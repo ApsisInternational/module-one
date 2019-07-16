@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Apsis_One::reports" title="Apsis One" module="Apsis_One" sortOrder="100"
+             parent="Magento_Reports::report" resource="Apsis_One::reports"/>
+        <add id="Apsis_One::subscriber" title="Subscribers" module="Apsis_One" sortOrder="110"
+             action="apsis_one/subscriber" resource="Apsis_One::subscriber"
+             parent="Apsis_One::reports"/>
+        <add id="Apsis_One::events" title="Events" module="Apsis_One" sortOrder="120"
+             action="apsis_one/events" resource="Apsis_One::events"
+             parent="Apsis_One::reports"/>
+        <add id="Apsis_One::abandoned" title="Abandoned Carts" module="Apsis_One" sortOrder="130"
+             action="apsis_one/abandoned" resource="Apsis_One::abandoned"
+             parent="Apsis_One::reports"/>
+    </menu>
+</config>
+

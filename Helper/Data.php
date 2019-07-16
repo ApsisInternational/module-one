@@ -14,9 +14,8 @@ class Data extends AbstractHelper
      *
      * @param Context $context
      */
-    public function __construct(
-        Context $context
-    ) {
+    public function __construct(Context $context)
+    {
         parent::__construct($context);
     }
 }

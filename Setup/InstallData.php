@@ -31,6 +31,13 @@ class InstallData implements InstallDataInterface
      */
     private function populateApsisSubscriberTable($installer)
     {
+        $insertArray = [
+            'subscriber_id',
+            'store_id',
+            'customer_id',
+            'subscriber_email',
+            'subscriber_status'
+        ];
         $select = $installer->getConnection()->select()
             ->from(
                 [
@@ -38,19 +45,9 @@ class InstallData implements InstallDataInterface
                         'newsletter_subscriber'
                     )
                 ],
-                [
-                    'subscriber_id',
-                    'store_id',
-                    'customer_id',
-                    'subscriber_email',
-                ]
+                $insertArray
             );
-        $insertArray = [
-            'subscriber_id',
-            'store_id',
-            'customer_id',
-            'subscriber_email',
-        ];
+
         $sqlQuery = $select->insertFromSelect(
             $installer->getTable(Helper::APSIS_SUBSCRIBER_TABLE),
             $insertArray,

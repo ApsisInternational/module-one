@@ -75,6 +75,13 @@ class InstallSchema implements InstallSchemaInterface
             'Primary Key'
         )
             ->addColumn(
+                'subscriber_status',
+                Table::TYPE_SMALLINT,
+                null,
+                ['unsigned' => true, 'nullable' => true],
+                'Subscriber status'
+            )
+            ->addColumn(
                 'store_id',
                 Table::TYPE_SMALLINT,
                 5,
@@ -108,7 +115,14 @@ class InstallSchema implements InstallSchemaInterface
                 null,
                 ['unsigned' => true, 'nullable' => true],
                 'Is Imported'
-            );
+            )
+            ->addColumn(
+                'suppressed',
+                Table::TYPE_SMALLINT,
+                null,
+                ['unsigned' => true, 'nullable' => true],
+                'Is Suppressed'
+            );;
     }
 
     /**
@@ -122,6 +136,10 @@ class InstallSchema implements InstallSchemaInterface
             $installer->getIdxName(Helper::APSIS_SUBSCRIBER_TABLE, ['id']),
             ['id']
         )
+            ->addIndex(
+                $installer->getIdxName(Helper::APSIS_SUBSCRIBER_TABLE, ['subscriber_status']),
+                ['subscriber_status']
+            )
             ->addIndex(
                 $installer->getIdxName(Helper::APSIS_SUBSCRIBER_TABLE, ['customer_id']),
                 ['customer_id']
@@ -141,6 +159,10 @@ class InstallSchema implements InstallSchemaInterface
             ->addIndex(
                 $installer->getIdxName(Helper::APSIS_SUBSCRIBER_TABLE, ['subscriber_email']),
                 ['subscriber_email']
+            )
+            ->addIndex(
+                $installer->getIdxName(Helper::APSIS_SUBSCRIBER_TABLE, ['suppressed']),
+                ['suppressed']
             );
     }
 

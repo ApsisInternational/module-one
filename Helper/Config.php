@@ -89,6 +89,8 @@ class Config extends ApsisCoreHelper
      * Abandoned carts section
      */
     const CONFIG_APSIS_ONE_ABANDONED_CARTS_GROUP = 'apsis_one_abandoned/customers';
+    const CONFIG_APSIS_ONE_ABANDONED_CARTS_PASSCODE = 'apsis_one_abandoned/customers/passcode';
+    const CONFIG_APSIS_ONE_ABANDONED_CARTS__URL = 'apsis_one_abandoned/customers/url';
     const CONFIG_APSIS_ONE_ABANDONED_CARTS_SEND_AFTER_ABANDONED_CART_1 = 'apsis_one_abandoned/customers/send_after_1';
     const CONFIG_APSIS_ONE_ABANDONED_CARTS_SEND_AFTER_ABANDONED_CART_2 = 'apsis_one_abandoned/customers/send_after_2';
 
@@ -100,6 +102,8 @@ class Config extends ApsisCoreHelper
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_ORDER = 'apsis_one_events/events/order';
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_REVIEW = 'apsis_one_events/events/review';
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_WISHLIST = 'apsis_one_events/events/wishlist';
+    const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_UNSUBSCRIBE = 'apsis_one_events/events/unsubscribe';
+    const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_2_CUSTOMER = 'apsis_one_events/events/subscriber_2_customer';
 
     /**
      * Config constructor.

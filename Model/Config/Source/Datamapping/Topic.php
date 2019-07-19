@@ -33,14 +33,26 @@ class Topic implements OptionSourceInterface
         }
 
         //default data option
-        $fields[] = ['value' => '0', 'label' => __('-- Please Select --')];
+        $options[] = ['value' => '0', 'label' => __('-- Please Select --')];
 
         /**
-         * @todo fetch from account set at selected scope
+         * @todo fetch from section / account set at selected scope
          */
-        $fields[] = ['value' => 'topic1', 'label' => __('TopicOne')];
-        $fields[] = ['value' => 'topic2', 'label' => __('TopicTwo')];
+        $options[] = [
+            'label' => 'Consent list 1',
+            'value' => [
+                ['value' => 'consent1_topic1', 'label' => 'Topic 1'],
+                ['value' => 'consent1_topic2', 'label' => 'Topic 2']
+            ]
+        ];
+        $options[] = [
+            'label' => 'Consent list 2',
+            'value' => [
+                ['value' => 'consent2_topic1', 'label' => 'Topic 1'],
+                ['value' => 'consent2_topic2', 'label' => 'Topic 2']
+            ]
+        ];
 
-        return $fields;
+        return $options;
     }
 }

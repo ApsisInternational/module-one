@@ -4,9 +4,8 @@ namespace Apsis\One\Helper;
 
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
-use Magento\Store\Api\Data\WebsiteInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\Store\Api\Data\StoreInterface;
+use Magento\Framework\UrlInterface;
 
 class Core extends AbstractHelper
 {
@@ -27,22 +26,6 @@ class Core extends AbstractHelper
     {
         $this->storeManager = $storeManager;
         parent::__construct($context);
-    }
-
-    /**
-     * Get selected scope object in admin
-     *
-     * @return StoreInterface|WebsiteInterface
-     */
-    public function getSelectedScopeObjectInAdmin()
-    {
-        $storeId = $this->_request->getParam('store');
-        if ($storeId) {
-            return $this->storeManager->getStore($storeId);
-        }
-
-        $websiteId = $this->_request->getParam('website', 0);
-        return $this->storeManager->getWebsite($websiteId);
     }
 
     /**
@@ -94,5 +77,16 @@ class Core extends AbstractHelper
             $scope['context_scope'],
             $scope['context_scope_id']
         );
+    }
+
+    /**
+     * @return string
+     */
+    public function generateBaseUrlForDynamicContent()
+    {
+        $website = $this->storeManager->getWebsite($this->_request->getParam('website', 0));
+        $defaultGroup = $website->getDefaultGroup();
+        $store =  (! $defaultGroup) ? null : $defaultGroup->getDefaultStore();
+        return $this->storeManager->getStore($store)->getBaseUrl(UrlInterface::URL_TYPE_LINK);
     }
 }

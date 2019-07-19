@@ -19,8 +19,8 @@ class Section implements OptionSourceInterface
         /**
          * @todo fetch from account set at selected scope
          */
-        $fields[] = ['value' => 'section1', 'label' => __('SectionOne')];
-        $fields[] = ['value' => 'section2', 'label' => __('SectionTwo')];
+        $fields[] = ['value' => 'section1', 'label' => 'Section One'];
+        $fields[] = ['value' => 'section2', 'label' => 'Section Two'];
 
         return $fields;
     }

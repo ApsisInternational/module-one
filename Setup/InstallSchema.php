@@ -5,7 +5,7 @@ namespace Apsis\One\Setup;
 use Magento\Framework\Setup\InstallSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
-use Apsis\One\Helper\Data as Helper;
+use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Magento\Framework\DB\Ddl\Table;
 
 class InstallSchema implements InstallSchemaInterface
@@ -30,7 +30,7 @@ class InstallSchema implements InstallSchemaInterface
      */
     private function createApsisSubscriberTable($installer)
     {
-        $tableName = $installer->getTable(Helper::APSIS_SUBSCRIBER_TABLE);
+        $tableName = $installer->getTable(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE);
         $this->dropTableIfExists($installer, $tableName);
 
         $subscriberTable = $installer->getConnection()->newTable($tableName);
@@ -39,7 +39,7 @@ class InstallSchema implements InstallSchemaInterface
 
         $subscriberTable->addForeignKey(
             $installer->getFkName(
-                Helper::APSIS_SUBSCRIBER_TABLE,
+                ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE,
                 'store_id',
                 'store',
                 'store_id'
@@ -131,35 +131,35 @@ class InstallSchema implements InstallSchemaInterface
     private function addIndexesToApsisSubscriberTable($installer, $subscriberTable)
     {
         return $subscriberTable->addIndex(
-            $installer->getIdxName(Helper::APSIS_SUBSCRIBER_TABLE, ['id']),
+            $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['id']),
             ['id']
         )
             ->addIndex(
-                $installer->getIdxName(Helper::APSIS_SUBSCRIBER_TABLE, ['subscriber_status']),
+                $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['subscriber_status']),
                 ['subscriber_status']
             )
             ->addIndex(
-                $installer->getIdxName(Helper::APSIS_SUBSCRIBER_TABLE, ['customer_id']),
+                $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['customer_id']),
                 ['customer_id']
             )
             ->addIndex(
-                $installer->getIdxName(Helper::APSIS_SUBSCRIBER_TABLE, ['store_id']),
+                $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['store_id']),
                 ['store_id']
             )
             ->addIndex(
-                $installer->getIdxName(Helper::APSIS_SUBSCRIBER_TABLE, ['subscriber_id']),
+                $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['subscriber_id']),
                 ['subscriber_id']
             )
             ->addIndex(
-                $installer->getIdxName(Helper::APSIS_SUBSCRIBER_TABLE, ['imported']),
+                $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['imported']),
                 ['imported']
             )
             ->addIndex(
-                $installer->getIdxName(Helper::APSIS_SUBSCRIBER_TABLE, ['subscriber_email']),
+                $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['subscriber_email']),
                 ['subscriber_email']
             )
             ->addIndex(
-                $installer->getIdxName(Helper::APSIS_SUBSCRIBER_TABLE, ['suppressed']),
+                $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['suppressed']),
                 ['suppressed']
             );
     }

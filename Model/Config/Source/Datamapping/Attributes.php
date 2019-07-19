@@ -38,8 +38,8 @@ class Attributes implements OptionSourceInterface
         /**
          * @todo fetch from account set at selected scope
          */
-        $fields[] = ['value' => 'fname', 'label' => __('FirstName')];
-        $fields[] = ['value' => 'lname', 'label' => __('LastName')];
+        $fields[] = ['value' => 'fname', 'label' => 'First Name'];
+        $fields[] = ['value' => 'lname', 'label' => 'Last Name'];
 
         return $fields;
     }

@@ -19,16 +19,17 @@
                     <label>Enabled</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="id" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1"
+                <field id="id" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Client Id</label>
                     <depends>
                         <field id="enabled">1</field>
                     </depends>
                 </field>
-                <field id="secret" translate="label" sortOrder="30" showInDefault="1" showInWebsite="1"
+                <field id="secret" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Client Secret</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                     <depends>
                         <field id="enabled">1</field>
                     </depends>
@@ -295,55 +296,80 @@
             <group id="customers" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Customer Abandoned Cart Series</label>
                 <attribute type="expanded">1</attribute>
-                <field id="heading_1" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1"
+                <field id="ac_heading_1" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Abandoned Cart 1</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                 </field>
-                <field id="send_after_1" translate="label" sortOrder="30" type="select" showInDefault="1"
+                <field id="send_after_1" translate="label" sortOrder="20" type="select" showInDefault="1"
                        showInWebsite="1" showInStore="1">
-                    <label>Send After</label>
+                    <label>After</label>
                     <source_model>Apsis\One\Model\Config\Source\Abandoned\Intervalminute</source_model>
                 </field>
-                <field id="heading_2" translate="label" sortOrder="40" showInStore="1" showInWebsite="1"
+                <field id="ac_heading_2" translate="label" sortOrder="30" showInStore="1" showInWebsite="1"
                        showInDefault="1">
                     <label>Abandoned Cart 2</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                 </field>
-                <field id="send_after_2" translate="label" sortOrder="60" type="select" showInStore="1"
+                <field id="send_after_2" translate="label" sortOrder="40" type="select" showInStore="1"
                        showInWebsite="1" showInDefault="1">
-                    <label>Send After</label>
+                    <label>After</label>
                     <source_model>Apsis\One\Model\Config\Source\Abandoned\Intervalhour</source_model>
+                </field>
+                <field id="cart_content_heading" translate="label" sortOrder="50" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Cart Content</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                </field>
+                <field id="passcode" translate="label comment" type="text" sortOrder="60" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Passcode</label>
+                    <comment><![CDATA[Recommended: Set a passcode so that basket contents can only be viewed if passcode is supplied with the request.]]></comment>
+                </field>
+                <field id="url" translate="label" sortOrder="70" type="label" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Cart Content URL</label>
+                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Abandoned\Url</frontend_model>
                 </field>
             </group>
         </section>
         <section id="apsis_one_events" translate="label" sortOrder="40" showInDefault="1" showInWebsite="1"
                  showInStore="1">
             <class>separator-top</class>
-            <label>Customer Events</label>
+            <label>Events</label>
             <tab>apsis_one</tab>
             <resource>Apsis_One::config</resource>
             <group id="events" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Customer Events</label>
+                <label>Events To Register</label>
                 <attribute type="expanded">1</attribute>
-                <field id="login" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1"
+                <field id="subscriber_2_customer" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1"
                        showInStore="1">
-                    <label>Login</label>
+                    <label>Subscriber Becomes A Customer</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
                 </field>
-                <field id="order" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1"
+                <field id="unsubscribe" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1"
                        showInStore="1">
-                    <label>Order</label>
+                    <label>Subscriber Unsubscribe</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
                 </field>
-                <field id="review" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1"
+                <field id="login" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1"
                        showInStore="1">
-                    <label>Review</label>
+                    <label>Customer Login</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
                 </field>
-                <field id="wishlist" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1"
+                <field id="order" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1"
                        showInStore="1">
-                    <label>Wishlist</label>
+                    <label>Customer Order</label>
+                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
+                </field>
+                <field id="review" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Customer Review</label>
+                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
+                </field>
+                <field id="wishlist" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Customer Wishlist</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
                 </field>
             </group>

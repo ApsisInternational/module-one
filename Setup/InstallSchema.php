@@ -18,7 +18,13 @@ class InstallSchema implements InstallSchemaInterface
         $installer = $setup;
         $installer->startSetup();
 
+        // Create entities tables
+        /** Subscriber */
         $this->createApsisSubscriberTable($installer);
+        /** Events */
+        $this->createApsisEventTable($installer);
+        /** Abandoned Carts */
+        $this->createApsisAbandonedTable($installer);
 
         $installer->endSetup();
     }
@@ -28,18 +34,177 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @return null
      */
-    private function createApsisSubscriberTable($installer)
+    private function createApsisAbandonedTable($installer)
     {
-        $tableName = $installer->getTable(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE);
-        $this->dropTableIfExists($installer, $tableName);
+        $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_ABANDONED_TABLE);
 
-        $subscriberTable = $installer->getConnection()->newTable($tableName);
-        $subscriberTable = $this->addColumnsToApsisSubscriberTable($subscriberTable);
-        $subscriberTable = $this->addIndexesToApsisSubscriberTable($installer, $subscriberTable);
+        $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
+        $table = $this->addColumnsToApsisAbandonedTable($table);
+        $table = $this->addIndexesToApsisAbandonedTable($installer, $table);
+        $table = $this->addForeignKeysToAbandonedTable($installer, $table);
 
-        $subscriberTable->addForeignKey(
+        $table->setComment('Apsis Abandoned Carts');
+        $installer->getConnection()->createTable($table);
+    }
+
+    /**
+     * @param Table $table
+     *
+     * @return Table
+     */
+    private function addColumnsToApsisAbandonedTable($table)
+    {
+        return $table->addColumn(
+            'id',
+            Table::TYPE_INTEGER,
+            null,
+            [
+                'primary' => true,
+                'identity' => true,
+                'unsigned' => true,
+                'nullable' => false
+            ],
+            'Primary Key'
+        )
+            ->addColumn(
+                'quote_id',
+                Table::TYPE_INTEGER,
+                null,
+                ['unsigned' => true, 'nullable' => true],
+                'Quote Id'
+            )
+            ->addColumn(
+                'store_id',
+                Table::TYPE_SMALLINT,
+                10,
+                ['unsigned' => true, 'nullable' => true],
+                'Store Id'
+            )
+            ->addColumn(
+                'customer_id',
+                Table::TYPE_INTEGER,
+                10,
+                ['unsigned' => true, 'nullable' => true, 'default' => null],
+                'Customer ID'
+            )
+            ->addColumn(
+                'customer_email',
+                Table::TYPE_TEXT,
+                255,
+                ['nullable' => false, 'default' => ''],
+                'Customer Email'
+            )
+            ->addColumn(
+                'status',
+                Table::TYPE_TEXT,
+                255,
+                ['nullable' => false, 'default' => ''],
+                'AC Status'
+            )
+            ->addColumn(
+                'is_active',
+                Table::TYPE_SMALLINT,
+                5,
+                ['unsigned' => true, 'nullable' => false, 'default' => '1'],
+                'Is Quote Active'
+            )
+            ->addColumn(
+                'quote_updated_at',
+                Table::TYPE_TIMESTAMP,
+                null,
+                [],
+                'Quote updated at'
+            )
+            ->addColumn(
+                'abandoned_cart_number',
+                Table::TYPE_SMALLINT,
+                null,
+                ['unsigned' => true, 'nullable' => false, 'default' => 0],
+                'Abandoned Cart number'
+            )
+            ->addColumn(
+                'items_count',
+                Table::TYPE_SMALLINT,
+                null,
+                ['unsigned' => true, 'nullable' => true, 'default' => 0],
+                'Quote items count'
+            )
+            ->addColumn(
+                'items_ids',
+                Table::TYPE_TEXT,
+                255,
+                ['unsigned' => true, 'nullable' => true],
+                'Quote item ids'
+            )
+            ->addColumn(
+                'created_at',
+                Table::TYPE_TIMESTAMP,
+                null,
+                [],
+                'Created At'
+            )
+            ->addColumn(
+                'updated_at',
+                Table::TYPE_TIMESTAMP,
+                null,
+                [],
+                'Updated at'
+            );
+    }
+
+    /**
+     * @param SchemaSetupInterface $installer
+     * @param Table $table
+     *
+     * @return Table
+     */
+    private function addIndexesToApsisAbandonedTable($installer, $table)
+    {
+        return $table->addIndex(
+            $installer->getIdxName(ApsisCoreHelper::APSIS_ABANDONED_TABLE, ['id']),
+            ['id']
+        )   ->addIndex(
+                $installer->getIdxName(ApsisCoreHelper::APSIS_ABANDONED_TABLE, ['quote_id']),
+                ['quote_id']
+            )
+            ->addIndex(
+                $installer->getIdxName(ApsisCoreHelper::APSIS_ABANDONED_TABLE, ['status']),
+                ['status']
+            )
+            ->addIndex(
+                $installer->getIdxName(ApsisCoreHelper::APSIS_ABANDONED_TABLE, ['store_id']),
+                ['store_id']
+            )
+            ->addIndex(
+                $installer->getIdxName(ApsisCoreHelper::APSIS_ABANDONED_TABLE, ['customer_id']),
+                ['customer_id']
+            )
+            ->addIndex(
+                $installer->getIdxName(ApsisCoreHelper::APSIS_ABANDONED_TABLE, ['customer_email']),
+                ['customer_email']
+            )
+            ->addIndex(
+                $installer->getIdxName(ApsisCoreHelper::APSIS_ABANDONED_TABLE, ['created_at']),
+                ['created_at']
+            )
+            ->addIndex(
+                $installer->getIdxName(
+                    $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE), ['updated_at']),
+                ['updated_at']
+            );
+    }
+
+    /**
+     * @param SchemaSetupInterface $installer
+     * @param Table $table
+     *
+     * @return Table
+     */
+    private function addForeignKeysToAbandonedTable($installer, $table)
+    {
+        return $table->addForeignKey(
             $installer->getFkName(
-                ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE,
+                ApsisCoreHelper::APSIS_ABANDONED_TABLE,
                 'store_id',
                 'store',
                 'store_id'
@@ -48,19 +213,242 @@ class InstallSchema implements InstallSchemaInterface
             $installer->getTable('store'),
             'store_id',
             Table::ACTION_CASCADE
-        );
-
-        $subscriberTable->setComment('Apsis Subscribers');
-        $installer->getConnection()->createTable($subscriberTable);
+        )
+            ->addForeignKey(
+                $installer->getFkName(
+                    ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+                    'customer_id',
+                    'customer_entity',
+                    'entity_id'
+                ),
+                'customer_id',
+                $installer->getTable('customer_entity'),
+                'entity_id',
+                Table::ACTION_CASCADE
+            )
+            ->addForeignKey(
+                $installer->getFkName(
+                    ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+                    'quote_id',
+                    'quote',
+                    'entity_id'
+                ),
+                'quote_id',
+                $installer->getTable('quote'),
+                'entity_id',
+                Table::ACTION_CASCADE
+            );
     }
 
     /**
-     * @param Table $subscriberTable
+     * @param SchemaSetupInterface $installer
+     *
+     * @return null
+     */
+    private function createApsisEventTable($installer)
+    {
+        $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_EVENT_TABLE);
+
+        $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_EVENT_TABLE);
+        $table = $this->addColumnsToApsisEventTable($table);
+        $table = $this->addIndexesToApsisEventTable($installer, $table);
+        $table = $this->addForeignKeysToEventTable($installer, $table);
+
+        $table->setComment('Apsis Events');
+        $installer->getConnection()->createTable($table);
+    }
+
+    /**
+     * @param Table $table
+     *
      * @return Table
      */
-    private function addColumnsToApsisSubscriberTable($subscriberTable)
+    private function addColumnsToApsisEventTable($table)
     {
-        return $subscriberTable->addColumn(
+        return $table->addColumn(
+            'id',
+            Table::TYPE_INTEGER,
+            10,
+            [
+                'primary' => true,
+                'identity' => true,
+                'unsigned' => true,
+                'nullable' => false
+            ],
+            'Primary Key'
+        )
+            ->addColumn(
+                'event_type',
+                Table::TYPE_TEXT,
+                255,
+                ['nullable' => true],
+                'Event Type'
+            )
+            ->addColumn(
+                'type_id',
+                Table::TYPE_INTEGER,
+                11,
+                ['nullable' => true],
+                'Type ID'
+            )
+            ->addColumn(
+                'customer_id',
+                Table::TYPE_INTEGER,
+                11,
+                ['unsigned' => true, 'nullable' => false],
+                'Customer Id'
+            )
+            ->addColumn(
+                'store_id',
+                Table::TYPE_SMALLINT,
+                5,
+                ['unsigned' => true, 'nullable' => false, 'default' => '0'],
+                'Store ID'
+            )
+            ->addColumn(
+                'customer_email',
+                Table::TYPE_TEXT,
+                255,
+                ['nullable' => false, 'default' => ''],
+                'Subscriber Email'
+            )
+            ->addColumn(
+                'status',
+                Table::TYPE_SMALLINT,
+                null,
+                ['unsigned' => true, 'nullable' => true],
+                'Is Registered'
+            )
+            ->addColumn(
+                'error_message',
+                Table::TYPE_TEXT,
+                255,
+                ['nullable' => false],
+                'Error Message'
+            )
+            ->addColumn(
+                'created_at',
+                Table::TYPE_TIMESTAMP,
+                null,
+                [],
+                'Creation Time'
+            )
+            ->addColumn(
+                'updated_at',
+                Table::TYPE_TIMESTAMP,
+                null,
+                [],
+                'Update Time'
+            );
+    }
+
+    /**
+     * @param SchemaSetupInterface $installer
+     * @param Table $table
+     *
+     * @return Table
+     */
+    private function addIndexesToApsisEventTable($installer, $table)
+    {
+        return $table->addIndex(
+            $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['id']),
+            ['id']
+        )
+            ->addIndex(
+                $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['type_id']),
+                ['type_id']
+            )
+            ->addIndex(
+                $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['customer_id']),
+                ['customer_id']
+            )
+            ->addIndex(
+                $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['store_id']),
+                ['store_id']
+            )
+            ->addIndex(
+                $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['event_type']),
+                ['event_type']
+            )
+            ->addIndex(
+                $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['status']),
+                ['status']
+            )
+            ->addIndex(
+                $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['customer_email']),
+                ['customer_email']
+            )
+            ->addIndex(
+                $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['created_at']),
+                ['created_at']
+            )
+            ->addIndex(
+                $installer->getIdxName(
+                    $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE), ['updated_at']),
+                ['updated_at']
+            );
+    }
+
+    /**
+     * @param SchemaSetupInterface $installer
+     * @param Table $table
+     *
+     * @return Table
+     */
+    private function addForeignKeysToEventTable($installer, $table)
+    {
+        return $table->addForeignKey(
+            $installer->getFkName(
+                ApsisCoreHelper::APSIS_EVENT_TABLE,
+                'store_id',
+                'store',
+                'store_id'
+            ),
+            'store_id',
+            $installer->getTable('store'),
+            'store_id',
+            Table::ACTION_CASCADE
+        )
+            ->addForeignKey(
+                $installer->getFkName(
+                    ApsisCoreHelper::APSIS_EVENT_TABLE,
+                    'customer_id',
+                    'customer_entity',
+                    'entity_id'
+                ),
+                'customer_id',
+                $installer->getTable('customer_entity'),
+                'entity_id',
+                Table::ACTION_CASCADE
+            );
+    }
+
+    /**
+     * @param SchemaSetupInterface $installer
+     *
+     * @return null
+     */
+    private function createApsisSubscriberTable($installer)
+    {
+        $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE);
+
+        $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE);
+        $table = $this->addColumnsToApsisSubscriberTable($table);
+        $table = $this->addIndexesToApsisSubscriberTable($installer, $table);
+        $table = $this->addForeignKeysToSubscriberTable($installer, $table);
+
+        $table->setComment('Apsis Subscribers');
+        $installer->getConnection()->createTable($table);
+    }
+
+    /**
+     * @param Table $table
+     *
+     * @return Table
+     */
+    private function addColumnsToApsisSubscriberTable($table)
+    {
+        return $table->addColumn(
             'id',
             Table::TYPE_INTEGER,
             10,
@@ -120,17 +508,32 @@ class InstallSchema implements InstallSchemaInterface
                 null,
                 ['unsigned' => true, 'nullable' => true],
                 'Is Suppressed'
-            );;
+            )
+            ->addColumn(
+                'error_message',
+                Table::TYPE_TEXT,
+                255,
+                ['nullable' => false],
+                'Error Message'
+            )
+            ->addColumn(
+                'updated_at',
+                Table::TYPE_TIMESTAMP,
+                null,
+                [],
+                'Last Update Time'
+            );
     }
 
     /**
      * @param SchemaSetupInterface $installer
-     * @param Table $subscriberTable
+     * @param Table $table
+     *
      * @return Table
      */
-    private function addIndexesToApsisSubscriberTable($installer, $subscriberTable)
+    private function addIndexesToApsisSubscriberTable($installer, $table)
     {
-        return $subscriberTable->addIndex(
+        return $table->addIndex(
             $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['id']),
             ['id']
         )
@@ -161,18 +564,58 @@ class InstallSchema implements InstallSchemaInterface
             ->addIndex(
                 $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['suppressed']),
                 ['suppressed']
+            )
+            ->addIndex(
+                $installer->getIdxName(
+                    $installer->getTable(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE), ['updated_at']),
+                ['updated_at']
             );
     }
 
     /**
      * @param SchemaSetupInterface $installer
-     * @param string $table
+     * @param Table $table
+     *
+     * @return Table
      */
-    private function dropTableIfExists($installer, $table)
+    private function addForeignKeysToSubscriberTable($installer, $table)
     {
-        if ($installer->getConnection()->isTableExists($installer->getTable($table))) {
+        return $table->addForeignKey(
+            $installer->getFkName(
+                ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE,
+                'store_id',
+                'store',
+                'store_id'
+            ),
+            'store_id',
+            $installer->getTable('store'),
+            'store_id',
+            Table::ACTION_CASCADE
+        )
+            ->addForeignKey(
+                $installer->getFkName(
+                    ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE,
+                    'subscriber_id',
+                    'newsletter_subscriber',
+                    'subscriber_id'
+                ),
+                'subscriber_id',
+                $installer->getTable('newsletter_subscriber'),
+                'subscriber_id',
+                Table::ACTION_CASCADE
+            );
+    }
+
+    /**
+     * @param SchemaSetupInterface $installer
+     * @param string $tableName
+     */
+    private function dropTableIfExists($installer, $tableName)
+    {
+        $tableName = $installer->getTable($tableName);
+        if ($installer->getConnection()->isTableExists($installer->getTable($tableName))) {
             $installer->getConnection()->dropTable(
-                $installer->getTable($table)
+                $installer->getTable($tableName)
             );
         }
     }

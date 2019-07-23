@@ -5,7 +5,7 @@ namespace Apsis\One\Model\ResourceModel;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Apsis\One\Helper\Core as Helper;
 
-class Subscriber extends AbstractDb
+class Abandoned extends AbstractDb
 {
     /**
      * Initialize resource.
@@ -14,6 +14,6 @@ class Subscriber extends AbstractDb
      */
     public function _construct()
     {
-        $this->_init(Helper::APSIS_SUBSCRIBER_TABLE, 'id');
+        $this->_init(Helper::APSIS_ABANDONED_TABLE, 'id');
     }
 }

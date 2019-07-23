@@ -14,7 +14,12 @@ class Core extends AbstractHelper
      */
     protected $storeManager;
 
+    /**
+     * APSIS table names
+     */
     const APSIS_SUBSCRIBER_TABLE = 'apsis_subscriber';
+    const APSIS_EVENT_TABLE = 'apsis_event';
+    const APSIS_ABANDONED_TABLE = 'apsis_abandoned';
 
     /**
      * Core constructor.

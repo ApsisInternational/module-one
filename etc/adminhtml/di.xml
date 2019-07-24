@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <virtualType name="Apsis\One\Ui\Model\ResourceModel\Abandoned\Collection"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">apsis_abandoned</argument>
+            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\Abandoned</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Apsis\One\Ui\Model\ResourceModel\Event\Collection"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">apsis_event</argument>
+            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\Event</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Apsis\One\Ui\Model\ResourceModel\Subscriber\Collection"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">apsis_subscriber</argument>
+            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\Subscriber</argument>
+        </arguments>
+    </virtualType>
+</config>

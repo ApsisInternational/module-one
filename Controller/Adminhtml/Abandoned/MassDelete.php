@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Controller\Adminhtml\Abandoned;
 
+use Exception;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Ui\Component\MassAction\Filter;
 use Magento\Backend\App\Action;
@@ -9,6 +10,9 @@ use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;
 use Apsis\One\Model\ResourceModel\Abandoned\CollectionFactory as AbandonedCollectionFactory;
 use Magento\Backend\App\Action\Context;
 use Magento\Backend\Model\View\Result\Redirect;
+use Magento\Framework\App\ResponseInterface;
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Exception\LocalizedException;
 
 class MassDelete extends Action
 {
@@ -55,7 +59,10 @@ class MassDelete extends Action
     }
 
     /**
-     * @return Redirect
+     * @return Redirect|ResponseInterface|ResultInterface
+     *
+     * @throws LocalizedException
+     * @throws Exception
      */
     public function execute()
     {

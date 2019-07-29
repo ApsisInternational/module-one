@@ -2,7 +2,11 @@
 
 namespace Apsis\One\Controller\Adminhtml\Subscriber;
 
+use Exception;
+use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Ui\Component\MassAction\Filter;
 use Magento\Backend\App\Action;
 use Apsis\One\Model\ResourceModel\Subscriber as SubscriberResource;
@@ -55,7 +59,10 @@ class MassDelete extends Action
     }
 
     /**
-     * @return Redirect
+     * @return Redirect|ResponseInterface|ResultInterface
+     *
+     * @throws LocalizedException
+     * @throws Exception
      */
     public function execute()
     {

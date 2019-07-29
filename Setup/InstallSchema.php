@@ -7,11 +7,15 @@ use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Magento\Framework\DB\Ddl\Table;
+use Zend_Db_Exception;
 
 class InstallSchema implements InstallSchemaInterface
 {
     /**
-     * {@inheritdoc}
+     * @param SchemaSetupInterface $setup
+     * @param ModuleContextInterface $context
+     *
+     * @throws Zend_Db_Exception
      */
     public function install(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {
@@ -31,8 +35,9 @@ class InstallSchema implements InstallSchemaInterface
 
     /**
      * @param SchemaSetupInterface $installer
+     * @throws Zend_Db_Exception
      */
-    private function createApsisAbandonedTable($installer)
+    private function createApsisAbandonedTable(SchemaSetupInterface $installer)
     {
         $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_ABANDONED_TABLE);
 
@@ -49,8 +54,10 @@ class InstallSchema implements InstallSchemaInterface
      * @param Table $table
      *
      * @return Table
+     *
+     * @throws Zend_Db_Exception
      */
-    private function addColumnsToApsisAbandonedTable($table)
+    private function addColumnsToApsisAbandonedTable(Table $table)
     {
         return $table->addColumn(
             'id',
@@ -155,8 +162,10 @@ class InstallSchema implements InstallSchemaInterface
      * @param Table $table
      *
      * @return Table
+     *
+     * @throws Zend_Db_Exception
      */
-    private function addIndexesToApsisAbandonedTable($installer, $table)
+    private function addIndexesToApsisAbandonedTable(SchemaSetupInterface $installer, Table $table)
     {
         $tableName = $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
         $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
@@ -175,8 +184,10 @@ class InstallSchema implements InstallSchemaInterface
      * @param Table $table
      *
      * @return Table
+     *
+     * @throws Zend_Db_Exception
      */
-    private function addForeignKeysToAbandonedTable($installer, $table)
+    private function addForeignKeysToAbandonedTable(SchemaSetupInterface $installer, Table $table)
     {
         return $table->addForeignKey(
             $installer->getFkName(
@@ -218,8 +229,10 @@ class InstallSchema implements InstallSchemaInterface
 
     /**
      * @param SchemaSetupInterface $installer
+     *
+     * @throws Zend_Db_Exception
      */
-    private function createApsisEventTable($installer)
+    private function createApsisEventTable(SchemaSetupInterface $installer)
     {
         $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_EVENT_TABLE);
 
@@ -236,8 +249,10 @@ class InstallSchema implements InstallSchemaInterface
      * @param Table $table
      *
      * @return Table
+     *
+     * @throws Zend_Db_Exception
      */
-    private function addColumnsToApsisEventTable($table)
+    private function addColumnsToApsisEventTable(Table $table)
     {
         return $table->addColumn(
             'id',
@@ -321,8 +336,10 @@ class InstallSchema implements InstallSchemaInterface
      * @param Table $table
      *
      * @return Table
+     *
+     * @throws Zend_Db_Exception
      */
-    private function addIndexesToApsisEventTable($installer, $table)
+    private function addIndexesToApsisEventTable(SchemaSetupInterface $installer, Table $table)
     {
         $tableName = $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE);
         $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
@@ -342,8 +359,10 @@ class InstallSchema implements InstallSchemaInterface
      * @param Table $table
      *
      * @return Table
+     *
+     * @throws Zend_Db_Exception
      */
-    private function addForeignKeysToEventTable($installer, $table)
+    private function addForeignKeysToEventTable(SchemaSetupInterface $installer, Table $table)
     {
         return $table->addForeignKey(
             $installer->getFkName(
@@ -373,8 +392,10 @@ class InstallSchema implements InstallSchemaInterface
 
     /**
      * @param SchemaSetupInterface $installer
+     *
+     * @throws Zend_Db_Exception
      */
-    private function createApsisSubscriberTable($installer)
+    private function createApsisSubscriberTable(SchemaSetupInterface $installer)
     {
         $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE);
 
@@ -391,8 +412,10 @@ class InstallSchema implements InstallSchemaInterface
      * @param Table $table
      *
      * @return Table
+     *
+     * @throws Zend_Db_Exception
      */
-    private function addColumnsToApsisSubscriberTable($table)
+    private function addColumnsToApsisSubscriberTable(Table $table)
     {
         return $table->addColumn(
             'id',
@@ -476,19 +499,21 @@ class InstallSchema implements InstallSchemaInterface
      * @param Table $table
      *
      * @return Table
+     *
+     * @throws Zend_Db_Exception
      */
-    private function addIndexesToApsisSubscriberTable($installer, $table)
+    private function addIndexesToApsisSubscriberTable(SchemaSetupInterface $installer, Table $table)
     {
         $tableName = $installer->getTable(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE);
-        $table->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['id']), ['id'])
-            ->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['subscriber_status']), ['subscriber_status'])
-            ->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['customer_id']), ['customer_id'])
-            ->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['store_id']), ['store_id'])
-            ->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['subscriber_id']), ['subscriber_id'])
-            ->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['imported']), ['imported'])
-            ->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['subscriber_email']), ['subscriber_email'])
-            ->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['suppressed']), ['suppressed'])
-            ->addIndex($installer->getIdxName($installer->getTable(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE), ['updated_at']), ['updated_at']);
+        $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
+            ->addIndex($installer->getIdxName($tableName, ['subscriber_status']), ['subscriber_status'])
+            ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
+            ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
+            ->addIndex($installer->getIdxName($tableName, ['subscriber_id']), ['subscriber_id'])
+            ->addIndex($installer->getIdxName($tableName, ['imported']), ['imported'])
+            ->addIndex($installer->getIdxName($tableName, ['subscriber_email']), ['subscriber_email'])
+            ->addIndex($installer->getIdxName($tableName, ['suppressed']), ['suppressed'])
+            ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
         return $table;
     }
 
@@ -497,8 +522,10 @@ class InstallSchema implements InstallSchemaInterface
      * @param Table $table
      *
      * @return Table
+     *
+     * @throws Zend_Db_Exception
      */
-    private function addForeignKeysToSubscriberTable($installer, $table)
+    private function addForeignKeysToSubscriberTable(SchemaSetupInterface $installer, Table $table)
     {
         return $table->addForeignKey(
             $installer->getFkName(
@@ -530,7 +557,7 @@ class InstallSchema implements InstallSchemaInterface
      * @param SchemaSetupInterface $installer
      * @param string $tableName
      */
-    private function dropTableIfExists($installer, $tableName)
+    private function dropTableIfExists(SchemaSetupInterface $installer, string $tableName)
     {
         $tableName = $installer->getTable($tableName);
         if ($installer->getConnection()->isTableExists($installer->getTable($tableName))) {

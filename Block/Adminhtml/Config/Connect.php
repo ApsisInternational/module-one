@@ -5,6 +5,7 @@ namespace Apsis\One\Block\Adminhtml\Config;
 use Magento\Config\Block\System\Config\Form\Field;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Backend\Block\Widget\Button;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * @todo provide OAUTH Logic at selected scope level
@@ -31,6 +32,8 @@ class Connect extends Field
      * @param AbstractElement $element
      *
      * @return string
+     *
+     * @throws LocalizedException
      */
     public function _getElementHtml(AbstractElement $element)
     {

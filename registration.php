@@ -1,4 +1,3 @@
-
 <?php
 
 use Magento\Framework\Component\ComponentRegistrar;

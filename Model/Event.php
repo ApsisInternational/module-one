@@ -47,8 +47,6 @@ class Event extends AbstractModel
 
     /**
      * Constructor.
-     *
-     * @return null
      */
     public function _construct()
     {

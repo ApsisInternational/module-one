@@ -9,8 +9,6 @@ class Subscriber extends AbstractDb
 {
     /**
      * Initialize resource.
-     *
-     * @return null
      */
     public function _construct()
     {

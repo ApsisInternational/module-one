@@ -47,8 +47,6 @@ class Abandoned extends AbstractModel
 
     /**
      * Constructor.
-     *
-     * @return null
      */
     public function _construct()
     {

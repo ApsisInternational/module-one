@@ -31,8 +31,6 @@ class InstallSchema implements InstallSchemaInterface
 
     /**
      * @param SchemaSetupInterface $installer
-     *
-     * @return null
      */
     private function createApsisAbandonedTable($installer)
     {
@@ -160,38 +158,16 @@ class InstallSchema implements InstallSchemaInterface
      */
     private function addIndexesToApsisAbandonedTable($installer, $table)
     {
-        return $table->addIndex(
-            $installer->getIdxName(ApsisCoreHelper::APSIS_ABANDONED_TABLE, ['id']),
-            ['id']
-        )   ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_ABANDONED_TABLE, ['quote_id']),
-                ['quote_id']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_ABANDONED_TABLE, ['status']),
-                ['status']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_ABANDONED_TABLE, ['store_id']),
-                ['store_id']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_ABANDONED_TABLE, ['customer_id']),
-                ['customer_id']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_ABANDONED_TABLE, ['customer_email']),
-                ['customer_email']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_ABANDONED_TABLE, ['created_at']),
-                ['created_at']
-            )
-            ->addIndex(
-                $installer->getIdxName(
-                    $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE), ['updated_at']),
-                ['updated_at']
-            );
+        $tableName = $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
+        $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
+            ->addIndex($installer->getIdxName($tableName, ['quote_id']), ['quote_id'])
+            ->addIndex($installer->getIdxName($tableName, ['status']), ['status'])
+            ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
+            ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
+            ->addIndex($installer->getIdxName($tableName, ['customer_email']), ['customer_email'])
+            ->addIndex($installer->getIdxName($tableName, ['created_at']), ['created_at'])
+            ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
+        return $table;
     }
 
     /**
@@ -242,8 +218,6 @@ class InstallSchema implements InstallSchemaInterface
 
     /**
      * @param SchemaSetupInterface $installer
-     *
-     * @return null
      */
     private function createApsisEventTable($installer)
     {
@@ -350,43 +324,17 @@ class InstallSchema implements InstallSchemaInterface
      */
     private function addIndexesToApsisEventTable($installer, $table)
     {
-        return $table->addIndex(
-            $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['id']),
-            ['id']
-        )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['type_id']),
-                ['type_id']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['customer_id']),
-                ['customer_id']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['store_id']),
-                ['store_id']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['event_type']),
-                ['event_type']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['status']),
-                ['status']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['customer_email']),
-                ['customer_email']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_EVENT_TABLE, ['created_at']),
-                ['created_at']
-            )
-            ->addIndex(
-                $installer->getIdxName(
-                    $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE), ['updated_at']),
-                ['updated_at']
-            );
+        $tableName = $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE);
+        $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
+            ->addIndex($installer->getIdxName($tableName, ['type_id']), ['type_id'])
+            ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
+            ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
+            ->addIndex($installer->getIdxName($tableName, ['event_type']), ['event_type'])
+            ->addIndex($installer->getIdxName($tableName, ['status']), ['status'])
+            ->addIndex($installer->getIdxName($tableName, ['customer_email']), ['customer_email'])
+            ->addIndex($installer->getIdxName($tableName, ['created_at']), ['created_at'])
+            ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
+        return $table;
     }
 
     /**
@@ -425,8 +373,6 @@ class InstallSchema implements InstallSchemaInterface
 
     /**
      * @param SchemaSetupInterface $installer
-     *
-     * @return null
      */
     private function createApsisSubscriberTable($installer)
     {
@@ -533,43 +479,17 @@ class InstallSchema implements InstallSchemaInterface
      */
     private function addIndexesToApsisSubscriberTable($installer, $table)
     {
-        return $table->addIndex(
-            $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['id']),
-            ['id']
-        )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['subscriber_status']),
-                ['subscriber_status']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['customer_id']),
-                ['customer_id']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['store_id']),
-                ['store_id']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['subscriber_id']),
-                ['subscriber_id']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['imported']),
-                ['imported']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['subscriber_email']),
-                ['subscriber_email']
-            )
-            ->addIndex(
-                $installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['suppressed']),
-                ['suppressed']
-            )
-            ->addIndex(
-                $installer->getIdxName(
-                    $installer->getTable(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE), ['updated_at']),
-                ['updated_at']
-            );
+        $tableName = $installer->getTable(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE);
+        $table->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['id']), ['id'])
+            ->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['subscriber_status']), ['subscriber_status'])
+            ->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['customer_id']), ['customer_id'])
+            ->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['store_id']), ['store_id'])
+            ->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['subscriber_id']), ['subscriber_id'])
+            ->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['imported']), ['imported'])
+            ->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['subscriber_email']), ['subscriber_email'])
+            ->addIndex($installer->getIdxName(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE, ['suppressed']), ['suppressed'])
+            ->addIndex($installer->getIdxName($installer->getTable(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE), ['updated_at']), ['updated_at']);
+        return $table;
     }
 
     /**

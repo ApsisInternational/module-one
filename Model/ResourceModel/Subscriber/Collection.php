@@ -15,8 +15,6 @@ class Collection extends AbstractCollection
 
     /**
      * Initialize resource collection.
-     *
-     * @return null
      */
     public function _construct()
     {

@@ -59,8 +59,6 @@ class InstallData implements InstallDataInterface
 
     /**
      * @param ModuleDataSetupInterface $installer
-     *
-     * @return null
      */
     private function populateApsisSubscriberTable($installer)
     {

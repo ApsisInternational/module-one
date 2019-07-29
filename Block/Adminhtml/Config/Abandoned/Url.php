@@ -7,6 +7,8 @@ use Magento\Config\Block\System\Config\Form\Field;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Data\Form\Element\AbstractElement;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 
 class Url extends Field
 {
@@ -29,8 +31,10 @@ class Url extends Field
 
     /**
      * @param AbstractElement $element
-     *
      * @return string
+     *
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
     public function _getElementHtml(AbstractElement $element)
     {

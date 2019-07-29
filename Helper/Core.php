@@ -67,7 +67,7 @@ class Core extends AbstractHelper
      *
      * @return mixed
      */
-    public function getConfigValue($path, $contextScope = 'default', $contextScopeId = null)
+    public function getConfigValue(string $path, string $contextScope = 'default', $contextScopeId = null)
     {
         return $this->scopeConfig->getValue($path, $contextScope, $contextScopeId);
     }
@@ -76,7 +76,7 @@ class Core extends AbstractHelper
      * @param string $path
      * @return mixed
      */
-    public function getMappedValueFromSelectedScope($path)
+    public function getMappedValueFromSelectedScope(string $path)
     {
         $scope = $this->getSelectedScopeInAdmin();
         return $this->getConfigValue(

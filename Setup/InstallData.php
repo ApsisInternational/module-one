@@ -4,6 +4,7 @@ namespace Apsis\One\Setup;
 
 use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Setup\InstallDataInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
@@ -43,7 +44,10 @@ class InstallData implements InstallDataInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @param ModuleDataSetupInterface $setup
+     * @param ModuleContextInterface $context
+     *
+     * @throws LocalizedException
      */
     public function install(ModuleDataSetupInterface $setup, ModuleContextInterface $context)
     {
@@ -60,7 +64,7 @@ class InstallData implements InstallDataInterface
     /**
      * @param ModuleDataSetupInterface $installer
      */
-    private function populateApsisSubscriberTable($installer)
+    private function populateApsisSubscriberTable(ModuleDataSetupInterface $installer)
     {
         $insertArray = [
             'subscriber_id',
@@ -89,6 +93,8 @@ class InstallData implements InstallDataInterface
 
     /**
      * Generate and save code
+     *
+     * @throws LocalizedException
      */
     private function savePassCode()
     {

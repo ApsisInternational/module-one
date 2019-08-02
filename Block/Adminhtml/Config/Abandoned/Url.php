@@ -54,7 +54,7 @@ class Url extends Field
         }
 
         $text = sprintf(
-            '%sapsis/one/cart/passcode/%s/quote_id/@%s@',
+            '%sapsis/abandoned/cart/passcode/%s/quote_id/@%s@',
             $baseUrl,
             $passcodeValue,
             $mappedAttributeForLastQuoteId

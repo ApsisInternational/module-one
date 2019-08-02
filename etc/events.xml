@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <!-- Subscriber Events -->
+    <event name="newsletter_subscriber_save_after">
+        <observer name="apsis_newsletter_subscriber_save_after_observer"
+                  instance="Apsis\One\Observer\Subscriber\SaveUpdate"/>
+    </event>
+    <event name="newsletter_subscriber_delete_after">
+        <observer name="apsis_newsletter_subscriber_delete_after_observer"
+                  instance="Apsis\One\Observer\Subscriber\Remove"/>
+    </event>
+    <!-- Customer Events -->
+    <event name="customer_save_after">
+        <observer name="apsis_customer_save_after_observer"
+                  instance="Apsis\One\Observer\Customer\SaveUpdate"/>
+    </event>
+    <event name="customer_delete_after">
+        <observer name="apsis_customer_delete_after_observer"
+                  instance="Apsis\One\Observer\Customer\Remove"/>
+    </event>
+    <event name="customer_login">
+        <observer name="apsis_customer_login"
+                  instance="Apsis\One\Observer\Customer\Login\Account"/>
+    </event>
+    <event name="controller_action_postdispatch_customer_ajax_login">
+        <observer name="apsis_controller_action_postdispatch_customer_ajax_login_observer"
+                  instance="Apsis\One\Observer\Customer\Login\Checkout"/>
+    </event>
+    <!-- Customer Review Events -->
+    <event name="review_save_after">
+        <observer name="apsis_review_save_after_observer"
+                  instance="Apsis\One\Observer\Customer\Review\Product"/>
+    </event>
+    <!-- Customer Wishlist Events -->
+    <event name="wishlist_add_product">
+        <observer name="apsis_wishlist_add_product_observer"
+                  instance="Apsis\One\Observer\Customer\Wishlist\AddProduct"/>
+    </event>
+    <!-- Sales Events -->
+    <event name="sales_order_place_after">
+        <observer name="apsis_sales_order_place_after_observer"
+                  instance="Apsis\One\Observer\Sales\Order\Placed"/>
+    </event>
+    <event name="sales_quote_add_item">
+        <observer name="apsis_sales_quote_add_item_observer"
+                  instance="Apsis\One\Observer\Sales\Quote\AddProduct"/>
+    </event>
+</config>

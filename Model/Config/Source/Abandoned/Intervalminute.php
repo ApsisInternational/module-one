@@ -11,7 +11,7 @@ class Intervalminute implements OptionSourceInterface
      *
      * @var array
      */
-    protected $times = [15, 20, 25, 30, 45, 50, 60];
+    protected $times = [15, 20, 25, 30, 45, 60, 90, 120, 180, 240];
 
     /**
      * @var string

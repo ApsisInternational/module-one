@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Helper;
 
+use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Store\Model\StoreManagerInterface;
@@ -98,5 +99,20 @@ class Core extends AbstractHelper
         $defaultGroup = $website->getDefaultGroup();
         $store =  (! $defaultGroup) ? null : $defaultGroup->getDefaultStore();
         return $this->storeManager->getStore($store)->getBaseUrl(UrlInterface::URL_TYPE_LINK);
+    }
+
+    /**
+     * @param string $fromRequest
+     *
+     * @return bool
+     */
+    public function authoriseCode($fromRequest)
+    {
+        $fromConfig = $this->getConfigValue(ApsisConfigHelper::CONFIG_APSIS_ONE_ABANDONED_CARTS_PASSCODE);
+        if ($fromRequest == $fromConfig) {
+            return true;
+        }
+
+        return false;
     }
 }

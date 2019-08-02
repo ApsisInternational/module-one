@@ -11,9 +11,7 @@
         <apsis_one_abandoned>
             <customers>
                 <passcode></passcode>
-                <url></url>
-                <send_after_1>0</send_after_1>
-                <send_after_2>0</send_after_2>
+                <send_after>0</send_after>
             </customers>
         </apsis_one_abandoned>
         <apsis_one_events>
@@ -24,6 +22,8 @@
                 <wishlist>0</wishlist>
                 <unsubscribe>0</unsubscribe>
                 <subscriber_2_customer>0</subscriber_2_customer>
+                <subscriber_not_a_customer>0</subscriber_not_a_customer>
+                <cart>0</cart>
             </events>
         </apsis_one_events>
         <apsis_one_mappings>

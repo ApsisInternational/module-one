@@ -25,11 +25,11 @@ class Attributes implements OptionSourceInterface
      */
     public function toOptionArray()
     {
-        $mappedTopicFromScope = $this->apsisCoreHelper->getMappedValueFromSelectedScope(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_TOPIC_TOPIC
+        $mappedSectionFromScope = $this->apsisCoreHelper->getMappedValueFromSelectedScope(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_TOPIC_SECTION
         );
-        if (! $mappedTopicFromScope) {
-            return [['value' => '0', 'label' => __('-- Map & Save Topic First --')]];
+        if (! $mappedSectionFromScope) {
+            return [['value' => '0', 'label' => __('-- Map & Save Section First --')]];
         }
 
         //default data option

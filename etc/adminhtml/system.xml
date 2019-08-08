@@ -250,39 +250,34 @@
                     <label>Sales Information</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                 </field>
-                <field id="last_order_id" type="select" translate="label" sortOrder="300" showInDefault="1"
+                <field id="last_quote_id" type="select" translate="label" sortOrder="300" showInDefault="1"
                        showInWebsite="1" showInStore="1">
-                    <label>Last Order Id</label>
+                    <label>Last Cart Id</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
                 </field>
-                <field id="last_quote_id" type="select" translate="label" sortOrder="310" showInDefault="1"
+                <field id="last_increment_id" type="select" translate="label" sortOrder="310" showInDefault="1"
                        showInWebsite="1" showInStore="1">
-                    <label>Last Quote Id</label>
+                    <label>Last Increment Id (Order Id)</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
                 </field>
-                <field id="last_increment_id" type="select" translate="label" sortOrder="320" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>Last Increment Id</label>
-                    <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
-                </field>
-                <field id="last_order_date" type="select" translate="label" sortOrder="330" showInDefault="1"
+                <field id="last_order_date" type="select" translate="label" sortOrder="320" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Last Purchase Date</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
                 </field>
-                <field id="number_of_orders" type="select" translate="label" sortOrder="340" showInDefault="1"
+                <field id="number_of_orders" type="select" translate="label" sortOrder="330" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Total Number of Orders</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
                 </field>
-                <field id="average_order_value" type="select" translate="label" sortOrder="350" showInDefault="1"
+                <field id="average_order_value" type="select" translate="label" sortOrder="340" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Average Order Value</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
                 </field>
-                <field id="total_spend" type="select" translate="label" sortOrder="360" showInDefault="1"
+                <field id="total_spend" type="select" translate="label" sortOrder="350" showInDefault="1"
                        showInWebsite="1" showInStore="1">
-                    <label>Total Spend</label>
+                    <label>Total Spent</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
                 </field>
             </group>
@@ -303,7 +298,7 @@
                 </field>
                 <field id="send_after" translate="label" sortOrder="20" type="select" showInDefault="1"
                        showInWebsite="1" showInStore="1">
-                    <label>After</label>
+                    <label>Register After</label>
                     <source_model>Apsis\One\Model\Config\Source\Abandoned\Intervalminute</source_model>
                 </field>
                 <field id="cart_content_heading" translate="label" sortOrder="50" showInDefault="1" showInWebsite="1"

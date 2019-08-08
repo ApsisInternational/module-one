@@ -3,10 +3,14 @@
 namespace Apsis\One\Controller\Abandoned;
 
 use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\ResponseInterface;
+use Magento\Framework\Controller\Result\Json;
+use Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Framework\Controller\ResultInterface;
 use Zend\Http\PhpEnvironment\Response;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\Serialize\Serializer\Json;
+use Apsis\One\Model\Cart\ContentFactory;
 
 class Cart extends Action
 {
@@ -16,54 +20,63 @@ class Cart extends Action
     private $apsisCoreHelper;
 
     /**
-     * @var Json
+     * @var ContentFactory
      */
-    private $jsonSerializer;
+    private $cartContentFactory;
+
+    /**
+     * @var JsonFactory
+     */
+    protected $resultJsonFactory;
 
     /**
      * Cart constructor.
      *
      * @param Context $context
      * @param ApsisCoreHelper $apsisCoreHelper
-     * @param Json $jsonSerializer
+     * @param JsonFactory $resultJsonFactory
+     * @param ContentFactory $cartContentFactory
      */
     public function __construct(
         Context $context,
         ApsisCoreHelper $apsisCoreHelper,
-        Json $jsonSerializer
+        JsonFactory $resultJsonFactory,
+        ContentFactory $cartContentFactory
     ) {
-        $this->jsonSerializer = $jsonSerializer;
+        $this->cartContentFactory = $cartContentFactory;
+        $this->resultJsonFactory = $resultJsonFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
         parent::__construct($context);
     }
 
     /**
-     * Abandoned cart json content
+     * @return ResponseInterface|Json|ResultInterface|Response
      */
     public function execute()
     {
-        //authenticate
         if ($this->authenticate()) {
-            /** @todo send real cart content */
-            $this->sendJsonResponse(['cart_id' => $this->getRequest()->getParam('quote_id')]);
+            $cartData = $this->cartContentFactory
+                ->create()
+                ->getCartData($this->getRequest()->getParam('quote_id'));
+
+            return (! empty($cartData)) ? $this->sendJsonResponse($cartData) : $this->sendResponse(204);
         }
+
+        return $this->sendResponse(204);
     }
 
     /**
      * @param array $body
      *
-     * @return mixed
+     * @return Json
      */
     private function sendJsonResponse(array $body)
     {
-        return $this->getResponse()
-            ->setHeader('Content-type', 'application/javascript', true)
-            ->setBody($this->jsonSerializer->serialize($body))
-            ->sendResponse();
+        $resultJson = $this->resultJsonFactory->create();
+        return $resultJson->setData($body);
     }
 
     /**
-     *
      * @return bool
      */
     public function authenticate()
@@ -73,7 +86,6 @@ class Cart extends Action
             return false;
         }
 
-        // Check for required params
         if (! $this->getRequest()->getParam('quote_id')) {
             $this->sendResponse(204);
             return false;
@@ -86,7 +98,7 @@ class Cart extends Action
      * @param int $code
      * @param string $body
      *
-     * @return Response
+     * @return ResponseInterface
      */
     public function sendResponse(int $code, string $body = '')
     {
@@ -100,6 +112,6 @@ class Cart extends Action
             $this->getResponse()->setBody('<h1>401 Unauthorized</h1>');
         }
 
-        return $this->getResponse()->sendHeaders();
+        return $this->getResponse();
     }
 }

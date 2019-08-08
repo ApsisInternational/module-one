@@ -73,7 +73,6 @@ class Config extends ApsisCoreHelper
         = 'apsis_one_mappings/customer_attribute/delivery_telephone';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_COMPANY
         = 'apsis_one_mappings/customer_attribute/delivery_company';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_ORDER_ID = 'apsis_one_mappings/customer_attribute/last_order_id';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_QUOTE_ID = 'apsis_one_mappings/customer_attribute/last_quote_id';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_INCREMENT_ID
         = 'apsis_one_mappings/customer_attribute/last_increment_id';

@@ -14,6 +14,7 @@ use Magento\Store\Model\App\EmulationFactory;
 use Magento\Store\Model\App\Emulation;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Cart\CartTotalRepository;
+use Magento\Quote\Model\Quote\Address;
 
 class Content
 {
@@ -123,17 +124,65 @@ class Content
     {
         $totals = $this->cartTotalRepository->get($quoteModel->getId());
         $quoteData['cart_id'] = (int) $quoteModel->getId();
-        $quoteData['customer_id'] = (int) $quoteModel->getCustomerId();
-        $quoteData['email'] = (string) $quoteModel->getCustomerEmail();
+        $quoteData['created_at'] = (string) $quoteModel->getCreatedAt();
+        $quoteData['updated_at'] = (string) $quoteModel->getUpdatedAt();
         $quoteData['subtotal_amount'] = (float) $this->round($totals->getSubtotal());
         $quoteData['grand_total_amount'] = (float) $this->round($quoteModel->getGrandTotal());
         $quoteData['tax_amount'] = (float) $this->round($totals->getTaxAmount());
         $quoteData['shipping_amount'] = (float) $this->round($totals->getShippingAmount());
         $quoteData['discount_amount'] = (float) $this->round($totals->getDiscountAmount());
-        $quoteData['currency_code'] = (string) $totals->getQuoteCurrencyCode();
         $quoteData['items_quantity'] = (float) $this->round($totals->getItemsQty());
         $quoteData['items_count'] = (float) $this->round($quoteModel->getItemsCount());
+        $quoteData['payment_method_title'] = (string) $quoteModel->getPayment()->getMethod();
+        $quoteData['shipping_method_title'] = (string) $quoteModel->getShippingAddress()->getShippingDescription();
+        $quoteData['currency_code'] = (string) $totals->getQuoteCurrencyCode();
+        $quoteData['customer_info'] = $this->getCustomerInformation($quoteModel);
+        $quoteData['shipping_billing_same'] = (boolean) $quoteModel->getShippingAddress()->getSameAsBilling();
+        $quoteData['shipping_address'] = $this->getAddress($quoteModel->getShippingAddress());
+        $quoteData['billing_address'] = $this->getAddress($quoteModel->getBillingAddress());
         return $quoteData;
+    }
+
+    /**
+     * @param Address $address
+     *
+     * @return array
+     */
+    private function getAddress(Address $address)
+    {
+        $addressInfo['email'] = (string) $address->getEmail();
+        $addressInfo['prefix'] = (string) $address->getPrefix();
+        $addressInfo['suffix'] = (string) $address->getSuffix();
+        $addressInfo['first_name'] = (string) $address->getFirstname();
+        $addressInfo['middle_name'] = (string) $address->getMiddlename();
+        $addressInfo['last_name'] = (string) $address->getLastname();
+        $addressInfo['company'] = (string) $address->getCompany();
+        $addressInfo['street_line_1'] = (string) $address->getStreetLine(1);
+        $addressInfo['street_line_2'] = (string) $address->getStreetLine(2);
+        $addressInfo['city'] = (string) $address->getCity();
+        $addressInfo['region'] = (string) $address->getRegion();
+        $addressInfo['postcode'] = (string) $address->getPostcode();
+        $addressInfo['country'] = (string) $address->getCountry();
+        $addressInfo['telephone'] = (string) $address->getTelephone();
+        return $addressInfo;
+    }
+
+    /**
+     * @param Quote $quoteModel
+     *
+     * @return array
+     */
+    private function getCustomerInformation(Quote $quoteModel)
+    {
+        $customer['customer_id'] = (int) $quoteModel->getCustomerId();
+        $customer['is_guest'] = (boolean) $quoteModel->getCustomerIsGuest();
+        $customer['email'] = (string) $quoteModel->getCustomerEmail();
+        $customer['prefix'] = (string) $quoteModel->getCustomerPrefix();
+        $customer['suffix'] = (string) $quoteModel->getCustomerSuffix();
+        $customer['first_name'] = (string) $quoteModel->getCustomerFirstname();
+        $customer['middle_name'] = (string) $quoteModel->getCustomerMiddlename();
+        $customer['last_name'] = (string) $quoteModel->getCustomerLastname();
+        return $customer;
     }
 
     /**
@@ -148,7 +197,6 @@ class Content
             'product_id' => (int) $quoteItem->getProductId(),
             'sku' => (string) $quoteItem->getSku(),
             'name' => (string) $quoteItem->getName(),
-            'product_options' => $this->getProductOptions($quoteItem),
             'product_url' => (string) $product->getProductUrl(),
             'product_image_url' => (string) $this->getProductImageUrl($product),
             'qty_ordered' => (float) $quoteItem->getQty() ? $quoteItem->getQty() :
@@ -157,6 +205,7 @@ class Content
             'row_total_amount' => (float) $this->round($quoteItem->getRowTotal()),
             'tax_amount' => (float) $this->round($quoteItem->getTaxAmount()),
             'discount_amount' => (float) $this->round($quoteItem->getTotalDiscountAmount()),
+            'product_options' => $this->getProductOptions($quoteItem)
         ];
 
         return $itemsData;

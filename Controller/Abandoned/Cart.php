@@ -54,15 +54,15 @@ class Cart extends Action
      */
     public function execute()
     {
-        if ($this->authenticate()) {
+        if ($this->apsisCoreHelper->authoriseCode($this->getRequest()->getParam('passcode'))) {
             $cartData = $this->cartContentFactory
                 ->create()
                 ->getCartData($this->getRequest()->getParam('quote_id'));
 
             return (! empty($cartData)) ? $this->sendJsonResponse($cartData) : $this->sendResponse(204);
+        } else {
+            return $this->sendResponse(401, '<h1>401 Unauthorized</h1>');
         }
-
-        return $this->sendResponse(204);
     }
 
     /**
@@ -74,24 +74,6 @@ class Cart extends Action
     {
         $resultJson = $this->resultJsonFactory->create();
         return $resultJson->setData($body);
-    }
-
-    /**
-     * @return bool
-     */
-    public function authenticate()
-    {
-        if (! $this->apsisCoreHelper->authoriseCode($this->getRequest()->getParam('passcode'))) {
-            $this->sendResponse(401, '<h1>401 Unauthorized</h1>');
-            return false;
-        }
-
-        if (! $this->getRequest()->getParam('quote_id')) {
-            $this->sendResponse(204);
-            return false;
-        }
-
-        return true;
     }
 
     /**

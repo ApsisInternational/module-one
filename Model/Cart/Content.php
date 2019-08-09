@@ -67,12 +67,13 @@ class Content
     }
 
     /**
-     * @param int $quoteId
+     * @param string|int $quoteId
      *
      * @return array|bool
      */
-    public function getCartData(int $quoteId)
+    public function getCartData($quoteId)
     {
+        $quoteId = (int) $quoteId;
         $quoteModel = $this->quoteFactory->create()
             ->loadActive($quoteId);
         $quoteItems = $quoteModel->getAllVisibleItems();

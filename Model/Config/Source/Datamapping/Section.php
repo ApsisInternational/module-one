@@ -2,10 +2,26 @@
 
 namespace Apsis\One\Model\Config\Source\Datamapping;
 
+use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Magento\Framework\Data\OptionSourceInterface;
 
 class Section implements OptionSourceInterface
 {
+    /**
+     * @var ApsisCoreHelper
+     */
+    private $apsisCoreHelper;
+
+    /**
+     * Section constructor.
+     *
+     * @param ApsisCoreHelper $apsisCoreHelper
+     */
+    public function __construct(ApsisCoreHelper $apsisCoreHelper)
+    {
+        $this->apsisCoreHelper = $apsisCoreHelper;
+    }
+
     /**
      *  Attribute options
      *
@@ -13,6 +29,10 @@ class Section implements OptionSourceInterface
      */
     public function toOptionArray()
     {
+        if (! $this->apsisCoreHelper->isEnabledForSelectedScopeInAdmin()) {
+            return [['value' => '0', 'label' => __('-- Please Enable Account First --')]];
+        }
+
         //default data option
         $fields[] = ['value' => '0', 'label' => __('-- Please Select --')];
 

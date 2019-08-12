@@ -54,7 +54,8 @@ class Cart extends Action
      */
     public function execute()
     {
-        if ($this->apsisCoreHelper->authoriseCode($this->getRequest()->getParam('passcode'))) {
+        if ($this->apsisCoreHelper->authoriseCode($this->getRequest()->getParam('passcode')) &&
+            $this->apsisCoreHelper->isEnabledForSelectedScopeInAdmin()) {
             $cartData = $this->cartContentFactory
                 ->create()
                 ->getCartData($this->getRequest()->getParam('quote_id'));

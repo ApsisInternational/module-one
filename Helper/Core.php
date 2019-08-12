@@ -60,6 +60,16 @@ class Core extends AbstractHelper
     }
 
     /**
+     * @return bool
+     */
+    public function isEnabledForSelectedScopeInAdmin()
+    {
+        return (boolean) $this->getMappedValueFromSelectedScope(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED
+        );
+    }
+
+    /**
      * Get config scope value.
      *
      * @param string $path

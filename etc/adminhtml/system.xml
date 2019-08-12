@@ -71,36 +71,43 @@
                        showInWebsite="1" showInStore="1">
                     <label>Subscriber Id</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Number]]></comment>
                 </field>
                 <field id="subscriber_email" type="select" translate="label" sortOrder="30" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Subscriber Email</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="subscriber_status" type="select" translate="label" sortOrder="40" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Subscriber Status</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="website_id" type="select" translate="label" sortOrder="50" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Website Id</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Number]]></comment>
                 </field>
                 <field id="store_id" type="select" translate="label" sortOrder="60" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Store Id</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Number]]></comment>
                 </field>
                 <field id="website_name" type="select" translate="label" sortOrder="70" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Website Name</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="store_name" type="select" translate="label" sortOrder="80" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Store Name</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
             </group>
             <group id="customer_attribute" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1"
@@ -115,56 +122,67 @@
                        showInStore="1">
                     <label>Title</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="customer_id" type="select" translate="label" sortOrder="30" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Customer Id</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Number]]></comment>
                 </field>
                 <field id="first_name" type="select" translate="label" sortOrder="40" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>First Name</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="last_name" type="select" translate="label" sortOrder="50" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Last Name</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="dob" type="select" translate="label" sortOrder="60" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>D.O.B</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Date ISO-8601]]></comment>
                 </field>
                 <field id="gender" type="select" translate="label" sortOrder="70" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Gender</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="created_at" type="select" translate="label" sortOrder="80" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Created At</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Date ISO-8601]]></comment>
                 </field>
                 <field id="last_logged_date" type="select" translate="label" sortOrder="90" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Last Logged In Date</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Date ISO-8601]]></comment>
                 </field>
                 <field id="customer_group" type="select" translate="label" sortOrder="100" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Customer Group</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="review_count" type="select" translate="label" sortOrder="110" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Review Count</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Number]]></comment>
                 </field>
                 <field id="last_review_date" type="select" translate="label" sortOrder="120" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Last Review Date</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Date ISO-8601]]></comment>
                 </field>
                 <field id="address_title" translate="label" sortOrder="130" showInDefault="1" showInWebsite="1"
                        showInStore="1">
@@ -175,76 +193,91 @@
                        showInWebsite="1" showInStore="1">
                     <label>Billing Address Line 1</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="billing_address_2" type="select" translate="label" sortOrder="150" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Billing Address Line 2</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="billing_state" type="select" translate="label" sortOrder="160" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Billing State</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="billing_country" type="select" translate="label" sortOrder="170" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Billing Country</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="billing_postcode" type="select" translate="label" sortOrder="180" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Billing Postcode</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="billing_telephone" type="select" translate="label" sortOrder="190" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Billing Telephone</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="billing_company" type="select" translate="label" sortOrder="200" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Billing Company</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="delivery_address_1" type="select" translate="label" sortOrder="210" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Delivery Address 1</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="delivery_address_2" type="select" translate="label" sortOrder="220" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Delivery Address 2</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="delivery_city" type="select" translate="label" sortOrder="230" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Delivery City</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="delivery_state" type="select" translate="label" sortOrder="240" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Delivery State</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="delivery_country" type="select" translate="label" sortOrder="250" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Delivery Country</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="delivery_postcode" type="select" translate="label" sortOrder="260" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Delivery Postcode</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="delivery_telephone" type="select" translate="label" sortOrder="270" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Delivery Telephone</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="delivery_company" type="select" translate="label" sortOrder="280" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Delivery Company</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="sales" translate="label" sortOrder="290" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Sales Information</label>
@@ -254,31 +287,37 @@
                        showInWebsite="1" showInStore="1">
                     <label>Last Cart Id</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Number]]></comment>
                 </field>
                 <field id="last_increment_id" type="select" translate="label" sortOrder="310" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Last Increment Id (Order Id)</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
                 <field id="last_order_date" type="select" translate="label" sortOrder="320" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Last Purchase Date</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Date ISO-8601]]></comment>
                 </field>
                 <field id="number_of_orders" type="select" translate="label" sortOrder="330" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Total Number of Orders</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Number]]></comment>
                 </field>
                 <field id="average_order_value" type="select" translate="label" sortOrder="340" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Average Order Value</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Number w/decimals]]></comment>
                 </field>
                 <field id="total_spend" type="select" translate="label" sortOrder="350" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Total Spent</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Number w/decimals]]></comment>
                 </field>
             </group>
         </section>

@@ -5,18 +5,16 @@ namespace Apsis\One\Helper;
 use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Stdlib\StringUtils;
+use Zend_Date;
 
 class Core extends AbstractHelper
 {
-    /**
-     * @var StoreManagerInterface
-     */
-    protected $storeManager;
-
     /**
      * APSIS table names
      */
@@ -25,14 +23,42 @@ class Core extends AbstractHelper
     const APSIS_ABANDONED_TABLE = 'apsis_abandoned';
 
     /**
+     * APSIS attribute type text limit
+     */
+    const APSIS_ATTRIBUTE_TYPE_TEXT_LIMIT = 100;
+
+    /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
+
+    /**
+     * @var StringUtils
+     */
+    private $stringUtils;
+
+    /**
+     * @var TimezoneInterface
+     */
+    protected $localeDate;
+
+    /**
      * Core constructor.
      *
      * @param Context $context
      * @param StoreManagerInterface $storeManager
+     * @param StringUtils $stringUtils
+     * @param TimezoneInterface $localeDate
      */
-    public function __construct(Context $context, StoreManagerInterface $storeManager)
-    {
+    public function __construct(
+        Context $context,
+        StoreManagerInterface $storeManager,
+        StringUtils $stringUtils,
+        TimezoneInterface $localeDate
+    ) {
+        $this->localeDate = $localeDate;
         $this->storeManager = $storeManager;
+        $this->stringUtils = $stringUtils;
         parent::__construct($context);
     }
 
@@ -124,5 +150,31 @@ class Core extends AbstractHelper
         }
 
         return false;
+    }
+
+    /**
+     *  Check string length and limit to set in class constant.
+     *
+     * @param string $string
+     *
+     * @return string
+     */
+    public function limitStringLength($string)
+    {
+        if ($this->stringUtils->strlen($string) > self::APSIS_ATTRIBUTE_TYPE_TEXT_LIMIT) {
+            $string = $this->stringUtils->substr($string, 0, self::APSIS_ATTRIBUTE_TYPE_TEXT_LIMIT);
+        }
+
+        return $string;
+    }
+
+    /**
+     * @param string $date
+     *
+     * @return string
+     */
+    public function formatDateForPlatformCompatibility($date)
+    {
+        return $this->localeDate->date($date)->format(Zend_Date::ISO_8601);
     }
 }

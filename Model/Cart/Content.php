@@ -15,6 +15,7 @@ use Magento\Store\Model\App\Emulation;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Cart\CartTotalRepository;
 use Magento\Quote\Model\Quote\Address;
+use Apsis\One\Helper\Core as ApsisCoreHelper;
 
 class Content
 {
@@ -44,6 +45,11 @@ class Content
     private $cartTotalRepository;
 
     /**
+     * @var ApsisCoreHelper
+     */
+    private $apsisCoreHelper;
+
+    /**
      * Content constructor.
      *
      * @param EmulationFactory $emulationFactory
@@ -51,14 +57,17 @@ class Content
      * @param Data $priceHelper
      * @param ImageBuilderFactory $imageBuilderFactory
      * @param CartTotalRepository $cartTotalRepository
+     * @param ApsisCoreHelper $apsisCoreHelper
      */
     public function __construct(
         EmulationFactory $emulationFactory,
         QuoteFactory $quoteFactory,
         Data $priceHelper,
         ImageBuilderFactory $imageBuilderFactory,
-        CartTotalRepository $cartTotalRepository
+        CartTotalRepository $cartTotalRepository,
+        ApsisCoreHelper $apsisCoreHelper
     ) {
+        $this->apsisCoreHelper = $apsisCoreHelper;
         $this->cartTotalRepository = $cartTotalRepository;
         $this->quoteFactory = $quoteFactory;
         $this->priceHelper = $priceHelper;
@@ -125,8 +134,10 @@ class Content
     {
         $totals = $this->cartTotalRepository->get($quoteModel->getId());
         $quoteData['cart_id'] = (int) $quoteModel->getId();
-        $quoteData['created_at'] = (string) $quoteModel->getCreatedAt();
-        $quoteData['updated_at'] = (string) $quoteModel->getUpdatedAt();
+        $quoteData['created_at'] = (string) $this->apsisCoreHelper
+            ->formatDateForPlatformCompatibility($quoteModel->getCreatedAt());
+        $quoteData['updated_at'] = (string) $this->apsisCoreHelper
+            ->formatDateForPlatformCompatibility($quoteModel->getUpdatedAt());
         $quoteData['subtotal_amount'] = (float) $this->round($totals->getSubtotal());
         $quoteData['grand_total_amount'] = (float) $this->round($quoteModel->getGrandTotal());
         $quoteData['tax_amount'] = (float) $this->round($totals->getTaxAmount());

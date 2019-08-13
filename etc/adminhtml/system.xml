@@ -201,6 +201,12 @@
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
                     <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
+                <field id="billing_city" type="select" translate="label" sortOrder="155" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Billing City</label>
+                    <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
+                </field>
                 <field id="billing_state" type="select" translate="label" sortOrder="160" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Billing State</label>

@@ -52,6 +52,7 @@ class Config extends ApsisCoreHelper
         = 'apsis_one_mappings/customer_attribute/billing_address_1';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_ADDRESS_LINE_2
         = 'apsis_one_mappings/customer_attribute/billing_address_2';
+    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_CITY = 'apsis_one_mappings/customer_attribute/billing_city';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_STATE = 'apsis_one_mappings/customer_attribute/billing_state';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_COUNTRY = 'apsis_one_mappings/customer_attribute/billing_country';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_POSTCODE

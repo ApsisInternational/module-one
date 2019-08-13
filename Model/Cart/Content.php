@@ -96,8 +96,8 @@ class Content
 
         try {
             $appEmulation->startEnvironmentEmulation($quoteModel->getStoreId(), Area::AREA_FRONTEND, true);
-            $cartData = $this->getMainCartData($quoteModel);
-            $cartData['items'] = $this->getItemData($quoteItems);
+            $cartData = (array) $this->getMainCartData($quoteModel);
+            $cartData['items'] = (array) $this->getItemData($quoteItems);
         } catch (\Exception $e) {
             $appEmulation->stopEnvironmentEmulation();
             return false;
@@ -148,10 +148,10 @@ class Content
         $quoteData['payment_method_title'] = (string) $quoteModel->getPayment()->getMethod();
         $quoteData['shipping_method_title'] = (string) $quoteModel->getShippingAddress()->getShippingDescription();
         $quoteData['currency_code'] = (string) $totals->getQuoteCurrencyCode();
-        $quoteData['customer_info'] = $this->getCustomerInformation($quoteModel);
+        $quoteData['customer_info'] = (array) $this->getCustomerInformation($quoteModel);
         $quoteData['shipping_billing_same'] = (boolean) $quoteModel->getShippingAddress()->getSameAsBilling();
-        $quoteData['shipping_address'] = $this->getAddress($quoteModel->getShippingAddress());
-        $quoteData['billing_address'] = $this->getAddress($quoteModel->getBillingAddress());
+        $quoteData['shipping_address'] = (array) $this->getAddress($quoteModel->getShippingAddress());
+        $quoteData['billing_address'] = (array) $this->getAddress($quoteModel->getBillingAddress());
         return $quoteData;
     }
 

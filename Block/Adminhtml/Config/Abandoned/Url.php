@@ -50,11 +50,11 @@ class Url extends Field
             $passcodeValue = __('[PLEASE SET UP A PASSCODE]');
         }
         if (! $mappedAttributeForLastQuoteId) {
-            $mappedAttributeForLastQuoteId = __('[PLEASE MAP LAST QUOTE ID ATTRIBUTE]');
+            $mappedAttributeForLastQuoteId = __('PLEASE MAP LAST CART ID ATTRIBUTE');
         }
 
         $text = sprintf(
-            '%sapsis/abandoned/cart/passcode/%s/quote_id/@%s@',
+            '%sapsis/abandoned/cart/passcode/%s/quote_id/##%s##',
             $baseUrl,
             $passcodeValue,
             $mappedAttributeForLastQuoteId

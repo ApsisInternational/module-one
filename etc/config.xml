@@ -55,6 +55,7 @@
                 <billing_address_1>0</billing_address_1>
                 <billing_address_2>0</billing_address_2>
                 <billing_state>0</billing_state>
+                <billing_city>0</billing_city>
                 <billing_country>0</billing_country>
                 <billing_postcode>0</billing_postcode>
                 <billing_telephone>0</billing_telephone>

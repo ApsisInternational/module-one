@@ -173,7 +173,7 @@ class Core extends AbstractHelper
      *
      * @return string
      */
-    public function formatDateForPlatformCompatibility($date)
+    public function formatDate($date)
     {
         return $this->localeDate->date($date)->format(Zend_Date::ISO_8601);
     }

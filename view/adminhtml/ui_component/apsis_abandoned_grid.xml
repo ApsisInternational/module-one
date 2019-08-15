@@ -155,7 +155,7 @@
                     <item name="dataType" xsi:type="string">select</item>
                     <item name="editor" xsi:type="string">select</item>
                     <item name="sortOrder" xsi:type="number">30</item>
-                    <item name="label" xsi:type="string" translate="true">Store</item>
+                    <item name="label" xsi:type="string" translate="true">Store Id</item>
                 </item>
             </argument>
         </column>
@@ -177,62 +177,6 @@
                 </item>
             </argument>
         </column>
-        <column name="status">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">AC Status</item>
-                    <item name="sortOrder" xsi:type="number">50</item>
-                </item>
-            </argument>
-        </column>
-        <column name="is_active">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">Is Active</item>
-                    <item name="sortOrder" xsi:type="number">60</item>
-                </item>
-            </argument>
-        </column>
-        <column name="quote_updated_at" class="Magento\Ui\Component\Listing\Columns\Date">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">dateRange</item>
-                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/date</item>
-                    <item name="dataType" xsi:type="string">date</item>
-                    <item name="label" xsi:type="string" translate="true">Quote Updated At</item>
-                    <item name="sortOrder" xsi:type="number">70</item>
-                </item>
-            </argument>
-        </column>
-        <column name="abandoned_cart_number">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">Abandoned Cart Number</item>
-                    <item name="sortOrder" xsi:type="number">80</item>
-                </item>
-            </argument>
-        </column>
-        <column name="items_count">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">Items Count</item>
-                    <item name="sortOrder" xsi:type="number">90</item>
-                </item>
-            </argument>
-        </column>
-        <column name="items_ids">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">Item Ids</item>
-                    <item name="sortOrder" xsi:type="number">90</item>
-                </item>
-            </argument>
-        </column>
         <column name="created_at" class="Magento\Ui\Component\Listing\Columns\Date">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
@@ -242,17 +186,6 @@
                     <item name="sortOrder" xsi:type="number">100</item>
                     <item name="sorting" xsi:type="string">desc</item>
                     <item name="label" xsi:type="string" translate="true">Created At</item>
-                </item>
-            </argument>
-        </column>
-        <column name="updated_at" class="Magento\Ui\Component\Listing\Columns\Date">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">dateRange</item>
-                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/date</item>
-                    <item name="dataType" xsi:type="string">date</item>
-                    <item name="sortOrder" xsi:type="number">110</item>
-                    <item name="label" xsi:type="string" translate="true">Updated At</item>
                 </item>
             </argument>
         </column>

@@ -12,6 +12,10 @@ use Magento\Framework\Stdlib\DateTime;
 
 class Event extends AbstractModel
 {
+    const EVENT_TYPE_AC = 'Abandoned Cart';
+
+    const EVENT_STATUS_PENDING = 'Pending';
+
     /**
      * @var DateTime
      */

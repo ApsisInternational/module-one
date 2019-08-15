@@ -325,6 +325,12 @@
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
                     <comment><![CDATA[Attribute Type: Number w/decimals]]></comment>
                 </field>
+                <field id="ac_token" type="select" translate="label" sortOrder="360" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>AC Token</label>
+                    <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
+                </field>
             </group>
         </section>
         <section id="apsis_one_abandoned" translate="label" sortOrder="30" showInDefault="1" showInWebsite="1"
@@ -351,12 +357,7 @@
                     <label>Cart Content</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                 </field>
-                <field id="passcode" translate="label comment" type="text" sortOrder="60" showInDefault="1"
-                       showInWebsite="0" showInStore="0">
-                    <label>Passcode</label>
-                    <comment><![CDATA[Recommended: Set a passcode so that basket contents can only be viewed if passcode is supplied with the request.]]></comment>
-                </field>
-                <field id="url" translate="label" sortOrder="70" type="label" showInDefault="1"
+                <field id="url" translate="label" sortOrder="60" type="label" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Cart Content URL</label>
                     <frontend_model>Apsis\One\Block\Adminhtml\Config\Abandoned\Url</frontend_model>

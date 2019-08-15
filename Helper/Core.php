@@ -5,7 +5,11 @@ namespace Apsis\One\Helper;
 use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Encryption\EncryptorInterface;
+use Magento\Framework\Math\Random;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use \Exception;
+use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\Exception\LocalizedException;
@@ -40,7 +44,17 @@ class Core extends AbstractHelper
     /**
      * @var TimezoneInterface
      */
-    protected $localeDate;
+    private $localeDate;
+
+    /**
+     * @var EncryptorInterface
+     */
+    private $encryptor;
+
+    /**
+     * @var Random
+     */
+    private $random;
 
     /**
      * Core constructor.
@@ -49,16 +63,22 @@ class Core extends AbstractHelper
      * @param StoreManagerInterface $storeManager
      * @param StringUtils $stringUtils
      * @param TimezoneInterface $localeDate
+     * @param EncryptorInterface $encryptor
+     * @param Random $random
      */
     public function __construct(
         Context $context,
         StoreManagerInterface $storeManager,
         StringUtils $stringUtils,
-        TimezoneInterface $localeDate
+        TimezoneInterface $localeDate,
+        EncryptorInterface $encryptor,
+        Random $random
     ) {
+        $this->encryptor = $encryptor;
         $this->localeDate = $localeDate;
         $this->storeManager = $storeManager;
         $this->stringUtils = $stringUtils;
+        $this->random = $random;
         parent::__construct($context);
     }
 
@@ -138,18 +158,14 @@ class Core extends AbstractHelper
     }
 
     /**
-     * @param string $fromRequest
+     * @param int $length
+     * @return string
      *
-     * @return bool
+     * @throws LocalizedException
      */
-    public function authoriseCode($fromRequest)
+    public function getRandomString(int $length = 32)
     {
-        $fromConfig = $this->getConfigValue(ApsisConfigHelper::CONFIG_APSIS_ONE_ABANDONED_CARTS_PASSCODE);
-        if ($fromRequest == $fromConfig) {
-            return true;
-        }
-
-        return false;
+        return $this->random->getRandomString($length);
     }
 
     /**
@@ -173,8 +189,31 @@ class Core extends AbstractHelper
      *
      * @return string
      */
-    public function formatDate($date)
+    public function formatDateForPlatformCompatibility($date)
     {
         return $this->localeDate->date($date)->format(Zend_Date::ISO_8601);
+    }
+
+    /**
+     * Get all stores.
+     *
+     * @param bool|false $default
+     *
+     * @return StoreInterface[]
+     */
+    public function getStores($default = false)
+    {
+        return $this->storeManager->getStores($default);
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param string $path
+     *
+     * @return null|string
+     */
+    public function getStoreConfig(StoreInterface $store, $path)
+    {
+        return $store->getConfig($path);
     }
 }

@@ -10,7 +10,7 @@ use Magento\Framework\Controller\ResultInterface;
 use Zend\Http\PhpEnvironment\Response;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Magento\Framework\App\Action\Context;
-use Apsis\One\Model\Cart\ContentFactory;
+use Apsis\One\Model\AbandonedFactory;
 
 class Cart extends Action
 {
@@ -20,9 +20,9 @@ class Cart extends Action
     private $apsisCoreHelper;
 
     /**
-     * @var ContentFactory
+     * @var AbandonedFactory
      */
-    private $cartContentFactory;
+    private $abandonedFactory;
 
     /**
      * @var JsonFactory
@@ -35,15 +35,15 @@ class Cart extends Action
      * @param Context $context
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param JsonFactory $resultJsonFactory
-     * @param ContentFactory $cartContentFactory
+     * @param AbandonedFactory $abandonedFactory
      */
     public function __construct(
         Context $context,
         ApsisCoreHelper $apsisCoreHelper,
         JsonFactory $resultJsonFactory,
-        ContentFactory $cartContentFactory
+        AbandonedFactory $abandonedFactory
     ) {
-        $this->cartContentFactory = $cartContentFactory;
+        $this->abandonedFactory = $abandonedFactory;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
         parent::__construct($context);
@@ -54,11 +54,12 @@ class Cart extends Action
      */
     public function execute()
     {
-        if ($this->apsisCoreHelper->authoriseCode($this->getRequest()->getParam('passcode')) &&
-            $this->apsisCoreHelper->isEnabledForSelectedScopeInAdmin()) {
-            $cartData = $this->cartContentFactory
+        $quoteId = (int) $this->getRequest()->getParam('quote_id');
+        $token = $this->getRequest()->getParam('token');
+        if (strlen($token) && $this->apsisCoreHelper->isEnabledForSelectedScopeInAdmin() && $quoteId) {
+            $cartData = $this->abandonedFactory
                 ->create()
-                ->getCartData($this->getRequest()->getParam('quote_id'));
+                ->getCartJsonData($quoteId, $token);
 
             return (! empty($cartData)) ? $this->sendJsonResponse($cartData) : $this->sendResponse(204);
         } else {
@@ -67,14 +68,14 @@ class Cart extends Action
     }
 
     /**
-     * @param array $body
+     * @param string $body
      *
      * @return Json
      */
-    private function sendJsonResponse(array $body)
+    private function sendJsonResponse(string $body)
     {
         $resultJson = $this->resultJsonFactory->create();
-        return $resultJson->setData($body);
+        return $resultJson->setJsonData($body);
     }
 
     /**

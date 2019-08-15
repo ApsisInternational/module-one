@@ -2,8 +2,6 @@
 
 namespace Apsis\One\Helper;
 
-use Magento\Framework\App\Helper\Context;
-use Magento\Store\Model\StoreManagerInterface;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 
 class Config extends ApsisCoreHelper
@@ -84,14 +82,14 @@ class Config extends ApsisCoreHelper
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_AVERAGE_ORDER_VALUE
         = 'apsis_one_mappings/customer_attribute/average_order_value';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_TOTAL_SPEND = 'apsis_one_mappings/customer_attribute/total_spend';
+    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_AC_TOKEN = 'apsis_one_mappings/customer_attribute/ac_token';
 
     /**
      * Abandoned carts section
      */
     const CONFIG_APSIS_ONE_ABANDONED_CARTS_GROUP = 'apsis_one_abandoned/customers';
-    const CONFIG_APSIS_ONE_ABANDONED_CARTS_PASSCODE = 'apsis_one_abandoned/customers/passcode';
     const CONFIG_APSIS_ONE_ABANDONED_CARTS__URL = 'apsis_one_abandoned/customers/url';
-    const CONFIG_APSIS_ONE_ABANDONED_CARTS_SEND_AFTER_ABANDONED_CART = 'apsis_one_abandoned/customers/send_after';
+    const CONFIG_APSIS_ONE_ABANDONED_CARTS_SEND_AFTER = 'apsis_one_abandoned/customers/send_after';
 
     /**
      * Customer events section
@@ -105,15 +103,4 @@ class Config extends ApsisCoreHelper
     const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_UNSUBSCRIBE = 'apsis_one_events/events/unsubscribe';
     const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_2_CUSTOMER = 'apsis_one_events/events/subscriber_2_customer';
     const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_NOT_A_CUSTOMER = 'apsis_one_events/events/subscriber_not_a_customer';
-
-    /**
-     * Config constructor.
-     *
-     * @param Context $context
-     * @param StoreManagerInterface $storeManager
-     */
-    public function __construct(Context $context, StoreManagerInterface $storeManager)
-    {
-        parent::__construct($context, $storeManager);
-    }
 }

@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Setup;
 
+use Apsis\One\Model\Event;
 use Magento\Framework\Setup\InstallSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
@@ -79,6 +80,13 @@ class InstallSchema implements InstallSchemaInterface
                 'Quote Id'
             )
             ->addColumn(
+                'cart_data',
+                Table::TYPE_BLOB,
+                null,
+                ['nullable' => false, 'default' => ''],
+                'Cart Data'
+            )
+            ->addColumn(
                 'store_id',
                 Table::TYPE_SMALLINT,
                 10,
@@ -100,46 +108,11 @@ class InstallSchema implements InstallSchemaInterface
                 'Customer Email'
             )
             ->addColumn(
-                'status',
+                'token',
                 Table::TYPE_TEXT,
                 255,
                 ['nullable' => false, 'default' => ''],
-                'AC Status'
-            )
-            ->addColumn(
-                'is_active',
-                Table::TYPE_SMALLINT,
-                5,
-                ['unsigned' => true, 'nullable' => false, 'default' => '1'],
-                'Is Quote Active'
-            )
-            ->addColumn(
-                'quote_updated_at',
-                Table::TYPE_TIMESTAMP,
-                null,
-                [],
-                'Quote updated at'
-            )
-            ->addColumn(
-                'abandoned_cart_number',
-                Table::TYPE_SMALLINT,
-                null,
-                ['unsigned' => true, 'nullable' => false, 'default' => 0],
-                'Abandoned Cart number'
-            )
-            ->addColumn(
-                'items_count',
-                Table::TYPE_SMALLINT,
-                null,
-                ['unsigned' => true, 'nullable' => true, 'default' => 0],
-                'Quote items count'
-            )
-            ->addColumn(
-                'items_ids',
-                Table::TYPE_TEXT,
-                255,
-                ['unsigned' => true, 'nullable' => true],
-                'Quote item ids'
+                'AC Token'
             )
             ->addColumn(
                 'created_at',
@@ -147,13 +120,6 @@ class InstallSchema implements InstallSchemaInterface
                 null,
                 [],
                 'Created At'
-            )
-            ->addColumn(
-                'updated_at',
-                Table::TYPE_TIMESTAMP,
-                null,
-                [],
-                'Updated at'
             );
     }
 
@@ -170,12 +136,10 @@ class InstallSchema implements InstallSchemaInterface
         $tableName = $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
         $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
             ->addIndex($installer->getIdxName($tableName, ['quote_id']), ['quote_id'])
-            ->addIndex($installer->getIdxName($tableName, ['status']), ['status'])
             ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
             ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
             ->addIndex($installer->getIdxName($tableName, ['customer_email']), ['customer_email'])
-            ->addIndex($installer->getIdxName($tableName, ['created_at']), ['created_at'])
-            ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
+            ->addIndex($installer->getIdxName($tableName, ['created_at']), ['created_at']);
         return $table;
     }
 
@@ -274,11 +238,18 @@ class InstallSchema implements InstallSchemaInterface
                 'Event Type'
             )
             ->addColumn(
-                'type_id',
+                'event_data',
+                Table::TYPE_BLOB,
+                null,
+                ['nullable' => false, 'default' => ''],
+                'Type ID'
+            )
+            ->addColumn(
+                'subscriber_id',
                 Table::TYPE_INTEGER,
                 11,
-                ['nullable' => true],
-                'Type ID'
+                ['nullable' => false, 'default' => 0],
+                'Subscriber Id'
             )
             ->addColumn(
                 'customer_id',
@@ -295,18 +266,18 @@ class InstallSchema implements InstallSchemaInterface
                 'Store ID'
             )
             ->addColumn(
-                'customer_email',
+                'email',
                 Table::TYPE_TEXT,
                 255,
                 ['nullable' => false, 'default' => ''],
-                'Subscriber Email'
+                'Email'
             )
             ->addColumn(
                 'status',
-                Table::TYPE_SMALLINT,
-                null,
-                ['unsigned' => true, 'nullable' => true],
-                'Is Registered'
+                Table::TYPE_TEXT,
+                15,
+                ['nullable' => false, 'default' => Event::EVENT_STATUS_PENDING],
+                'Status'
             )
             ->addColumn(
                 'error_message',
@@ -343,12 +314,12 @@ class InstallSchema implements InstallSchemaInterface
     {
         $tableName = $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE);
         $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
-            ->addIndex($installer->getIdxName($tableName, ['type_id']), ['type_id'])
             ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
+            ->addIndex($installer->getIdxName($tableName, ['subscriber_id']), ['subscriber_id'])
             ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
             ->addIndex($installer->getIdxName($tableName, ['event_type']), ['event_type'])
             ->addIndex($installer->getIdxName($tableName, ['status']), ['status'])
-            ->addIndex($installer->getIdxName($tableName, ['customer_email']), ['customer_email'])
+            ->addIndex($installer->getIdxName($tableName, ['email']), ['email'])
             ->addIndex($installer->getIdxName($tableName, ['created_at']), ['created_at'])
             ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
         return $table;
@@ -465,18 +436,11 @@ class InstallSchema implements InstallSchemaInterface
                 'Subscriber Email'
             )
             ->addColumn(
-                'imported',
+                'sync_status',
                 Table::TYPE_SMALLINT,
                 null,
                 ['unsigned' => true, 'nullable' => true],
-                'Is Imported'
-            )
-            ->addColumn(
-                'suppressed',
-                Table::TYPE_SMALLINT,
-                null,
-                ['unsigned' => true, 'nullable' => true],
-                'Is Suppressed'
+                'Sync Status'
             )
             ->addColumn(
                 'error_message',
@@ -510,9 +474,8 @@ class InstallSchema implements InstallSchemaInterface
             ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
             ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
             ->addIndex($installer->getIdxName($tableName, ['subscriber_id']), ['subscriber_id'])
-            ->addIndex($installer->getIdxName($tableName, ['imported']), ['imported'])
+            ->addIndex($installer->getIdxName($tableName, ['sync_status']), ['sync_status'])
             ->addIndex($installer->getIdxName($tableName, ['subscriber_email']), ['subscriber_email'])
-            ->addIndex($installer->getIdxName($tableName, ['suppressed']), ['suppressed'])
             ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
         return $table;
     }

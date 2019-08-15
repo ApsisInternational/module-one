@@ -10,7 +10,6 @@
         </apsis_one_accounts>
         <apsis_one_abandoned>
             <customers>
-                <passcode></passcode>
                 <send_after>0</send_after>
             </customers>
         </apsis_one_abandoned>
@@ -73,6 +72,7 @@
                 <last_order_date>0</last_order_date>
                 <number_of_orders>0</number_of_orders>
                 <average_order_value>0</average_order_value>
+                <ac_token>0</ac_token>
             </customer_attribute>
         </apsis_one_mappings>
     </default>

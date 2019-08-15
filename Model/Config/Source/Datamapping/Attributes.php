@@ -86,6 +86,7 @@ class Attributes implements OptionSourceInterface
         $fields[] = ['value' => 'total_number_of_orders', 'label' => 'TOTAL NUMBER OF ORDERS'];
         $fields[] = ['value' => 'average_order_value', 'label' => 'AVERAGE ORDER VALUE'];
         $fields[] = ['value' => 'total_spent', 'label' => 'TOTAL SPENT'];
+        $fields[] = ['value' => 'ac_token', 'label' => 'AC TOKEN'];
 
         return $fields;
     }

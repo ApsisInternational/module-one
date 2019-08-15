@@ -9,7 +9,6 @@ use Magento\Framework\App\Area;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Pricing\Helper\Data;
 use Magento\Quote\Model\Quote\Item;
-use Magento\Quote\Model\QuoteFactory;
 use Magento\Store\Model\App\EmulationFactory;
 use Magento\Store\Model\App\Emulation;
 use Magento\Quote\Model\Quote;
@@ -23,11 +22,6 @@ class Content
      * @var ImageBuilderFactory
      */
     private $imageBuilderFactory;
-
-    /**
-     * @var QuoteFactory
-     */
-    private $quoteFactory;
 
     /**
      * @var Data
@@ -53,7 +47,6 @@ class Content
      * Content constructor.
      *
      * @param EmulationFactory $emulationFactory
-     * @param QuoteFactory $quoteFactory
      * @param Data $priceHelper
      * @param ImageBuilderFactory $imageBuilderFactory
      * @param CartTotalRepository $cartTotalRepository
@@ -61,7 +54,6 @@ class Content
      */
     public function __construct(
         EmulationFactory $emulationFactory,
-        QuoteFactory $quoteFactory,
         Data $priceHelper,
         ImageBuilderFactory $imageBuilderFactory,
         CartTotalRepository $cartTotalRepository,
@@ -69,42 +61,32 @@ class Content
     ) {
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->cartTotalRepository = $cartTotalRepository;
-        $this->quoteFactory = $quoteFactory;
         $this->priceHelper = $priceHelper;
         $this->emulationFactory = $emulationFactory;
         $this->imageBuilderFactory = $imageBuilderFactory;
     }
 
     /**
-     * @param string|int $quoteId
+     * @param Quote $quoteModel
      *
-     * @return array|bool
+     * @return array
      */
-    public function getCartData($quoteId)
+    public function getCartData(Quote $quoteModel)
     {
-        $quoteId = (int) $quoteId;
-        $quoteModel = $this->quoteFactory->create()
-            ->loadActive($quoteId);
-        $quoteItems = $quoteModel->getAllVisibleItems();
-
-        if (! $quoteModel->getId() || empty($quoteItems)) {
-            return false;
-        }
-
         /** @var Emulation $appEmulation */
         $appEmulation = $this->emulationFactory->create();
 
         try {
             $appEmulation->startEnvironmentEmulation($quoteModel->getStoreId(), Area::AREA_FRONTEND, true);
             $cartData = (array) $this->getMainCartData($quoteModel);
-            $cartData['items'] = (array) $this->getItemData($quoteItems);
+            $cartData['items'] = (array) $this->getItemData($quoteModel->getAllVisibleItems());
         } catch (\Exception $e) {
             $appEmulation->stopEnvironmentEmulation();
-            return false;
+            return [];
         }
 
         $appEmulation->stopEnvironmentEmulation();
-        return $cartData;
+        return (array) $cartData;
     }
 
     /**

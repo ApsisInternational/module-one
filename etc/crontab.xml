@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+    <group id="apsis_one">
+        <job name="apsis_one_subscribers" instance="Apsis\One\Model\Cron" method="syncSubscribers">
+            <schedule>*/2 * * * *</schedule>
+        </job>
+        <job name="apsis_one_subscribers" instance="Apsis\One\Model\Cron" method="findAbandonedCarts">
+            <schedule>*/5 * * * *</schedule>
+        </job>
+        <job name="apsis_one_subscribers" instance="Apsis\One\Model\Cron" method="syncEvents">
+            <schedule>*/5 * * * *</schedule>
+        </job>
+    </group>
+</config>

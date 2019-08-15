@@ -2,47 +2,15 @@
 
 namespace Apsis\One\Setup;
 
-use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Setup\InstallDataInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
-use Magento\Config\Model\ResourceModel\Config;
-use Magento\Framework\Math\Random;
-use Magento\Framework\App\Config\ReinitableConfigInterface;
+use Magento\Newsletter\Model\Subscriber;
 
 class InstallData implements InstallDataInterface
 {
-    /**
-     * @var Config
-     */
-    private $config;
-
-    /**
-     * @var Random
-     */
-    private $random;
-
-    /**
-     * @var ReinitableConfigInterface
-     */
-    public $configCache;
-
-    /**
-     * InstallData constructor.
-     *
-     * @param Config $config
-     * @param Random $random
-     * @param ReinitableConfigInterface $configCache
-     */
-    public function __construct(Config $config, Random $random, ReinitableConfigInterface $configCache)
-    {
-        $this->configCache = $configCache;
-        $this->config = $config;
-        $this->random = $random;
-    }
-
     /**
      * @param ModuleDataSetupInterface $setup
      * @param ModuleContextInterface $context
@@ -54,9 +22,8 @@ class InstallData implements InstallDataInterface
         $installer = $setup;
         $installer->startSetup();
 
+        /** Populate apsis subscriber table */
         $this->populateApsisSubscriberTable($installer);
-        $this->savePassCode();
-        $this->configCache->reinit();
 
         $installer->endSetup();
     }
@@ -81,7 +48,7 @@ class InstallData implements InstallDataInterface
                     )
                 ],
                 $insertArray
-            );
+            )->where('subscriber_status =?', Subscriber::STATUS_SUBSCRIBED);
 
         $sqlQuery = $select->insertFromSelect(
             $installer->getTable(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE),
@@ -89,18 +56,5 @@ class InstallData implements InstallDataInterface
             false
         );
         $installer->getConnection()->query($sqlQuery);
-    }
-
-    /**
-     * Generate and save code
-     *
-     * @throws LocalizedException
-     */
-    private function savePassCode()
-    {
-        $this->config->saveConfig(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ABANDONED_CARTS_PASSCODE,
-            $this->random->getRandomString(32)
-        );
     }
 }

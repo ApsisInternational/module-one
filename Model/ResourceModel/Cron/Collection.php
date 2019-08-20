@@ -2,7 +2,9 @@
 
 namespace Apsis\One\Model\ResourceModel\Cron;
 
+use Magento\Cron\Model\Schedule;
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
+use Magento\Cron\Model\ResourceModel\Schedule as ScheduleResource;
 
 class Collection extends AbstractCollection
 {
@@ -13,11 +15,9 @@ class Collection extends AbstractCollection
 
     /**
      * Initialize resource collection
-     *
-     * @return null
      */
     public function _construct()
     {
-        $this->_init(\Magento\Cron\Model\Schedule::class, \Magento\Cron\Model\ResourceModel\Schedule::class);
+        $this->_init(Schedule::class, ScheduleResource::class);
     }
 }

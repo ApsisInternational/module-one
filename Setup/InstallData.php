@@ -3,7 +3,6 @@
 namespace Apsis\One\Setup;
 
 use Apsis\One\Helper\Core as ApsisCoreHelper;
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Setup\InstallDataInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
@@ -14,8 +13,6 @@ class InstallData implements InstallDataInterface
     /**
      * @param ModuleDataSetupInterface $setup
      * @param ModuleContextInterface $context
-     *
-     * @throws LocalizedException
      */
     public function install(ModuleDataSetupInterface $setup, ModuleContextInterface $context)
     {

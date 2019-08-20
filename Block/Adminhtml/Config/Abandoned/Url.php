@@ -7,34 +7,33 @@ use Magento\Config\Block\System\Config\Form\Field;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Data\Form\Element\AbstractElement;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 
 class Url extends Field
 {
     /**
      * @var ApsisCoreHelper
      */
-    public $apsisCoreHelper;
+    private $apsisCoreHelper;
 
     /**
      * Url constructor.
      *
      * @param Context $context
      * @param ApsisCoreHelper $apsisCoreHelper
+     * @param array $data
      */
-    public function __construct(Context $context, ApsisCoreHelper $apsisCoreHelper)
-    {
+    public function __construct(
+        Context $context,
+        ApsisCoreHelper $apsisCoreHelper,
+        array $data = []
+    ) {
         $this->apsisCoreHelper = $apsisCoreHelper;
-        parent::__construct($context);
+        parent::__construct($context, $data);
     }
 
     /**
      * @param AbstractElement $element
      * @return string
-     *
-     * @throws LocalizedException
-     * @throws NoSuchEntityException
      */
     public function _getElementHtml(AbstractElement $element)
     {

@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Model\Cart;
 
+use Exception;
 use Magento\Catalog\Block\Product\Image;
 use Magento\Catalog\Block\Product\ImageBuilderFactory;
 use Magento\Catalog\Model\Product;
@@ -80,7 +81,8 @@ class Content
             $appEmulation->startEnvironmentEmulation($quoteModel->getStoreId(), Area::AREA_FRONTEND, true);
             $cartData = (array) $this->getMainCartData($quoteModel);
             $cartData['items'] = (array) $this->getItemData($quoteModel->getAllVisibleItems());
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logMessage(__CLASS__, __METHOD__, $e->getMessage());
             $appEmulation->stopEnvironmentEmulation();
             return [];
         }

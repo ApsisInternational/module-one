@@ -2,12 +2,35 @@
 
 namespace Apsis\One\Model\ResourceModel;
 
-use Magento\Framework\Exception\LocalizedException;
+use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Exception;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Apsis\One\Helper\Core as Helper;
+use Magento\Framework\Model\ResourceModel\Db\Context;
 
 class Event extends AbstractDb
 {
+    /**
+     * @var ApsisCoreHelper
+     */
+    private $apsisCoreHelper;
+
+    /**
+     * Event constructor.
+     *
+     * @param Context $context
+     * @param Helper $apsisCoreHelper
+     * @param null $connectionName
+     */
+    public function __construct(
+        Context $context,
+        ApsisCoreHelper $apsisCoreHelper,
+        $connectionName = null
+    ) {
+        $this->apsisCoreHelper = $apsisCoreHelper;
+        parent::__construct($context, $connectionName);
+    }
+
     /**
      * Initialize resource.
      */
@@ -19,13 +42,16 @@ class Event extends AbstractDb
     /**
      * @param array $events
      *
-     * @throws LocalizedException
+     * @return int
      */
     public function insertEvents(array $events)
     {
-        $write = $this->getConnection();
-        if (! empty($events)) {
-            $write->insertMultiple($this->getMainTable(), $events);
+        try {
+            $write = $this->getConnection();
+            return $write->insertMultiple($this->getMainTable(), $events);
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logMessage(__CLASS__, __METHOD__, $e->getMessage());
+            return 0;
         }
     }
 }

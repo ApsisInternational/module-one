@@ -12,10 +12,9 @@ use \Exception;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\UrlInterface;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Stdlib\StringUtils;
 use Zend_Date;
+use Apsis\One\Logger\Logger;
 
 class Core extends AbstractHelper
 {
@@ -25,6 +24,11 @@ class Core extends AbstractHelper
     const APSIS_SUBSCRIBER_TABLE = 'apsis_subscriber';
     const APSIS_EVENT_TABLE = 'apsis_event';
     const APSIS_ABANDONED_TABLE = 'apsis_abandoned';
+
+    /**
+     * @var Logger
+     */
+    private $logger;
 
     /**
      * APSIS attribute type text limit
@@ -65,6 +69,7 @@ class Core extends AbstractHelper
      * @param TimezoneInterface $localeDate
      * @param EncryptorInterface $encryptor
      * @param Random $random
+     * @param Logger $logger
      */
     public function __construct(
         Context $context,
@@ -72,14 +77,59 @@ class Core extends AbstractHelper
         StringUtils $stringUtils,
         TimezoneInterface $localeDate,
         EncryptorInterface $encryptor,
-        Random $random
+        Random $random,
+        Logger $logger
     ) {
+        $this->logger = $logger;
         $this->encryptor = $encryptor;
         $this->localeDate = $localeDate;
         $this->storeManager = $storeManager;
         $this->stringUtils = $stringUtils;
         $this->random = $random;
         parent::__construct($context);
+    }
+
+    /**
+     * @param string $className
+     * @param string $methodName
+     * @param string $text
+     */
+    public function logMessage(string $className, string $methodName, string $text)
+    {
+        $this->log($this->getStringForLog($className, $methodName, $text));
+    }
+
+    /**
+     * INFO (200): Interesting events.
+     *
+     * @param string $data
+     * @param array $extra
+     */
+    public function log($data, $extra = [])
+    {
+        $this->logger->info($data, $extra);
+    }
+
+    /**
+     * DEBUG (100): Detailed debug information.
+     *
+     * @param string $message
+     * @param array $extra
+     */
+    public function debug($message, $extra = [])
+    {
+        $this->logger->debug($message, $extra);
+    }
+
+    /**
+     * ERROR (400): Runtime errors.
+     *
+     * @param string $message
+     * @param array $extra
+     */
+    public function error($message, $extra = [])
+    {
+        $this->logger->error($message, $extra);
     }
 
     /**
@@ -144,28 +194,45 @@ class Core extends AbstractHelper
     }
 
     /**
-     * @return mixed
-     *
-     * @throws LocalizedException
-     * @throws NoSuchEntityException
+     * @return string
      */
     public function generateBaseUrlForDynamicContent()
     {
-        $website = $this->storeManager->getWebsite($this->_request->getParam('website', 0));
-        $defaultGroup = $website->getDefaultGroup();
-        $store =  (! $defaultGroup) ? null : $defaultGroup->getDefaultStore();
-        return $this->storeManager->getStore($store)->getBaseUrl(UrlInterface::URL_TYPE_LINK);
+        try {
+            $website = $this->storeManager->getWebsite($this->_request->getParam('website', 0));
+            $defaultGroup = $website->getDefaultGroup();
+            $store =  (! $defaultGroup) ? null : $defaultGroup->getDefaultStore();
+            return $this->storeManager->getStore($store)->getBaseUrl(UrlInterface::URL_TYPE_LINK);
+        } catch (Exception $e) {
+            $this->logMessage(__CLASS__, __METHOD__, $e->getMessage());
+            return '';
+        }
+    }
+
+    /**
+     * @param string $className
+     * @param string $functionName
+     * @param string $text
+     *
+     * @return string
+     */
+    public function getStringForLog(string $className, string $functionName, string $text)
+    {
+        return 'Class: ' . $className . ' - Method: ' . $functionName . ' - Text: ' . $text;
     }
 
     /**
      * @param int $length
      * @return string
-     *
-     * @throws LocalizedException
      */
     public function getRandomString(int $length = 32)
     {
-        return $this->random->getRandomString($length);
+        try {
+            return $this->random->getRandomString($length);
+        } catch (Exception $e) {
+            $this->logMessage(__CLASS__, __METHOD__, $e->getMessage());
+            return rand();
+        }
     }
 
     /**

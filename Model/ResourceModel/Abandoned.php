@@ -2,12 +2,35 @@
 
 namespace Apsis\One\Model\ResourceModel;
 
-use Magento\Framework\Exception\LocalizedException;
+use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Exception;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Apsis\One\Helper\Core as Helper;
+use Magento\Framework\Model\ResourceModel\Db\Context;
 
 class Abandoned extends AbstractDb
 {
+    /**
+     * @var ApsisCoreHelper
+     */
+    private $apsisCoreHelper;
+
+    /**
+     * Abandoned constructor.
+     *
+     * @param Context $context
+     * @param Helper $apsisCoreHelper
+     * @param null $connectionName
+     */
+    public function __construct(
+        Context $context,
+        ApsisCoreHelper $apsisCoreHelper,
+        $connectionName = null
+    ) {
+        $this->apsisCoreHelper = $apsisCoreHelper;
+        parent::__construct($context, $connectionName);
+    }
+
     /**
      * Initialize resource.
      */
@@ -19,13 +42,16 @@ class Abandoned extends AbstractDb
     /**
      * @param array $carts
      *
-     * @throws LocalizedException
+     * @return int
      */
     public function insertAbandonedCarts(array $carts)
     {
-        $write = $this->getConnection();
-        if (! empty($carts)) {
-            $write->insertMultiple($this->getMainTable(), $carts);
+        try {
+            $write = $this->getConnection();
+            return $write->insertMultiple($this->getMainTable(), $carts);
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logMessage(__CLASS__, __METHOD__, $e->getMessage());
+            return 0;
         }
     }
 }

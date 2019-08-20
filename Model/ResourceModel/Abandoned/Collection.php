@@ -30,7 +30,8 @@ class Collection extends AbstractCollection
     public function loadByQuoteId(int $quoteId)
     {
         $collection = $this->addFieldToFilter('quote_id', $quoteId)
-            ->setPageSize(1);
+            ->setPageSize(1)
+            ->setOrder('id');
 
         if ($collection->getSize()) {
             return $collection->getFirstItem();

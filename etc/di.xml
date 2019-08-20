@@ -16,4 +16,17 @@
             </argument>
         </arguments>
     </type>
+    <type name="Apsis\One\Logger\Handler\ApsisLogHandler">
+        <arguments>
+            <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
+        </arguments>
+    </type>
+    <type name="Apsis\One\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">apsis</argument>
+            <argument name="handlers"  xsi:type="array">
+                <item name="apsis_log_handler" xsi:type="object">Apsis\One\Logger\Handler\ApsisLogHandler</item>
+            </argument>
+        </arguments>
+    </type>
 </config>

@@ -4,10 +4,10 @@
         <job name="apsis_one_subscribers" instance="Apsis\One\Model\Cron" method="syncSubscribers">
             <schedule>*/2 * * * *</schedule>
         </job>
-        <job name="apsis_one_subscribers" instance="Apsis\One\Model\Cron" method="findAbandonedCarts">
+        <job name="apsis_one_abandoned" instance="Apsis\One\Model\Cron" method="findAbandonedCarts">
             <schedule>*/5 * * * *</schedule>
         </job>
-        <job name="apsis_one_subscribers" instance="Apsis\One\Model\Cron" method="syncEvents">
+        <job name="apsis_one_events" instance="Apsis\One\Model\Cron" method="syncEvents">
             <schedule>*/5 * * * *</schedule>
         </job>
     </group>

@@ -349,7 +349,7 @@
                 </field>
                 <field id="send_after" translate="label" sortOrder="20" type="select" showInDefault="1"
                        showInWebsite="1" showInStore="1">
-                    <label>Register After</label>
+                    <label>After</label>
                     <source_model>Apsis\One\Model\Config\Source\Abandoned\Intervalminute</source_model>
                 </field>
                 <field id="cart_content_heading" translate="label" sortOrder="50" showInDefault="1" showInWebsite="1"

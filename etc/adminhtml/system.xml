@@ -50,18 +50,13 @@
             <label>Data Mappings</label>
             <tab>apsis_one</tab>
             <resource>Apsis_One::config</resource>
-            <group id="section_topic_mapping" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1"
+            <group id="section_mapping" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1"
                    showInStore="1">
-                <label>Section And Topic Mapping</label>
+                <label>Section Mapping</label>
                 <field id="section" type="select" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Section</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Section</source_model>
-                </field>
-                <field id="topic" type="select" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1"
-                       showInStore="1">
-                    <label>Consent List Topic</label>
-                    <source_model>Apsis\One\Model\Config\Source\Datamapping\Topic</source_model>
                 </field>
             </group>
             <group id="subscriber_attribute" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1"
@@ -333,7 +328,46 @@
                 </field>
             </group>
         </section>
-        <section id="apsis_one_abandoned" translate="label" sortOrder="30" showInDefault="1" showInWebsite="1"
+        <section id="apsis_one_sync" translate="label" sortOrder="30" showInDefault="1" showInWebsite="1"
+                 showInStore="1">
+            <class>separator-top</class>
+            <label>Profile Sync</label>
+            <tab>apsis_one</tab>
+            <resource>Apsis_One::config</resource>
+            <group id="sync" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Sync</label>
+                <attribute type="expanded">1</attribute>
+                <field id="subscriber_heading" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Subscriber</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                </field>
+                <field id="subscriber_enabled" translate="label" type="select" sortOrder="20" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
+                </field>
+                <field id="subscriber_consent_topic" type="multiselect" translate="label" sortOrder="30" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Consent List Topics</label>
+                    <source_model>Apsis\One\Model\Config\Source\Datamapping\Topic</source_model>
+                    <depends>
+                        <field id="subscriber_enabled">1</field>
+                    </depends>
+                </field>
+                <field id="customer_heading" translate="label" sortOrder="40" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Customer</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                </field>
+                <field id="customer_enabled" translate="label" type="select" sortOrder="50" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
+                </field>
+            </group>
+        </section>
+        <section id="apsis_one_abandoned" translate="label" sortOrder="40" showInDefault="1" showInWebsite="1"
                  showInStore="1">
             <class>separator-top</class>
             <label>Abandoned Carts</label>
@@ -364,7 +398,7 @@
                 </field>
             </group>
         </section>
-        <section id="apsis_one_events" translate="label" sortOrder="40" showInDefault="1" showInWebsite="1"
+        <section id="apsis_one_events" translate="label" sortOrder="50" showInDefault="1" showInWebsite="1"
                  showInStore="1">
             <class>separator-top</class>
             <label>Events</label>
@@ -398,17 +432,12 @@
                     <label>Customer Places An Order</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
                 </field>
-                <field id="cart" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1"
-                       showInStore="1">
-                    <label>Customer Adds Product To Cart</label>
-                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
-                </field>
-                <field id="review" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1"
+                <field id="review" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Customer Leaves A Product Review</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
                 </field>
-                <field id="wishlist" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1"
+                <field id="wishlist" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Customer Adds Product To Wishlist</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>

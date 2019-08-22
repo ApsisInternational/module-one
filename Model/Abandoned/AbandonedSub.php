@@ -16,6 +16,7 @@ use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollection
 use Magento\Store\Api\Data\StoreInterface;
 use Apsis\One\Model\DateTimeFactory;
 use Apsis\One\Model\DateTimeZoneFactory;
+use Apsis\One\Model\Profile;
 
 class AbandonedSub
 {
@@ -164,7 +165,7 @@ class AbandonedSub
                 ];
 
                 $events[] = [
-                    'event_type' => Event::EVENT_TYPE_AC,
+                    'event_type' => Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART,
                     'event_data' => $jsonSerializer->serialize(
                         [
                             'quote_id' => $quote->getId(),
@@ -175,7 +176,7 @@ class AbandonedSub
                     'customer_id' => $quote->getCustomerId(),
                     'store_id' => $quote->getStoreId(),
                     'email' => $quote->getCustomerEmail(),
-                    'status' => Event::EVENT_STATUS_PENDING,
+                    'status' => Profile::SYNC_STATUS_PENDING,
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
                 ];

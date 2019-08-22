@@ -1,6 +1,6 @@
 <?php
 
-namespace Apsis\One\Controller\Adminhtml\Subscriber;
+namespace Apsis\One\Controller\Adminhtml\Profile;
 
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
@@ -14,7 +14,7 @@ class Index extends AbstractAction
      *
      * @see _isAllowed()
      */
-    const ADMIN_RESOURCE = 'Apsis_One::subscriber';
+    const ADMIN_RESOURCE = 'Apsis_One::profile';
 
     /**
      * @var PageFactory
@@ -42,10 +42,10 @@ class Index extends AbstractAction
     {
         /** @var Page $resultPage */
         $resultPage = $this->resultPageFactory->create();
-        $resultPage->setActiveMenu('Apsis_One::subscriber');
-        $resultPage->addBreadcrumb(__('Subscriber'), __('Subscriber'));
+        $resultPage->setActiveMenu('Apsis_One::profile');
+        $resultPage->addBreadcrumb(__('Profile'), __('Profile'));
         $resultPage->addBreadcrumb(__('Reports'), __('Reports'));
-        $resultPage->getConfig()->getTitle()->prepend(__('Subscriber Status Report'));
+        $resultPage->getConfig()->getTitle()->prepend(__('Profile Status Report'));
 
         return $resultPage;
     }

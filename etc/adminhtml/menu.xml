@@ -3,8 +3,8 @@
     <menu>
         <add id="Apsis_One::reports" title="Apsis One" module="Apsis_One" sortOrder="100"
              parent="Magento_Reports::report" resource="Apsis_One::reports"/>
-        <add id="Apsis_One::subscriber" title="Subscriber Status" module="Apsis_One" sortOrder="110"
-             action="apsis_one/subscriber" resource="Apsis_One::subscriber"
+        <add id="Apsis_One::profile" title="Profile Status" module="Apsis_One" sortOrder="110"
+             action="apsis_one/profile" resource="Apsis_One::profile"
              parent="Apsis_One::reports"/>
         <add id="Apsis_One::event" title="Registered Events" module="Apsis_One" sortOrder="120"
              action="apsis_one/event" resource="Apsis_One::event"

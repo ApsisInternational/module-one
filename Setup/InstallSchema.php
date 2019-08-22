@@ -24,8 +24,8 @@ class InstallSchema implements InstallSchemaInterface
         $installer->startSetup();
 
         // Create entities tables
-        /** Subscriber */
-        $this->createApsisSubscriberTable($installer);
+        /** Profile */
+        $this->createApsisProfileTable($installer);
         /** Events */
         $this->createApsisEventTable($installer);
         /** Abandoned Carts */
@@ -232,9 +232,9 @@ class InstallSchema implements InstallSchemaInterface
         )
             ->addColumn(
                 'event_type',
-                Table::TYPE_TEXT,
-                255,
-                ['nullable' => true],
+                Table::TYPE_SMALLINT,
+                null,
+                ['unsigned' => true, 'nullable' => true, 'default' => null],
                 'Event Type'
             )
             ->addColumn(
@@ -248,14 +248,14 @@ class InstallSchema implements InstallSchemaInterface
                 'subscriber_id',
                 Table::TYPE_INTEGER,
                 11,
-                ['nullable' => false, 'default' => 0],
+                ['unsigned' => true, 'nullable' => true, 'default' => null],
                 'Subscriber Id'
             )
             ->addColumn(
                 'customer_id',
                 Table::TYPE_INTEGER,
                 11,
-                ['unsigned' => true, 'nullable' => false],
+                ['unsigned' => true, 'nullable' => true, 'default' => null],
                 'Customer Id'
             )
             ->addColumn(
@@ -274,9 +274,9 @@ class InstallSchema implements InstallSchemaInterface
             )
             ->addColumn(
                 'status',
-                Table::TYPE_TEXT,
-                15,
-                ['nullable' => false, 'default' => Event::EVENT_STATUS_PENDING],
+                Table::TYPE_SMALLINT,
+                null,
+                ['nullable' => false, 'default' => '0'],
                 'Status'
             )
             ->addColumn(
@@ -346,19 +346,7 @@ class InstallSchema implements InstallSchemaInterface
             $installer->getTable('store'),
             'store_id',
             Table::ACTION_CASCADE
-        )
-            ->addForeignKey(
-                $installer->getFkName(
-                    ApsisCoreHelper::APSIS_EVENT_TABLE,
-                    'customer_id',
-                    'customer_entity',
-                    'entity_id'
-                ),
-                'customer_id',
-                $installer->getTable('customer_entity'),
-                'entity_id',
-                Table::ACTION_CASCADE
-            );
+        );
     }
 
     /**
@@ -366,16 +354,16 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @throws Zend_Db_Exception
      */
-    private function createApsisSubscriberTable(SchemaSetupInterface $installer)
+    private function createApsisProfileTable(SchemaSetupInterface $installer)
     {
-        $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE);
+        $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_PROFILE_TABLE);
 
-        $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE);
-        $table = $this->addColumnsToApsisSubscriberTable($table);
-        $table = $this->addIndexesToApsisSubscriberTable($installer, $table);
-        $table = $this->addForeignKeysToSubscriberTable($installer, $table);
+        $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
+        $table = $this->addColumnsToApsisProfileTable($table);
+        $table = $this->addIndexesToApsisProfileTable($installer, $table);
+        $table = $this->addForeignKeysToProfileTable($installer, $table);
 
-        $table->setComment('Apsis Subscribers');
+        $table->setComment('Apsis Profiles');
         $installer->getConnection()->createTable($table);
     }
 
@@ -386,7 +374,7 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @throws Zend_Db_Exception
      */
-    private function addColumnsToApsisSubscriberTable(Table $table)
+    private function addColumnsToApsisProfileTable(Table $table)
     {
         return $table->addColumn(
             'id',
@@ -418,29 +406,50 @@ class InstallSchema implements InstallSchemaInterface
                 'subscriber_id',
                 Table::TYPE_INTEGER,
                 11,
-                ['unsigned' => true, 'nullable' => false],
+                ['unsigned' => true, 'nullable' => true, 'default' => null],
                 'Subscriber Id'
             )
             ->addColumn(
                 'customer_id',
                 Table::TYPE_INTEGER,
                 11,
-                ['unsigned' => true, 'nullable' => false],
+                ['unsigned' => true, 'nullable' => true, 'default' => null],
                 'Customer Id'
             )
             ->addColumn(
-                'subscriber_email',
+                'email',
                 Table::TYPE_TEXT,
                 255,
                 ['nullable' => false, 'default' => ''],
-                'Subscriber Email'
+                'Email'
             )
             ->addColumn(
-                'sync_status',
+                'subscriber_sync_status',
                 Table::TYPE_SMALLINT,
                 null,
-                ['unsigned' => true, 'nullable' => true],
-                'Sync Status'
+                ['nullable' => false, 'default' => '0'],
+                'Subscriber Sync Status'
+            )
+            ->addColumn(
+                'customer_sync_status',
+                Table::TYPE_SMALLINT,
+                null,
+                ['nullable' => false, 'default' => '0'],
+                'Customer Sync Status'
+            )
+            ->addColumn(
+                'is_subscriber',
+                Table::TYPE_SMALLINT,
+                null,
+                ['nullable' => false, 'default' => '0'],
+                'Is Subscriber'
+            )
+            ->addColumn(
+                'is_customer',
+                Table::TYPE_SMALLINT,
+                null,
+                ['nullable' => false, 'default' => '0'],
+                'Is Customer'
             )
             ->addColumn(
                 'error_message',
@@ -466,16 +475,19 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @throws Zend_Db_Exception
      */
-    private function addIndexesToApsisSubscriberTable(SchemaSetupInterface $installer, Table $table)
+    private function addIndexesToApsisProfileTable(SchemaSetupInterface $installer, Table $table)
     {
-        $tableName = $installer->getTable(ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE);
+        $tableName = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
         $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
             ->addIndex($installer->getIdxName($tableName, ['subscriber_status']), ['subscriber_status'])
             ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
             ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
             ->addIndex($installer->getIdxName($tableName, ['subscriber_id']), ['subscriber_id'])
-            ->addIndex($installer->getIdxName($tableName, ['sync_status']), ['sync_status'])
-            ->addIndex($installer->getIdxName($tableName, ['subscriber_email']), ['subscriber_email'])
+            ->addIndex($installer->getIdxName($tableName, ['subscriber_sync_status']), ['subscriber_sync_status'])
+            ->addIndex($installer->getIdxName($tableName, ['customer_sync_status']), ['customer_sync_status'])
+            ->addIndex($installer->getIdxName($tableName, ['is_subscriber']), ['is_subscriber'])
+            ->addIndex($installer->getIdxName($tableName, ['is_customer']), ['is_customer'])
+            ->addIndex($installer->getIdxName($tableName, ['email']), ['email'])
             ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
         return $table;
     }
@@ -488,11 +500,11 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @throws Zend_Db_Exception
      */
-    private function addForeignKeysToSubscriberTable(SchemaSetupInterface $installer, Table $table)
+    private function addForeignKeysToProfileTable(SchemaSetupInterface $installer, Table $table)
     {
         return $table->addForeignKey(
             $installer->getFkName(
-                ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE,
+                ApsisCoreHelper::APSIS_PROFILE_TABLE,
                 'store_id',
                 'store',
                 'store_id'
@@ -501,19 +513,7 @@ class InstallSchema implements InstallSchemaInterface
             $installer->getTable('store'),
             'store_id',
             Table::ACTION_CASCADE
-        )
-            ->addForeignKey(
-                $installer->getFkName(
-                    ApsisCoreHelper::APSIS_SUBSCRIBER_TABLE,
-                    'subscriber_id',
-                    'newsletter_subscriber',
-                    'subscriber_id'
-                ),
-                'subscriber_id',
-                $installer->getTable('newsletter_subscriber'),
-                'subscriber_id',
-                Table::ACTION_CASCADE
-            );
+        );
     }
 
     /**

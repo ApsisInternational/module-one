@@ -8,6 +8,13 @@
                 <secret></secret>
             </oauth>
         </apsis_one_accounts>
+        <apsis_one_sync>
+            <sync>
+                <subscriber_enabled>0</subscriber_enabled>
+                <subscriber_consent_topic>0</subscriber_consent_topic>
+                <customer_enabled>0</customer_enabled>
+            </sync>
+        </apsis_one_sync>
         <apsis_one_abandoned>
             <customers>
                 <send_after>0</send_after>
@@ -22,13 +29,11 @@
                 <unsubscribe>0</unsubscribe>
                 <subscriber_2_customer>0</subscriber_2_customer>
                 <subscriber_not_a_customer>0</subscriber_not_a_customer>
-                <cart>0</cart>
             </events>
         </apsis_one_events>
         <apsis_one_mappings>
             <section_topic_mapping>
                 <section>0</section>
-                <topic>0</topic>
             </section_topic_mapping>
             <subscriber_attribute>
                 <subscriber_id>0</subscriber_id>

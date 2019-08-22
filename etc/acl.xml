@@ -5,7 +5,7 @@
             <resource id="Magento_Backend::admin">
                 <resource id="Magento_Reports::report">
                     <resource id="Apsis_One::reports" title="Apsis One">
-                        <resource id="Apsis_One::subscriber" title="Apsis Subscriber" sortOrder="10"/>
+                        <resource id="Apsis_One::profile" title="Apsis Profile" sortOrder="10"/>
                         <resource id="Apsis_One::event" title="Apsis Event" sortOrder="20"/>
                         <resource id="Apsis_One::abandoned" title="Apsis Abandoned Basket" sortOrder="30"/>
                     </resource>

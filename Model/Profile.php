@@ -4,14 +4,18 @@ namespace Apsis\One\Model;
 
 use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Model\AbstractModel;
-use Apsis\One\Model\ResourceModel\Subscriber as SubscriberResource;
+use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime;
 
-class Subscriber extends AbstractModel
+class Profile extends AbstractModel
 {
+    const SYNC_STATUS_PENDING = 0;
+    const SYNC_STATUS_SYNCED = 1;
+    const SYNC_STATUS_FAILED = 2;
+
     /**
      * @var DateTime
      */
@@ -50,7 +54,7 @@ class Subscriber extends AbstractModel
      */
     public function _construct()
     {
-        $this->_init(SubscriberResource::class);
+        $this->_init(ProfileResource::class);
     }
 
     /**

@@ -10,8 +10,8 @@
                 <item name="apsis_event_report_grid_data_source" xsi:type="string">
                     Apsis\One\Ui\Model\ResourceModel\Event\Collection
                 </item>
-                <item name="apsis_subscriber_report_grid_data_source" xsi:type="string">
-                    Apsis\One\Ui\Model\ResourceModel\Subscriber\Collection
+                <item name="apsis_profile_report_grid_data_source" xsi:type="string">
+                    Apsis\One\Ui\Model\ResourceModel\Profile\Collection
                 </item>
             </argument>
         </arguments>

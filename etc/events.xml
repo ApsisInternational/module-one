@@ -42,8 +42,4 @@
         <observer name="apsis_sales_order_place_after_observer"
                   instance="Apsis\One\Observer\Sales\Order\Placed"/>
     </event>
-    <event name="sales_quote_add_item">
-        <observer name="apsis_sales_quote_add_item_observer"
-                  instance="Apsis\One\Observer\Sales\Quote\AddProduct"/>
-    </event>
 </config>

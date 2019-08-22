@@ -35,7 +35,7 @@ class Attributes implements OptionSourceInterface
         }
 
         if (! $this->apsisCoreHelper->getMappedValueFromSelectedScope(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_TOPIC_SECTION
+            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
         )) {
             return [['value' => '0', 'label' => __('-- Map & Save Section First --')]];
         }

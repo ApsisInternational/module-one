@@ -12,9 +12,18 @@ use Magento\Framework\Stdlib\DateTime;
 
 class Event extends AbstractModel
 {
-    const EVENT_TYPE_AC = 'Abandoned Cart';
-
-    const EVENT_STATUS_PENDING = 'Pending';
+    /**
+     * Event types / names
+     */
+    const EVENT_TYPE_CUSTOMER_ABANDONED_CART = 1;
+    const EVENT_TYPE_SUBSCRIBER_BECOMES_CUSTOMER = 2;
+    const EVENT_TYPE_SUBSCRIBER_NO_LONGER_CUSTOMER = 3;
+    const EVENT_TYPE_SUBSCRIBER_UNSUBSCRIBE = 4;
+    const EVENT_TYPE_CUSTOMER_LOGIN = 5;
+    const EVENT_TYPE_CUSTOMER_PLACED_ORDER = 6;
+    const EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART = 7;
+    const EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW = 8;
+    const EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST = 9;
 
     /**
      * @var DateTime

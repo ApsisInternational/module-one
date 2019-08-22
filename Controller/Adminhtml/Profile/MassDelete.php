@@ -1,6 +1,6 @@
 <?php
 
-namespace Apsis\One\Controller\Adminhtml\Subscriber;
+namespace Apsis\One\Controller\Adminhtml\Profile;
 
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Exception;
@@ -9,8 +9,8 @@ use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Ui\Component\MassAction\Filter;
 use Magento\Backend\App\Action;
-use Apsis\One\Model\ResourceModel\Subscriber as SubscriberResource;
-use Apsis\One\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
+use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Magento\Backend\App\Action\Context;
 use Magento\Backend\Model\View\Result\Redirect;
 
@@ -21,17 +21,17 @@ class MassDelete extends Action
      *
      * @see _isAllowed()
      */
-    const ADMIN_RESOURCE = 'Apsis_One::subscriber';
+    const ADMIN_RESOURCE = 'Apsis_One::profile';
 
     /**
-     * @var SubscriberResource
+     * @var ProfileResource
      */
-    public $subscriberResource;
+    public $profileResource;
 
     /**
-     * @var SubscriberCollectionFactory
+     * @var ProfileCollectionFactory
      */
-    public $subscriberCollectionFactory;
+    public $profileCollectionFactory;
 
     /**
      * @var Filter
@@ -48,21 +48,21 @@ class MassDelete extends Action
      *
      * @param Context $context
      * @param ApsisCoreHelper $apsisCoreHelper
-     * @param SubscriberResource $subscriberResource
+     * @param ProfileResource $subscriberResource
      * @param Filter $filter
-     * @param SubscriberCollectionFactory $subscriberCollectionFactory
+     * @param ProfileCollectionFactory $subscriberCollectionFactory
      */
     public function __construct(
         Context $context,
         ApsisCoreHelper $apsisCoreHelper,
-        SubscriberResource $subscriberResource,
+        ProfileResource $subscriberResource,
         Filter $filter,
-        SubscriberCollectionFactory $subscriberCollectionFactory
+        ProfileCollectionFactory $subscriberCollectionFactory
     ) {
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->filter = $filter;
-        $this->subscriberCollectionFactory = $subscriberCollectionFactory;
-        $this->subscriberResource = $subscriberResource;
+        $this->profileCollectionFactory = $subscriberCollectionFactory;
+        $this->profileResource = $subscriberResource;
         parent::__construct($context);
     }
 
@@ -75,11 +75,11 @@ class MassDelete extends Action
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
 
         try {
-            $collection = $this->filter->getCollection($this->subscriberCollectionFactory->create());
+            $collection = $this->filter->getCollection($this->profileCollectionFactory->create());
             $collectionSize = $collection->getSize();
 
             foreach ($collection as $item) {
-                $this->subscriberResource->delete($item);
+                $this->profileResource->delete($item);
             }
 
             $this->messageManager->addSuccessMessage(__('A total of %1 record(s) have been deleted.', $collectionSize));

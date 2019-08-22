@@ -1,10 +1,10 @@
 <?php
 
-namespace Apsis\One\Model\ResourceModel\Subscriber;
+namespace Apsis\One\Model\ResourceModel\Profile;
 
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
-use Apsis\One\Model\ResourceModel\Subscriber as SubscriberResource;
-use Apsis\One\Model\Subscriber;
+use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
+use Apsis\One\Model\Profile;
 
 class Collection extends AbstractCollection
 {
@@ -18,6 +18,6 @@ class Collection extends AbstractCollection
      */
     public function _construct()
     {
-        $this->_init(Subscriber::class, SubscriberResource::class);
+        $this->_init(Profile::class, ProfileResource::class);
     }
 }

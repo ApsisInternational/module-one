@@ -15,11 +15,11 @@
             <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\Event</argument>
         </arguments>
     </virtualType>
-    <virtualType name="Apsis\One\Ui\Model\ResourceModel\Subscriber\Collection"
+    <virtualType name="Apsis\One\Ui\Model\ResourceModel\Profile\Collection"
                  type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
         <arguments>
-            <argument name="mainTable" xsi:type="string">apsis_subscriber</argument>
-            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\Subscriber</argument>
+            <argument name="mainTable" xsi:type="string">apsis_profile</argument>
+            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\Profile</argument>
         </arguments>
     </virtualType>
 </config>

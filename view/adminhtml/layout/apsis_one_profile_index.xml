@@ -5,7 +5,7 @@
     <update handle="styles"/>
     <body>
         <referenceContainer name="content">
-            <uiComponent name="apsis_subscriber_grid"/>
+            <uiComponent name="apsis_profile_grid"/>
         </referenceContainer>
     </body>
 </page>

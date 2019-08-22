@@ -19,9 +19,8 @@ class Config extends ApsisCoreHelper
      * Data mapping section
      */
     /** Section & topic */
-    const CONFIG_APSIS_ONE_MAPPINGS_SECTION_TOPIC_GROUP = 'apsis_one_mappings/section_topic_mapping';
-    const CONFIG_APSIS_ONE_MAPPINGS_SECTION_TOPIC_SECTION = 'apsis_one_mappings/section_topic_mapping/section';
-    const CONFIG_APSIS_ONE_MAPPINGS_SECTION_TOPIC_TOPIC = 'apsis_one_mappings/section_topic_mapping/topic';
+    const CONFIG_APSIS_ONE_MAPPINGS_SECTION_GROUP = 'apsis_one_mappings/section_mapping';
+    const CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION = 'apsis_one_mappings/section_mapping/section';
     /** Subscriber attributes */
     const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_GROUP = 'apsis_one_mappings/subscriber_attribute';
     const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_ID = 'apsis_one_mappings/subscriber_attribute/subscriber_id';
@@ -85,6 +84,14 @@ class Config extends ApsisCoreHelper
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_AC_TOKEN = 'apsis_one_mappings/customer_attribute/ac_token';
 
     /**
+     * Sync settings
+     */
+    const CONFIG_APSIS_ONE_SYNC_SETTING_GROUP = 'apsis_one_sync/sync';
+    const CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED = 'apsis_one_sync/sync/subscriber_enabled';
+    const CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC = 'apsis_one_sync/sync/subscriber_consent_topic';
+    const CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED = 'apsis_one_sync/sync/customer_enabled';
+
+    /**
      * Abandoned carts section
      */
     const CONFIG_APSIS_ONE_ABANDONED_CARTS_GROUP = 'apsis_one_abandoned/customers';
@@ -97,7 +104,6 @@ class Config extends ApsisCoreHelper
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_GROUP = 'apsis_one_events/events';
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_LOGIN = 'apsis_one_events/events/login';
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_ORDER = 'apsis_one_events/events/order';
-    const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_CART = 'apsis_one_events/events/cart';
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_REVIEW = 'apsis_one_events/events/review';
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_WISHLIST = 'apsis_one_events/events/wishlist';
     const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_UNSUBSCRIBE = 'apsis_one_events/events/unsubscribe';

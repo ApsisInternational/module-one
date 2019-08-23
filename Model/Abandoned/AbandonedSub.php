@@ -10,7 +10,6 @@ use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\DateIntervalFactory;
 use Exception;
-use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Quote\Model\ResourceModel\Quote\Collection;
 use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
 use Magento\Store\Api\Data\StoreInterface;
@@ -137,17 +136,16 @@ class AbandonedSub
     /**
      * @param Collection $quoteCollection
      * @param ApsisCoreHelper $apsisCoreHelper
-     * @param Json $jsonSerializer
-     * @param string $createdAt
+     * @param boolean $customerSyncEnabled
      */
     public function aggregateCartDataFromStoreCollection(
         Collection $quoteCollection,
         ApsisCoreHelper $apsisCoreHelper,
-        Json $jsonSerializer,
-        string $createdAt
+        $customerSyncEnabled
     ) {
         $abandonedCarts = [];
         $events = [];
+        $createdAt = $apsisCoreHelper->getFormattedDateTime();
         foreach ($quoteCollection as $quote) {
             $cartData = $this->cartContentFactory->create()
                 ->getCartData($quote);
@@ -156,7 +154,7 @@ class AbandonedSub
                 $token = $apsisCoreHelper->getRandomString();
                 $abandonedCarts[] = [
                     'quote_id' => $quote->getId(),
-                    'cart_data' => $jsonSerializer->serialize($cartData),
+                    'cart_data' => $apsisCoreHelper->serialize($cartData),
                     'store_id' => $quote->getStoreId(),
                     'customer_id' => $quote->getCustomerId(),
                     'customer_email' => $quote->getCustomerEmail(),
@@ -164,22 +162,18 @@ class AbandonedSub
                     'created_at' => $createdAt
                 ];
 
-                $events[] = [
-                    'event_type' => Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART,
-                    'event_data' => $jsonSerializer->serialize(
-                        [
-                            'quote_id' => $quote->getId(),
-                            'token' => $token
-                        ]
-                    ),
-                    'subscriber_id' => '',
-                    'customer_id' => $quote->getCustomerId(),
-                    'store_id' => $quote->getStoreId(),
-                    'email' => $quote->getCustomerEmail(),
-                    'status' => Profile::SYNC_STATUS_PENDING,
-                    'created_at' => $createdAt,
-                    'updated_at' => $createdAt,
-                ];
+                if ($customerSyncEnabled) {
+                    $events[] = [
+                        'event_type' => Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART,
+                        'event_data' => $apsisCoreHelper->serialize($this->getDataForEventFromAcData($cartData)),
+                        'customer_id' => $quote->getCustomerId(),
+                        'store_id' => $quote->getStoreId(),
+                        'email' => $quote->getCustomerEmail(),
+                        'status' => Profile::SYNC_STATUS_PENDING,
+                        'created_at' => $createdAt,
+                        'updated_at' => $createdAt,
+                    ];
+                }
             }
         }
 
@@ -190,5 +184,42 @@ class AbandonedSub
                 $this->eventResource->insertEvents($events);
             }
         }
+    }
+
+    /**
+     * @param array $acData
+     *
+     * @return array
+     */
+    private function getDataForEventFromAcData(array $acData)
+    {
+        $items = [];
+        foreach ($acData['items'] as $item) {
+            $items [] = [
+                'cart_id' => $acData['cart_id'],
+                'product_id' => $item['product_id'],
+                'sku' => $item['sku'],
+                'name' => $item['name'],
+                'product_url' => $item['product_url'],
+                'product_image_url' => $item['product_image_url'],
+                'qty_ordered' => $item['qty_ordered'],
+                'price_amount' => $item['price_amount'],
+                'row_total_amount' => $item['row_total_amount'],
+            ];
+        }
+
+        $eventData = [
+            'cart_id' => $acData['cart_id'],
+            'customer_id' => $acData['customer_info']['customer_id'],
+            'created_at' => $acData['created_at'],
+            'store_name' => $acData['store_name'],
+            'website_name' => $acData['website_name'],
+            'grand_total_amount' => $acData['grand_total_amount'],
+            'items_count' => $acData['items_count'],
+            'currency_code' => $acData['currency_code'],
+            'items' => $items
+        ];
+
+        return $eventData;
     }
 }

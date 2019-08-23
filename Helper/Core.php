@@ -3,18 +3,26 @@
 namespace Apsis\One\Helper;
 
 use Apsis\One\Helper\Config as ApsisConfigHelper;
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Block\Product\Image;
+use Magento\Catalog\Block\Product\ImageBuilderFactory;
+use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Math\Random;
+use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Framework\Stdlib\DateTime;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
-use \Exception;
+use Exception;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\Stdlib\StringUtils;
 use Zend_Date;
 use Apsis\One\Logger\Logger;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Customer\Api\CustomerRepositoryInterface;
 
 class Core extends AbstractHelper
 {
@@ -61,6 +69,31 @@ class Core extends AbstractHelper
     private $random;
 
     /**
+     * @var Json
+     */
+    private $jsonSerializer;
+
+    /**
+     * @var ImageBuilderFactory
+     */
+    private $imageBuilderFactory;
+
+    /**
+     * @var ProductRepositoryInterface
+     */
+    private $productRepository;
+
+    /**
+     * @var CustomerRepositoryInterface
+     */
+    private $customerRepository;
+
+    /**
+     * @var DateTime
+     */
+    private $dateTime;
+
+    /**
      * Core constructor.
      *
      * @param Context $context
@@ -70,6 +103,11 @@ class Core extends AbstractHelper
      * @param EncryptorInterface $encryptor
      * @param Random $random
      * @param Logger $logger
+     * @param Json $jsonSerializer
+     * @param ImageBuilderFactory $imageBuilderFactory
+     * @param ProductRepositoryInterface $productRepository
+     * @param CustomerRepositoryInterface $customerRepository
+     * @param DateTime $dateTime
      */
     public function __construct(
         Context $context,
@@ -78,25 +116,142 @@ class Core extends AbstractHelper
         TimezoneInterface $localeDate,
         EncryptorInterface $encryptor,
         Random $random,
-        Logger $logger
+        Logger $logger,
+        Json $jsonSerializer,
+        ImageBuilderFactory $imageBuilderFactory,
+        ProductRepositoryInterface $productRepository,
+        CustomerRepositoryInterface $customerRepository,
+        DateTime $dateTime
     ) {
+        $this->dateTime = $dateTime;
+        $this->customerRepository = $customerRepository;
+        $this->productRepository = $productRepository;
+        $this->imageBuilderFactory = $imageBuilderFactory;
         $this->logger = $logger;
         $this->encryptor = $encryptor;
         $this->localeDate = $localeDate;
         $this->storeManager = $storeManager;
         $this->stringUtils = $stringUtils;
         $this->random = $random;
+        $this->jsonSerializer = $jsonSerializer;
         parent::__construct($context);
     }
 
     /**
-     * @param string $className
+     * @return string
+     */
+    public function getFormattedDateTime()
+    {
+        return $this->dateTime->formatDate(true);
+    }
+
+    /**
+     * @param int $customerId
+     * @return bool|CustomerInterface
+     */
+    public function getCustomer($customerId)
+    {
+        try {
+            return $this->customerRepository->getById($customerId);
+        } catch (Exception $e) {
+            $this->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * @param int $productId
+     * @return bool|ProductInterface
+     */
+    public function getProductById($productId)
+    {
+        try {
+            return $this->productRepository->getById($productId);
+        } catch (Exception $e) {
+            $this->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * @param ProductInterface $product
+     * @param string $imageId
+     *
+     * @return string
+     */
+    public function getProductImageUrl(ProductInterface $product, string $imageId = 'cart_page_product_thumbnail')
+    {
+        /** @var Image $image */
+        $image = $this->imageBuilderFactory
+            ->create()
+            ->setProduct($product)
+            ->setImageId($imageId)
+            ->create();
+
+        return $image->getImageUrl();
+    }
+
+    /**
+     * @param string|int|float|bool|array|null $data
+     * @return string
+     */
+    public function serialize($data)
+    {
+        try {
+            return $this->jsonSerializer->serialize($data);
+        } catch (Exception $e) {
+            $this->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+            return '{}';
+        }
+    }
+
+    /**
+     * @param null|int $storeId
+     * @return bool|StoreInterface
+     */
+    public function getStore($storeId = null)
+    {
+        try {
+            return $this->storeManager->getStore($storeId);
+        } catch (Exception $e) {
+            $this->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * @param null|int $storeId
+     * @return string
+     */
+    public function getStoreNameFromId($storeId = null)
+    {
+        $store = $this->getStore($storeId);
+        return ($store) ? $store->getName() : '';
+    }
+
+    /**
+     * @param null|int $storeId
+     * @return string
+     */
+    public function getWebsiteNameFromStoreId($storeId = null)
+    {
+        try {
+            $store = $this->getStore($storeId);
+            return ($store) ? $this->storeManager->getWebsite($store->getWebsiteId())->getName() : '';
+        } catch (Exception $e) {
+            $this->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+            return '';
+        }
+    }
+
+    /**
+     * @param string $nameSpace
      * @param string $methodName
      * @param string $text
      */
-    public function logMessage(string $className, string $methodName, string $text)
+    public function logMessage(string $nameSpace, string $methodName, string $text)
     {
-        $this->log($this->getStringForLog($className, $methodName, $text));
+        $this->log($this->getStringForLog($nameSpace, $methodName, $text));
     }
 
     /**
@@ -204,21 +359,21 @@ class Core extends AbstractHelper
             $store =  (! $defaultGroup) ? null : $defaultGroup->getDefaultStore();
             return $this->storeManager->getStore($store)->getBaseUrl(UrlInterface::URL_TYPE_LINK);
         } catch (Exception $e) {
-            $this->logMessage(__CLASS__, __METHOD__, $e->getMessage());
+            $this->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
             return '';
         }
     }
 
     /**
-     * @param string $className
+     * @param string $nameSpace
      * @param string $functionName
      * @param string $text
      *
      * @return string
      */
-    public function getStringForLog(string $className, string $functionName, string $text)
+    public function getStringForLog(string $nameSpace, string $functionName, string $text)
     {
-        return 'Class: ' . $className . ' - Method: ' . $functionName . ' - Text: ' . $text;
+        return 'Name Space: ' . $nameSpace . ' - Method: ' . $functionName . ' - Text: ' . $text;
     }
 
     /**
@@ -230,7 +385,7 @@ class Core extends AbstractHelper
         try {
             return $this->random->getRandomString($length);
         } catch (Exception $e) {
-            $this->logMessage(__CLASS__, __METHOD__, $e->getMessage());
+            $this->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
             return rand();
         }
     }
@@ -282,5 +437,16 @@ class Core extends AbstractHelper
     public function getStoreConfig(StoreInterface $store, $path)
     {
         return $store->getConfig($path);
+    }
+
+    /**
+     * @param float $price
+     * @param int $precision
+     *
+     * @return float
+     */
+    public function round($price, $precision = 2)
+    {
+        return (float) round($price, $precision);
     }
 }

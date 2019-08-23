@@ -3,9 +3,6 @@
 namespace Apsis\One\Model\Cart;
 
 use Exception;
-use Magento\Catalog\Block\Product\Image;
-use Magento\Catalog\Block\Product\ImageBuilderFactory;
-use Magento\Catalog\Model\Product;
 use Magento\Framework\App\Area;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Pricing\Helper\Data;
@@ -19,11 +16,6 @@ use Apsis\One\Helper\Core as ApsisCoreHelper;
 
 class Content
 {
-    /**
-     * @var ImageBuilderFactory
-     */
-    private $imageBuilderFactory;
-
     /**
      * @var Data
      */
@@ -49,14 +41,12 @@ class Content
      *
      * @param EmulationFactory $emulationFactory
      * @param Data $priceHelper
-     * @param ImageBuilderFactory $imageBuilderFactory
      * @param CartTotalRepository $cartTotalRepository
      * @param ApsisCoreHelper $apsisCoreHelper
      */
     public function __construct(
         EmulationFactory $emulationFactory,
         Data $priceHelper,
-        ImageBuilderFactory $imageBuilderFactory,
         CartTotalRepository $cartTotalRepository,
         ApsisCoreHelper $apsisCoreHelper
     ) {
@@ -64,7 +54,6 @@ class Content
         $this->cartTotalRepository = $cartTotalRepository;
         $this->priceHelper = $priceHelper;
         $this->emulationFactory = $emulationFactory;
-        $this->imageBuilderFactory = $imageBuilderFactory;
     }
 
     /**
@@ -82,7 +71,7 @@ class Content
             $cartData = (array) $this->getMainCartData($quoteModel);
             $cartData['items'] = (array) $this->getItemData($quoteModel->getAllVisibleItems());
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__CLASS__, __METHOD__, $e->getMessage());
+            $this->apsisCoreHelper->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
             $appEmulation->stopEnvironmentEmulation();
             return [];
         }
@@ -122,13 +111,15 @@ class Content
             ->formatDateForPlatformCompatibility($quoteModel->getCreatedAt());
         $quoteData['updated_at'] = (string) $this->apsisCoreHelper
             ->formatDateForPlatformCompatibility($quoteModel->getUpdatedAt());
-        $quoteData['subtotal_amount'] = (float) $this->round($totals->getSubtotal());
-        $quoteData['grand_total_amount'] = (float) $this->round($quoteModel->getGrandTotal());
-        $quoteData['tax_amount'] = (float) $this->round($totals->getTaxAmount());
-        $quoteData['shipping_amount'] = (float) $this->round($totals->getShippingAmount());
-        $quoteData['discount_amount'] = (float) $this->round($totals->getDiscountAmount());
-        $quoteData['items_quantity'] = (float) $this->round($totals->getItemsQty());
-        $quoteData['items_count'] = (float) $this->round($quoteModel->getItemsCount());
+        $quoteData['store_name'] = (string) $quoteModel->getStore()->getName();
+        $quoteData['website_name'] = (string) $quoteModel->getStore()->getWebsite()->getName();
+        $quoteData['subtotal_amount'] = (float) $this->apsisCoreHelper->round($totals->getSubtotal());
+        $quoteData['grand_total_amount'] = (float) $this->apsisCoreHelper->round($quoteModel->getGrandTotal());
+        $quoteData['tax_amount'] = (float) $this->apsisCoreHelper->round($totals->getTaxAmount());
+        $quoteData['shipping_amount'] = (float) $this->apsisCoreHelper->round($totals->getShippingAmount());
+        $quoteData['discount_amount'] = (float) $this->apsisCoreHelper->round($totals->getDiscountAmount());
+        $quoteData['items_quantity'] = (float) $this->apsisCoreHelper->round($totals->getItemsQty());
+        $quoteData['items_count'] = (float) $this->apsisCoreHelper->round($quoteModel->getItemsCount());
         $quoteData['payment_method_title'] = (string) $quoteModel->getPayment()->getMethod();
         $quoteData['shipping_method_title'] = (string) $quoteModel->getShippingAddress()->getShippingDescription();
         $quoteData['currency_code'] = (string) $totals->getQuoteCurrencyCode();
@@ -146,7 +137,6 @@ class Content
      */
     private function getAddress(Address $address)
     {
-        $addressInfo['email'] = (string) $address->getEmail();
         $addressInfo['prefix'] = (string) $address->getPrefix();
         $addressInfo['suffix'] = (string) $address->getSuffix();
         $addressInfo['first_name'] = (string) $address->getFirstname();
@@ -194,13 +184,13 @@ class Content
             'sku' => (string) $quoteItem->getSku(),
             'name' => (string) $quoteItem->getName(),
             'product_url' => (string) $product->getProductUrl(),
-            'product_image_url' => (string) $this->getProductImageUrl($product),
+            'product_image_url' => (string) $this->apsisCoreHelper->getProductImageUrl($product),
             'qty_ordered' => (float) $quoteItem->getQty() ? $quoteItem->getQty() :
                 ($quoteItem->getQtyOrdered() ? $quoteItem->getQtyOrdered() : 1),
-            'price_amount' => (float) $this->round($quoteItem->getPrice()),
-            'row_total_amount' => (float) $this->round($quoteItem->getRowTotal()),
-            'tax_amount' => (float) $this->round($quoteItem->getTaxAmount()),
-            'discount_amount' => (float) $this->round($quoteItem->getTotalDiscountAmount()),
+            'price_amount' => (float) $this->apsisCoreHelper->round($quoteItem->getPrice()),
+            'row_total_amount' => (float) $this->apsisCoreHelper->round($quoteItem->getRowTotal()),
+            'tax_amount' => (float) $this->apsisCoreHelper->round($quoteItem->getTaxAmount()),
+            'discount_amount' => (float) $this->apsisCoreHelper->round($quoteItem->getTotalDiscountAmount()),
             'product_options' => $this->getProductOptions($quoteItem)
         ];
 
@@ -229,35 +219,6 @@ class Content
         }
 
         return $sortedOptions;
-    }
-
-    /**
-     * @param float $price
-     * @param int $precision
-     *
-     * @return float
-     */
-    private function round($price, $precision = 2)
-    {
-        return (float) round($price, $precision);
-    }
-
-    /**
-     * @param Product $product
-     * @param string $imageId
-     *
-     * @return string
-     */
-    public function getProductImageUrl(Product $product, string $imageId = 'cart_page_product_thumbnail')
-    {
-        /** @var Image $image */
-        $image = $this->imageBuilderFactory
-            ->create()
-            ->setProduct($product)
-            ->setImageId($imageId)
-            ->create();
-
-        return $image->getImageUrl();
     }
 
     /**
@@ -293,8 +254,8 @@ class Content
             foreach ($attribute['value'] as $value) {
                 $values['title'] = (string) $value['title'];
                 $values['value'] = '';
-                $values['qty'] = (float) $this->round($value['qty']);
-                $values['price'] = (float) $this->round($value['price']);
+                $values['qty'] = (float) $this->apsisCoreHelper->round($value['qty']);
+                $values['price'] = (float) $this->apsisCoreHelper->round($value['price']);
                 $option['option_value'] = $values;
             }
             $sortedOptions[] = $option;

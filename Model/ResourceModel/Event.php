@@ -50,7 +50,7 @@ class Event extends AbstractDb
             $write = $this->getConnection();
             return $write->insertMultiple($this->getMainTable(), $events);
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__CLASS__, __METHOD__, $e->getMessage());
+            $this->apsisCoreHelper->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
             return 0;
         }
     }

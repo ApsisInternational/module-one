@@ -70,7 +70,7 @@ class Connect extends Field
                 ->setOnClick("window.location.href='" . $url . "'")
                 ->toHtml();
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__CLASS__, __METHOD__, $e->getMessage());
+            $this->apsisCoreHelper->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
             return parent::_getElementHtml($element);
         }
     }

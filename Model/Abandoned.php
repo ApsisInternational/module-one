@@ -8,7 +8,6 @@ use Magento\Framework\Model\AbstractModel;
 use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Registry;
-use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Data\Collection\AbstractDb;
@@ -19,11 +18,6 @@ use Apsis\One\Model\Abandoned\AbandonedSub;
 
 class Abandoned extends AbstractModel
 {
-    /**
-     * @var Json
-     */
-    private $jsonSerializer;
-
     /**
      * @var DateTime
      */
@@ -52,7 +46,6 @@ class Abandoned extends AbstractModel
      * @param DateTime $dateTime
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param AbandonedCollectionFactory $abandonedCollectionFactory
-     * @param Json $jsonSerializer
      * @param AbandonedSubFactory $abandonedSubFactory
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
@@ -64,7 +57,6 @@ class Abandoned extends AbstractModel
         DateTime $dateTime,
         ApsisCoreHelper $apsisCoreHelper,
         AbandonedCollectionFactory $abandonedCollectionFactory,
-        Json $jsonSerializer,
         AbandonedSubFactory $abandonedSubFactory,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
@@ -74,7 +66,6 @@ class Abandoned extends AbstractModel
         $this->abandonedCollectionFactory = $abandonedCollectionFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->dateTime = $dateTime;
-        $this->jsonSerializer = $jsonSerializer;
         parent::__construct(
             $context,
             $registry,
@@ -103,7 +94,7 @@ class Abandoned extends AbstractModel
         }
 
         $this->setToken($this->apsisCoreHelper->getRandomString())
-            ->setCartData($this->jsonSerializer->serialize($this->getCartData()));
+            ->setCartData($this->apsisCoreHelper->serialize($this->getCartData()));
 
         return $this;
     }
@@ -115,12 +106,15 @@ class Abandoned extends AbstractModel
     {
         $stores = $this->apsisCoreHelper->getStores();
         foreach ($stores as $store) {
-            $isEnabled = $this->apsisCoreHelper
+            $isEnabled = (boolean) $this->apsisCoreHelper
                 ->getStoreConfig($store, ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED);
-            $acDelayPeriod = $this->apsisCoreHelper
-                ->getStoreConfig($store, ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED);
+            $acDelayPeriod = (boolean) $this->apsisCoreHelper
+                ->getStoreConfig($store, ApsisConfigHelper::CONFIG_APSIS_ONE_ABANDONED_CARTS_SEND_AFTER);
 
             if ($isEnabled && $acDelayPeriod) {
+                $customerSyncEnabled = (boolean) $this->apsisCoreHelper
+                    ->getStoreConfig($store, ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED);
+
                 /** @var AbandonedSub $abandonedSub */
                 $abandonedSub = $this->abandonedSubFactory->create();
                 $quoteCollection = $abandonedSub->getQuoteCollectionByStore($store, $acDelayPeriod);
@@ -128,8 +122,7 @@ class Abandoned extends AbstractModel
                     $abandonedSub->aggregateCartDataFromStoreCollection(
                         $quoteCollection,
                         $this->apsisCoreHelper,
-                        $this->jsonSerializer,
-                        $this->dateTime->formatDate(true)
+                        $customerSyncEnabled
                     );
                 }
             }

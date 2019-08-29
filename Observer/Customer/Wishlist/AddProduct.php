@@ -57,7 +57,7 @@ class AddProduct implements ObserverInterface
         $wishlist = $observer->getEvent()->getWishlist();
         $store = $wishlist->getStore();
         /** @var Customer $customer */
-        $customer = $this->apsisCoreHelper->getCustomer($wishlist->getCustomerId());
+        $customer = $this->apsisCoreHelper->getCustomerById($wishlist->getCustomerId());
 
         if ($customer && $this->isOkToProceed($store)) {
             /** @var Product $product */
@@ -120,27 +120,26 @@ class AddProduct implements ObserverInterface
     private function getDataArr(Wishlist $wishlist, Store $store, WishlistItem $item, Product $product)
     {
         $data = [
-            'wishlist_id' => (int)$wishlist->getId(),
-            'customer_id' => (int)$wishlist->getCustomerId(),
-            'updated_at' => (string)$this->apsisCoreHelper
+            'wishlist_id' => (int) $wishlist->getId(),
+            'customer_id' => (int) $wishlist->getCustomerId(),
+            'updated_at' => (string) $this->apsisCoreHelper
                 ->formatDateForPlatformCompatibility($wishlist->getUpdatedAt()),
-            'wishlist_name' => (string)$wishlist->getName(),
-            'website_name' => (string)$this->apsisCoreHelper->getWebsiteNameFromStoreId($store->getId()),
-            'store_name' => (string)$this->apsisCoreHelper->getStoreNameFromId($store->getId()),
-            'currency_code' => (string)$store->getCurrentCurrencyCode(),
-            'items_count' => (int)$wishlist->getItemsCount(),
+            'wishlist_name' => (string) $wishlist->getName(),
+            'website_name' => (string) $this->apsisCoreHelper->getWebsiteNameFromStoreId($store->getId()),
+            'store_name' => (string) $this->apsisCoreHelper->getStoreNameFromId($store->getId()),
+            'currency_code' => (string) $store->getCurrentCurrencyCode(),
+            'items_count' => (int) $wishlist->getItemsCount(),
             'wishlist_item' => [
-                'wishlist_id' => (int)$wishlist->getId(),
-                'wishlist_item_id' => (int)$item->getId(),
-                'added_at' => (string)$this->apsisCoreHelper
-                    ->formatDateForPlatformCompatibility($item->getAddedAt()),
-                'product_id' => (int)$product->getId(),
-                'sku' => (string)$product->getSku(),
-                'name' => (string)$product->getName(),
-                'product_url' => (string)$product->getProductUrl(),
-                'product_image_url' => (string)$this->apsisCoreHelper->getProductImageUrl($product),
-                'catalog_price_amount' => (float)$this->apsisCoreHelper->round($product->getPrice()),
-                'qty' => (float)$item->getQty()
+                'wishlist_id' => (int) $wishlist->getId(),
+                'wishlist_item_id' => (int) $item->getId(),
+                'added_at' => (string) $this->apsisCoreHelper->formatDateForPlatformCompatibility($item->getAddedAt()),
+                'product_id' => (int) $product->getId(),
+                'sku' => (string) $product->getSku(),
+                'name' => (string) $product->getName(),
+                'product_url' => (string) $product->getProductUrl(),
+                'product_image_url' => (string) $this->apsisCoreHelper->getProductImageUrl($product),
+                'catalog_price_amount' => (float) $this->apsisCoreHelper->round($product->getPrice()),
+                'qty' => (float) $item->getQty()
             ]
         ];
         return $data;

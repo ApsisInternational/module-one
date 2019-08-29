@@ -4,8 +4,6 @@ namespace Apsis\One\Helper;
 
 use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Magento\Catalog\Api\Data\ProductInterface;
-use Magento\Catalog\Block\Product\Image;
-use Magento\Catalog\Block\Product\ImageBuilderFactory;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
@@ -23,6 +21,7 @@ use Zend_Date;
 use Apsis\One\Logger\Logger;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface;
+use Magento\Catalog\Helper\Image;
 
 class Core extends AbstractHelper
 {
@@ -74,9 +73,9 @@ class Core extends AbstractHelper
     private $jsonSerializer;
 
     /**
-     * @var ImageBuilderFactory
+     * @var Image
      */
-    private $imageBuilderFactory;
+    private $imageHelper;
 
     /**
      * @var ProductRepositoryInterface
@@ -104,7 +103,7 @@ class Core extends AbstractHelper
      * @param Random $random
      * @param Logger $logger
      * @param Json $jsonSerializer
-     * @param ImageBuilderFactory $imageBuilderFactory
+     * @param Image $imageHelper
      * @param ProductRepositoryInterface $productRepository
      * @param CustomerRepositoryInterface $customerRepository
      * @param DateTime $dateTime
@@ -118,7 +117,7 @@ class Core extends AbstractHelper
         Random $random,
         Logger $logger,
         Json $jsonSerializer,
-        ImageBuilderFactory $imageBuilderFactory,
+        Image $imageHelper,
         ProductRepositoryInterface $productRepository,
         CustomerRepositoryInterface $customerRepository,
         DateTime $dateTime
@@ -126,7 +125,7 @@ class Core extends AbstractHelper
         $this->dateTime = $dateTime;
         $this->customerRepository = $customerRepository;
         $this->productRepository = $productRepository;
-        $this->imageBuilderFactory = $imageBuilderFactory;
+        $this->imageHelper = $imageHelper;
         $this->logger = $logger;
         $this->encryptor = $encryptor;
         $this->localeDate = $localeDate;
@@ -149,7 +148,7 @@ class Core extends AbstractHelper
      * @param int $customerId
      * @return bool|CustomerInterface
      */
-    public function getCustomer($customerId)
+    public function getCustomerById($customerId)
     {
         try {
             return $this->customerRepository->getById($customerId);
@@ -179,16 +178,13 @@ class Core extends AbstractHelper
      *
      * @return string
      */
-    public function getProductImageUrl(ProductInterface $product, string $imageId = 'product_page_image_large')
+    public function getProductImageUrl(ProductInterface $product, string $imageId = 'small_image')
     {
-        /** @var Image $image */
-        $image = $this->imageBuilderFactory
-            ->create()
-            ->setProduct($product)
-            ->setImageId($imageId)
-            ->create();
+        $image = $this->imageHelper
+            ->init($product, $imageId)
+            ->setImageFile($product->getSmallImage());
 
-        return $image->getImageUrl();
+        return $image->getUrl();
     }
 
     /**

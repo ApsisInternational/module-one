@@ -11,8 +11,6 @@ use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Exception;
 use Magento\Customer\Model\Logger as CustomerLogger;
 use Magento\Customer\Model\Log as CustomerLog;
-use Magento\Customer\Api\CustomerRepositoryInterface;
-use Magento\Customer\Api\Data\CustomerInterface;
 
 class LoggerPlugin
 {
@@ -37,27 +35,19 @@ class LoggerPlugin
     private $customerLogger;
 
     /**
-     * @var CustomerRepositoryInterface
-     */
-    private $customerRepository;
-
-    /**
      * Account constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param EventFactory $eventFactory
      * @param EventResource $eventResource
      * @param CustomerLogger $customerLogger
-     * @param CustomerRepositoryInterface $customerRepository
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
         EventFactory $eventFactory,
         EventResource $eventResource,
-        CustomerLogger $customerLogger,
-        CustomerRepositoryInterface $customerRepository
+        CustomerLogger $customerLogger
     ) {
-        $this->customerRepository = $customerRepository;
         $this->customerLogger = $customerLogger;
         $this->eventFactory = $eventFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
@@ -74,7 +64,7 @@ class LoggerPlugin
      */
     public function afterLog(CustomerLogger $logger, $result, $customerId, array $data)
     {
-        $customer = $this->getCustomer($customerId);
+        $customer = $this->apsisCoreHelper->getCustomerById($customerId);
         if ($this->isOkToProceed() && $customer && isset($data['last_login_at'])) {
             /** @var CustomerLog $customerLog */
             $customerLog = $this->customerLogger->get($customerId);
@@ -142,20 +132,5 @@ class LoggerPlugin
         );
 
         return ($account && $event && $sync) ? true : false;
-    }
-
-    /**
-     * @param int $customerId
-     * @return bool|CustomerInterface
-     */
-    private function getCustomer($customerId)
-    {
-        try {
-            $customer = $this->customerRepository->getById($customerId);
-            return $customer;
-        } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
-            return false;
-        }
     }
 }

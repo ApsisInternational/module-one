@@ -114,7 +114,7 @@ class Placed implements ObserverInterface
                 'sku' => (string) $item->getSku(),
                 'name' => (string) $item->getName(),
                 'product_url' => (string) $product->getProductUrl(),
-                'product_image_url' => (string) '' /** @todo $this->apsisCoreHelper->getProductImageUrl($product) */,
+                'product_image_url' => (string) $this->apsisCoreHelper->getProductImageUrl($product),
                 'qty_ordered' => (float) $this->apsisCoreHelper->round($item->getQtyOrdered()),
                 'price_amount' => (float) $this->apsisCoreHelper->round($item->getPrice()),
                 'row_total_amount' => (float) $this->apsisCoreHelper->round($item->getRowTotal()),

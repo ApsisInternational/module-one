@@ -60,7 +60,7 @@ class Product implements ObserverInterface
         /** @var MagentoProduct $product */
         $product = $this->apsisCoreHelper->getProductById($reviewObject->getEntityPkValue());
         /** @var Customer $customer */
-        $customer = $this->apsisCoreHelper->getCustomer($reviewObject->getCustomerId());
+        $customer = $this->apsisCoreHelper->getCustomerById($reviewObject->getCustomerId());
 
         if ($customer && $product && $this->isOkToProceed()) {
             $eventModel = $this->eventFactory->create()

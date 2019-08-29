@@ -65,11 +65,10 @@ class AddProduct implements ObserverInterface
             /** @var WishlistItem $item */
             $item = $observer->getEvent()->getItem();
 
-            $data = (array) $this->getDataArr($wishlist, $store, $item, $product);
             $eventModel = $this->eventFactory
                 ->create()
                 ->setEventType(Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST)
-                ->setEventData($this->apsisCoreHelper->serialize($data))
+                ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($wishlist, $store, $item, $product)))
                 ->setCustomerId($wishlist->getCustomerId())
                 ->setStoreId($store->getId())
                 ->setEmail($customer->getEmail())
@@ -78,7 +77,7 @@ class AddProduct implements ObserverInterface
             try {
                 $this->eventResource->save($eventModel);
             } catch (Exception $e) {
-                $this->apsisCoreHelper->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             }
         }
 
@@ -107,7 +106,7 @@ class AddProduct implements ObserverInterface
             ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED
         );
 
-        return ($account && $event && $sync) ? true : false;
+        return ($account && $event && $sync);
     }
 
     /**

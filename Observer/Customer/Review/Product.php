@@ -63,10 +63,9 @@ class Product implements ObserverInterface
         $customer = $this->apsisCoreHelper->getCustomer($reviewObject->getCustomerId());
 
         if ($customer && $product && $this->isOkToProceed()) {
-            $data = (array) $this->getDataArr($reviewObject, $product);
             $eventModel = $this->eventFactory->create()
                 ->setEventType(Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW)
-                ->setEventData($this->apsisCoreHelper->serialize($data))
+                ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($reviewObject, $product)))
                 ->setCustomerId($reviewObject->getCustomerId())
                 ->setStoreId($this->apsisCoreHelper->getStore()->getId())
                 ->setEmail($customer->getEmail())
@@ -75,7 +74,7 @@ class Product implements ObserverInterface
             try {
                 $this->eventResource->save($eventModel);
             } catch (Exception $e) {
-                $this->apsisCoreHelper->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             }
         }
         return $this;
@@ -102,7 +101,7 @@ class Product implements ObserverInterface
             ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED
         );
 
-        return ($account && $event && $sync) ? true : false;
+        return ($account && $event && $sync);
     }
 
     /**
@@ -114,23 +113,23 @@ class Product implements ObserverInterface
     private function getDataArr(Review $reviewObject, MagentoProduct $product)
     {
         $data = [
-            'review_id' => (int)$reviewObject->getReviewId(),
-            'customer_id' => (int)$reviewObject->getCustomerId(),
-            'created_at' => (string)$this->apsisCoreHelper
+            'review_id' => (int) $reviewObject->getReviewId(),
+            'customer_id' => (int) $reviewObject->getCustomerId(),
+            'created_at' => (string) $this->apsisCoreHelper
                 ->formatDateForPlatformCompatibility($reviewObject->getCreatedAt()),
-            'website_name' => (string)$this->apsisCoreHelper
+            'website_name' => (string) $this->apsisCoreHelper
                 ->getWebsiteNameFromStoreId(),
-            'store_name' => (string)$this->apsisCoreHelper->getStoreNameFromId(),
-            'nickname' => (string)$reviewObject->getNickname(),
-            'review_title' => (string)$reviewObject->getTitle(),
-            'review_detail' => (string)$reviewObject->getDetail(),
-            'product_id' => (int)$product->getId(),
-            'sku' => (string)$product->getSku(),
-            'name' => (string)$product->getName(),
-            'product_url' => (string)$product->getProductUrl(),
-            'product_review_url' => (string)$reviewObject->getReviewUrl(),
-            'product_image_url' => (string)$this->apsisCoreHelper->getProductImageUrl($product),
-            'catalog_price_amount' => (float)$this->apsisCoreHelper->round($product->getPrice())
+            'store_name' => (string) $this->apsisCoreHelper->getStoreNameFromId(),
+            'nickname' => (string) $reviewObject->getNickname(),
+            'review_title' => (string) $reviewObject->getTitle(),
+            'review_detail' => (string) $reviewObject->getDetail(),
+            'product_id' => (int) $product->getId(),
+            'sku' => (string) $product->getSku(),
+            'name' => (string) $product->getName(),
+            'product_url' => (string) $product->getProductUrl(),
+            'product_review_url' => (string) $reviewObject->getReviewUrl(),
+            'product_image_url' => (string) $this->apsisCoreHelper->getProductImageUrl($product),
+            'catalog_price_amount' => (float) $this->apsisCoreHelper->round($product->getPrice())
         ];
         return $data;
     }

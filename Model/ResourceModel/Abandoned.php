@@ -50,7 +50,7 @@ class Abandoned extends AbstractDb
             $write = $this->getConnection();
             return $write->insertMultiple($this->getMainTable(), $carts);
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             return 0;
         }
     }

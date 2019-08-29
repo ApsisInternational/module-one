@@ -84,7 +84,7 @@ class MassDelete extends Action
 
             $this->messageManager->addSuccessMessage(__('A total of %1 record(s) have been deleted.', $collectionSize));
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             $this->messageManager->addErrorMessage(__('An error happen during execution. Please check logs'));
         }
 

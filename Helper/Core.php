@@ -154,7 +154,7 @@ class Core extends AbstractHelper
         try {
             return $this->customerRepository->getById($customerId);
         } catch (Exception $e) {
-            $this->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+            $this->logMessage(__METHOD__, $e->getMessage());
             return false;
         }
     }
@@ -168,7 +168,7 @@ class Core extends AbstractHelper
         try {
             return $this->productRepository->getById($productId);
         } catch (Exception $e) {
-            $this->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+            $this->logMessage(__METHOD__, $e->getMessage());
             return false;
         }
     }
@@ -179,7 +179,7 @@ class Core extends AbstractHelper
      *
      * @return string
      */
-    public function getProductImageUrl(ProductInterface $product, string $imageId = 'cart_page_product_thumbnail')
+    public function getProductImageUrl(ProductInterface $product, string $imageId = 'product_page_image_large')
     {
         /** @var Image $image */
         $image = $this->imageBuilderFactory
@@ -200,7 +200,7 @@ class Core extends AbstractHelper
         try {
             return $this->jsonSerializer->serialize($data);
         } catch (Exception $e) {
-            $this->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+            $this->logMessage(__METHOD__, $e->getMessage());
             return '{}';
         }
     }
@@ -214,7 +214,7 @@ class Core extends AbstractHelper
         try {
             return $this->storeManager->getStore($storeId);
         } catch (Exception $e) {
-            $this->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+            $this->logMessage(__METHOD__, $e->getMessage());
             return false;
         }
     }
@@ -239,19 +239,18 @@ class Core extends AbstractHelper
             $store = $this->getStore($storeId);
             return ($store) ? $this->storeManager->getWebsite($store->getWebsiteId())->getName() : '';
         } catch (Exception $e) {
-            $this->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+            $this->logMessage(__METHOD__, $e->getMessage());
             return '';
         }
     }
 
     /**
-     * @param string $nameSpace
-     * @param string $methodName
+     * @param string $classMethodName
      * @param string $text
      */
-    public function logMessage(string $nameSpace, string $methodName, string $text)
+    public function logMessage(string $classMethodName, string $text)
     {
-        $this->log($this->getStringForLog($nameSpace, $methodName, $text));
+        $this->log($this->getStringForLog($classMethodName, $text));
     }
 
     /**
@@ -359,21 +358,20 @@ class Core extends AbstractHelper
             $store =  (! $defaultGroup) ? null : $defaultGroup->getDefaultStore();
             return $this->storeManager->getStore($store)->getBaseUrl(UrlInterface::URL_TYPE_LINK);
         } catch (Exception $e) {
-            $this->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+            $this->logMessage(__METHOD__, $e->getMessage());
             return '';
         }
     }
 
     /**
-     * @param string $nameSpace
      * @param string $functionName
      * @param string $text
      *
      * @return string
      */
-    public function getStringForLog(string $nameSpace, string $functionName, string $text)
+    public function getStringForLog(string $functionName, string $text)
     {
-        return 'Name Space: ' . $nameSpace . ' - Method: ' . $functionName . ' - Text: ' . $text;
+        return ' - Class & Method: ' . $functionName . ' - Text: ' . $text;
     }
 
     /**
@@ -385,7 +383,7 @@ class Core extends AbstractHelper
         try {
             return $this->random->getRandomString($length);
         } catch (Exception $e) {
-            $this->logMessage(__NAMESPACE__, __METHOD__, $e->getMessage());
+            $this->logMessage(__METHOD__, $e->getMessage());
             return rand();
         }
     }

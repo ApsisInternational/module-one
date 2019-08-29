@@ -29,4 +29,8 @@
             </argument>
         </arguments>
     </type>
+    <!-- Plugins -->
+    <type name="Magento\Customer\Model\Logger">
+        <plugin name="apsis_logger_log_plugin" type="Apsis\One\Plugin\Customer\LoggerPlugin" />
+    </type>
 </config>

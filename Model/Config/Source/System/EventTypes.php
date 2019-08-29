@@ -34,8 +34,8 @@ class EventTypes implements OptionSourceInterface
                 'label' => 'Customer Login'
             ],
             [
-                'value' => Event::EVENT_TYPE_CUSTOMER_PLACED_ORDER,
-                'label' => 'Customer Placed An Order'
+                'value' => Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER,
+                'label' => 'Customer/Subscriber Placed An Order'
             ],
             [
                 'value' => Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART,

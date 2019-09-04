@@ -54,4 +54,25 @@ class Event extends AbstractDb
             return 0;
         }
     }
+
+    /**
+     * @param $oldEmail
+     * @param $newEmail
+     *
+     * @return int
+     */
+    public function updateEventsEmail($oldEmail, $newEmail)
+    {
+        try {
+            $write = $this->getConnection();
+            return $write->update(
+                $this->getMainTable(),
+                ['email' => $newEmail],
+                $this->getConnection()->quoteInto('email = ?', $oldEmail)
+            );
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            return 0;
+        }
+    }
 }

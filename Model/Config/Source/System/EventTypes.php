@@ -22,8 +22,8 @@ class EventTypes implements OptionSourceInterface
                 'label' => 'Subscriber Becomes Customer'
             ],
             [
-                'value' => Event::EVENT_TYPE_SUBSCRIBER_NO_LONGER_CUSTOMER,
-                'label' => 'Subscriber No Longer Customer'
+                'value' => Event::EVENT_TYPE_CUSTOMER_BECOMES_SUBSCRIBER,
+                'label' => 'Customer Becomes Subscriber'
             ],
             [
                 'value' => Event::EVENT_TYPE_SUBSCRIBER_UNSUBSCRIBE,

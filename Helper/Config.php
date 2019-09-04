@@ -108,5 +108,5 @@ class Config extends ApsisCoreHelper
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_WISHLIST = 'apsis_one_events/events/wishlist';
     const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_UNSUBSCRIBE = 'apsis_one_events/events/unsubscribe';
     const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_2_CUSTOMER = 'apsis_one_events/events/subscriber_2_customer';
-    const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_NOT_A_CUSTOMER = 'apsis_one_events/events/subscriber_not_a_customer';
+    const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_2_SUBSCRIBER = 'apsis_one_events/events/customer_2_subscriber';
 }

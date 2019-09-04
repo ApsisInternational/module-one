@@ -145,7 +145,7 @@ class AbandonedSub
     ) {
         $abandonedCarts = [];
         $events = [];
-        $createdAt = $apsisCoreHelper->getFormattedDateTime();
+        $createdAt = $apsisCoreHelper->formatDateForPlatformCompatibility();
         foreach ($quoteCollection as $quote) {
             $cartData = $this->cartContentFactory->create()
                 ->getCartData($quote);

@@ -16,6 +16,9 @@ class Profile extends AbstractModel
     const SYNC_STATUS_SYNCED = 1;
     const SYNC_STATUS_FAILED = 2;
 
+    const IS_FLAGGED = 1;
+    const IS_FLAGGED_NO = 0;
+
     /**
      * @var DateTime
      */

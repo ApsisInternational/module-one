@@ -28,7 +28,7 @@
                 <wishlist>0</wishlist>
                 <unsubscribe>0</unsubscribe>
                 <subscriber_2_customer>0</subscriber_2_customer>
-                <subscriber_not_a_customer>0</subscriber_not_a_customer>
+                <customer_2_subscriber>0</customer_2_subscriber>
             </events>
         </apsis_one_events>
         <apsis_one_mappings>

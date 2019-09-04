@@ -416,11 +416,11 @@
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
                     <comment><![CDATA[Subscriber profile sync need to be enabled as well.]]></comment>
                 </field>
-                <field id="subscriber_not_a_customer" translate="label" type="select" sortOrder="20" showInDefault="1"
+                <field id="customer_2_subscriber" translate="label" type="select" sortOrder="20" showInDefault="1"
                        showInWebsite="1" showInStore="1">
-                    <label>Subscriber No Longer A Customer</label>
+                    <label>Customer Becomes Subscriber</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
-                    <comment><![CDATA[Subscriber profile sync need to be enabled as well.]]></comment>
+                    <comment><![CDATA[Customer profile sync need to be enabled as well.]]></comment>
                 </field>
                 <field id="unsubscribe" translate="label" type="select" sortOrder="30" showInDefault="1"
                        showInWebsite="1" showInStore="1">

@@ -40,4 +40,38 @@ class Collection extends AbstractCollection
 
         return false;
     }
+
+    /**
+     * @param int $customerId
+     * @return bool|DataObject
+     */
+    public function loadCustomerById($customerId)
+    {
+        $collection = $this->addFieldToFilter('customer_id', $customerId)
+            ->setPageSize(1);
+
+        if ($collection->getSize()) {
+            return $collection->getFirstItem();
+        }
+
+        return false;
+    }
+
+    /**
+     * @param string $email
+     * @param int $storeId
+     * @return bool|DataObject
+     */
+    public function loadByEmailAndStoreId($email, $storeId)
+    {
+        $collection = $this->addFieldToFilter('email', $email)
+            ->addFieldToFilter('store_id', $storeId)
+            ->setPageSize(1);
+
+        if ($collection->getSize()) {
+            return $collection->getFirstItem();
+        }
+
+        return false;
+    }
 }

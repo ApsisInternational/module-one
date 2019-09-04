@@ -137,14 +137,6 @@ class Core extends AbstractHelper
     }
 
     /**
-     * @return string
-     */
-    public function getFormattedDateTime()
-    {
-        return $this->dateTime->formatDate(true);
-    }
-
-    /**
      * @param int $customerId
      * @return bool|CustomerInterface
      */
@@ -401,11 +393,11 @@ class Core extends AbstractHelper
     }
 
     /**
-     * @param string $date
+     * @param string|null $date
      *
      * @return string
      */
-    public function formatDateForPlatformCompatibility($date)
+    public function formatDateForPlatformCompatibility($date = null)
     {
         return $this->localeDate->date($date)->format(Zend_Date::ISO_8601);
     }

@@ -4,15 +4,9 @@
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
         <arguments>
             <argument name="collections" xsi:type="array">
-                <item name="apsis_abandoned_report_grid_data_source" xsi:type="string">
-                    Apsis\One\Ui\Model\ResourceModel\Abandoned\Collection
-                </item>
-                <item name="apsis_event_report_grid_data_source" xsi:type="string">
-                    Apsis\One\Ui\Model\ResourceModel\Event\Collection
-                </item>
-                <item name="apsis_profile_report_grid_data_source" xsi:type="string">
-                    Apsis\One\Ui\Model\ResourceModel\Profile\Collection
-                </item>
+                <item name="apsis_abandoned_report_grid_data_source" xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Abandoned\Collection</item>
+                <item name="apsis_event_report_grid_data_source" xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Event\Collection</item>
+                <item name="apsis_profile_report_grid_data_source" xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Profile\Collection</item>
             </argument>
         </arguments>
     </type>
@@ -29,8 +23,11 @@
             </argument>
         </arguments>
     </type>
-    <!-- Plugins -->
     <type name="Magento\Customer\Model\Logger">
         <plugin name="apsis_logger_log_plugin" type="Apsis\One\Plugin\Customer\LoggerPlugin" />
     </type>
+    <preference for="Magento\Config\Model\Config\Structure\SearchInterface"
+                type="Magento\Config\Model\Config\Structure" />
+    <preference for="Magento\Sales\Api\Data\OrderSearchResultInterface"
+                type="Magento\Sales\Model\ResourceModel\Order\Collection" />
 </config>

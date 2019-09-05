@@ -86,8 +86,8 @@ class Placed implements ObserverInterface
             $eventModel = $this->eventFactory->create()
                 ->setEventType(Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER)
                 ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($order, $subscriberId)))
-                ->setCustomerId((int) $order->getCustomerId())
-                ->setSubscriberId()
+                ->setCustomerId($order->getCustomerId())
+                ->setSubscriberId($subscriberId)
                 ->setStoreId($order->getStore()->getId())
                 ->setEmail($order->getCustomerEmail())
                 ->setStatus(Profile::SYNC_STATUS_PENDING);

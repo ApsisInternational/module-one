@@ -21,15 +21,25 @@ class Config extends ApsisCoreHelper
     /** Section & topic */
     const CONFIG_APSIS_ONE_MAPPINGS_SECTION_GROUP = 'apsis_one_mappings/section_mapping';
     const CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION = 'apsis_one_mappings/section_mapping/section';
+    /** Customer/Subscriber common attributes */
+    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_GROUP
+        = 'apsis_one_mappings/customer_subscriber_common_attribute';
+    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
+        = 'apsis_one_mappings/customer_subscriber_common_attribute/email';
+    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_WEBSITE_ID
+        = 'apsis_one_mappings/customer_subscriber_common_attribute/website_id';
+    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_STORE_ID
+        = 'apsis_one_mappings/customer_subscriber_common_attribute/store_id';
+    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_WEBSITE_NAME
+        = 'apsis_one_mappings/customer_subscriber_common_attribute/website_name';
+    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_STORE_NAME
+        = 'apsis_one_mappings/customer_subscriber_common_attribute/store_name';
     /** Subscriber attributes */
     const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_GROUP = 'apsis_one_mappings/subscriber_attribute';
     const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_ID = 'apsis_one_mappings/subscriber_attribute/subscriber_id';
-    const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_EMAIL = 'apsis_one_mappings/subscriber_attribute/subscriber_email';
     const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_STATUS = 'apsis_one_mappings/subscriber_attribute/subscriber_status';
-    const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_WEBSITE_ID = 'apsis_one_mappings/subscriber_attribute/website_id';
-    const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_STORE_ID = 'apsis_one_mappings/subscriber_attribute/store_id';
-    const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_WEBSITE_NAME = 'apsis_one_mappings/subscriber_attribute/website_name';
-    const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_STORE_NAME = 'apsis_one_mappings/subscriber_attribute/store_name';
+    const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_STATUS_CHANGE_AT
+        = 'apsis_one_mappings/subscriber_attribute/status_change_at';
     /** Customer attributes */
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_GROUP = 'apsis_one_mappings/customer_attribute';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_TITLE = 'apsis_one_mappings/customer_attribute/title';

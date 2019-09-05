@@ -10,9 +10,7 @@
     </argument>
     <dataSource name="apsis_event_report_grid_data_source">
         <argument name="dataProvider" xsi:type="configurableObject">
-            <argument name="class" xsi:type="string">
-                Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider
-            </argument>
+            <argument name="class" xsi:type="string">Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider</argument>
             <argument name="name" xsi:type="string">apsis_event_report_grid_data_source</argument>
             <argument name="primaryFieldName" xsi:type="string">id</argument>
             <argument name="requestFieldName" xsi:type="string">id</argument>
@@ -46,9 +44,7 @@
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="columnsData" xsi:type="array">
-                        <item name="provider" xsi:type="string">
-                            apsis_event_grid.apsis_event_grid.apsis_event_columns
-                        </item>
+                        <item name="provider" xsi:type="string">apsis_event_grid.apsis_event_grid.apsis_event_columns</item>
                     </item>
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/controls/columns</item>
                     <item name="displayArea" xsi:type="string">dataGridActions</item>
@@ -58,23 +54,15 @@
         <filters name="listing_filters">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="columnsProvider" xsi:type="string">
-                        apsis_event_grid.apsis_event_grid.apsis_event_columns
-                    </item>
+                    <item name="columnsProvider" xsi:type="string">apsis_event_grid.apsis_event_grid.apsis_event_columns</item>
                     <item name="storageConfig" xsi:type="array">
-                        <item name="provider" xsi:type="string">
-                            apsis_event_grid.apsis_event_grid.listing_top.bookmarks
-                        </item>
+                        <item name="provider" xsi:type="string">apsis_event_grid.apsis_event_grid.listing_top.bookmarks</item>
                         <item name="namespace" xsi:type="string">current.filters</item>
                     </item>
                     <item name="childDefaults" xsi:type="array">
-                        <item name="provider" xsi:type="string">
-                            apsis_event_grid.apsis_event_grid.listing_top.listing_filters
-                        </item>
+                        <item name="provider" xsi:type="string">apsis_event_grid.apsis_event_grid.listing_top.listing_filters</item>
                         <item name="imports" xsi:type="array">
-                            <item name="visible" xsi:type="string">
-                                apsis_event_grid.apsis_event_grid.apsis_event_columns.${ $.index }:visible
-                            </item>
+                            <item name="visible" xsi:type="string">apsis_event_grid.apsis_event_grid.apsis_event_columns.${ $.index }:visible</item>
                         </item>
                     </item>
                 </item>
@@ -83,9 +71,7 @@
         <massaction name="listing_massaction">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="selectProvider" xsi:type="string">
-                        apsis_event_grid.apsis_event_grid.apsis_event_columns.ids
-                    </item>
+                    <item name="selectProvider" xsi:type="string">apsis_event_grid.apsis_event_grid.apsis_event_columns.ids</item>
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/tree-massactions</item>
                     <item name="indexField" xsi:type="string">id</item>
                 </item>
@@ -108,14 +94,10 @@
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="storageConfig" xsi:type="array">
-                        <item name="provider" xsi:type="string">
-                            apsis_event_grid.apsis_event_grid.listing_top.bookmarks
-                        </item>
+                        <item name="provider" xsi:type="string">apsis_event_grid.apsis_event_grid.listing_top.bookmarks</item>
                         <item name="namespace" xsi:type="string">current.paging</item>
                     </item>
-                    <item name="selectProvider" xsi:type="string">
-                        apsis_event_grid.apsis_event_grid.apsis_event_columns.ids
-                    </item>
+                    <item name="selectProvider" xsi:type="string">apsis_event_grid.apsis_event_grid.apsis_event_columns.ids</item>
                 </item>
             </argument>
         </paging>
@@ -139,7 +121,7 @@
         </column>
         <column name="event_type">
             <argument name="data" xsi:type="array">
-                <item name="options" xsi:type="object">\Apsis\One\Model\Config\Source\System\EventTypes</item>
+                <item name="options" xsi:type="object">Apsis\One\Model\Config\Source\System\EventTypes</item>
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">select</item>
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
@@ -191,7 +173,7 @@
         </column>
         <column name="status">
             <argument name="data" xsi:type="array">
-                <item name="options" xsi:type="object">\Apsis\One\Model\Config\Source\System\SyncStatus</item>
+                <item name="options" xsi:type="object">Apsis\One\Model\Config\Source\System\SyncStatus</item>
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">select</item>
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>

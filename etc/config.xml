@@ -35,14 +35,17 @@
             <section_topic_mapping>
                 <section>0</section>
             </section_topic_mapping>
-            <subscriber_attribute>
-                <subscriber_id>0</subscriber_id>
+            <customer_subscriber_common_attribute>
                 <subscriber_email>0</subscriber_email>
-                <subscriber_status>0</subscriber_status>
                 <website_id>0</website_id>
                 <store_id>0</store_id>
                 <website_name>0</website_name>
                 <store_name>0</store_name>
+            </customer_subscriber_common_attribute>
+            <subscriber_attribute>
+                <subscriber_id>0</subscriber_id>
+                <subscriber_status>0</subscriber_status>
+                <status_change_at>0</status_change_at>
             </subscriber_attribute>
             <customer_attribute>
                 <title>0</title>

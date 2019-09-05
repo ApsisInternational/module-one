@@ -47,8 +47,9 @@ class Attributes implements OptionSourceInterface
          * @todo fetch from account set at selected scope
          */
         $fields[] = ['value' => 'subscriber_id', 'label' => 'SUBSCRIBER ID'];
-        $fields[] = ['value' => 'subscriber_email', 'label' => 'SUBSCRIBER EMAIL'];
+        $fields[] = ['value' => 'email', 'label' => 'EMAIL'];
         $fields[] = ['value' => 'subscriber_status', 'label' => 'SUBSCRIBER STATUS'];
+        $fields[] = ['value' => 'status_change_at', 'label' => 'STATUS CHANGE AT'];
         $fields[] = ['value' => 'website_id', 'label' => 'WEBSITE ID'];
         $fields[] = ['value' => 'store_id', 'label' => 'STORE ID'];
         $fields[] = ['value' => 'website_name', 'label' => 'WEBSITE NAME'];

@@ -59,53 +59,63 @@
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Section</source_model>
                 </field>
             </group>
-            <group id="subscriber_attribute" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1"
+            <group id="customer_subscriber_common_attribute" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1"
                    showInStore="1">
-                <label>Subscriber Attribute Mapping</label>
-                <field id="subscriber_id" type="select" translate="label" sortOrder="20" showInDefault="1"
+                <label>Common Attribute Mapping</label>
+                <field id="email" type="select" translate="label" sortOrder="5" showInDefault="1"
                        showInWebsite="1" showInStore="1">
-                    <label>Subscriber Id</label>
-                    <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
-                    <comment><![CDATA[Attribute Type: Number]]></comment>
-                </field>
-                <field id="subscriber_email" type="select" translate="label" sortOrder="30" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>Subscriber Email</label>
+                    <label>Email</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
                     <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
-                <field id="subscriber_status" type="select" translate="label" sortOrder="40" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>Subscriber Status</label>
-                    <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
-                    <comment><![CDATA[Attribute Type: Text]]></comment>
-                </field>
-                <field id="website_id" type="select" translate="label" sortOrder="50" showInDefault="1"
+                <field id="website_id" type="select" translate="label" sortOrder="10" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Website Id</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
                     <comment><![CDATA[Attribute Type: Number]]></comment>
                 </field>
-                <field id="store_id" type="select" translate="label" sortOrder="60" showInDefault="1" showInWebsite="1"
+                <field id="store_id" type="select" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Store Id</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
                     <comment><![CDATA[Attribute Type: Number]]></comment>
                 </field>
-                <field id="website_name" type="select" translate="label" sortOrder="70" showInDefault="1"
+                <field id="website_name" type="select" translate="label" sortOrder="30" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Website Name</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
                     <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
-                <field id="store_name" type="select" translate="label" sortOrder="80" showInDefault="1"
+                <field id="store_name" type="select" translate="label" sortOrder="40" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Store Name</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
                     <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
             </group>
-            <group id="customer_attribute" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1"
+            <group id="subscriber_attribute" translate="label" sortOrder="30" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Subscriber Attribute Mapping</label>
+                <field id="subscriber_id" type="select" translate="label" sortOrder="10" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Subscriber Id</label>
+                    <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Number]]></comment>
+                </field>
+                <field id="subscriber_status" type="select" translate="label" sortOrder="20" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Subscriber Status</label>
+                    <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
+                </field>
+                <field id="status_change_at" type="select" translate="label" sortOrder="30" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Status Change At</label>
+                    <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Date ISO-8601]]></comment>
+                </field>
+            </group>
+            <group id="customer_attribute" translate="label" sortOrder="40" showInDefault="1" showInWebsite="1"
                    showInStore="1">
                 <label>Customer Attribute Mapping</label>
                 <field id="customer_title" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1"

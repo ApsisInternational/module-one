@@ -10,9 +10,7 @@
     </argument>
     <dataSource name="apsis_abandoned_report_grid_data_source">
         <argument name="dataProvider" xsi:type="configurableObject">
-            <argument name="class" xsi:type="string">
-                Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider
-            </argument>
+            <argument name="class" xsi:type="string">Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider</argument>
             <argument name="name" xsi:type="string">apsis_abandoned_report_grid_data_source</argument>
             <argument name="primaryFieldName" xsi:type="string">id</argument>
             <argument name="requestFieldName" xsi:type="string">id</argument>
@@ -46,9 +44,7 @@
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="columnsData" xsi:type="array">
-                        <item name="provider" xsi:type="string">
-                            apsis_abandoned_grid.apsis_abandoned_grid.apsis_abandoned_columns
-                        </item>
+                        <item name="provider" xsi:type="string">apsis_abandoned_grid.apsis_abandoned_grid.apsis_abandoned_columns</item>
                     </item>
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/controls/columns</item>
                     <item name="displayArea" xsi:type="string">dataGridActions</item>
@@ -58,23 +54,15 @@
         <filters name="listing_filters">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="columnsProvider" xsi:type="string">
-                        apsis_abandoned_grid.apsis_abandoned_grid.apsis_abandoned_columns
-                    </item>
+                    <item name="columnsProvider" xsi:type="string">apsis_abandoned_grid.apsis_abandoned_grid.apsis_abandoned_columns</item>
                     <item name="storageConfig" xsi:type="array">
-                        <item name="provider" xsi:type="string">
-                            apsis_abandoned_grid.apsis_abandoned_grid.listing_top.bookmarks
-                        </item>
+                        <item name="provider" xsi:type="string">apsis_abandoned_grid.apsis_abandoned_grid.listing_top.bookmarks</item>
                         <item name="namespace" xsi:type="string">current.filters</item>
                     </item>
                     <item name="childDefaults" xsi:type="array">
-                        <item name="provider" xsi:type="string">
-                            apsis_abandoned_grid.apsis_abandoned_grid.listing_top.listing_filters
-                        </item>
+                        <item name="provider" xsi:type="string">apsis_abandoned_grid.apsis_abandoned_grid.listing_top.listing_filters</item>
                         <item name="imports" xsi:type="array">
-                            <item name="visible" xsi:type="string">
-                                apsis_abandoned_grid.apsis_abandoned_grid.apsis_abandoned_columns.${ $.index }:visible
-                            </item>
+                            <item name="visible" xsi:type="string">apsis_abandoned_grid.apsis_abandoned_grid.apsis_abandoned_columns.${ $.index }:visible</item>
                         </item>
                     </item>
                 </item>
@@ -83,9 +71,7 @@
         <massaction name="listing_massaction">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="selectProvider" xsi:type="string">
-                        apsis_abandoned_grid.apsis_abandoned_grid.apsis_abandoned_columns.ids
-                    </item>
+                    <item name="selectProvider" xsi:type="string">apsis_abandoned_grid.apsis_abandoned_grid.apsis_abandoned_columns.ids</item>
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/tree-massactions</item>
                     <item name="indexField" xsi:type="string">id</item>
                 </item>
@@ -108,14 +94,10 @@
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="storageConfig" xsi:type="array">
-                        <item name="provider" xsi:type="string">
-                            apsis_abandoned_grid.apsis_abandoned_grid.listing_top.bookmarks
-                        </item>
+                        <item name="provider" xsi:type="string">apsis_abandoned_grid.apsis_abandoned_grid.listing_top.bookmarks</item>
                         <item name="namespace" xsi:type="string">current.paging</item>
                     </item>
-                    <item name="selectProvider" xsi:type="string">
-                        apsis_abandoned_grid.apsis_abandoned_grid.apsis_abandoned_columns.ids
-                    </item>
+                    <item name="selectProvider" xsi:type="string">apsis_abandoned_grid.apsis_abandoned_grid.apsis_abandoned_columns.ids</item>
                 </item>
             </argument>
         </paging>

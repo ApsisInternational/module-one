@@ -32,20 +32,18 @@ class Cron
 
     public function syncEvents()
     {
-        if ($this->hasJobAlreadyRun('apsis_sync_events')) {
+        if ($this->hasJobAlreadyRun('apsis_one_sync_events')) {
             return;
         }
 
         //@todo run code
     }
 
-    public function syncSubscribers()
+    public function syncProfiles()
     {
-        if ($this->hasJobAlreadyRun('apsis_sync_subscribers')) {
+        if ($this->hasJobAlreadyRun('apsis_one_sync_profiles')) {
             return;
         }
-
-        //@todo run code
     }
 
     /**
@@ -53,7 +51,7 @@ class Cron
      */
     public function findAbandonedCarts()
     {
-        if ($this->hasJobAlreadyRun('apsis_abandoned_carts')) {
+        if ($this->hasJobAlreadyRun('apsis_one_find_abandoned_carts')) {
             return;
         }
 

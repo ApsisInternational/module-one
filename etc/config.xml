@@ -36,7 +36,6 @@
                 <section>0</section>
             </section_topic_mapping>
             <customer_subscriber_common_attribute>
-                <subscriber_email>0</subscriber_email>
                 <website_id>0</website_id>
                 <store_id>0</store_id>
                 <website_name>0</website_name>
@@ -45,7 +44,7 @@
             <subscriber_attribute>
                 <subscriber_id>0</subscriber_id>
                 <subscriber_status>0</subscriber_status>
-                <status_change_at>0</status_change_at>
+                <change_status_at>0</change_status_at>
             </subscriber_attribute>
             <customer_attribute>
                 <title>0</title>

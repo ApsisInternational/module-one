@@ -30,4 +30,8 @@
                 type="Magento\Config\Model\Config\Structure" />
     <preference for="Magento\Sales\Api\Data\OrderSearchResultInterface"
                 type="Magento\Sales\Model\ResourceModel\Order\Collection" />
+    <preference for="Magento\Framework\Filesystem\Directory\WriteInterface"
+                type="Magento\Framework\Filesystem\Directory\Write" />
+    <preference for="Magento\Framework\Filesystem\DriverInterface"
+                type="Magento\Framework\Filesystem\Driver\File" />
 </config>

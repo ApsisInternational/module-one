@@ -75,6 +75,10 @@ class SaveUpdate implements ObserverInterface
         $this->eventResource = $eventResource;
     }
 
+    /**
+     * @param Observer $observer
+     * @return $this
+     */
     public function execute(Observer $observer)
     {
         /** @var Subscriber $subscriber */

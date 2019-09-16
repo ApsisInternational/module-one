@@ -2,9 +2,11 @@
 
 namespace Apsis\One\Helper;
 
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Magento\Framework\App\Helper\AbstractHelper;
+use Magento\Store\Api\Data\StoreInterface;
+use Magento\Store\Model\ScopeInterface;
 
-class Config extends ApsisCoreHelper
+class Config extends AbstractHelper
 {
     /**
      * Accounts section
@@ -24,8 +26,6 @@ class Config extends ApsisCoreHelper
     /** Customer/Subscriber common attributes */
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_GROUP
         = 'apsis_one_mappings/customer_subscriber_common_attribute';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
-        = 'apsis_one_mappings/customer_subscriber_common_attribute/email';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_WEBSITE_ID
         = 'apsis_one_mappings/customer_subscriber_common_attribute/website_id';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_STORE_ID
@@ -39,7 +39,7 @@ class Config extends ApsisCoreHelper
     const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_ID = 'apsis_one_mappings/subscriber_attribute/subscriber_id';
     const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_STATUS = 'apsis_one_mappings/subscriber_attribute/subscriber_status';
     const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_STATUS_CHANGE_AT
-        = 'apsis_one_mappings/subscriber_attribute/status_change_at';
+        = 'apsis_one_mappings/subscriber_attribute/change_status_at';
     /** Customer attributes */
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_GROUP = 'apsis_one_mappings/customer_attribute';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_TITLE = 'apsis_one_mappings/customer_attribute/title';
@@ -119,4 +119,58 @@ class Config extends ApsisCoreHelper
     const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_UNSUBSCRIBE = 'apsis_one_events/events/unsubscribe';
     const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_2_CUSTOMER = 'apsis_one_events/events/subscriber_2_customer';
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_2_SUBSCRIBER = 'apsis_one_events/events/customer_2_subscriber';
+
+    /**
+     * @param StoreInterface $store
+     * @return array
+     */
+    public function getSubscriberAttributeMapping(StoreInterface $store)
+    {
+        $subscriberMapping = $this->getConfigMappingsByPath($store, self::CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_GROUP);
+        $commonMapping = $this->getCommonAttributeMapping($store);
+        return array_merge($subscriberMapping, $commonMapping);
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @return array
+     */
+    public function getCustomerAttributeMapping(StoreInterface $store)
+    {
+        $customerMapping = $this->getConfigMappingsByPath($store, self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_GROUP);
+        $commonMapping = $this->getCommonAttributeMapping($store);
+        return array_merge($customerMapping, $commonMapping);
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @return array
+     */
+    private function getCommonAttributeMapping(StoreInterface $store)
+    {
+        return $this->getConfigMappingsByPath($store, self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_GROUP);
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param string $path
+     * @return array
+     */
+    private function getConfigMappingsByPath(StoreInterface $store, $path)
+    {
+        $mapping = $this->scopeConfig->getValue(
+            $path,
+            ScopeInterface::SCOPE_STORE,
+            $store->getId()
+        );
+
+        //skip non mapped config
+        foreach ($mapping as $key => $value) {
+            if (! $value) {
+                unset($mapping[$key]);
+            }
+        }
+
+        return $mapping;
+    }
 }

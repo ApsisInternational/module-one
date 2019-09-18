@@ -74,8 +74,6 @@
                 <delivery_postcode>0</delivery_postcode>
                 <delivery_telephone>0</delivery_telephone>
                 <delivery_company>0</delivery_company>
-                <last_quote_id>0</last_quote_id>
-                <last_increment_id>0</last_increment_id>
                 <last_order_date>0</last_order_date>
                 <number_of_orders>0</number_of_orders>
                 <average_order_value>0</average_order_value>

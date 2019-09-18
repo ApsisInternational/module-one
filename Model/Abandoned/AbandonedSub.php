@@ -10,6 +10,7 @@ use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\DateIntervalFactory;
 use Exception;
+use Magento\Framework\Stdlib\DateTime;
 use Magento\Quote\Model\ResourceModel\Quote\Collection;
 use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
 use Magento\Store\Api\Data\StoreInterface;
@@ -55,6 +56,11 @@ class AbandonedSub
     private $cartContentFactory;
 
     /**
+     * @var DateTime
+     */
+    private $dateTime;
+
+    /**
      * AbandonedSub constructor.
      *
      * @param ContentFactory $cartContentFactory
@@ -64,6 +70,7 @@ class AbandonedSub
      * @param EventResource $eventResource
      * @param DateTimeFactory $dateTimeFactory
      * @param DateTimeZoneFactory $dateTimeZoneFactory
+     * @param DateTime $dateTime
      */
     public function __construct(
         ContentFactory $cartContentFactory,
@@ -72,8 +79,10 @@ class AbandonedSub
         DateIntervalFactory $dateIntervalFactory,
         EventResource $eventResource,
         DateTimeFactory $dateTimeFactory,
-        DateTimeZoneFactory $dateTimeZoneFactory
+        DateTimeZoneFactory $dateTimeZoneFactory,
+        DateTime $dateTime
     ) {
+        $this->dateTime = $dateTime;
         $this->dateTimeFactory = $dateTimeFactory;
         $this->dateTimeZoneFactory = $dateTimeZoneFactory;
         $this->eventResource = $eventResource;
@@ -145,20 +154,19 @@ class AbandonedSub
     ) {
         $abandonedCarts = [];
         $events = [];
-        $createdAt = $apsisCoreHelper->formatDateForPlatformCompatibility();
+        $createdAt = $this->dateTime->formatDate(true);
         foreach ($quoteCollection as $quote) {
             $cartData = $this->cartContentFactory->create()
                 ->getCartData($quote);
 
             if (! empty($cartData)) {
-                $token = $apsisCoreHelper->getRandomString();
                 $abandonedCarts[] = [
                     'quote_id' => $quote->getId(),
                     'cart_data' => $apsisCoreHelper->serialize($cartData),
                     'store_id' => $quote->getStoreId(),
                     'customer_id' => $quote->getCustomerId(),
                     'customer_email' => $quote->getCustomerEmail(),
-                    'token' => $token,
+                    'token' => $apsisCoreHelper->getRandomString(),
                     'created_at' => $createdAt
                 ];
 

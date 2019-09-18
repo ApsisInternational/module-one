@@ -54,12 +54,13 @@ class Cart extends Action
      */
     public function execute()
     {
-        $quoteId = (int) $this->getRequest()->getParam('quote_id');
         $token = $this->getRequest()->getParam('token');
-        if (strlen($token) && $this->apsisCoreHelper->isEnabledForSelectedScopeInAdmin() && $quoteId) {
+        if (strlen($token) === ApsisCoreHelper::RAND_STRING_LENGTH
+            && $this->apsisCoreHelper->isEnabledForSelectedScopeInAdmin()
+        ) {
             $cartData = $this->abandonedFactory
                 ->create()
-                ->getCartJsonData($quoteId, $token);
+                ->getCartJsonData($token);
 
             return (! empty($cartData)) ? $this->sendJsonResponse($cartData) : $this->sendResponse(204);
         } else {
@@ -93,7 +94,7 @@ class Cart extends Action
             ->setHeader('Content-type', 'text/html; charset=UTF-8', true);
 
         if (strlen($body)) {
-            $this->getResponse()->setBody('<h1>401 Unauthorized</h1>');
+            $this->getResponse()->setBody($body);
         }
 
         return $this->getResponse();

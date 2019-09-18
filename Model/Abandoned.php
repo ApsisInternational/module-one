@@ -84,7 +84,7 @@ class Abandoned extends AbstractModel
     }
 
     /**
-     * @return $this|AbstractModel
+     * @return $this
      */
     public function beforeSave()
     {
@@ -130,25 +130,14 @@ class Abandoned extends AbstractModel
     }
 
     /**
-     * @param int $quoteId
      * @param string $token
      *
      * @return array|string
      */
-    public function getCartJsonData(int $quoteId, string $token)
+    public function getCartJsonData(string $token)
     {
-        $cart = $this->loadByQuoteId($quoteId);
-        return (! empty($cart) && $cart->getToken() === $token) ? (string) $cart->getCartData() : [];
-    }
-
-    /**
-     * @param int $quoteId
-     *
-     * @return bool|DataObject
-     */
-    private function loadByQuoteId(int $quoteId)
-    {
-        return $this->abandonedCollectionFactory->create()
-            ->loadByQuoteId($quoteId);
+        $cart = $this->abandonedCollectionFactory->create()
+            ->loadByToken($token);
+        return (! empty($cart)) ? (string) $cart->getCartData() : [];
     }
 }

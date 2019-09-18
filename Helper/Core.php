@@ -32,6 +32,8 @@ class Core extends AbstractHelper
     const APSIS_EVENT_TABLE = 'apsis_event';
     const APSIS_ABANDONED_TABLE = 'apsis_abandoned';
 
+    const RAND_STRING_LENGTH = 32;
+
     /**
      * @var Logger
      */
@@ -363,16 +365,14 @@ class Core extends AbstractHelper
     }
 
     /**
-     * @param int $length
      * @return string
      */
-    public function getRandomString(int $length = 32)
+    public function getRandomString()
     {
         try {
-            return $this->random->getRandomString($length);
+            return $this->random->getRandomString(self::RAND_STRING_LENGTH);
         } catch (Exception $e) {
             $this->logMessage(__METHOD__, $e->getMessage());
-            return rand();
         }
     }
 

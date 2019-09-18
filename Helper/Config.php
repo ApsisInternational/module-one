@@ -81,9 +81,6 @@ class Config extends AbstractHelper
         = 'apsis_one_mappings/customer_attribute/delivery_telephone';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_COMPANY
         = 'apsis_one_mappings/customer_attribute/delivery_company';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_QUOTE_ID = 'apsis_one_mappings/customer_attribute/last_quote_id';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_INCREMENT_ID
-        = 'apsis_one_mappings/customer_attribute/last_increment_id';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_PURCHASE_DATE
         = 'apsis_one_mappings/customer_attribute/last_order_date';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_TOTAL_NUMBER_OF_ORDERS

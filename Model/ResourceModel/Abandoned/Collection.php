@@ -23,15 +23,14 @@ class Collection extends AbstractCollection
     }
 
     /**
-     * @param int $quoteId
+     * @param string $token
      *
      * @return bool|DataObject
      */
-    public function loadByQuoteId(int $quoteId)
+    public function loadByToken(string $token)
     {
-        $collection = $this->addFieldToFilter('quote_id', $quoteId)
-            ->setPageSize(1)
-            ->setOrder('id');
+        $collection = $this->addFieldToFilter('token', $token)
+            ->setPageSize(1);
 
         if ($collection->getSize()) {
             return $collection->getFirstItem();

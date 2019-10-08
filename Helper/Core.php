@@ -418,7 +418,7 @@ class Core extends AbstractHelper
      * @param StoreInterface $store
      * @param string $path
      *
-     * @return null|string
+     * @return mixed
      */
     public function getStoreConfig(StoreInterface $store, $path)
     {

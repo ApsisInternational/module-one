@@ -6,7 +6,6 @@ use Magento\Framework\DataObject;
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\Profile;
-use Magento\Newsletter\Model\Subscriber;
 
 class Collection extends AbstractCollection
 {
@@ -91,7 +90,23 @@ class Collection extends AbstractCollection
             ->addFieldToFilter('subscriber_id', ['notnull' => true])
             ->addFieldToFilter('subscriber_sync_status', Profile::SYNC_STATUS_PENDING)
             ->addFieldToFilter('store_id', $storeId)
-            ->addFieldToFilter('subscriber_status', Subscriber::STATUS_SUBSCRIBED)
+            ->setPageSize($syncLimit);
+
+        return $collection;
+    }
+
+    /**
+     * @param int $storeId
+     * @param int $syncLimit
+     *
+     * @return Collection
+     */
+    public function getCustomerToSyncByStore($storeId, $syncLimit)
+    {
+        $collection = $this->addFieldToSelect('*')
+            ->addFieldToFilter('customer_id', ['notnull' => true])
+            ->addFieldToFilter('customer_sync_status', Profile::SYNC_STATUS_PENDING)
+            ->addFieldToFilter('store_id', $storeId)
             ->setPageSize($syncLimit);
 
         return $collection;

@@ -123,13 +123,14 @@ class SaveUpdate implements ObserverInterface
                 if ($profile->getSubscriberSyncStatus()) {
                     $profile->setSubscriberSyncStatus(Profile::SYNC_STATUS_PENDING);
                 }
+                $this->profileResource->save($profile);
             } elseif (! $profile->getIsSubscriber() && $subscriber->getStatus() == Subscriber::STATUS_SUBSCRIBED) {
                 $this->registerCustomerBecomesSubscriberEvent($subscriber, $profile, $store);
                 $profile->setSubscriberId($subscriber->getSubscriberId())
                     ->setSubscriberStatus($subscriber->getStatus())
                     ->setIsSubscriber(Profile::IS_FLAGGED);
+                $this->profileResource->save($profile);
             }
-            $this->profileResource->save($profile);
         } catch (Exception $e) {
             $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
         }

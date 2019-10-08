@@ -86,6 +86,12 @@
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
                     <comment><![CDATA[Attribute Type: Text]]></comment>
                 </field>
+                <field id="email" type="select" translate="label" sortOrder="50" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Email</label>
+                    <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
+                </field>
             </group>
             <group id="subscriber_attribute" translate="label" sortOrder="30" showInDefault="1" showInWebsite="1"
                    showInStore="1">
@@ -447,6 +453,32 @@
                     <label>Customer Adds Product To Wishlist</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
                     <comment><![CDATA[Customer profile sync need to be enabled as well.]]></comment>
+                </field>
+            </group>
+        </section>
+        <section id="apsis_one_configuration" translate="label" sortOrder="60" showInDefault="1" showInWebsite="1"
+                 showInStore="1">
+            <class>separator-top</class>
+            <label>Configuration</label>
+            <tab>apsis_one</tab>
+            <resource>Apsis_One::config</resource>
+            <group id="profile_sync" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Profile Sync</label>
+                <attribute type="expanded">1</attribute>
+                <field id="order_status" translate="comment label" sortOrder="10" type="multiselect" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Sales Attributes Calculation With Order Status</label>
+                    <source_model>Apsis\One\Model\Config\Source\System\OrderStatus</source_model>
+                    <comment><![CDATA[Select multiple statuses by pressing Ctrl button while selecting]]></comment>
+                </field>
+                <field id="subscriber_batch_size" translate="label" sortOrder="20" showInStore="1" showInWebsite="1"
+                       showInDefault="1">
+                    <label>Subscriber Sync Size</label>
+                </field>
+                <field id="customer_batch_size" translate="label" sortOrder="30" showInStore="1" showInWebsite="1"
+                       showInDefault="1">
+                    <label>Customer Sync Size</label>
                 </field>
             </group>
         </section>

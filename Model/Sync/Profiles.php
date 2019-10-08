@@ -5,6 +5,7 @@ namespace Apsis\One\Model\Sync;
 use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers;
+use Apsis\One\Model\Sync\Profiles\Customers;
 
 class Profiles
 {
@@ -19,15 +20,23 @@ class Profiles
     private $subscribers;
 
     /**
+     * @var Customers
+     */
+    private $customers;
+
+    /**
      * Profiles constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param Subscribers $subscribers
+     * @param Customers $customers
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
-        Subscribers $subscribers
+        Subscribers $subscribers,
+        Customers $customers
     ) {
+        $this->customers = $customers;
         $this->subscribers = $subscribers;
         $this->apsisCoreHelper = $apsisCoreHelper;
     }
@@ -45,6 +54,7 @@ class Profiles
             );
             if ($account) {
                 $this->subscribers->sync($store);
+                $this->customers->sync($store);
             }
         }
     }

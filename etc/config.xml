@@ -80,5 +80,12 @@
                 <ac_token>0</ac_token>
             </customer_attribute>
         </apsis_one_mappings>
+        <apsis_one_configuration>
+            <profile_sync>
+                <order_status>pending,processing,complete</order_status>
+                <subscriber_batch_size>500</subscriber_batch_size>
+                <customer_batch_size>500</customer_batch_size>
+            </profile_sync>
+        </apsis_one_configuration>
     </default>
 </config>

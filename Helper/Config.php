@@ -117,6 +117,14 @@ class Config extends AbstractHelper
     const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_2_CUSTOMER = 'apsis_one_events/events/subscriber_2_customer';
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_2_SUBSCRIBER = 'apsis_one_events/events/customer_2_subscriber';
 
+    const CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_SECTION = 'apsis_one_configuration/profile_sync';
+    const CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_ORDER_STATUSES
+        = 'apsis_one_configuration/profile_sync/order_status';
+    const CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_SUBSCRIBER_BATCH_SIZE
+        = 'apsis_one_configuration/profile_sync/subscriber_batch_size';
+    const CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_CUSTOMER_BATCH_SIZE
+        = 'apsis_one_configuration/profile_sync/customer_batch_size';
+
     /**
      * @param StoreInterface $store
      * @return array
@@ -135,6 +143,7 @@ class Config extends AbstractHelper
     public function getCustomerAttributeMapping(StoreInterface $store)
     {
         $customerMapping = $this->getConfigMappingsByPath($store, self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_GROUP);
+        unset($customerMapping['ac_token']);
         $commonMapping = $this->getCommonAttributeMapping($store);
         return array_merge($customerMapping, $commonMapping);
     }

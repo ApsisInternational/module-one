@@ -3,6 +3,7 @@
 namespace Apsis\One\Model;
 
 use Apsis\One\Model\ResourceModel\Cron\CollectionFactory as CronCollectionFactory;
+use Apsis\One\Model\Sync\Profiles;
 
 class Cron
 {
@@ -17,15 +18,23 @@ class Cron
     private $abandonedFactory;
 
     /**
+     * @var Profiles
+     */
+    private $profileSyncModel;
+
+    /**
      * Cron constructor.
      *
      * @param CronCollectionFactory $cronCollectionFactory
      * @param AbandonedFactory $abandonedFactory
+     * @param Profiles $profiles
      */
     public function __construct(
         CronCollectionFactory $cronCollectionFactory,
-        AbandonedFactory $abandonedFactory
+        AbandonedFactory $abandonedFactory,
+        Profiles $profiles
     ) {
+        $this->profileSyncModel = $profiles;
         $this->abandonedFactory = $abandonedFactory;
         $this->cronCollectionFactory = $cronCollectionFactory;
     }
@@ -39,11 +48,16 @@ class Cron
         //@todo run code
     }
 
+    /**
+     * Sync profiles
+     */
     public function syncProfiles()
     {
         if ($this->hasJobAlreadyRun('apsis_one_sync_profiles')) {
             return;
         }
+
+        $this->profileSyncModel->syncProfiles();
     }
 
     /**

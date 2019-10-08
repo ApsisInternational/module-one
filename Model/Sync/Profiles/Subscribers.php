@@ -13,12 +13,11 @@ use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Helper\File as ApsisFileHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers\SubscriberFactory as SubscriberDataFactory;
 use Apsis\One\Model\Profile;
+use Magento\Newsletter\Model\Subscriber as MagentoSubscriber;
 
 class Subscribers
 {
-    const LIMIT = 5000;
-
-    const DEFAULT_HEADERS = ['email' => 'Email'];
+    const LIMIT = 500;
 
     /**
      * @var ProfileCollectionFactory
@@ -99,14 +98,17 @@ class Subscribers
         );
 
         if ($sync && $topics) {
+            $limit = $this->apsisCoreHelper->getStoreConfig(
+                $store,
+                ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_SUBSCRIBER_BATCH_SIZE
+            );
             $collection = $this->profileCollectionFactory->create()
-                ->getSubscribersToSyncByStore($store->getId(), self::LIMIT);
+                ->getSubscribersToSyncByStore($store->getId(), ($limit) ? $limit : self::LIMIT);
 
             if ($collection->getSize()) {
                 try {
                     $file = strtolower($store->getCode() . '_subscriber_' . date('d_m_Y_His') . '.csv');
-                    $mappings = $this->apsisConfigHelper->getSubscriberAttributeMapping($store);
-                    $headers = array_merge(self::DEFAULT_HEADERS, $mappings);
+                    $headers = $this->apsisConfigHelper->getSubscriberAttributeMapping($store);
                     $this->apsisFileHelper->outputCSV(
                         $file,
                         $headers
@@ -118,6 +120,7 @@ class Subscribers
                     );
                     $subscribersToUpdate = [];
 
+                    /** @var MagentoSubscriber $subscriber */
                     foreach ($subscriberCollection as $subscriber) {
                         try {
                             $subscriberData = $this->subscriberDataFactory->create()
@@ -148,7 +151,7 @@ class Subscribers
                         Profile::SYNC_STATUS_SYNCED
                     );
 
-                    $this->apsisCoreHelper->log('Subscriber synced : ' . $updated);
+                    $this->apsisCoreHelper->log('Total subscriber synced : ' . $updated);
                 } catch (Exception $e) {
                     $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
                 }

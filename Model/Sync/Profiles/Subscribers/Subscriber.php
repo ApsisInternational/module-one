@@ -115,7 +115,7 @@ class Subscriber
     private function getSubscriberStatus()
     {
         $statusId = $this->subscriber->getSubscriberStatus();
-        $status = 'Subscribed';
+        $status = 'subscribed';
         if ($statusId === MagentoSubscriber::STATUS_UNSUBSCRIBED) {
             $status = 'unsubscribed';
         }
@@ -128,8 +128,7 @@ class Subscriber
      */
     private function getChangeStatusAt()
     {
-        return (string) $this->apsisCoreHelper->formatDateForPlatformCompatibility(
-            $this->subscriber->getChangeStatusAt()
-        );
+        return (string) ($this->subscriber->getChangeStatusAt()) ?
+            $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->subscriber->getChangeStatusAt()) : '';
     }
 }

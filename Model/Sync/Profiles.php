@@ -9,6 +9,8 @@ use Apsis\One\Model\Sync\Profiles\Customers;
 
 class Profiles
 {
+    const DEFAULT_HEADERS = ['integration_uid' => 'integration_uid'];
+
     /**
      * @var ApsisCoreHelper
      */

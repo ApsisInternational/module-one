@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Model;
 
+use Apsis\One\Model\Sql\ExpressionFactory;
 use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Model\AbstractModel;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
@@ -25,11 +26,17 @@ class Profile extends AbstractModel
     private $dateTime;
 
     /**
+     * @var ExpressionFactory
+     */
+    private $expressionFactory;
+
+    /**
      * Subscriber constructor.
      *
      * @param Context $context
      * @param Registry $registry
      * @param DateTime $dateTime
+     * @param ExpressionFactory $expressionFactory
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -38,10 +45,12 @@ class Profile extends AbstractModel
         Context $context,
         Registry $registry,
         DateTime $dateTime,
+        ExpressionFactory $expressionFactory,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = []
     ) {
+        $this->expressionFactory = $expressionFactory;
         $this->dateTime = $dateTime;
         parent::__construct(
             $context,
@@ -67,6 +76,14 @@ class Profile extends AbstractModel
     {
         parent::beforeSave();
         $this->setUpdatedAt($this->dateTime->formatDate(true));
+
+        if ($this->isObjectNew()) {
+            $this->setIntegrationUid(
+                $this->expressionFactory->create(
+                    ["expression" => "(SELECT UUID())"]
+                )
+            );
+        }
         return $this;
     }
 }

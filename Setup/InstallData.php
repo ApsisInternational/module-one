@@ -3,14 +3,29 @@
 namespace Apsis\One\Setup;
 
 use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Sql\ExpressionFactory;
 use Magento\Framework\Setup\InstallDataInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Newsletter\Model\Subscriber;
-use Zend_Db_Expr;
 
 class InstallData implements InstallDataInterface
 {
+    /**
+     * @var ExpressionFactory
+     */
+    private $expressionFactory;
+
+    /**
+     * InstallData constructor.
+     *
+     * @param ExpressionFactory $expressionFactory
+     */
+    public function __construct(ExpressionFactory $expressionFactory)
+    {
+        $this->expressionFactory = $expressionFactory;
+    }
+
     /**
      * @param ModuleDataSetupInterface $setup
      * @param ModuleContextInterface $context
@@ -47,15 +62,16 @@ class InstallData implements InstallDataInterface
                     'customer' => $installer->getTable('customer_entity')
                 ],
                 [
+                    'integration_uid' => $this->expressionFactory->create(["expression" => ('UUID()')]),
                     'customer_id' => 'entity_id',
                     'email',
-                    'is_customer' => new Zend_Db_Expr('1'),
+                    'is_customer' => $this->expressionFactory->create(["expression" => ('1')]),
                     'store_id'
                 ]
             );
         $sqlQuery = $select->insertFromSelect(
             $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
-            ['customer_id', 'email', 'is_customer', 'store_id'],
+            ['integration_uid', 'customer_id', 'email', 'is_customer', 'store_id'],
             false
         );
         $installer->getConnection()->query($sqlQuery);
@@ -74,11 +90,12 @@ class InstallData implements InstallDataInterface
                     )
                 ],
                 [
+                    'integration_uid' => $this->expressionFactory->create(["expression" => ('UUID()')]),
                     'subscriber_id',
                     'store_id',
                     'email' => 'subscriber_email',
                     'subscriber_status',
-                    'is_subscriber' => new Zend_Db_Expr('1'),
+                    'is_subscriber' => $this->expressionFactory->create(["expression" => ('1')]),
                 ]
             )
             ->where('subscriber_status = ?', Subscriber::STATUS_SUBSCRIBED)
@@ -86,7 +103,7 @@ class InstallData implements InstallDataInterface
 
         $sqlQuery = $select->insertFromSelect(
             $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
-            ['subscriber_id', 'store_id', 'email', 'subscriber_status', 'is_subscriber'],
+            ['integration_uid', 'subscriber_id', 'store_id', 'email', 'subscriber_status', 'is_subscriber'],
             false
         );
         $installer->getConnection()->query($sqlQuery);
@@ -107,7 +124,7 @@ class InstallData implements InstallDataInterface
             [
                 'subscriber_id',
                 'subscriber_status',
-                'is_subscriber' => new Zend_Db_Expr('1'),
+                'is_subscriber' => $this->expressionFactory->create(["expression" => ('1')]),
             ]
         )
             ->where('subscriber.subscriber_status = ?', Subscriber::STATUS_SUBSCRIBED)

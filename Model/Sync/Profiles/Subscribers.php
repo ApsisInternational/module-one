@@ -4,6 +4,7 @@ namespace Apsis\One\Model\Sync\Profiles;
 
 use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\ResourceModel\Profile\Collection;
 use \Exception;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
@@ -14,6 +15,7 @@ use Apsis\One\Helper\File as ApsisFileHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers\SubscriberFactory as SubscriberDataFactory;
 use Apsis\One\Model\Profile;
 use Magento\Newsletter\Model\Subscriber as MagentoSubscriber;
+use Apsis\One\Model\Sync\Profiles;
 
 class Subscribers
 {
@@ -96,8 +98,9 @@ class Subscribers
             $store,
             ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC
         );
+        $mappings = $this->apsisConfigHelper->getSubscriberAttributeMapping($store);
 
-        if ($sync && $topics) {
+        if ($sync && $topics && ! empty($mappings) && isset($mappings['email'])) {
             $limit = $this->apsisCoreHelper->getStoreConfig(
                 $store,
                 ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_SUBSCRIBER_BATCH_SIZE
@@ -107,11 +110,12 @@ class Subscribers
 
             if ($collection->getSize()) {
                 try {
+                    $integrationIdsArray = $this->getIntegrationIdsArray($collection);
                     $file = strtolower($store->getCode() . '_subscriber_' . date('d_m_Y_His') . '.csv');
-                    $headers = $this->apsisConfigHelper->getSubscriberAttributeMapping($store);
+                    $mappings = array_merge(Profiles::DEFAULT_HEADERS, $mappings);
                     $this->apsisFileHelper->outputCSV(
                         $file,
-                        $headers
+                        $mappings
                     );
 
                     $subscriberCollection = $this->getSubscribersFromIdsByStore(
@@ -123,8 +127,9 @@ class Subscribers
                     /** @var MagentoSubscriber $subscriber */
                     foreach ($subscriberCollection as $subscriber) {
                         try {
+                            $subscriber->setIntegrationUid($integrationIdsArray[$subscriber->getSubscriberId()]);
                             $subscriberData = $this->subscriberDataFactory->create()
-                                ->setSubscriberData(array_keys($headers), $subscriber)
+                                ->setSubscriberData(array_keys($mappings), $subscriber)
                                 ->toCSVArray();
                             $this->apsisFileHelper->outputCSV(
                                 $file,
@@ -157,6 +162,20 @@ class Subscribers
                 }
             }
         }
+    }
+
+    /**
+     * @param Collection $collection
+     *
+     * @return array
+     */
+    private function getIntegrationIdsArray(Collection $collection)
+    {
+        $integrationIdsArray = [];
+        foreach ($collection as $item) {
+            $integrationIdsArray[$item->getSubscriberId()] = $item->getIntegrationUid();
+        }
+        return $integrationIdsArray;
     }
 
     /**

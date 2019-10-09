@@ -283,7 +283,7 @@ class InstallSchema implements InstallSchemaInterface
                 'error_message',
                 Table::TYPE_TEXT,
                 255,
-                ['nullable' => false],
+                ['nullable' => false, 'default' => ''],
                 'Error Message'
             )
             ->addColumn(
@@ -389,6 +389,13 @@ class InstallSchema implements InstallSchemaInterface
             'Primary Key'
         )
             ->addColumn(
+                'integration_uid',
+                Table::TYPE_TEXT,
+                255,
+                ['nullable' => false, 'default' => ''],
+                'Integration User Id'
+            )
+            ->addColumn(
                 'subscriber_status',
                 Table::TYPE_SMALLINT,
                 null,
@@ -455,7 +462,7 @@ class InstallSchema implements InstallSchemaInterface
                 'error_message',
                 Table::TYPE_TEXT,
                 255,
-                ['nullable' => false],
+                ['nullable' => false, 'default' => ''],
                 'Error Message'
             )
             ->addColumn(

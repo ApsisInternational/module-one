@@ -117,6 +117,14 @@ class Customer
     /**
      * @return string
      */
+    private function getIntegrationUid()
+    {
+        return (string) $this->customer->getIntegrationUid();
+    }
+
+    /**
+     * @return string
+     */
     private function getEmail()
     {
         return (string) $this->customer->getEmail();

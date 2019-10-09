@@ -64,6 +64,14 @@ class Subscriber
     /**
      * @return string
      */
+    private function getIntegrationUid()
+    {
+        return (string) $this->subscriber->getIntegrationUid();
+    }
+
+    /**
+     * @return string
+     */
     private function getEmail()
     {
         return (string) $this->subscriber->getEmail();

@@ -4,6 +4,7 @@ namespace Apsis\One\Model\Sync\Profiles;
 
 use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\ResourceModel\Profile\Collection;
 use \Exception;
 use Magento\Customer\Model\Customer;
 use Magento\Store\Api\Data\StoreInterface;
@@ -12,6 +13,7 @@ use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Helper\File as ApsisFileHelper;
 use Apsis\One\Model\Sync\Profiles\Customers\CustomerFactory as CustomerDataFactory;
 use Apsis\One\Model\Profile;
+use Apsis\One\Model\Sync\Profiles;
 
 class Customers
 {
@@ -82,8 +84,9 @@ class Customers
             $store,
             ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED
         );
+        $mappings = $this->apsisConfigHelper->getCustomerAttributeMapping($store);
 
-        if ($sync) {
+        if ($sync && ! empty($mappings) && isset($mappings['email'])) {
             $limit = $this->apsisCoreHelper->getStoreConfig(
                 $store,
                 ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_CUSTOMER_BATCH_SIZE
@@ -92,7 +95,7 @@ class Customers
                 ->getCustomerToSyncByStore($store->getId(), ($limit) ? $limit : self::LIMIT);
 
             if ($collection->getSize()) {
-                $this->syncCustomersForStore($store, $collection->getColumnValues('customer_id'));
+                $this->syncCustomersForStore($store, $collection, $mappings);
             }
         }
     }
@@ -113,17 +116,20 @@ class Customers
 
     /**
      * @param StoreInterface $store
-     * @param array $customerIds
+     * @param Collection $collection
+     * @param array $mappings
      */
-    private function syncCustomersForStore(StoreInterface $store, $customerIds)
+    private function syncCustomersForStore(StoreInterface $store, Collection $collection, array $mappings)
     {
         try {
+            $integrationIdsArray = $this->getIntegrationIdsArray($collection);
             $file = strtolower($store->getCode() . '_customer_' . date('d_m_Y_His') . '.csv');
-            $headers = $this->apsisConfigHelper->getCustomerAttributeMapping($store);
+            $mappings = array_merge(Profiles::DEFAULT_HEADERS, $mappings);
             $this->apsisFileHelper->outputCSV(
                 $file,
-                $headers
+                $mappings
             );
+            $customerIds = $collection->getColumnValues('customer_id');
             $customerCollection = $this->profileResource->buildCustomerCollection(
                 $store->getId(),
                 $customerIds
@@ -137,11 +143,12 @@ class Customers
             /** @var Customer $customer */
             foreach ($customerCollection as $customer) {
                 try {
+                    $customer->setIntegrationUid($integrationIdsArray[$customer->getId()]);
                     if (isset($salesData[$customer->getId()])) {
                         $customer = $this->setSalesDataOnCustomer($salesData[$customer->getId()], $customer);
                     }
                     $subscriberData = $this->customerDataFactory->create()
-                        ->setCustomerData(array_keys($headers), $customer)
+                        ->setCustomerData(array_keys($mappings), $customer)
                         ->toCSVArray();
                     $this->apsisFileHelper->outputCSV(
                         $file,
@@ -172,5 +179,19 @@ class Customers
         } catch (Exception $e) {
             $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
         }
+    }
+
+    /**
+     * @param Collection $collection
+     *
+     * @return array
+     */
+    private function getIntegrationIdsArray(Collection $collection)
+    {
+        $integrationIdsArray = [];
+        foreach ($collection as $item) {
+            $integrationIdsArray[$item->getCustomerId()] = $item->getIntegrationUid();
+        }
+        return $integrationIdsArray;
     }
 }

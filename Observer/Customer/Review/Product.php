@@ -14,6 +14,7 @@ use Apsis\One\Model\Event;
 use Magento\Catalog\Model\Product as MagentoProduct;
 use Magento\Customer\Model\Customer;
 use Apsis\One\Helper\Config as ApsisConfigHelper;
+use Magento\Store\Model\ScopeInterface;
 
 class Product implements ObserverInterface
 {
@@ -86,10 +87,7 @@ class Product implements ObserverInterface
     private function isOkToProceed()
     {
         $store = $this->apsisCoreHelper->getStore();
-        $account = (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED
-        );
+        $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
 
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,

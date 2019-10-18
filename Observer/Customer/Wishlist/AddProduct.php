@@ -11,6 +11,7 @@ use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Apsis\One\Model\EventFactory;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\Event;
+use Magento\Store\Model\ScopeInterface;
 use Magento\Wishlist\Model\Wishlist;
 use Magento\Catalog\Model\Product;
 use Magento\Wishlist\Model\Item as WishlistItem;
@@ -91,10 +92,7 @@ class AddProduct implements ObserverInterface
      */
     private function isOkToProceed(Store $store)
     {
-        $account = (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED
-        );
+        $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
 
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,

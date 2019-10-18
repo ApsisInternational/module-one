@@ -30,36 +30,44 @@ class Topic implements OptionSourceInterface
      */
     public function toOptionArray()
     {
-        if (! $this->apsisCoreHelper->isEnabledForSelectedScopeInAdmin()) {
-            return [['value' => '0', 'label' => __('-- Please Enable Account First --')]];
+        $section = $this->apsisCoreHelper->getMappedValueFromSelectedScope(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+        );
+        if (! $section) {
+            return [['value' => '0', 'label' => __('-- Map & Save Section First --')]];
         }
 
-        if (! $this->apsisCoreHelper->getMappedValueFromSelectedScope(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
-        )) {
-            return [['value' => '0', 'label' => __('-- Map & Save Section First --')]];
+        $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
+        $apiClient = $this->apsisCoreHelper->getApiClient(
+            $scope['context_scope'],
+            $scope['context_scope_id']
+        );
+        if (! $apiClient) {
+            return [['value' => '0', 'label' => __('-- Account Is Not Enabled Or Invalid Credentials --')]];
+        }
+
+        $consentLists = $apiClient->getConsentLists($section);
+        if (! $consentLists || ! isset($consentLists->items)) {
+            return [['value' => '0', 'label' => __('-- Invalid Request Or No Consent Lists On Account --')]];
         }
 
         //default data option
         $options[] = ['value' => '0', 'label' => __('-- Please Select --')];
 
-        /**
-         * @todo fetch from section / account set at selected scope
-         */
-        $options[] = [
-            'label' => 'Consent list 1',
-            'value' => [
-                ['value' => 'consent1_topic1', 'label' => 'Topic 1'],
-                ['value' => 'consent1_topic2', 'label' => 'Topic 2']
-            ]
-        ];
-        $options[] = [
-            'label' => 'Consent list 2',
-            'value' => [
-                ['value' => 'consent2_topic1', 'label' => 'Topic 1'],
-                ['value' => 'consent2_topic2', 'label' => 'Topic 2']
-            ]
-        ];
+        foreach ($consentLists->items as $consentList) {
+            $topics = $apiClient->getTopics($section, $consentList->discriminator);
+            $formattedTopics = [];
+            foreach ($topics->items as $topic) {
+                $formattedTopics[] = [
+                    'value' => $consentList->discriminator . '|' . $topic->discriminator,
+                    'label' => $topic->name
+                ];
+            }
+            $options[] = [
+                'label' => $consentList->name,
+                'value' => $formattedTopics
+            ];
+        }
 
         return $options;
     }

@@ -3,25 +3,33 @@
 namespace Apsis\One\Helper;
 
 use Apsis\One\Helper\Config as ApsisConfigHelper;
+use Apsis\One\Model\DateIntervalFactory;
+use Apsis\One\Model\DateTimeFactory;
+use Apsis\One\Model\DateTimeZoneFactory;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Customer\Api\Data\CustomerInterface;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Encryption\EncryptorInterface;
-use Magento\Framework\Math\Random;
 use Magento\Framework\Serialize\Serializer\Json;
-use Magento\Framework\Stdlib\DateTime;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Exception;
 use Magento\Store\Api\Data\StoreInterface;
+use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\Stdlib\StringUtils;
+use stdClass;
 use Zend_Date;
 use Apsis\One\Logger\Logger;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Catalog\Helper\Image;
+use Apsis\One\ApiClient\ClientFactory;
+use Apsis\One\ApiClient\Client;
+use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as DataCollectionFactory;
 
 class Core extends AbstractHelper
 {
@@ -32,17 +40,13 @@ class Core extends AbstractHelper
     const APSIS_EVENT_TABLE = 'apsis_event';
     const APSIS_ABANDONED_TABLE = 'apsis_abandoned';
 
-    const RAND_STRING_LENGTH = 32;
+    const TOKEN_STRING_LENGTH = 36;
+    const APSIS_ATTRIBUTE_TYPE_TEXT_LIMIT = 100;
 
     /**
      * @var Logger
      */
     private $logger;
-
-    /**
-     * APSIS attribute type text limit
-     */
-    const APSIS_ATTRIBUTE_TYPE_TEXT_LIMIT = 100;
 
     /**
      * @var StoreManagerInterface
@@ -65,11 +69,6 @@ class Core extends AbstractHelper
     private $encryptor;
 
     /**
-     * @var Random
-     */
-    private $random;
-
-    /**
      * @var Json
      */
     private $jsonSerializer;
@@ -90,9 +89,34 @@ class Core extends AbstractHelper
     private $customerRepository;
 
     /**
-     * @var DateTime
+     * @var WriterInterface
      */
-    private $dateTime;
+    private $writer;
+
+    /**
+     * @var ClientFactory
+     */
+    private $apiClientFactory;
+
+    /**
+     * @var DateTimeFactory
+     */
+    private $dateTimeFactory;
+
+    /**
+     * @var DateTimeZoneFactory
+     */
+    private $dateTimeZoneFactory;
+
+    /**
+     * @var DateIntervalFactory
+     */
+    private $dateIntervalFactory;
+
+    /**
+     * @var DataCollectionFactory
+     */
+    private $dataCollectionFactory;
 
     /**
      * Core constructor.
@@ -102,13 +126,17 @@ class Core extends AbstractHelper
      * @param StringUtils $stringUtils
      * @param TimezoneInterface $localeDate
      * @param EncryptorInterface $encryptor
-     * @param Random $random
      * @param Logger $logger
      * @param Json $jsonSerializer
      * @param Image $imageHelper
      * @param ProductRepositoryInterface $productRepository
      * @param CustomerRepositoryInterface $customerRepository
-     * @param DateTime $dateTime
+     * @param WriterInterface $writer
+     * @param ClientFactory $clientFactory
+     * @param DateTimeFactory $dateTimeFactory
+     * @param DateTimeZoneFactory $dateTimeZoneFactory
+     * @param DateIntervalFactory $dateIntervalFactory
+     * @param DataCollectionFactory $dataCollectionFactory
      */
     public function __construct(
         Context $context,
@@ -116,15 +144,24 @@ class Core extends AbstractHelper
         StringUtils $stringUtils,
         TimezoneInterface $localeDate,
         EncryptorInterface $encryptor,
-        Random $random,
         Logger $logger,
         Json $jsonSerializer,
         Image $imageHelper,
         ProductRepositoryInterface $productRepository,
         CustomerRepositoryInterface $customerRepository,
-        DateTime $dateTime
+        WriterInterface $writer,
+        ClientFactory $clientFactory,
+        DateTimeFactory $dateTimeFactory,
+        DateTimeZoneFactory $dateTimeZoneFactory,
+        DateIntervalFactory $dateIntervalFactory,
+        DataCollectionFactory $dataCollectionFactory
     ) {
-        $this->dateTime = $dateTime;
+        $this->dataCollectionFactory = $dataCollectionFactory;
+        $this->dateIntervalFactory = $dateIntervalFactory;
+        $this->dateTimeFactory = $dateTimeFactory;
+        $this->dateTimeZoneFactory = $dateTimeZoneFactory;
+        $this->apiClientFactory = $clientFactory;
+        $this->writer = $writer;
         $this->customerRepository = $customerRepository;
         $this->productRepository = $productRepository;
         $this->imageHelper = $imageHelper;
@@ -133,7 +170,6 @@ class Core extends AbstractHelper
         $this->localeDate = $localeDate;
         $this->storeManager = $storeManager;
         $this->stringUtils = $stringUtils;
-        $this->random = $random;
         $this->jsonSerializer = $jsonSerializer;
         parent::__construct($context);
     }
@@ -292,7 +328,7 @@ class Core extends AbstractHelper
         }
 
         $websiteId = $this->_request->getParam('website', 0);
-        $contextScope = ($websiteId) ? 'websites' : 'default';
+        $contextScope = ($websiteId) ? ScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
 
         $scope['context_scope'] = $contextScope;
         $scope['context_scope_id'] = $websiteId;
@@ -300,27 +336,34 @@ class Core extends AbstractHelper
     }
 
     /**
-     * @return bool
+     * Get config scope value.
+     *
+     * @param string $path
+     * @param string $contextScope
+     * @param int $contextScopeId
+     *
+     * @return mixed
      */
-    public function isEnabledForSelectedScopeInAdmin()
+    public function getConfigValue(string $path, string $contextScope, int $contextScopeId)
     {
-        return (boolean) $this->getMappedValueFromSelectedScope(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED
-        );
+        return $this->scopeConfig->getValue($path, $contextScope, $contextScopeId);
     }
 
     /**
      * Get config scope value.
      *
      * @param string $path
+     * @param string $value
      * @param string $contextScope
-     * @param null|int $contextScopeId
-     *
-     * @return mixed
+     * @param int $contextScopeId
      */
-    public function getConfigValue(string $path, string $contextScope = 'default', $contextScopeId = null)
-    {
-        return $this->scopeConfig->getValue($path, $contextScope, $contextScopeId);
+    public function saveConfigValue(
+        string $path,
+        string $value,
+        string $contextScope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+        $contextScopeId = 0
+    ) {
+        $this->writer->save($path, $value, $contextScope, $contextScopeId);
     }
 
     /**
@@ -362,18 +405,6 @@ class Core extends AbstractHelper
     public function getStringForLog(string $functionName, string $text)
     {
         return ' - Class & Method: ' . $functionName . ' - Text: ' . $text;
-    }
-
-    /**
-     * @return string
-     */
-    public function getRandomString()
-    {
-        try {
-            return $this->random->getRandomString(self::RAND_STRING_LENGTH);
-        } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage());
-        }
     }
 
     /**
@@ -434,5 +465,227 @@ class Core extends AbstractHelper
     public function round($price, $precision = 2)
     {
         return (float) round($price, $precision);
+    }
+
+    /**
+     * @param string $contextScope
+     * @param int $scopeId
+     *
+     * @return mixed
+     */
+    private function getClientId(string $contextScope, int $scopeId)
+    {
+        return $this->getConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID,
+            $contextScope,
+            $scopeId
+        );
+    }
+
+    /**
+     * @param string $contextScope
+     * @param int $scopeId
+     *
+     * @return string
+     */
+    private function getClientSecret(string $contextScope, int $scopeId)
+    {
+        $value = $this->getConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET,
+            $contextScope,
+            $scopeId
+        );
+        return $this->encryptor->decrypt($value);
+    }
+
+    /**
+     * @param string $contextScope
+     * @param int $scopeId
+     *
+     * @return bool
+     */
+    public function isEnabled(string $contextScope, int $scopeId)
+    {
+        return (boolean) $this->getConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED,
+            $contextScope,
+            $scopeId
+        );
+    }
+
+    /**
+     * @param string $contextScope
+     * @param int $scopeId
+     *
+     * @return string
+     */
+    private function getTokenFromDb(string $contextScope, int $scopeId)
+    {
+        $value = $this->getConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
+            $contextScope,
+            $scopeId
+        );
+        $token = $this->encryptor->decrypt($value);
+        return $token;
+    }
+
+    /**
+     * @param string $contextScope
+     * @param int $scopeId
+     * @param string $id
+     * @param string $secret
+     *
+     * @return string
+     */
+    public function getTokenFromApi(string $contextScope, int $scopeId, $id = '', $secret = '')
+    {
+        $clientId = ($id) ? $id : $this->getClientId($contextScope, $scopeId);
+        $clientSecret = ($secret) ? $secret : $this->getClientSecret($contextScope, $scopeId);
+        if (! empty($clientId) && ! empty($clientSecret)) {
+            /** @var Client $apiClient */
+            $apiClient = $this->apiClientFactory->create();
+            $request = $apiClient->setHelper($this)
+                ->getAccessToken($clientId, $clientSecret);
+
+            if ($request && isset($request->access_token)) {
+                if ($contextScope === ScopeInterface::SCOPE_STORES) {
+                    $scopeArray = $this->resolveContextForStore($scopeId);
+                    $contextScope = $scopeArray['scope'];
+                    $scopeId = $scopeArray['id'];
+                }
+                $this->saveTokenAndExpiry($contextScope, $scopeId, $request);
+                return $request->access_token;
+            }
+        }
+        return '';
+    }
+
+    /**
+     * @param string $contextScope
+     * @param int $scopeId
+     *
+     * @return string
+     */
+    private function getToken(string $contextScope, int $scopeId)
+    {
+        if ($this->isTokenExpired($contextScope, $scopeId)) {
+            return $this->getTokenFromApi($contextScope, $scopeId);
+        } else {
+            $token = $this->getTokenFromDb($contextScope, $scopeId);
+            return ($token) ? $token : $this->getTokenFromApi($contextScope, $scopeId);
+        }
+    }
+
+    /**
+     * @param string $contextScope
+     * @param int $scopeId
+     *
+     * @return bool
+     */
+    private function isTokenExpired(string $contextScope, int $scopeId)
+    {
+        $expiryTime = $this->getConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE,
+            $contextScope,
+            $scopeId
+        );
+        $nowTime = $this->dateTimeFactory->create(
+            [
+                'time' => 'now',
+                'timezone' => $this->dateTimeZoneFactory->create(['timezone' => 'UTC'])
+            ]
+        )->format('Y-m-d H:i:s');
+
+        return ($nowTime > $expiryTime);
+    }
+
+    /**
+     * @param string $contextScope
+     * @param int $scopeId
+     *
+     * @return Client|bool
+     */
+    public function getApiClient(string $contextScope, int $scopeId)
+    {
+        if (! $this->isEnabled($contextScope, $scopeId)) {
+            return false;
+        }
+
+        $token = $this->getToken($contextScope, $scopeId);
+        if (empty($token)) {
+            return false;
+        }
+
+        /** @var Client $apiClient */
+        $apiClient = $this->apiClientFactory->create();
+        return $apiClient->setHelper($this)
+            ->setToken($token);
+    }
+
+    /**
+     * @param string $contextScope
+     * @param int $scopeId
+     * @param stdClass $request
+     */
+    private function saveTokenAndExpiry(string $contextScope, int $scopeId, stdClass $request)
+    {
+        $this->saveConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
+            $this->encryptor->encrypt($request->access_token),
+            $contextScope,
+            $scopeId
+        );
+
+        $time = $this->dateTimeFactory->create(
+            [
+                'time' => 'now',
+                'timezone' => $this->dateTimeZoneFactory->create(['timezone' => 'UTC'])
+            ]
+        )->add($this->dateIntervalFactory->create(['interval_spec' => sprintf('PT%sS', $request->expires_in)]));
+        $this->saveConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE,
+            $time->format('Y-m-d H:i:s'),
+            $contextScope,
+            $scopeId
+        );
+    }
+
+    /**
+     * @param int $scopeId
+     *
+     * @return array
+     */
+    private function resolveContextForStore(int $scopeId)
+    {
+        $path = 'apsis_one_accounts/oauth/id';
+        $contextScope = ScopeInterface::SCOPE_STORES;
+        if (! $this->isExistInDataCollection($contextScope, $scopeId, $path)) {
+            $websiteId = (int) $this->getStore($scopeId)->getWebsiteId();
+            if ($this->isExistInDataCollection(ScopeInterface::SCOPE_WEBSITES, $websiteId, $path)) {
+                $contextScope = ScopeInterface::SCOPE_WEBSITES;
+                $scopeId = $websiteId;
+            } else {
+                $contextScope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
+                $scopeId = 0;
+            }
+        }
+        return ['scope' => $contextScope, 'id' => $scopeId];
+    }
+
+    /**
+     * @param string $contextScope
+     * @param int $scopeId
+     * @param string $path
+     *
+     * @return bool
+     */
+    private function isExistInDataCollection(string $contextScope, int $scopeId, string $path)
+    {
+        $collection = $this->dataCollectionFactory->create()
+            ->addFieldToFilter('scope', $contextScope)
+            ->addFieldToFilter('scope_id', $scopeId)
+            ->addFieldToFilter('path', $path);
+        return ($collection->getSize());
     }
 }

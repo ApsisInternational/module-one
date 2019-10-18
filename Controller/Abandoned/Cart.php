@@ -55,16 +55,14 @@ class Cart extends Action
     public function execute()
     {
         $token = $this->getRequest()->getParam('token');
-        if (strlen($token) === ApsisCoreHelper::RAND_STRING_LENGTH
-            && $this->apsisCoreHelper->isEnabledForSelectedScopeInAdmin()
+        if (strlen($token) === ApsisCoreHelper::TOKEN_STRING_LENGTH &&
+            $cart = $this->abandonedFactory->create()->getCart($token)
         ) {
-            $cartData = $this->abandonedFactory
-                ->create()
-                ->getCartJsonData($token);
-
-            return (! empty($cartData)) ? $this->sendJsonResponse($cartData) : $this->sendResponse(204);
+            return (strlen($cart->getCartData())) ?
+                $this->sendJsonResponse($cart->getCartData()) :
+                $this->sendResponse(204);
         } else {
-            return $this->sendResponse(401, '<h1>401 Unauthorized</h1>');
+            return $this->sendResponse(401, '401 Unauthorized');
         }
     }
 

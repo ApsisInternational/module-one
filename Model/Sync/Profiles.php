@@ -6,6 +6,7 @@ use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers;
 use Apsis\One\Model\Sync\Profiles\Customers;
+use Magento\Store\Model\ScopeInterface;
 
 class Profiles
 {
@@ -50,10 +51,7 @@ class Profiles
     {
         $stores = $this->apsisCoreHelper->getStores();
         foreach ($stores as $store) {
-            $account = (boolean) $this->apsisCoreHelper->getStoreConfig(
-                $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED
-            );
+            $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
             if ($account) {
                 $this->subscribers->sync($store);
                 $this->customers->sync($store);

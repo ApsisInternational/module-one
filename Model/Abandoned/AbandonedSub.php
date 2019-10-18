@@ -9,6 +9,7 @@ use Apsis\One\Model\Event;
 use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\DateIntervalFactory;
+use Apsis\One\Model\Sql\ExpressionFactory;
 use Exception;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Quote\Model\ResourceModel\Quote\Collection;
@@ -61,6 +62,11 @@ class AbandonedSub
     private $dateTime;
 
     /**
+     * @var ExpressionFactory
+     */
+    private $expressionFactory;
+
+    /**
      * AbandonedSub constructor.
      *
      * @param ContentFactory $cartContentFactory
@@ -71,6 +77,7 @@ class AbandonedSub
      * @param DateTimeFactory $dateTimeFactory
      * @param DateTimeZoneFactory $dateTimeZoneFactory
      * @param DateTime $dateTime
+     * @param ExpressionFactory $expressionFactory
      */
     public function __construct(
         ContentFactory $cartContentFactory,
@@ -80,8 +87,10 @@ class AbandonedSub
         EventResource $eventResource,
         DateTimeFactory $dateTimeFactory,
         DateTimeZoneFactory $dateTimeZoneFactory,
-        DateTime $dateTime
+        DateTime $dateTime,
+        ExpressionFactory $expressionFactory
     ) {
+        $this->expressionFactory = $expressionFactory;
         $this->dateTime = $dateTime;
         $this->dateTimeFactory = $dateTimeFactory;
         $this->dateTimeZoneFactory = $dateTimeZoneFactory;
@@ -166,7 +175,9 @@ class AbandonedSub
                     'store_id' => $quote->getStoreId(),
                     'customer_id' => $quote->getCustomerId(),
                     'customer_email' => $quote->getCustomerEmail(),
-                    'token' => $apsisCoreHelper->getRandomString(),
+                    'token' => $this->expressionFactory->create(
+                        ["expression" => "(SELECT UUID())"]
+                    ),
                     'created_at' => $createdAt
                 ];
 

@@ -3,6 +3,7 @@
 namespace Apsis\One\Model;
 
 use Apsis\One\Helper\Config as ApsisConfigHelper;
+use Apsis\One\Model\Sql\ExpressionFactory;
 use Magento\Framework\DataObject;
 use Magento\Framework\Model\AbstractModel;
 use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;
@@ -15,6 +16,7 @@ use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Apsis\One\Model\ResourceModel\Abandoned\CollectionFactory as AbandonedCollectionFactory;
 use Apsis\One\Model\Abandoned\AbandonedSubFactory;
 use Apsis\One\Model\Abandoned\AbandonedSub;
+use Magento\Store\Model\ScopeInterface;
 
 class Abandoned extends AbstractModel
 {
@@ -39,6 +41,11 @@ class Abandoned extends AbstractModel
     private $abandonedSubFactory;
 
     /**
+     * @var ExpressionFactory
+     */
+    private $expressionFactory;
+
+    /**
      * Abandoned constructor.
      *
      * @param Context $context
@@ -47,6 +54,7 @@ class Abandoned extends AbstractModel
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param AbandonedCollectionFactory $abandonedCollectionFactory
      * @param AbandonedSubFactory $abandonedSubFactory
+     * @param ExpressionFactory $expressionFactory
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -58,10 +66,12 @@ class Abandoned extends AbstractModel
         ApsisCoreHelper $apsisCoreHelper,
         AbandonedCollectionFactory $abandonedCollectionFactory,
         AbandonedSubFactory $abandonedSubFactory,
+        ExpressionFactory $expressionFactory,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = []
     ) {
+        $this->expressionFactory = $expressionFactory;
         $this->abandonedSubFactory = $abandonedSubFactory;
         $this->abandonedCollectionFactory = $abandonedCollectionFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
@@ -93,8 +103,11 @@ class Abandoned extends AbstractModel
             $this->setCreatedAt($this->dateTime->formatDate(true));
         }
 
-        $this->setToken($this->apsisCoreHelper->getRandomString())
-            ->setCartData($this->apsisCoreHelper->serialize($this->getCartData()));
+        $this->setToken(
+            $this->expressionFactory->create(
+                ["expression" => "(SELECT UUID())"]
+            )
+        )->setCartData($this->apsisCoreHelper->serialize($this->getCartData()));
 
         return $this;
     }
@@ -106,9 +119,8 @@ class Abandoned extends AbstractModel
     {
         $stores = $this->apsisCoreHelper->getStores();
         foreach ($stores as $store) {
-            $isEnabled = (boolean) $this->apsisCoreHelper
-                ->getStoreConfig($store, ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED);
-            $acDelayPeriod = (boolean) $this->apsisCoreHelper
+            $isEnabled = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
+            $acDelayPeriod = $this->apsisCoreHelper
                 ->getStoreConfig($store, ApsisConfigHelper::CONFIG_APSIS_ONE_ABANDONED_CARTS_SEND_AFTER);
 
             if ($isEnabled && $acDelayPeriod) {
@@ -131,13 +143,11 @@ class Abandoned extends AbstractModel
 
     /**
      * @param string $token
-     *
-     * @return array|string
+     * @return bool|DataObject
      */
-    public function getCartJsonData(string $token)
+    public function getCart(string $token)
     {
-        $cart = $this->abandonedCollectionFactory->create()
+        return $this->abandonedCollectionFactory->create()
             ->loadByToken($token);
-        return (! empty($cart)) ? (string) $cart->getCartData() : [];
     }
 }

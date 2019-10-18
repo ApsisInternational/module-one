@@ -13,6 +13,7 @@ use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Item;
+use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileResourceCollectionFactory;
 
@@ -151,10 +152,7 @@ class Placed implements ObserverInterface
      */
     private function isOkToProceed(Store $store, $isSubscriber = false)
     {
-        $account = (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED
-        );
+        $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
 
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,

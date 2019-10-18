@@ -29,18 +29,24 @@ class Section implements OptionSourceInterface
      */
     public function toOptionArray()
     {
-        if (! $this->apsisCoreHelper->isEnabledForSelectedScopeInAdmin()) {
-            return [['value' => '0', 'label' => __('-- Please Enable Account First --')]];
+        $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
+        $apiClient = $this->apsisCoreHelper->getApiClient(
+            $scope['context_scope'],
+            $scope['context_scope_id']
+        );
+        if (! $apiClient) {
+            return [['value' => '0', 'label' => __('-- Account Is Not Enabled Or Invalid Credentials --')]];
         }
 
-        //default data option
-        $fields[] = ['value' => '0', 'label' => __('-- Please Select --')];
+        $request = $apiClient->getSections();
+        if (! $request || ! isset($request->items)) {
+            return [['value' => '0', 'label' => __('-- Invalid Request Or No Sections Exist On Account --')]];
+        }
 
-        /**
-         * @todo fetch from account set at selected scope
-         */
-        $fields[] = ['value' => 'section1', 'label' => 'Section One'];
-        $fields[] = ['value' => 'section2', 'label' => 'Section Two'];
+        $fields[] = ['value' => '0', 'label' => __('-- Please Select --')];
+        foreach ($request->items as $section) {
+            $fields[] = ['value' => $section->discriminator, 'label' => $section->name];
+        }
 
         return $fields;
     }

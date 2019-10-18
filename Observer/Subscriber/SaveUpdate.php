@@ -16,6 +16,7 @@ use Apsis\One\Model\ProfileFactory;
 use Apsis\One\Model\Profile;
 use \Exception;
 use Magento\Store\Api\Data\StoreInterface;
+use Magento\Store\Model\ScopeInterface;
 
 class SaveUpdate implements ObserverInterface
 {
@@ -85,10 +86,7 @@ class SaveUpdate implements ObserverInterface
         $subscriber = $observer->getEvent()->getSubscriber();
         $store = $this->apsisCoreHelper->getStore($subscriber->getStoreId());
 
-        $account = (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED
-        );
+        $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
 
         if ($account) {
             $profile = $this->profileCollectionFactory->create()

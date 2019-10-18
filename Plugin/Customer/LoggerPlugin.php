@@ -11,6 +11,7 @@ use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Exception;
 use Magento\Customer\Model\Logger as CustomerLogger;
 use Magento\Customer\Model\Log as CustomerLog;
+use Magento\Store\Model\ScopeInterface;
 
 class LoggerPlugin
 {
@@ -116,10 +117,7 @@ class LoggerPlugin
     private function isOkToProceed()
     {
         $store = $this->apsisCoreHelper->getStore();
-        $account = (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED
-        );
+        $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
 
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,

@@ -34,14 +34,6 @@
                         <field id="enabled">1</field>
                     </depends>
                 </field>
-                <field id="oauth_connect" translate="label" sortOrder="40" showInDefault="1" showInWebsite="1"
-                       showInStore="1">
-                    <label>Connection</label>
-                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Connect</frontend_model>
-                    <depends>
-                        <field id="enabled">1</field>
-                    </depends>
-                </field>
             </group>
         </section>
         <section id="apsis_one_mappings" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1"
@@ -354,6 +346,7 @@
                        showInWebsite="1" showInStore="1">
                     <label>Consent List Topics</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Topic</source_model>
+                    <comment><![CDATA[Select multiple topics by pressing Ctrl button while selecting]]></comment>
                     <depends>
                         <field id="subscriber_enabled">1</field>
                     </depends>

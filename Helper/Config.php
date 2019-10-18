@@ -16,6 +16,8 @@ class Config extends AbstractHelper
     const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED = 'apsis_one_accounts/oauth/enabled';
     const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID = 'apsis_one_accounts/oauth/id';
     const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET = 'apsis_one_accounts/oauth/secret';
+    const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN = 'apsis_one_accounts/oauth/token';
+    const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE = 'apsis_one_accounts/oauth/token_expire';
 
     /**
      * Data mapping section

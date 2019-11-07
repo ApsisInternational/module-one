@@ -29,6 +29,30 @@ class Client extends Rest
     }
 
     /**
+     * Get all registered key spaces
+     *
+     * @return bool|stdClass
+     */
+    public function getKeySpaces()
+    {
+        $this->setUrl(self::HOST_NAME . '/audience/keyspaces')
+            ->setVerb(Rest::VERB_GET);
+        return $this->processResponse($this->execute());
+    }
+
+    /**
+     * Get all available communication channels
+     *
+     * @return bool|stdClass
+     */
+    public function getChannels()
+    {
+        $this->setUrl(self::HOST_NAME . '/audience/channels')
+            ->setVerb(Rest::VERB_GET);
+        return $this->processResponse($this->execute());
+    }
+
+    /**
      * Get all sections on the APSIS One account
      *
      * @return bool|stdClass

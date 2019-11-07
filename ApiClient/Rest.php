@@ -101,8 +101,24 @@ class Rest
      */
     private function executeGet($ch)
     {
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
-        $this->doExecute($ch);
+        $headers = [
+            'Accept: application/json'
+        ];
+        $this->doExecute($ch, $headers);
+    }
+
+    /**
+     * @param mixed $ch
+     * @param array $headers
+     */
+    private function executePostPutPatch($ch, array $headers)
+    {
+        if (! is_string($this->requestBody)) {
+            $this->buildPostBody();
+        }
+
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $this->requestBody);
+        $this->doExecute($ch, $headers);
     }
 
     /**
@@ -112,14 +128,11 @@ class Rest
      */
     private function executePost($ch)
     {
-        if (! is_string($this->requestBody)) {
-            $this->buildPostBody();
-        }
-
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $this->requestBody);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-
-        $this->doExecute($ch);
+        $headers = [
+            'Accept: application/json',
+            'Content-Type: application/json'
+        ];
+        $this->executePostPutPatch($ch, $headers);
     }
 
     /**
@@ -129,8 +142,11 @@ class Rest
      */
     private function executePatch($ch)
     {
-        //@toDo patch
-        $this->doExecute($ch);
+        $headers = [
+            'Accept: application/problem+json',
+            'Content-Type: application/merge-patch+json'
+        ];
+        $this->executePostPutPatch($ch, $headers);
     }
 
     /**
@@ -140,8 +156,11 @@ class Rest
      */
     private function executePut($ch)
     {
-        //@toDo put
-        $this->doExecute($ch);
+        $headers = [
+            'Accept: application/json',
+            'Content-Type: application/json'
+        ];
+        $this->executePostPutPatch($ch, $headers);
     }
 
     /**
@@ -151,18 +170,21 @@ class Rest
      */
     private function executeDelete($ch)
     {
-        //@toDo delete
-        $this->doExecute($ch);
+        $headers = [
+            'Accept: application/problem+json'
+        ];
+        $this->doExecute($ch, $headers);
     }
 
     /**
      * Execute request.
      *
      * @param mixed $ch
+     * @param array headers
      */
-    private function doExecute(&$ch)
+    private function doExecute(&$ch, array $headers)
     {
-        $this->setCurlOpts($ch);
+        $this->setCurlOpts($ch, $headers);
         $this->responseBody = json_decode(curl_exec($ch));
         $this->responseInfo = curl_getinfo($ch);
         $err = curl_error($ch);
@@ -192,8 +214,9 @@ class Rest
      * Curl options.
      *
      * @param mixed $ch
+     * @param array $headers
      */
-    private function setCurlOpts(&$ch)
+    private function setCurlOpts(&$ch, array $headers)
     {
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         curl_setopt($ch, CURLOPT_URL, $this->url);
@@ -201,13 +224,10 @@ class Rest
         curl_setopt($ch, CURLOPT_ENCODING, "");
         curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
         curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $this->verb);
         /** @todo remove verifyhost options */
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        $headers = [
-            'Accept: application/json',
-            'Content-Type: application/json'
-        ];
         if (isset($this->token)) {
             $headers[] = 'Authorization: Bearer ' . $this->token;
         }

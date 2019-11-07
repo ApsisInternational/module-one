@@ -30,6 +30,7 @@ use Magento\Catalog\Helper\Image;
 use Apsis\One\ApiClient\ClientFactory;
 use Apsis\One\ApiClient\Client;
 use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as DataCollectionFactory;
+use Magento\Config\Model\ResourceModel\Config\Data\Collection as DataCollection;
 
 class Core extends AbstractHelper
 {
@@ -322,7 +323,7 @@ class Core extends AbstractHelper
         $scope = [];
         $storeId = $this->_request->getParam('store');
         if ($storeId) {
-            $scope['context_scope'] = 'stores';
+            $scope['context_scope'] = ScopeInterface::SCOPE_STORES;
             $scope['context_scope_id'] = $storeId;
             return $scope;
         }
@@ -350,7 +351,7 @@ class Core extends AbstractHelper
     }
 
     /**
-     * Get config scope value.
+     * Save config scope value.
      *
      * @param string $path
      * @param string $value
@@ -364,6 +365,21 @@ class Core extends AbstractHelper
         $contextScopeId = 0
     ) {
         $this->writer->save($path, $value, $contextScope, $contextScopeId);
+    }
+
+    /**
+     * Delete config by scope.
+     *
+     * @param string $path
+     * @param string $contextScope
+     * @param int $contextScopeId
+     */
+    public function deleteConfigByScope(
+        string $path,
+        string $contextScope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+        $contextScopeId = 0
+    ) {
+        $this->writer->delete($path, $contextScope, $contextScopeId);
     }
 
     /**
@@ -521,12 +537,12 @@ class Core extends AbstractHelper
      */
     private function getTokenFromDb(string $contextScope, int $scopeId)
     {
-        $value = $this->getConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
+        $collection = $this->getDataCollectionByContextAndPath(
             $contextScope,
-            $scopeId
+            $scopeId,
+            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN
         );
-        $token = $this->encryptor->decrypt($value);
+        $token = $this->encryptor->decrypt($collection->getFirstItem()->getValue());
         return $token;
     }
 
@@ -549,11 +565,9 @@ class Core extends AbstractHelper
                 ->getAccessToken($clientId, $clientSecret);
 
             if ($request && isset($request->access_token)) {
-                if ($contextScope === ScopeInterface::SCOPE_STORES) {
-                    $scopeArray = $this->resolveContextForStore($scopeId);
-                    $contextScope = $scopeArray['scope'];
-                    $scopeId = $scopeArray['id'];
-                }
+                $scopeArray = $this->resolveContext($contextScope, $scopeId);
+                $contextScope = $scopeArray['scope'];
+                $scopeId = $scopeArray['id'];
                 $this->saveTokenAndExpiry($contextScope, $scopeId, $request);
                 return $request->access_token;
             }
@@ -569,6 +583,9 @@ class Core extends AbstractHelper
      */
     private function getToken(string $contextScope, int $scopeId)
     {
+        $scopeArray = $this->resolveContext($contextScope, $scopeId);
+        $contextScope = $scopeArray['scope'];
+        $scopeId = $scopeArray['id'];
         if ($this->isTokenExpired($contextScope, $scopeId)) {
             return $this->getTokenFromApi($contextScope, $scopeId);
         } else {
@@ -585,18 +602,21 @@ class Core extends AbstractHelper
      */
     private function isTokenExpired(string $contextScope, int $scopeId)
     {
-        $expiryTime = $this->getConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE,
+        $expiryTime = '';
+        $dataCollection = $this->getDataCollectionByContextAndPath(
             $contextScope,
-            $scopeId
+            $scopeId,
+            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE
         );
+        if ($dataCollection->getSize()) {
+            $expiryTime = $dataCollection->getFirstItem()->getValue();
+        }
         $nowTime = $this->dateTimeFactory->create(
             [
                 'time' => 'now',
                 'timezone' => $this->dateTimeZoneFactory->create(['timezone' => 'UTC'])
             ]
         )->format('Y-m-d H:i:s');
-
         return ($nowTime > $expiryTime);
     }
 
@@ -652,6 +672,24 @@ class Core extends AbstractHelper
     }
 
     /**
+     * @param string $contextScope
+     * @param int $scopeId
+     *
+     * @return array
+     */
+    private function resolveContext(string $contextScope, int $scopeId)
+    {
+        switch ($contextScope) {
+            case ScopeInterface::SCOPE_STORES:
+                return $this->resolveContextForStore($scopeId);
+            case ScopeInterface::SCOPE_WEBSITES:
+                return $this->resolveContextForWebsite($scopeId);
+            default:
+                return ['scope' => $contextScope, 'id' => $scopeId];
+        }
+    }
+
+    /**
      * @param int $scopeId
      *
      * @return array
@@ -674,6 +712,22 @@ class Core extends AbstractHelper
     }
 
     /**
+     * @param int $scopeId
+     *
+     * @return array
+     */
+    private function resolveContextForWebsite(int $scopeId)
+    {
+        $path = 'apsis_one_accounts/oauth/id';
+        $contextScope = ScopeInterface::SCOPE_WEBSITES;
+        if (! $this->isExistInDataCollection($contextScope, $scopeId, $path)) {
+            $contextScope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
+            $scopeId = 0;
+        }
+        return ['scope' => $contextScope, 'id' => $scopeId];
+    }
+
+    /**
      * @param string $contextScope
      * @param int $scopeId
      * @param string $path
@@ -682,10 +736,24 @@ class Core extends AbstractHelper
      */
     private function isExistInDataCollection(string $contextScope, int $scopeId, string $path)
     {
+        $collection = $this->getDataCollectionByContextAndPath($contextScope, $scopeId, $path);
+        return (boolean) $collection->getSize();
+    }
+
+    /**
+     * @param string $contextScope
+     * @param int $scopeId
+     * @param string $path
+     *
+     * @return DataCollection
+     */
+    private function getDataCollectionByContextAndPath(string $contextScope, int $scopeId, string $path)
+    {
         $collection = $this->dataCollectionFactory->create()
             ->addFieldToFilter('scope', $contextScope)
             ->addFieldToFilter('scope_id', $scopeId)
             ->addFieldToFilter('path', $path);
-        return ($collection->getSize());
+        $collection->getSelect()->limit(1);
+        return $collection;
     }
 }

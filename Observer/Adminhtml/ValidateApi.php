@@ -8,6 +8,7 @@ use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Message\ManagerInterface;
 use Apsis\One\Helper\Config as ApsisConfigHelper;
+use Magento\Store\Model\ScopeInterface;
 
 class ValidateApi implements ObserverInterface
 {
@@ -53,7 +54,20 @@ class ValidateApi implements ObserverInterface
         if (isset($groups['oauth']['fields']['id']['inherit'])
             || isset($groups['oauth']['fields']['secret']['inherit'])
         ) {
-            /** ToDo remove token and token expiry */
+            $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
+            if (in_array($scope['context_scope'], [ScopeInterface::SCOPE_STORES, ScopeInterface::SCOPE_WEBSITES])) {
+                $paths = [
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE
+                ];
+                foreach ($paths as $path) {
+                    $this->apsisCoreHelper->deleteConfigByScope(
+                        $path,
+                        $scope['context_scope'],
+                        $scope['context_scope_id']
+                    );
+                }
+            }
             return $this;
         }
 

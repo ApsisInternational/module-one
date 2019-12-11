@@ -56,6 +56,10 @@ class Topic implements OptionSourceInterface
 
         foreach ($consentLists->items as $consentList) {
             $topics = $apiClient->getTopics($section, $consentList->discriminator);
+            if (! $topics || ! isset($topics->items)) {
+                continue;
+            }
+
             $formattedTopics = [];
             foreach ($topics->items as $topic) {
                 $formattedTopics[] = [

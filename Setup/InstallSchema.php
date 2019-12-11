@@ -26,6 +26,8 @@ class InstallSchema implements InstallSchemaInterface
         // Create entities tables
         /** Profile */
         $this->createApsisProfileTable($installer);
+        /** Profile Batch*/
+        $this->createApsisProfileBatchTable($installer);
         /** Events */
         $this->createApsisEventTable($installer);
         /** Abandoned Carts */
@@ -83,35 +85,42 @@ class InstallSchema implements InstallSchemaInterface
                 'cart_data',
                 Table::TYPE_BLOB,
                 null,
-                ['nullable' => false, 'default' => ''],
+                ['nullable' => false],
                 'Cart Data'
             )
             ->addColumn(
                 'store_id',
                 Table::TYPE_SMALLINT,
                 10,
-                ['unsigned' => true, 'nullable' => true],
+                ['unsigned' => true, 'nullable' => false],
                 'Store Id'
+            )
+            ->addColumn(
+                'profile_id',
+                Table::TYPE_INTEGER,
+                11,
+                ['unsigned' => true, 'nullable' => false],
+                'Profile Id'
             )
             ->addColumn(
                 'customer_id',
                 Table::TYPE_INTEGER,
                 10,
-                ['unsigned' => true, 'nullable' => true, 'default' => null],
+                ['unsigned' => true, 'nullable' => false],
                 'Customer ID'
             )
             ->addColumn(
                 'customer_email',
                 Table::TYPE_TEXT,
                 255,
-                ['nullable' => false, 'default' => ''],
+                ['nullable' => false],
                 'Customer Email'
             )
             ->addColumn(
                 'token',
                 Table::TYPE_TEXT,
                 255,
-                ['nullable' => false, 'default' => ''],
+                ['nullable' => false],
                 'AC Token'
             )
             ->addColumn(
@@ -157,38 +166,47 @@ class InstallSchema implements InstallSchemaInterface
             $installer->getFkName(
                 ApsisCoreHelper::APSIS_ABANDONED_TABLE,
                 'store_id',
-                'store',
+                $installer->getTable('store'),
                 'store_id'
             ),
             'store_id',
             $installer->getTable('store'),
             'store_id',
             Table::ACTION_CASCADE
-        )
-            ->addForeignKey(
-                $installer->getFkName(
-                    ApsisCoreHelper::APSIS_ABANDONED_TABLE,
-                    'customer_id',
-                    'customer_entity',
-                    'entity_id'
-                ),
+        )->addForeignKey(
+            $installer->getFkName(
+                ApsisCoreHelper::APSIS_ABANDONED_TABLE,
                 'customer_id',
                 $installer->getTable('customer_entity'),
-                'entity_id',
-                Table::ACTION_CASCADE
-            )
-            ->addForeignKey(
-                $installer->getFkName(
-                    ApsisCoreHelper::APSIS_ABANDONED_TABLE,
-                    'quote_id',
-                    'quote',
-                    'entity_id'
-                ),
+                'entity_id'
+            ),
+            'customer_id',
+            $installer->getTable('customer_entity'),
+            'entity_id',
+            Table::ACTION_CASCADE
+        )->addForeignKey(
+            $installer->getFkName(
+                ApsisCoreHelper::APSIS_ABANDONED_TABLE,
                 'quote_id',
                 $installer->getTable('quote'),
-                'entity_id',
-                Table::ACTION_CASCADE
-            );
+                'entity_id'
+            ),
+            'quote_id',
+            $installer->getTable('quote'),
+            'entity_id',
+            Table::ACTION_CASCADE
+        )->addForeignKey(
+            $installer->getFkName(
+                ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+                'profile_id',
+                $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
+                'id'
+            ),
+            'profile_id',
+            $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
+            'id',
+            Table::ACTION_CASCADE
+        );
     }
 
     /**
@@ -234,15 +252,22 @@ class InstallSchema implements InstallSchemaInterface
                 'event_type',
                 Table::TYPE_SMALLINT,
                 null,
-                ['unsigned' => true, 'nullable' => true, 'default' => null],
+                ['unsigned' => true, 'nullable' => false],
                 'Event Type'
             )
             ->addColumn(
                 'event_data',
                 Table::TYPE_BLOB,
                 null,
-                ['nullable' => false, 'default' => ''],
-                'Type ID'
+                ['nullable' => false],
+                'Event JSON Data'
+            )
+            ->addColumn(
+                'profile_id',
+                Table::TYPE_INTEGER,
+                11,
+                ['unsigned' => true, 'nullable' => false],
+                'Profile Id'
             )
             ->addColumn(
                 'subscriber_id',
@@ -262,14 +287,14 @@ class InstallSchema implements InstallSchemaInterface
                 'store_id',
                 Table::TYPE_SMALLINT,
                 5,
-                ['unsigned' => true, 'nullable' => false, 'default' => '0'],
+                ['unsigned' => true, 'nullable' => false],
                 'Store ID'
             )
             ->addColumn(
                 'email',
                 Table::TYPE_TEXT,
                 255,
-                ['nullable' => false, 'default' => ''],
+                ['nullable' => false],
                 'Email'
             )
             ->addColumn(
@@ -314,6 +339,7 @@ class InstallSchema implements InstallSchemaInterface
     {
         $tableName = $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE);
         $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
+            ->addIndex($installer->getIdxName($tableName, ['profile_id']), ['profile_id'])
             ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
             ->addIndex($installer->getIdxName($tableName, ['subscriber_id']), ['subscriber_id'])
             ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
@@ -339,7 +365,151 @@ class InstallSchema implements InstallSchemaInterface
             $installer->getFkName(
                 ApsisCoreHelper::APSIS_EVENT_TABLE,
                 'store_id',
-                'store',
+                $installer->getTable('store'),
+                'store_id'
+            ),
+            'store_id',
+            $installer->getTable('store'),
+            'store_id',
+            Table::ACTION_CASCADE
+        )->addForeignKey(
+            $installer->getFkName(
+                ApsisCoreHelper::APSIS_EVENT_TABLE,
+                'profile_id',
+                $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
+                'id'
+            ),
+            'profile_id',
+            $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
+            'id',
+            Table::ACTION_CASCADE
+        );
+    }
+
+    /**
+     * @param SchemaSetupInterface $installer
+     *
+     * @throws Zend_Db_Exception
+     */
+    private function createApsisProfileBatchTable(SchemaSetupInterface $installer)
+    {
+        $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE);
+
+        $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE);
+        $table = $this->addColumnsToApsisProfileBatchTable($table);
+        $table = $this->addIndexesToApsisProfileBatchTable($installer, $table);
+        $table = $this->addForeignKeysToProfileBatchTable($installer, $table);
+
+        $table->setComment('Apsis Profile Batch');
+        $installer->getConnection()->createTable($table);
+    }
+
+    /**
+     * @param Table $table
+     *
+     * @return Table
+     *
+     * @throws Zend_Db_Exception
+     */
+    private function addColumnsToApsisProfileBatchTable(Table $table)
+    {
+        return $table->addColumn(
+            'id',
+            Table::TYPE_INTEGER,
+            10,
+            [
+                'primary' => true,
+                'identity' => true,
+                'unsigned' => true,
+                'nullable' => false
+            ],
+            'Primary Key'
+        )
+            ->addColumn(
+                'store_id',
+                Table::TYPE_SMALLINT,
+                5,
+                ['unsigned' => true, 'nullable' => false],
+                'Store ID'
+            )
+            ->addColumn(
+                'file_path',
+                Table::TYPE_TEXT,
+                255,
+                ['nullable' => false],
+                'File Path'
+            )
+            ->addColumn(
+                'batch_type',
+                Table::TYPE_SMALLINT,
+                null,
+                ['nullable' => false],
+                'Batch Type'
+            )
+            ->addColumn(
+                'entity_ids',
+                Table::TYPE_BLOB,
+                null,
+                ['nullable' => false],
+                'Entity Ids'
+            )
+            ->addColumn(
+                'sync_status',
+                Table::TYPE_SMALLINT,
+                null,
+                ['nullable' => false, 'default' => '0'],
+                'Sync Status'
+            )
+            ->addColumn(
+                'error_message',
+                Table::TYPE_TEXT,
+                255,
+                ['nullable' => false, 'default' => ''],
+                'Error Message'
+            )
+            ->addColumn(
+                'updated_at',
+                Table::TYPE_TIMESTAMP,
+                null,
+                [],
+                'Last Update Time'
+            );
+    }
+
+    /**
+     * @param SchemaSetupInterface $installer
+     * @param Table $table
+     *
+     * @return Table
+     *
+     * @throws Zend_Db_Exception
+     */
+    private function addIndexesToApsisProfileBatchTable(SchemaSetupInterface $installer, Table $table)
+    {
+        $tableName = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE);
+        $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
+            ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
+            ->addIndex($installer->getIdxName($tableName, ['sync_status']), ['sync_status'])
+            ->addIndex($installer->getIdxName($tableName, ['batch_type']), ['batch_type'])
+            ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
+        return $table;
+    }
+
+    /**
+     * @param SchemaSetupInterface $installer
+     * @param Table $table
+     *
+     * @return Table
+     *
+     * @throws Zend_Db_Exception
+     */
+    private function addForeignKeysToProfileBatchTable(SchemaSetupInterface $installer, Table $table)
+    {
+        return $table->addForeignKey(
+            $installer->getFkName(
+                ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE,
+                'store_id',
+                $installer->getTable('store'),
                 'store_id'
             ),
             'store_id',
@@ -392,7 +562,7 @@ class InstallSchema implements InstallSchemaInterface
                 'integration_uid',
                 Table::TYPE_TEXT,
                 255,
-                ['nullable' => false, 'default' => ''],
+                ['nullable' => false],
                 'Integration User Id'
             )
             ->addColumn(
@@ -406,7 +576,7 @@ class InstallSchema implements InstallSchemaInterface
                 'store_id',
                 Table::TYPE_SMALLINT,
                 5,
-                ['unsigned' => true, 'nullable' => false, 'default' => '0'],
+                ['unsigned' => true, 'nullable' => false],
                 'Store ID'
             )
             ->addColumn(
@@ -427,7 +597,7 @@ class InstallSchema implements InstallSchemaInterface
                 'email',
                 Table::TYPE_TEXT,
                 255,
-                ['nullable' => false, 'default' => ''],
+                ['nullable' => false],
                 'Email'
             )
             ->addColumn(
@@ -513,7 +683,7 @@ class InstallSchema implements InstallSchemaInterface
             $installer->getFkName(
                 ApsisCoreHelper::APSIS_PROFILE_TABLE,
                 'store_id',
-                'store',
+                $installer->getTable('store'),
                 'store_id'
             ),
             'store_id',

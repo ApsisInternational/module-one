@@ -38,10 +38,6 @@ class EventTypes implements OptionSourceInterface
                 'label' => 'Customer/Subscriber Placed An Order'
             ],
             [
-                'value' => Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART,
-                'label' => 'Customer Added Product To Cart'
-            ],
-            [
                 'value' => Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW,
                 'label' => 'Customer Left Product Review'
             ],

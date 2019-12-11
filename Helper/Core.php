@@ -12,6 +12,7 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\DataObject;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
@@ -31,6 +32,7 @@ use Apsis\One\ApiClient\ClientFactory;
 use Apsis\One\ApiClient\Client;
 use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as DataCollectionFactory;
 use Magento\Config\Model\ResourceModel\Config\Data\Collection as DataCollection;
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 
 class Core extends AbstractHelper
 {
@@ -38,6 +40,7 @@ class Core extends AbstractHelper
      * APSIS table names
      */
     const APSIS_PROFILE_TABLE = 'apsis_profile';
+    const APSIS_PROFILE_BATCH_TABLE = 'apsis_profile_batch';
     const APSIS_EVENT_TABLE = 'apsis_event';
     const APSIS_ABANDONED_TABLE = 'apsis_abandoned';
 
@@ -120,6 +123,11 @@ class Core extends AbstractHelper
     private $dataCollectionFactory;
 
     /**
+     * @var ProfileCollectionFactory
+     */
+    private $profileCollectionFactory;
+
+    /**
      * Core constructor.
      *
      * @param Context $context
@@ -138,6 +146,7 @@ class Core extends AbstractHelper
      * @param DateTimeZoneFactory $dateTimeZoneFactory
      * @param DateIntervalFactory $dateIntervalFactory
      * @param DataCollectionFactory $dataCollectionFactory
+     * @param ProfileCollectionFactory $profileCollectionFactory
      */
     public function __construct(
         Context $context,
@@ -155,7 +164,8 @@ class Core extends AbstractHelper
         DateTimeFactory $dateTimeFactory,
         DateTimeZoneFactory $dateTimeZoneFactory,
         DateIntervalFactory $dateIntervalFactory,
-        DataCollectionFactory $dataCollectionFactory
+        DataCollectionFactory $dataCollectionFactory,
+        ProfileCollectionFactory $profileCollectionFactory
     ) {
         $this->dataCollectionFactory = $dataCollectionFactory;
         $this->dateIntervalFactory = $dateIntervalFactory;
@@ -172,7 +182,20 @@ class Core extends AbstractHelper
         $this->storeManager = $storeManager;
         $this->stringUtils = $stringUtils;
         $this->jsonSerializer = $jsonSerializer;
+        $this->profileCollectionFactory = $profileCollectionFactory;
         parent::__construct($context);
+    }
+
+    /**
+     * @param string $email
+     * @param int $storeId
+     *
+     * @return bool|DataObject
+     */
+    public function getProfileByEmailAndStoreId(string $email, int $storeId)
+    {
+        return $this->profileCollectionFactory->create()
+            ->loadByEmailAndStoreId($email, $storeId);
     }
 
     /**

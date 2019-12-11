@@ -47,7 +47,7 @@ class Url extends Field
         }
 
         $text = sprintf(
-            '%sapsis/abandoned/cart/token/##%s##',
+            '%sapsis/abandoned/cart/token/##%s##/output/OUTPUT_TYPE',
             $baseUrl,
             $mappedAttributeForAcToken
         );

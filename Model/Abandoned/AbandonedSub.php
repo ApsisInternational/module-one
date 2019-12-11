@@ -154,25 +154,23 @@ class AbandonedSub
     /**
      * @param Collection $quoteCollection
      * @param ApsisCoreHelper $apsisCoreHelper
-     * @param boolean $customerSyncEnabled
      */
-    public function aggregateCartDataFromStoreCollection(
-        Collection $quoteCollection,
-        ApsisCoreHelper $apsisCoreHelper,
-        $customerSyncEnabled
-    ) {
+    public function aggregateCartDataFromStoreCollection(Collection $quoteCollection, ApsisCoreHelper $apsisCoreHelper)
+    {
         $abandonedCarts = [];
         $events = [];
         $createdAt = $this->dateTime->formatDate(true);
         foreach ($quoteCollection as $quote) {
             $cartData = $this->cartContentFactory->create()
                 ->getCartData($quote);
+            $profile = $apsisCoreHelper->getProfileByEmailAndStoreId($quote->getCustomerEmail(), $quote->getStoreId());
 
-            if (! empty($cartData)) {
+            if (! empty($cartData) && $profile) {
                 $abandonedCarts[] = [
                     'quote_id' => $quote->getId(),
                     'cart_data' => $apsisCoreHelper->serialize($cartData),
                     'store_id' => $quote->getStoreId(),
+                    'profile_id' => $profile->getId(),
                     'customer_id' => $quote->getCustomerId(),
                     'customer_email' => $quote->getCustomerEmail(),
                     'token' => $this->expressionFactory->create(
@@ -180,19 +178,18 @@ class AbandonedSub
                     ),
                     'created_at' => $createdAt
                 ];
+                $events[] = [
+                    'event_type' => Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART,
+                    'event_data' => $apsisCoreHelper->serialize($this->getDataForEventFromAcData($cartData)),
+                    'profile_id' => $profile->getId(),
+                    'customer_id' => $quote->getCustomerId(),
+                    'store_id' => $quote->getStoreId(),
+                    'email' => $quote->getCustomerEmail(),
+                    'status' => Profile::SYNC_STATUS_PENDING,
+                    'created_at' => $createdAt,
+                    'updated_at' => $createdAt,
+                ];
 
-                if ($customerSyncEnabled) {
-                    $events[] = [
-                        'event_type' => Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART,
-                        'event_data' => $apsisCoreHelper->serialize($this->getDataForEventFromAcData($cartData)),
-                        'customer_id' => $quote->getCustomerId(),
-                        'store_id' => $quote->getStoreId(),
-                        'email' => $quote->getCustomerEmail(),
-                        'status' => Profile::SYNC_STATUS_PENDING,
-                        'created_at' => $createdAt,
-                        'updated_at' => $createdAt,
-                    ];
-                }
             }
         }
 

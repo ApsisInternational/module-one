@@ -158,6 +158,7 @@ class SaveUpdate implements ObserverInterface
                 ->setEventData($this->apsisCoreHelper->serialize(
                     $this->getDataArrForSubscriberEvent($subscriber, $profile)
                 ))
+                ->setProfileId($profile->getId())
                 ->setSubscriberId($subscriber->getSubscriberId())
                 ->setCustomerId($profile->getCustomerId())
                 ->setStoreId($subscriber->getStoreId())
@@ -192,6 +193,7 @@ class SaveUpdate implements ObserverInterface
                 ->setEventData($this->apsisCoreHelper->serialize(
                     $this->getDataArrForUnsubscribeEvent($subscriber, $profile)
                 ))
+                ->setProfileId($profile->getId())
                 ->setSubscriberId($subscriber->getSubscriberId())
                 ->setStoreId($subscriber->getStoreId())
                 ->setEmail($subscriber->getEmail())

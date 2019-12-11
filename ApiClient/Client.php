@@ -110,13 +110,68 @@ class Client extends Rest
     }
 
     /**
+     * Store a set of attribute values on a profile
+     *
+     * @param string $keySpaceDiscriminator
+     * @param string $profileKey
+     * @param string $sectionDiscriminator
+     * @param array $attributes
+     *
+     * @return bool|stdClass
+     */
+    public function createProfile(
+        string $keySpaceDiscriminator,
+        string $profileKey,
+        string $sectionDiscriminator,
+        array $attributes
+    ) {
+        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+            '/sections/' . $sectionDiscriminator . '/attributes';
+        $this->setUrl($url)
+            ->setVerb(Rest::VERB_PATCH)
+            ->buildPostBody($attributes);
+        return $this->processResponse($this->execute());
+    }
+
+    /**
+     * Subscribe profile to topic
+     *
+     * @param string $keyspaceDiscriminator
+     * @param string $profileKey
+     * @param string $sectionDiscriminator
+     * @param string $consentListDiscriminator
+     * @param string $topicDiscriminator
+     *
+     * @return bool|stdClass
+     */
+    public function subscribeProfileToTopic(
+        string $keyspaceDiscriminator,
+        string $profileKey,
+        string $sectionDiscriminator,
+        string $consentListDiscriminator,
+        string $topicDiscriminator
+    ) {
+        $url = self::HOST_NAME . '/audience/keyspaces/' . $keyspaceDiscriminator . '/profiles/' . $profileKey .
+            '/sections/' . $sectionDiscriminator . '/subscriptions';
+        $this->setUrl($url)
+            ->setVerb(Rest::VERB_POST)
+            ->buildPostBody(
+                [
+                    'consent_list_discriminator' => $consentListDiscriminator,
+                    'topic_discriminator' => $topicDiscriminator
+                ]
+            );
+        return $this->processResponse($this->execute());
+    }
+
+    /**
      * @param null|stdClass $response
      *
      * @return boolean|stdClass
      */
     private function processResponse($response)
     {
-        if (empty($response) || $this->curlError) {
+        if ($this->curlError) {
             return false;
         }
         /** Todo handle all error cases */

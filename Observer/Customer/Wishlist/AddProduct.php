@@ -59,8 +59,9 @@ class AddProduct implements ObserverInterface
         $store = $wishlist->getStore();
         /** @var Customer $customer */
         $customer = $this->apsisCoreHelper->getCustomerById($wishlist->getCustomerId());
+        $profile = $this->apsisCoreHelper->getProfileByEmailAndStoreId($customer->getEmail(), $store->getId());
 
-        if ($customer && $this->isOkToProceed($store)) {
+        if ($customer && $this->isOkToProceed($store) && $profile) {
             /** @var Product $product */
             $product = $observer->getEvent()->getProduct();
             /** @var WishlistItem $item */
@@ -70,6 +71,7 @@ class AddProduct implements ObserverInterface
                 ->create()
                 ->setEventType(Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST)
                 ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($wishlist, $store, $item, $product)))
+                ->setProfileId($profile->getId())
                 ->setCustomerId($wishlist->getCustomerId())
                 ->setStoreId($store->getId())
                 ->setEmail($customer->getEmail())

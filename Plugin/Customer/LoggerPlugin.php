@@ -66,13 +66,15 @@ class LoggerPlugin
     public function afterLog(CustomerLogger $logger, $result, $customerId, array $data)
     {
         $customer = $this->apsisCoreHelper->getCustomerById($customerId);
-        if ($this->isOkToProceed() && $customer && isset($data['last_login_at'])) {
+        $profile = $this->apsisCoreHelper->getProfileByEmailAndStoreId($customer->getEmail(), $customer->getStoreId());
+        if ($this->isOkToProceed() && $customer && isset($data['last_login_at']) && $profile) {
             /** @var CustomerLog $customerLog */
             $customerLog = $this->customerLogger->get($customerId);
 
             $eventModel = $this->eventFactory->create()
                 ->setEventType(Event::EVENT_TYPE_CUSTOMER_LOGIN)
                 ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($customerLog)))
+                ->setProfileId($profile->getId())
                 ->setCustomerId($customerLog->getCustomerId())
                 ->setStoreId($this->apsisCoreHelper->getStore()->getId())
                 ->setEmail($customer->getEmail())

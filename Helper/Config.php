@@ -36,6 +36,8 @@ class Config extends AbstractHelper
         = 'apsis_one_mappings/customer_subscriber_common_attribute/website_name';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_STORE_NAME
         = 'apsis_one_mappings/customer_subscriber_common_attribute/store_name';
+    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
+        = 'apsis_one_mappings/customer_subscriber_common_attribute/email';
     /** Subscriber attributes */
     const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_GROUP = 'apsis_one_mappings/subscriber_attribute';
     const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_ID = 'apsis_one_mappings/subscriber_attribute/subscriber_id';

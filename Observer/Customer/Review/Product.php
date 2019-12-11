@@ -62,11 +62,14 @@ class Product implements ObserverInterface
         $product = $this->apsisCoreHelper->getProductById($reviewObject->getEntityPkValue());
         /** @var Customer $customer */
         $customer = $this->apsisCoreHelper->getCustomerById($reviewObject->getCustomerId());
+        $profile = $this->apsisCoreHelper
+            ->getProfileByEmailAndStoreId($customer->getEmail(), $this->apsisCoreHelper->getStore()->getId());
 
-        if ($customer && $product && $this->isOkToProceed()) {
+        if ($customer && $product && $this->isOkToProceed() && $profile) {
             $eventModel = $this->eventFactory->create()
                 ->setEventType(Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW)
                 ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($reviewObject, $product)))
+                ->setProfileId($profile->getId())
                 ->setCustomerId($reviewObject->getCustomerId())
                 ->setStoreId($this->apsisCoreHelper->getStore()->getId())
                 ->setEmail($customer->getEmail())

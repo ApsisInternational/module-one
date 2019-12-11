@@ -393,6 +393,7 @@
                        showInWebsite="1" showInStore="1">
                     <label>Cart Content URL</label>
                     <frontend_model>Apsis\One\Block\Adminhtml\Config\Abandoned\Url</frontend_model>
+                    <comment><![CDATA[Replace OUTPUT_TYPE with desired data type json or html.]]></comment>
                 </field>
             </group>
         </section>

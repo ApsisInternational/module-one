@@ -68,27 +68,33 @@ class Placed implements ObserverInterface
     {
         /** @var Order $order */
         $order = $observer->getEvent()->getOrder();
-        $subscriberId = 0;
         $isSubscriber = false;
 
         if ($order->getCustomerIsGuest()) {
-            $subscriberProfileFound = $this->profileResourceCollectionFactory->create()
+            $profile = $this->profileResourceCollectionFactory->create()
                 ->loadSubscriberByEmailAndStoreId($order->getCustomerEmail(), $order->getStoreId());
 
-            if ($subscriberProfileFound === false) {
+            if (! $profile) {
                 return $this;
             }
 
-            $subscriberId = $subscriberProfileFound->getSubscriberId();
             $isSubscriber = true;
+        } else {
+            $profile = $this->apsisCoreHelper->getProfileByEmailAndStoreId(
+                $order->getCustomerEmail(),
+                $order->getStore()->getId()
+            );
         }
 
         if ($this->isOkToProceed($order->getStore(), $isSubscriber)) {
             $eventModel = $this->eventFactory->create()
                 ->setEventType(Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER)
-                ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($order, $subscriberId)))
+                ->setEventData(
+                    $this->apsisCoreHelper->serialize($this->getDataArr($order, $profile->getSubscriberId()))
+                )
+                ->setProfileId($profile->getId())
                 ->setCustomerId($order->getCustomerId())
-                ->setSubscriberId($subscriberId)
+                ->setSubscriberId($profile->getSubscriberId())
                 ->setStoreId($order->getStore()->getId())
                 ->setEmail($order->getCustomerEmail())
                 ->setStatus(Profile::SYNC_STATUS_PENDING);

@@ -2,7 +2,6 @@
 
 namespace Apsis\One\Model\Sync;
 
-use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers;
 use Apsis\One\Model\Sync\Profiles\Customers;
@@ -10,8 +9,6 @@ use Magento\Store\Model\ScopeInterface;
 
 class Profiles
 {
-    const DEFAULT_HEADERS = ['integration_uid' => 'integration_uid'];
-
     /**
      * @var ApsisCoreHelper
      */
@@ -47,14 +44,16 @@ class Profiles
     /**
      * Sync subscribers and customers
      */
-    public function syncProfiles()
+    public function batchAndSyncProfiles()
     {
         $stores = $this->apsisCoreHelper->getStores();
         foreach ($stores as $store) {
             $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
             if ($account) {
-                $this->subscribers->sync($store);
-                $this->customers->sync($store);
+                $this->subscribers->batch($store);
+                $this->subscribers->syncBatchItems($store);
+                $this->customers->batch($store);
+                $this->customers->syncBatchItems($store);
             }
         }
     }

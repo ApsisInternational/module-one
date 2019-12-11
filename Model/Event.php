@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Model;
 
+use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Model\AbstractModel;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
@@ -21,9 +22,8 @@ class Event extends AbstractModel
     const EVENT_TYPE_SUBSCRIBER_UNSUBSCRIBE = 4;
     const EVENT_TYPE_CUSTOMER_LOGIN = 5;
     const EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER = 6;
-    const EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART = 7;
-    const EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW = 8;
-    const EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST = 9;
+    const EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW = 7;
+    const EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST = 8;
 
     /**
      * @var DateTime
@@ -31,11 +31,17 @@ class Event extends AbstractModel
     private $dateTime;
 
     /**
+     * @var ApsisCoreHelper
+     */
+    private $apsisCoreHelper;
+
+    /**
      * Event constructor.
      *
      * @param Context $context
      * @param Registry $registry
      * @param DateTime $dateTime
+     * @param ApsisCoreHelper $apsisCoreHelper
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -44,11 +50,13 @@ class Event extends AbstractModel
         Context $context,
         Registry $registry,
         DateTime $dateTime,
+        ApsisCoreHelper $apsisCoreHelper,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         $this->dateTime = $dateTime;
+        $this->apsisCoreHelper = $apsisCoreHelper;
         parent::__construct(
             $context,
             $registry,

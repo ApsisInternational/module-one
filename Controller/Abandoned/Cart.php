@@ -7,10 +7,11 @@ use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\ResultInterface;
-use Zend\Http\PhpEnvironment\Response;
+use Magento\Framework\DataObject;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Magento\Framework\App\Action\Context;
 use Apsis\One\Model\AbandonedFactory;
+use Magento\Framework\Registry;
 
 class Cart extends Action
 {
@@ -27,7 +28,12 @@ class Cart extends Action
     /**
      * @var JsonFactory
      */
-    protected $resultJsonFactory;
+    private $resultJsonFactory;
+
+    /**
+     * @var Registry
+     */
+    private $registry;
 
     /**
      * Cart constructor.
@@ -36,13 +42,16 @@ class Cart extends Action
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param JsonFactory $resultJsonFactory
      * @param AbandonedFactory $abandonedFactory
+     * @param Registry $registry
      */
     public function __construct(
         Context $context,
         ApsisCoreHelper $apsisCoreHelper,
         JsonFactory $resultJsonFactory,
-        AbandonedFactory $abandonedFactory
+        AbandonedFactory $abandonedFactory,
+        Registry $registry
     ) {
+        $this->registry = $registry;
         $this->abandonedFactory = $abandonedFactory;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
@@ -50,7 +59,7 @@ class Cart extends Action
     }
 
     /**
-     * @return ResponseInterface|Json|ResultInterface|Response
+     * @return ResponseInterface|Json|ResultInterface
      */
     public function execute()
     {
@@ -58,12 +67,38 @@ class Cart extends Action
         if (strlen($token) === ApsisCoreHelper::TOKEN_STRING_LENGTH &&
             $cart = $this->abandonedFactory->create()->getCart($token)
         ) {
-            return (strlen($cart->getCartData())) ?
-                $this->sendJsonResponse($cart->getCartData()) :
-                $this->sendResponse(204);
+            return (strlen($cart->getCartData())) ? $this->getContent($cart) : $this->sendResponse(204);
         } else {
             return $this->sendResponse(401, '401 Unauthorized');
         }
+    }
+
+    /**
+     * @param DataObject $cart
+     *
+     * @return ResponseInterface|Json
+     */
+    private function getContent(DataObject $cart)
+    {
+        $output = $this->getRequest()->getParam('output');
+        if ($output === 'json') {
+            return $this->getJson($cart->getCartData());
+        } elseif ($output === 'html') {
+            $this->registry->register('apsis_one_cart', $cart, true);
+            return $this->getHtml();
+        } else {
+            return $this->sendResponse(204);
+        }
+    }
+
+    /**
+     * @return ResponseInterface
+     */
+    private function getHtml()
+    {
+        $this->_view->loadLayout();
+        $this->_view->renderLayout();
+        return $this->getResponse();
     }
 
     /**
@@ -71,7 +106,7 @@ class Cart extends Action
      *
      * @return Json
      */
-    private function sendJsonResponse(string $body)
+    private function getJson(string $body)
     {
         $resultJson = $this->resultJsonFactory->create();
         return $resultJson->setJsonData($body);

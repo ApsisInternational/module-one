@@ -13,7 +13,9 @@ use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Helper\File as ApsisFileHelper;
 use Apsis\One\Model\Sync\Profiles\Customers\CustomerFactory as CustomerDataFactory;
 use Apsis\One\Model\Profile;
-use Apsis\One\Model\Sync\Profiles;
+use Apsis\One\Model\ProfileBatchFactory;
+use Apsis\One\Model\ProfileBatch;
+use Magento\Store\Model\ScopeInterface;
 
 class Customers
 {
@@ -50,6 +52,11 @@ class Customers
     private $customerDataFactory;
 
     /**
+     * @var ProfileBatchFactory
+     */
+    private $profileBatchFactory;
+
+    /**
      * Customers constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -58,6 +65,7 @@ class Customers
      * @param ApsisConfigHelper $apsisConfigHelper
      * @param ApsisFileHelper $apsisFileHelper
      * @param CustomerDataFactory $customerDataFactory
+     * @param ProfileBatchFactory $profileBatchFactory
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -65,7 +73,8 @@ class Customers
         ProfileResource $profileResource,
         ApsisConfigHelper $apsisConfigHelper,
         ApsisFileHelper $apsisFileHelper,
-        CustomerDataFactory $customerDataFactory
+        CustomerDataFactory $customerDataFactory,
+        ProfileBatchFactory $profileBatchFactory
     ) {
         $this->customerDataFactory = $customerDataFactory;
         $this->apsisFileHelper = $apsisFileHelper;
@@ -73,12 +82,13 @@ class Customers
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->profileResource = $profileResource;
         $this->profileCollectionFactory = $profileCollectionFactory;
+        $this->profileBatchFactory = $profileBatchFactory;
     }
 
     /**
      * @param StoreInterface $store
      */
-    public function sync(StoreInterface $store)
+    public function batch(StoreInterface $store)
     {
         $sync = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,
@@ -92,10 +102,38 @@ class Customers
                 ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_CUSTOMER_BATCH_SIZE
             );
             $collection = $this->profileCollectionFactory->create()
-                ->getCustomerToSyncByStore($store->getId(), ($limit) ? $limit : self::LIMIT);
+                ->getCustomerToBatchByStore($store->getId(), ($limit) ? $limit : self::LIMIT);
 
             if ($collection->getSize()) {
-                $this->syncCustomersForStore($store, $collection, $mappings);
+                $this->batchCustomersForStore($store, $collection, $mappings);
+            }
+        }
+    }
+
+    /**
+     * @param StoreInterface $store
+     */
+    public function syncBatchItems(StoreInterface $store)
+    {
+        $collection = $this->profileBatchFactory->create()
+            ->getBatchItemCollection($store->getId(), ProfileBatch::BATCH_TYPE_CUSTOMER);
+        $apiClient = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
+        if ($collection->getSize() && $apiClient) {
+            foreach ($collection as $item) {
+                try {
+                    //@toDO file import api call
+                    $this->profileResource->updateCustomerSyncStatus(
+                        explode(",", $item->getEntityIds()),
+                        $store->getId(),
+                        Profile::SYNC_STATUS_SYNCED
+                    );
+                    $this->profileBatchFactory->create()
+                        ->updateItem($item, Profile::SYNC_STATUS_SYNCED);
+                } catch (Exception $e) {
+                    //@toDO maybe update the item and profiles with error msg
+                    $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+                    $this->apsisCoreHelper->log('Skipped batch item :' . $item->getId());
+                }
             }
         }
     }
@@ -119,12 +157,12 @@ class Customers
      * @param Collection $collection
      * @param array $mappings
      */
-    private function syncCustomersForStore(StoreInterface $store, Collection $collection, array $mappings)
+    private function batchCustomersForStore(StoreInterface $store, Collection $collection, array $mappings)
     {
         try {
             $integrationIdsArray = $this->getIntegrationIdsArray($collection);
             $file = strtolower($store->getCode() . '_customer_' . date('d_m_Y_His') . '.csv');
-            $mappings = array_merge(Profiles::DEFAULT_HEADERS, $mappings);
+            $mappings = array_merge(Profile::DEFAULT_HEADERS, $mappings);
             $this->apsisFileHelper->outputCSV(
                 $file,
                 $mappings
@@ -156,26 +194,30 @@ class Customers
                     );
                     $customersToUpdate[] = $customer->getId();
                 } catch (Exception $e) {
+                    //@toDO maybe update the item with error msg
                     $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
-                    $this->apsisCoreHelper->log(
-                        'Skipped customer with id :' . $customer->getId()
-                    );
+                    $this->apsisCoreHelper->log('Skipped customer with id :' . $customer->getId());
                 }
 
                 //clear collection and free memory
                 $customer->clearInstance();
             }
-            $filePath = $this->apsisFileHelper->getFilePath($file);
-            $this->apsisCoreHelper->log('Customer file : ' . $filePath);
-            /** @ToDo send file to import profile api */
 
-            $updated = $this->profileResource->updateCustomerSyncStatus(
-                $customersToUpdate,
-                $store->getId(),
-                Profile::SYNC_STATUS_SYNCED
-            );
-
-            $this->apsisCoreHelper->log('Total customer synced : ' . $updated);
+            if (! empty($customersToUpdate)) {
+                $filePath = $this->apsisFileHelper->getFilePath($file);
+                $this->profileBatchFactory->create()
+                    ->registerBatchItem(
+                        $store->getId(),
+                        $filePath,
+                        ProfileBatch::BATCH_TYPE_CUSTOMER,
+                        implode(',', $customersToUpdate)
+                    );
+                $this->profileResource->updateCustomerSyncStatus(
+                    $customersToUpdate,
+                    $store->getId(),
+                    Profile::SYNC_STATUS_BATCHED
+                );
+            }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
         }

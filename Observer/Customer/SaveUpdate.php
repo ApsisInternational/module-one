@@ -124,6 +124,7 @@ class SaveUpdate implements ObserverInterface
                 ->setEventType(Event::EVENT_TYPE_SUBSCRIBER_BECOMES_CUSTOMER)
                 ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($customer, $profile)))
                 ->setSubscriberId($profile->getSubscriberId())
+                ->setProfileId($profile->getId())
                 ->setCustomerId($customer->getEntityId())
                 ->setStoreId($customer->getStoreId())
                 ->setEmail($customer->getEmail())

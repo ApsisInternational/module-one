@@ -120,22 +120,17 @@ class Abandoned extends AbstractModel
         $stores = $this->apsisCoreHelper->getStores();
         foreach ($stores as $store) {
             $isEnabled = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
+            $isCustomerSyncEnabled = (boolean) $this->apsisCoreHelper
+                ->getStoreConfig($store, ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED);
             $acDelayPeriod = $this->apsisCoreHelper
                 ->getStoreConfig($store, ApsisConfigHelper::CONFIG_APSIS_ONE_ABANDONED_CARTS_SEND_AFTER);
 
-            if ($isEnabled && $acDelayPeriod) {
-                $customerSyncEnabled = (boolean) $this->apsisCoreHelper
-                    ->getStoreConfig($store, ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED);
-
+            if ($isEnabled && $acDelayPeriod && $isCustomerSyncEnabled) {
                 /** @var AbandonedSub $abandonedSub */
                 $abandonedSub = $this->abandonedSubFactory->create();
                 $quoteCollection = $abandonedSub->getQuoteCollectionByStore($store, $acDelayPeriod);
                 if ($quoteCollection && $quoteCollection->getSize()) {
-                    $abandonedSub->aggregateCartDataFromStoreCollection(
-                        $quoteCollection,
-                        $this->apsisCoreHelper,
-                        $customerSyncEnabled
-                    );
+                    $abandonedSub->aggregateCartDataFromStoreCollection($quoteCollection, $this->apsisCoreHelper);
                 }
             }
         }

@@ -16,9 +16,12 @@ class Profile extends AbstractModel
     const SYNC_STATUS_PENDING = 0;
     const SYNC_STATUS_SYNCED = 1;
     const SYNC_STATUS_FAILED = 2;
+    const SYNC_STATUS_BATCHED = 3;
 
     const IS_FLAGGED = 1;
     const IS_FLAGGED_NO = 0;
+
+    const DEFAULT_HEADERS = ['integration_uid' => 'integration_uid'];
 
     /**
      * @var DateTime

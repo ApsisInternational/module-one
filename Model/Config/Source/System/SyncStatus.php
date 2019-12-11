@@ -18,6 +18,10 @@ class SyncStatus implements OptionSourceInterface
                 'label' => 'Pending'
             ],
             [
+                'value' => Profile::SYNC_STATUS_BATCHED,
+                'label' => 'Batched',
+            ],
+            [
                 'value' => Profile::SYNC_STATUS_SYNCED,
                 'label' => 'Synced',
             ],

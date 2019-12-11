@@ -28,7 +28,7 @@ class Collection extends AbstractCollection
      *
      * @return bool|DataObject
      */
-    public function loadSubscriberByEmailAndStoreId($email, $storeId)
+    public function loadSubscriberByEmailAndStoreId(string $email, int $storeId)
     {
         $collection = $this->addFieldToFilter('email', $email)
             ->addFieldToFilter('store_id', $storeId)
@@ -47,7 +47,7 @@ class Collection extends AbstractCollection
      *
      * @return bool|DataObject
      */
-    public function loadCustomerById($customerId)
+    public function loadCustomerById(int $customerId)
     {
         $collection = $this->addFieldToFilter('customer_id', $customerId)
             ->setPageSize(1);
@@ -65,7 +65,7 @@ class Collection extends AbstractCollection
      *
      * @return bool|DataObject
      */
-    public function loadByEmailAndStoreId($email, $storeId)
+    public function loadByEmailAndStoreId(string $email, int $storeId)
     {
         $collection = $this->addFieldToFilter('email', $email)
             ->addFieldToFilter('store_id', $storeId)
@@ -84,15 +84,13 @@ class Collection extends AbstractCollection
      *
      * @return Collection
      */
-    public function getSubscribersToSyncByStore($storeId, $syncLimit)
+    public function getSubscribersToBatchByStore(int $storeId, int $syncLimit)
     {
-        $collection = $this->addFieldToSelect('*')
+        return $this->addFieldToSelect('*')
             ->addFieldToFilter('subscriber_id', ['notnull' => true])
             ->addFieldToFilter('subscriber_sync_status', Profile::SYNC_STATUS_PENDING)
             ->addFieldToFilter('store_id', $storeId)
             ->setPageSize($syncLimit);
-
-        return $collection;
     }
 
     /**
@@ -101,14 +99,23 @@ class Collection extends AbstractCollection
      *
      * @return Collection
      */
-    public function getCustomerToSyncByStore($storeId, $syncLimit)
+    public function getCustomerToBatchByStore(int $storeId, int $syncLimit)
     {
-        $collection = $this->addFieldToSelect('*')
+        return $this->addFieldToSelect('*')
             ->addFieldToFilter('customer_id', ['notnull' => true])
             ->addFieldToFilter('customer_sync_status', Profile::SYNC_STATUS_PENDING)
             ->addFieldToFilter('store_id', $storeId)
             ->setPageSize($syncLimit);
+    }
 
-        return $collection;
+    /**
+     * @param array $ids
+     *
+     * @return Collection
+     */
+    public function getCollectionFromIds(array $ids)
+    {
+        return $this->addFieldToSelect('*')
+            ->addFieldToFilter('id', ['in' => $ids]);
     }
 }

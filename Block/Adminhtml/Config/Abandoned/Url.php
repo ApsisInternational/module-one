@@ -47,9 +47,8 @@ class Url extends Field
         }
 
         $text = sprintf(
-            '%sapsis/abandoned/cart/token/##%s##/output/OUTPUT_TYPE',
-            $baseUrl,
-            $mappedAttributeForAcToken
+            '%sapsis/abandoned/cart/token/TOKEN/output/OUTPUT_TYPE/limit/NUMBER_LIMIT',
+            $baseUrl
         );
 
         $element->setData('value', $text);

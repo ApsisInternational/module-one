@@ -86,6 +86,9 @@
                 <subscriber_batch_size>500</subscriber_batch_size>
                 <customer_batch_size>500</customer_batch_size>
             </profile_sync>
+            <developer_settings>
+                <cleanup_after>30</cleanup_after>
+            </developer_settings>
         </apsis_one_configuration>
     </default>
 </config>

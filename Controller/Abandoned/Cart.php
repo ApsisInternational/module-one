@@ -67,7 +67,7 @@ class Cart extends Action
         if (strlen($token) === ApsisCoreHelper::TOKEN_STRING_LENGTH &&
             $cart = $this->abandonedFactory->create()->getCart($token)
         ) {
-            return (strlen($cart->getCartData())) ? $this->getContent($cart) : $this->sendResponse(204);
+            return (strlen($cart->getCartData())) ? $this->renderOutput($cart) : $this->sendResponse(204);
         } else {
             return $this->sendResponse(401, '401 Unauthorized');
         }
@@ -78,14 +78,14 @@ class Cart extends Action
      *
      * @return ResponseInterface|Json
      */
-    private function getContent(DataObject $cart)
+    private function renderOutput(DataObject $cart)
     {
         $output = $this->getRequest()->getParam('output');
         if ($output === 'json') {
-            return $this->getJson($cart->getCartData());
+            return $this->renderJson((string) $cart->getCartData());
         } elseif ($output === 'html') {
             $this->registry->register('apsis_one_cart', $cart, true);
-            return $this->getHtml();
+            return $this->renderHtml();
         } else {
             return $this->sendResponse(204);
         }
@@ -94,7 +94,7 @@ class Cart extends Action
     /**
      * @return ResponseInterface
      */
-    private function getHtml()
+    private function renderHtml()
     {
         $this->_view->loadLayout();
         $this->_view->renderLayout();
@@ -106,7 +106,7 @@ class Cart extends Action
      *
      * @return Json
      */
-    private function getJson(string $body)
+    private function renderJson(string $body)
     {
         $resultJson = $this->resultJsonFactory->create();
         return $resultJson->setJsonData($body);

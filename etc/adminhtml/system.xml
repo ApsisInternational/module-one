@@ -393,7 +393,7 @@
                        showInWebsite="1" showInStore="1">
                     <label>Cart Content URL</label>
                     <frontend_model>Apsis\One\Block\Adminhtml\Config\Abandoned\Url</frontend_model>
-                    <comment><![CDATA[Replace OUTPUT_TYPE with desired data type json or html.]]></comment>
+                    <comment><![CDATA[Replace TOKEN with mapped attribute from One. Replace OUTPUT_TYPE with desired data type json or html. Replace NUMBER_LIMIT with a number to limit number of products to show for output type HTML.]]></comment>
                 </field>
             </group>
         </section>
@@ -473,6 +473,15 @@
                 <field id="customer_batch_size" translate="label" sortOrder="30" showInStore="1" showInWebsite="1"
                        showInDefault="1">
                     <label>Customer Sync Size</label>
+                </field>
+            </group>
+            <group id="developer_settings" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Developer Settings</label>
+                <field id="cleanup_after" translate="label" sortOrder="10" type="select" showInDefault="1">
+                    <label>Cleanup After</label>
+                    <source_model>Apsis\One\Model\Config\Source\System\Cleanup</source_model>
+                    <comment><![CDATA[Cleanup cronjob will remove entries from DB tables (excluding apsis_profile table) older then set value.]]></comment>
                 </field>
             </group>
         </section>

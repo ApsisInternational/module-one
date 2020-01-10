@@ -25,7 +25,7 @@ class Client extends Rest
                 'client_id' => $clientId,
                 'client_secret' => $clientSecret
             ]);
-        return $this->processResponse($this->execute());
+        return $this->processResponse($this->execute(), __METHOD__);
     }
 
     /**
@@ -37,7 +37,7 @@ class Client extends Rest
     {
         $this->setUrl(self::HOST_NAME . '/audience/keyspaces')
             ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute());
+        return $this->processResponse($this->execute(), __METHOD__);
     }
 
     /**
@@ -49,7 +49,7 @@ class Client extends Rest
     {
         $this->setUrl(self::HOST_NAME . '/audience/channels')
             ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute());
+        return $this->processResponse($this->execute(), __METHOD__);
     }
 
     /**
@@ -61,7 +61,7 @@ class Client extends Rest
     {
         $this->setUrl(self::HOST_NAME . '/audience/sections')
             ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute());
+        return $this->processResponse($this->execute(), __METHOD__);
     }
 
     /**
@@ -75,7 +75,7 @@ class Client extends Rest
     {
         $this->setUrl(self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/attributes')
             ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute());
+        return $this->processResponse($this->execute(), __METHOD__);
     }
 
     /**
@@ -89,7 +89,7 @@ class Client extends Rest
     {
         $this->setUrl(self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/consent-lists')
             ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute());
+        return $this->processResponse($this->execute(), __METHOD__);
     }
 
     /**
@@ -106,7 +106,7 @@ class Client extends Rest
             self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/consent-lists/' .
             $consentListDiscriminator . '/topics'
         )->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute());
+        return $this->processResponse($this->execute(), __METHOD__);
     }
 
     /**
@@ -130,13 +130,13 @@ class Client extends Rest
         $this->setUrl($url)
             ->setVerb(Rest::VERB_PATCH)
             ->buildPostBody($attributes);
-        return $this->processResponse($this->execute());
+        return $this->processResponse($this->execute(), __METHOD__);
     }
 
     /**
      * Subscribe profile to topic
      *
-     * @param string $keyspaceDiscriminator
+     * @param string $keySpaceDiscriminator
      * @param string $profileKey
      * @param string $sectionDiscriminator
      * @param string $consentListDiscriminator
@@ -145,13 +145,13 @@ class Client extends Rest
      * @return bool|stdClass
      */
     public function subscribeProfileToTopic(
-        string $keyspaceDiscriminator,
+        string $keySpaceDiscriminator,
         string $profileKey,
         string $sectionDiscriminator,
         string $consentListDiscriminator,
         string $topicDiscriminator
     ) {
-        $url = self::HOST_NAME . '/audience/keyspaces/' . $keyspaceDiscriminator . '/profiles/' . $profileKey .
+        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/subscriptions';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_POST)
@@ -161,22 +161,61 @@ class Client extends Rest
                     'topic_discriminator' => $topicDiscriminator
                 ]
             );
-        return $this->processResponse($this->execute());
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * Get all events types
+     *
+     * @param string $sectionDiscriminator
+     *
+     * @return bool|stdClass
+     */
+    public function getEventsTypes(string $sectionDiscriminator)
+    {
+        $this->setUrl(self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/events')
+            ->setVerb(Rest::VERB_GET);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * Posting Events to a Profile
+     *
+     * @param string $keySpaceDiscriminator
+     * @param string $profileKey
+     * @param string $sectionDiscriminator
+     * @param array $events
+     *
+     * @return bool|stdClass
+     */
+    public function postEventsToProfile(
+        string $keySpaceDiscriminator,
+        string $profileKey,
+        string $sectionDiscriminator,
+        array $events
+    ) {
+        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+            '/sections/' . $sectionDiscriminator . '/events';
+        $this->setUrl($url)
+            ->setVerb(Rest::VERB_POST)
+            ->buildPostBody($events);
+        return $this->processResponse($this->execute(), __METHOD__);
     }
 
     /**
      * @param null|stdClass $response
+     * @param string $method
      *
      * @return boolean|stdClass
      */
-    private function processResponse($response)
+    private function processResponse($response, string $method)
     {
         if ($this->curlError) {
             return false;
         }
         /** Todo handle all error cases */
         if (isset($response->message)) {
-            $this->helper->debug(__METHOD__, $this->getErrorArray($response));
+            $this->helper->debug($method, $this->getErrorArray($response));
             return false;
         }
 

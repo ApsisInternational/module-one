@@ -10,5 +10,8 @@
         <job name="apsis_one_sync_events" instance="Apsis\One\Model\Cron" method="syncEvents">
             <schedule>*/5 * * * *</schedule>
         </job>
+        <job name="apsis_one_cleanup" instance="Apsis\One\Model\Cron" method="cleanup">
+            <schedule>0 0 * * *</schedule>
+        </job>
     </group>
 </config>

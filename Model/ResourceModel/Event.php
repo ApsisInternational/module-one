@@ -22,6 +22,15 @@ class Event extends AbstractDb
     private $dateTime;
 
     /**
+     * @var array
+     */
+    private $cleanupTableColumnMapping = [
+        Helper::APSIS_EVENT_TABLE => "updated_at",
+        Helper::APSIS_ABANDONED_TABLE => "created_at",
+        Helper::APSIS_PROFILE_BATCH_TABLE => "updated_at"
+    ];
+
+    /**
      * Event constructor.
      *
      * @param Context $context
@@ -107,6 +116,19 @@ class Event extends AbstractDb
         } catch (Exception $e) {
             $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             return 0;
+        }
+    }
+
+    /**
+     * @param int $day
+     */
+    public function cleanupRecords(int $day)
+    {
+        foreach ($this->cleanupTableColumnMapping as $table => $column) {
+            $this->getConnection()->delete(
+                $this->getTable($table),
+                "$column < DATE_SUB(NOW(), INTERVAL $day DAY)"
+            );
         }
     }
 }

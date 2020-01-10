@@ -121,6 +121,10 @@ class Config extends AbstractHelper
     const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_2_CUSTOMER = 'apsis_one_events/events/subscriber_2_customer';
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_2_SUBSCRIBER = 'apsis_one_events/events/customer_2_subscriber';
 
+    /**
+     * Configuration section
+     */
+    /** Profile Sync */
     const CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_SECTION = 'apsis_one_configuration/profile_sync';
     const CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_ORDER_STATUSES
         = 'apsis_one_configuration/profile_sync/order_status';
@@ -128,6 +132,10 @@ class Config extends AbstractHelper
         = 'apsis_one_configuration/profile_sync/subscriber_batch_size';
     const CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_CUSTOMER_BATCH_SIZE
         = 'apsis_one_configuration/profile_sync/customer_batch_size';
+    /** Developer settings */
+    const CONFIG_APSIS_ONE_CONFIGURATION_DEVELOPER_SETTING_SECTION = 'apsis_one_configuration/developer_settings';
+    const CONFIG_APSIS_ONE_CONFIGURATION_DEVELOPER_SETTING_CLEANUP_AFTER =
+        'apsis_one_configuration/developer_settings/cleanup_after';
 
     /**
      * @param StoreInterface $store

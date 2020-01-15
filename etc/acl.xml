@@ -8,6 +8,7 @@
                         <resource id="Apsis_One::profile" title="Apsis Profile" sortOrder="10"/>
                         <resource id="Apsis_One::event" title="Apsis Event" sortOrder="20"/>
                         <resource id="Apsis_One::abandoned" title="Apsis Abandoned Basket" sortOrder="30"/>
+                        <resource id="Apsis_One::logviewer" title="Log Viewer" sortOrder="40"/>
                     </resource>
                 </resource>
                 <resource id="Magento_Backend::stores">

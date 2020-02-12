@@ -14,7 +14,6 @@ use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\DataObject;
 use Magento\Framework\Encryption\EncryptorInterface;
-use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Exception;
 use Magento\Store\Api\Data\StoreInterface;
@@ -71,11 +70,6 @@ class Core extends AbstractHelper
      * @var EncryptorInterface
      */
     private $encryptor;
-
-    /**
-     * @var Json
-     */
-    private $jsonSerializer;
 
     /**
      * @var Image
@@ -136,7 +130,6 @@ class Core extends AbstractHelper
      * @param TimezoneInterface $localeDate
      * @param EncryptorInterface $encryptor
      * @param Logger $logger
-     * @param Json $jsonSerializer
      * @param Image $imageHelper
      * @param ProductRepositoryInterface $productRepository
      * @param CustomerRepositoryInterface $customerRepository
@@ -155,7 +148,6 @@ class Core extends AbstractHelper
         TimezoneInterface $localeDate,
         EncryptorInterface $encryptor,
         Logger $logger,
-        Json $jsonSerializer,
         Image $imageHelper,
         ProductRepositoryInterface $productRepository,
         CustomerRepositoryInterface $customerRepository,
@@ -181,7 +173,6 @@ class Core extends AbstractHelper
         $this->localeDate = $localeDate;
         $this->storeManager = $storeManager;
         $this->stringUtils = $stringUtils;
-        $this->jsonSerializer = $jsonSerializer;
         $this->profileCollectionFactory = $profileCollectionFactory;
         parent::__construct($context);
     }
@@ -243,15 +234,30 @@ class Core extends AbstractHelper
 
     /**
      * @param string|int|float|bool|array|null $data
-     * @return string
+     * @return string|bool
      */
     public function serialize($data)
     {
         try {
-            return $this->jsonSerializer->serialize($data);
+            return json_encode($data);
         } catch (Exception $e) {
             $this->logMessage(__METHOD__, $e->getMessage());
             return '{}';
+        }
+    }
+
+    /**
+     * @param string $string
+     *
+     * @return array|bool|float|int|mixed|string|null|object
+     */
+    public function unserialize(string $string)
+    {
+        try {
+            return json_decode($string);
+        } catch (Exception $e) {
+            $this->logMessage(__METHOD__, $e->getMessage());
+            return [];
         }
     }
 

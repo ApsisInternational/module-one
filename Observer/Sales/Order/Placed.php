@@ -11,6 +11,7 @@ use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Exception;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Item;
 use Magento\Store\Model\ScopeInterface;
@@ -87,20 +88,22 @@ class Placed implements ObserverInterface
         }
 
         if ($this->isOkToProceed($order->getStore(), $isSubscriber)) {
-            $eventModel = $this->eventFactory->create()
-                ->setEventType(Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER)
-                ->setEventData(
-                    $this->apsisCoreHelper->serialize($this->getDataArr($order, $profile->getSubscriberId()))
-                )
-                ->setProfileId($profile->getId())
-                ->setCustomerId($order->getCustomerId())
-                ->setSubscriberId($profile->getSubscriberId())
-                ->setStoreId($order->getStore()->getId())
-                ->setEmail($order->getCustomerEmail())
-                ->setStatus(Profile::SYNC_STATUS_PENDING);
-
             try {
-                $this->eventResource->save($eventModel);
+                $mainData = $this->getDataArr($order, $profile->getSubscriberId());
+                $subData = $mainData['items'];
+                unset($mainData['items']);
+                $eventModel = $this->eventFactory->create()
+                    ->setEventType(Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER)
+                    ->setEventData($this->apsisCoreHelper->serialize($mainData))
+                    ->setSubEventData($this->apsisCoreHelper->serialize($subData))
+                    ->setProfileId($profile->getId())
+                    ->setCustomerId($order->getCustomerId())
+                    ->setSubscriberId($profile->getSubscriberId())
+                    ->setStoreId($order->getStore()->getId())
+                    ->setEmail($order->getCustomerEmail())
+                    ->setStatus(Profile::SYNC_STATUS_PENDING);
+
+                    $this->eventResource->save($eventModel);
             } catch (Exception $e) {
                 $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             }
@@ -109,6 +112,14 @@ class Placed implements ObserverInterface
         return $this;
     }
 
+    /**
+     * @param Order $order
+     * @param int $subscriberId
+     *
+     * @return array
+     *
+     * @throws NoSuchEntityException
+     */
     private function getDataArr(Order $order, $subscriberId = 0)
     {
         $items = [];

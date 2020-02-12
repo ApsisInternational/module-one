@@ -7,6 +7,7 @@ use Magento\Framework\DataObject;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Magento\Framework\Registry;
 use Magento\Framework\View\Element\Template;
+use Apsis\One\Helper\Core as ApsisCoreHelper;
 
 /**
  * Cart block
@@ -31,19 +32,27 @@ class Cart extends Template
     private $cart;
 
     /**
+     * @var ApsisCoreHelper
+     */
+    private $apsisCoreHelper;
+
+    /**
      * Cart constructor.
      *
      * @param Template\Context $context
+     * @param ApsisCoreHelper $apsisCoreHelper
      * @param Registry $registry
      * @param PriceHelper $priceHelper
      * @param array $data
      */
     public function __construct(
         Template\Context $context,
+        ApsisCoreHelper $apsisCoreHelper,
         Registry $registry,
         PriceHelper $priceHelper,
         array $data = []
     ) {
+        $this->apsisCoreHelper = $apsisCoreHelper;
         $this->priceHelper = $priceHelper;
         $this->registry = $registry;
         parent::__construct($context, $data);
@@ -57,7 +66,7 @@ class Cart extends Template
         $cart = $this->registry->registry('apsis_one_cart');
         if ($cart instanceof DataObject) {
             $this->cart = $cart;
-            $obj = json_decode($this->cart->getCartData());
+            $obj = $this->apsisCoreHelper->unserialize($this->cart->getCartData());
             if (isset($obj->items) && is_array($obj->items)) {
                 return $this->getItemsWithLimitApplied($obj->items);
             }
@@ -72,7 +81,12 @@ class Cart extends Template
      */
     private function getItemsWithLimitApplied(array $items)
     {
-        $limit = (int) $this->getRequest()->getParam('limit');
+        $limit = $this->getRequest()->getParam('limit');
+        if (! $limit) {
+            return $items;
+        }
+
+        $limit = (int) $limit;
         if (count($items) > $limit) {
             return array_splice($items, 0, $limit);
         }

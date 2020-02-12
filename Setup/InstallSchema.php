@@ -263,6 +263,13 @@ class InstallSchema implements InstallSchemaInterface
                 'Event JSON Data'
             )
             ->addColumn(
+                'sub_event_data',
+                Table::TYPE_BLOB,
+                null,
+                ['nullable' => false],
+                'Sub Event JSON Data'
+            )
+            ->addColumn(
                 'profile_id',
                 Table::TYPE_INTEGER,
                 11,

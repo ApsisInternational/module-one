@@ -114,7 +114,7 @@ class Rest
     private function executePostPutPatch($ch, array $headers)
     {
         if (! is_string($this->requestBody)) {
-            $this->buildPostBody();
+            $this->buildBody();
         }
 
         curl_setopt($ch, CURLOPT_POSTFIELDS, $this->requestBody);
@@ -185,7 +185,7 @@ class Rest
     private function doExecute(&$ch, array $headers)
     {
         $this->setCurlOpts($ch, $headers);
-        $this->responseBody = json_decode(curl_exec($ch));
+        $this->responseBody = $this->helper->unserialize(curl_exec($ch));
         $this->responseInfo = curl_getinfo($ch);
         $err = curl_error($ch);
 
@@ -204,9 +204,9 @@ class Rest
      *
      * @return $this
      */
-    protected function buildPostBody($data = null)
+    protected function buildBody($data = null)
     {
-        $this->requestBody = json_encode($data);
+        $this->requestBody = $this->helper->serialize($data);
         return $this;
     }
 

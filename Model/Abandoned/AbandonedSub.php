@@ -178,9 +178,13 @@ class AbandonedSub
                     ),
                     'created_at' => $createdAt
                 ];
+                $mainData = $this->getDataForEventFromAcData($cartData);
+                $subData = $mainData['items'];
+                unset($mainData['items']);
                 $events[] = [
                     'event_type' => Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART,
-                    'event_data' => $apsisCoreHelper->serialize($this->getDataForEventFromAcData($cartData)),
+                    'event_data' => $apsisCoreHelper->serialize($mainData),
+                    'sub_event_data' => $apsisCoreHelper->serialize($subData),
                     'profile_id' => $profile->getId(),
                     'customer_id' => $quote->getCustomerId(),
                     'store_id' => $quote->getStoreId(),

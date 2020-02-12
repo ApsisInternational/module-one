@@ -20,7 +20,7 @@ class Client extends Rest
     {
         $this->setUrl(self::HOST_NAME . '/oauth/token')
             ->setVerb(Rest::VERB_POST)
-            ->buildPostBody([
+            ->buildBody([
                 'grant_type' => 'client_credentials',
                 'client_id' => $clientId,
                 'client_secret' => $clientSecret
@@ -129,7 +129,56 @@ class Client extends Rest
             '/sections/' . $sectionDiscriminator . '/attributes';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_PATCH)
-            ->buildPostBody($attributes);
+            ->buildBody($attributes);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     *  Get all profile attributes
+     *
+     * @param string $keySpaceDiscriminator
+     * @param string $profileKey
+     * @param string $sectionDiscriminator
+     *
+     * @return bool|stdClass
+     */
+    public function getProfileAttributes(
+        string $keySpaceDiscriminator,
+        string $profileKey,
+        string $sectionDiscriminator
+    ) {
+        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+            '/sections/' . $sectionDiscriminator . '/attributes';
+        $this->setUrl($url)
+            ->setVerb(Rest::VERB_GET);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * Get all profile events
+     *
+     * @param string $keySpaceDiscriminator
+     * @param string $profileKey
+     * @param string $sectionDiscriminator
+     * @param array $typeIds
+     *
+     * @return bool|stdClass
+     */
+    public function getProfileEvents(
+        string $keySpaceDiscriminator,
+        string $profileKey,
+        string $sectionDiscriminator,
+        array $typeIds = []
+    ) {
+        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+            '/sections/' . $sectionDiscriminator . '/events';
+        $this->setUrl($url)
+            ->setVerb(Rest::VERB_GET);
+
+        if (! empty($typeIds)) {
+            $this->buildBody(['typeID' => $typeIds]);
+        }
+
         return $this->processResponse($this->execute(), __METHOD__);
     }
 
@@ -155,10 +204,44 @@ class Client extends Rest
             '/sections/' . $sectionDiscriminator . '/subscriptions';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_POST)
-            ->buildPostBody(
+            ->buildBody(
                 [
                     'consent_list_discriminator' => $consentListDiscriminator,
                     'topic_discriminator' => $topicDiscriminator
+                ]
+            );
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * Create consent
+     *
+     * @param string $channelDiscriminator
+     * @param string $address
+     * @param string $sectionDiscriminator
+     * @param string $consentListDiscriminator
+     * @param string $topicDiscriminator
+     * @param string $type
+     *
+     * @return bool|stdClass
+     */
+    public function createConsent(
+        string $channelDiscriminator,
+        string $address,
+        string $sectionDiscriminator,
+        string $consentListDiscriminator,
+        string $topicDiscriminator,
+        string $type
+    ) {
+        $url = self::HOST_NAME . '/audience/channels/' . $channelDiscriminator . '/addresses/' . $address . '/consents';
+        $this->setUrl($url)
+            ->setVerb(Rest::VERB_POST)
+            ->buildBody(
+                [
+                    'section_discriminator' => $sectionDiscriminator,
+                    'consent_list_discriminator' => $consentListDiscriminator,
+                    'topic_discriminator' => $topicDiscriminator,
+                    'type' => $type
                 ]
             );
         return $this->processResponse($this->execute(), __METHOD__);
@@ -198,7 +281,7 @@ class Client extends Rest
             '/sections/' . $sectionDiscriminator . '/events';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_POST)
-            ->buildPostBody($events);
+            ->buildBody(['items' => $events]);
         return $this->processResponse($this->execute(), __METHOD__);
     }
 
@@ -214,7 +297,7 @@ class Client extends Rest
             return false;
         }
         /** Todo handle all error cases */
-        if (isset($response->message)) {
+        if (isset($response->detail)) {
             $this->helper->debug($method, $this->getErrorArray($response));
             return false;
         }
@@ -229,8 +312,9 @@ class Client extends Rest
     private function getErrorArray($response)
     {
         return $data = [
-            'code' => $response->status_code,
-            'description' => $response->message
+            'status' => $response->status,
+            'title' => $response->title,
+            'detail' => $response->detail
         ];
     }
 }

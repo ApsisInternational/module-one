@@ -101,12 +101,7 @@ class AddProduct implements ObserverInterface
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_WISHLIST
         );
 
-        $sync = (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED
-        );
-
-        return ($account && $event && $sync);
+        return ($account && $event);
     }
 
     /**

@@ -14,6 +14,7 @@ use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use stdClass;
 use Apsis\One\Model\ResourceModel\Event as EventResourceModel;
+use Apsis\One\Model\ResourceModel\Abandoned\CollectionFactory as AbandonedCollectionFactory;
 
 class Events
 {
@@ -38,6 +39,11 @@ class Events
      * @var EventResourceModel
      */
     private $eventResourceModel;
+
+    /**
+     * @var AbandonedCollectionFactory
+     */
+    private $abandonedCollectionFactory;
 
     /**
      * @var array
@@ -82,12 +88,17 @@ class Events
     /**
      * @var string
      */
-    private $keySpaceDiscriminator;
+    private $keySpaceDiscriminator = '';
 
     /**
      * @var string
      */
-    private $sectionDiscriminator;
+    private $sectionDiscriminator = '';
+
+    /**
+     * @var array
+     */
+    private $attributesArrWithVersionId = [];
 
     /**
      * Profiles constructor.
@@ -96,17 +107,20 @@ class Events
      * @param EventCollectionFactory $eventCollectionFactory
      * @param ProfileCollectionFactory $profileCollectionFactory
      * @param EventResourceModel $eventResourceModel
+     * @param AbandonedCollectionFactory $abandonedCollectionFactory
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
         EventCollectionFactory $eventCollectionFactory,
         ProfileCollectionFactory $profileCollectionFactory,
-        EventResourceModel $eventResourceModel
+        EventResourceModel $eventResourceModel,
+        AbandonedCollectionFactory $abandonedCollectionFactory
     ) {
         $this->eventResourceModel = $eventResourceModel;
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->eventCollectionFactory = $eventCollectionFactory;
+        $this->abandonedCollectionFactory = $abandonedCollectionFactory;
     }
 
     /**
@@ -116,20 +130,24 @@ class Events
     {
         $stores = $this->apsisCoreHelper->getStores();
         foreach ($stores as $store) {
-            $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
             $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
                 $store,
                 ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
             );
             $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
-            if ($account && $this->sectionDiscriminator && $client) {
-                $hash = substr(md5($this->sectionDiscriminator), 0, 8);
-                $this->keySpaceDiscriminator = "com.apsis1.integrations.keyspaces.$hash.magento";
+            if ($this->sectionDiscriminator && $client) {
+                $this->attributesArrWithVersionId = $this->apsisCoreHelper
+                    ->getAttributesArrWithVersionId($client, $this->sectionDiscriminator);
+                $this->keySpaceDiscriminator = $this->apsisCoreHelper
+                    ->getKeySpaceDiscriminator($this->sectionDiscriminator);
                 $this->mapEventVersionIds($client);
                 $eventCollection = $this->eventCollectionFactory->create()
                     ->getPendingEventsByStore($store->getId(), self::LIMIT);
 
-                if ($eventCollection->getSize()) {
+                if ($eventCollection->getSize() &&
+                    ! empty($this->eventsVersionMapping) &&
+                    ! empty($this->attributesArrWithVersionId)
+                ) {
                     $this->processEventCollection($client, $eventCollection, $store);
                 }
             }
@@ -151,8 +169,15 @@ class Events
                             break;
                         }
                     }
+                } else {
+                    $this->apsisCoreHelper->log(
+                        'No version found for event ' . $item->discriminator . ' section ' . $this->sectionDiscriminator
+                    );
                 }
             }
+        } else {
+            $this->apsisCoreHelper->log('No event types found on section ' . $this->sectionDiscriminator);
+            $this->eventsVersionMapping = [];
         }
     }
 
@@ -168,6 +193,9 @@ class Events
             $profile = $profileEvents['profile'];
             $status = $this->syncProfileForEvent($client, $profile, $store);
             if ($status === false) {
+                $this->apsisCoreHelper->log(
+                    'Unable to sync profile for events for store ' . $store->getCode() . ' profile ' . $profile->getId()
+                );
                 continue;
             }
 
@@ -190,6 +218,10 @@ class Events
 
                 if ($status !== false) {
                     $this->eventResourceModel->updateSyncStatus(array_keys($events), Profile::SYNC_STATUS_SYNCED);
+                } else {
+                    $this->apsisCoreHelper->log(
+                        'Unable to post events for store ' . $store->getCode() . ' profile ' . $profile->getId()
+                    );
                 }
             }
         }
@@ -260,20 +292,35 @@ class Events
      */
     private function syncProfileForEvent(Client $client, Profile $profile, StoreInterface $store)
     {
-        /** @var @toDo update support attribute */
-        $mappedEmailAttributeId = $this->apsisCoreHelper->getStoreConfig(
+        $mappedEmailAttribute = $this->apsisCoreHelper->getStoreConfig(
             $store,
             ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
         );
-        if ($mappedEmailAttributeId) {
+        if ($mappedEmailAttribute && isset($this->attributesArrWithVersionId[$mappedEmailAttribute])) {
+            $attributesToSync[$this->attributesArrWithVersionId[$mappedEmailAttribute]] = $profile->getEmail();
+            $mappedAcTokenAttribute = $this->apsisCoreHelper->getStoreConfig(
+                $store,
+                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_AC_TOKEN
+            );
+            $latestAbandonedCart = $this->abandonedCollectionFactory->create()
+                ->loadByProfileIdAndStoreId((int) $profile->getId(), (int) $store->getId());
+            if ($mappedAcTokenAttribute &&
+                isset($this->attributesArrWithVersionId[$mappedAcTokenAttribute]) &&
+                $latestAbandonedCart
+            ) {
+                $attributesToSync[$this->attributesArrWithVersionId[$mappedAcTokenAttribute]] =
+                    $latestAbandonedCart->getToken();
+            }
+
             return $client->createProfile(
                 $this->keySpaceDiscriminator,
                 $profile->getIntegrationUid(),
                 $this->sectionDiscriminator,
-                [$mappedEmailAttributeId => $profile->getEmail()]
+                $attributesToSync
             );
+        } else {
+            $this->apsisCoreHelper->log('Email attribute not mapped for profile sync for event');
         }
-
         return false;
     }
 }

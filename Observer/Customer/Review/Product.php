@@ -3,6 +3,7 @@
 namespace Apsis\One\Observer\Customer\Review;
 
 use Apsis\One\Model\Profile;
+use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Exception;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -34,17 +35,25 @@ class Product implements ObserverInterface
     private $eventResource;
 
     /**
+     * @var ProfileResource
+     */
+    private $profileResource;
+
+    /**
      * Product constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param EventFactory $eventFactory
      * @param EventResource $eventResource
+     * @param ProfileResource $profileResource
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
         EventFactory $eventFactory,
-        EventResource $eventResource
+        EventResource $eventResource,
+        ProfileResource $profileResource
     ) {
+        $this->profileResource = $profileResource;
         $this->eventFactory = $eventFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->eventResource = $eventResource;
@@ -65,7 +74,7 @@ class Product implements ObserverInterface
         $profile = $this->apsisCoreHelper
             ->getProfileByEmailAndStoreId($customer->getEmail(), $this->apsisCoreHelper->getStore()->getId());
 
-        if ($customer && $product && $this->isOkToProceed() && $profile) {
+        if ($customer && $product && $this->isOkToProceed() && $profile && $reviewObject->isApproved()) {
             $eventModel = $this->eventFactory->create()
                 ->setEventType(Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW)
                 ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($reviewObject, $product)))
@@ -75,8 +84,10 @@ class Product implements ObserverInterface
                 ->setEmail($customer->getEmail())
                 ->setStatus(Profile::SYNC_STATUS_PENDING);
 
+            $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
             try {
                 $this->eventResource->save($eventModel);
+                $this->profileResource->save($profile);
             } catch (Exception $e) {
                 $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             }
@@ -97,12 +108,7 @@ class Product implements ObserverInterface
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_REVIEW
         );
 
-        $sync = (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED
-        );
-
-        return ($account && $event && $sync);
+        return ($account && $event);
     }
 
     /**

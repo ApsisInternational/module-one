@@ -785,4 +785,40 @@ class Core extends AbstractHelper
         $collection->getSelect()->limit(1);
         return $collection;
     }
+
+    /**
+     * @param string $sectionDiscriminator
+     *
+     * @return string
+     */
+    public function getKeySpaceDiscriminator(string $sectionDiscriminator)
+    {
+        $hash = substr(md5($sectionDiscriminator), 0, 8);
+        return "com.apsis1.integrations.keyspaces.$hash.magento";
+    }
+
+    /**
+     * @param Client $client
+     * @param string $sectionDiscriminator
+     *
+     * @return array
+     */
+    public function getAttributesArrWithVersionId(Client $client, string $sectionDiscriminator)
+    {
+        $attributesArr = [];
+        $attributes = $client->getAttributes($sectionDiscriminator);
+        if (is_object($attributes) || isset($attributes->items)) {
+            foreach ($attributes->items as $attribute) {
+                foreach ($attribute->versions as $version) {
+                    if ($version->deprecated_at === null) {
+                        $attributesArr[$attribute->discriminator] = $version->id;
+                        break;
+                    }
+                }
+            }
+        } else {
+            $this->log('No attributes found on section ' . $sectionDiscriminator);
+        }
+        return $attributesArr;
+    }
 }

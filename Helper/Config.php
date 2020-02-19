@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Helper;
 
+use Apsis\One\Model\Profile;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -190,5 +191,54 @@ class Config extends AbstractHelper
         }
 
         return $mapping;
+    }
+
+    /**
+     * @param string $keySpaceDiscriminator
+     * @param array $mappings
+     * @param array $attributesArrWithVersionId
+     * @param array $topicsMapping
+     *
+     * @return array
+     */
+    public function getJsonMappingData(
+        string $keySpaceDiscriminator,
+        array $mappings,
+        array $attributesArrWithVersionId,
+        array $topicsMapping = []
+    ) {
+        $attributeMappings = [];
+        foreach ($mappings as $key => $mapping) {
+            $attributeMappings[] = [
+                'field_selector' => $key,
+                'attribute_version_id' => $attributesArrWithVersionId[$mapping]
+            ];
+        }
+
+        $jsonMappingData = [
+            'keyspace_mappings' => [[
+                'keyspace_discriminator' => $keySpaceDiscriminator,
+                'field_selector' => Profile::DEFAULT_HEADERS,
+                'merge_profiles' => false
+            ]],
+            'options' => ['update_existing_profiles' => true, 'clear_existing_attributes' => true],
+            'attribute_mappings' => $attributeMappings
+        ];
+
+        if (! empty($topicsMapping)) {
+            $consents = [];
+            foreach ($topicsMapping as $field => $topicMapping) {
+                $consents[] = [
+                    'field_selector' => $field,
+                    'channel_discriminator' => 'com.apsis1.channels.email',
+                    'consent_list_discriminator' => $topicMapping[0],
+                    'topic_discriminator' => $topicMapping[1],
+                    'type' => 'opt-in'
+                ];
+            }
+            $jsonMappingData['consent_mappings'] = [['address_field_selector' => 'email', 'consents' => $consents]];
+        }
+
+        return $jsonMappingData;
     }
 }

@@ -21,7 +21,7 @@ use Magento\Store\Model\ScopeInterface;
 
 class Subscribers
 {
-    const LIMIT = 500;
+    const LIMIT = 5000;
 
     /**
      * @var ProfileCollectionFactory
@@ -64,6 +64,16 @@ class Subscribers
     private $profileBatchFactory;
 
     /**
+     * @var string
+     */
+    private $keySpaceDiscriminator;
+
+    /**
+     * @var string
+     */
+    private $sectionDiscriminator;
+
+    /**
      * Subscribers constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -100,6 +110,10 @@ class Subscribers
      */
     public function batch(StoreInterface $store)
     {
+        $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
+            $store,
+            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+        );
         $sync = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,
             ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED
@@ -109,45 +123,119 @@ class Subscribers
             ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC
         );
         $mappings = $this->apsisConfigHelper->getSubscriberAttributeMapping($store);
+        $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
 
-        if ($sync && $topics && ! empty($mappings) && isset($mappings['email'])) {
+        if ($client &&
+            $sync &&
+            $this->sectionDiscriminator &&
+            strlen($topics) &&
+            ! empty($mappings) &&
+            isset($mappings['email'])
+        ) {
+            $attributesArrWithVersionId = $this->apsisCoreHelper
+                ->getAttributesArrWithVersionId($client, $this->sectionDiscriminator);
+            $this->keySpaceDiscriminator = $this->apsisCoreHelper
+                ->getKeySpaceDiscriminator($this->sectionDiscriminator);
             $limit = $this->apsisCoreHelper->getStoreConfig(
                 $store,
                 ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_SUBSCRIBER_BATCH_SIZE
             );
             $collection = $this->profileCollectionFactory->create()
                 ->getSubscribersToBatchByStore($store->getId(), ($limit) ? $limit : self::LIMIT);
+            $topics = explode(',', $topics);
 
-            if ($collection->getSize()) {
-                $this->batchSubscriberForStore($store, $collection, $mappings);
+            if ($collection->getSize() && ! empty($topics) && ! empty($attributesArrWithVersionId)) {
+                $this->batchSubscriberForStore($store, $collection, $mappings, $topics, $attributesArrWithVersionId);
             }
         }
     }
 
     /**
      * @param StoreInterface $store
+     * @param Collection $collection
+     * @param array $mappings
+     * @param array $topics
+     * @param array $attributesArrWithVersionId
      */
-    public function syncBatchItems(StoreInterface $store)
-    {
-        $collection = $this->profileBatchFactory->create()
-            ->getBatchItemCollection($store->getId(), ProfileBatch::BATCH_TYPE_SUBSCRIBER);
-        $apiClient = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
-        if ($collection->getSize() && $apiClient) {
-            foreach ($collection as $item) {
+    private function batchSubscriberForStore(
+        StoreInterface $store,
+        Collection $collection,
+        array $mappings,
+        array $topics,
+        array $attributesArrWithVersionId
+    ) {
+        try {
+            $integrationIdsArray = $this->getIntegrationIdsArray($collection);
+            $file = strtolower($store->getCode() . '_subscriber_' . date('d_m_Y_His') . '.csv');
+
+            $topicsMapping = [];
+            foreach ($topics as $topic) {
+                $topic = explode('|', $topic);
+                $topicsMapping[$topic[2]] = [$topic[0], $topic[1]];
+            }
+
+            $jsonMappings = $this->apsisConfigHelper->getJsonMappingData(
+                $this->keySpaceDiscriminator,
+                $mappings,
+                $attributesArrWithVersionId,
+                $topicsMapping
+            );
+
+            $mappings = array_merge([Profile::DEFAULT_HEADERS => Profile::DEFAULT_HEADERS], $mappings);
+            $this->apsisFileHelper->outputCSV(
+                $file,
+                array_merge(array_keys($mappings), array_keys($topicsMapping))
+            );
+
+            $subscriberCollection = $this->getSubscribersFromIdsByStore(
+                $store,
+                $collection->getColumnValues('subscriber_id')
+            );
+            $subscribersToUpdate = [];
+
+            /** @var MagentoSubscriber $subscriber */
+            foreach ($subscriberCollection as $subscriber) {
                 try {
-                    //@toDO file import api call
-                    $this->profileResource->updateSubscribersSyncStatus(
-                        explode(",", $item->getEntityIds()),
-                        $store->getId(),
-                        Profile::SYNC_STATUS_SYNCED
+                    $subscriber->setIntegrationUid($integrationIdsArray[$subscriber->getSubscriberId()]);
+                    $subscriberData = $this->subscriberDataFactory->create()
+                        ->setSubscriberData(array_keys($mappings), $subscriber)
+                        ->setConsentListData(array_keys($topicsMapping))
+                        ->toCSVArray();
+                    $this->apsisFileHelper->outputCSV(
+                        $file,
+                        $subscriberData
                     );
-                    $this->profileBatchFactory->create()
-                        ->updateItem($item, Profile::SYNC_STATUS_SYNCED);
+                    $subscribersToUpdate[] = $subscriber->getSubscriberId();
                 } catch (Exception $e) {
-                    //@toDO maybe update the item and profiles with error msg
                     $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
-                    $this->apsisCoreHelper->log('Skipped batch item :' . $item->getId());
+                    $this->apsisCoreHelper->log('Skipped subscriber with id :' . $subscriber->getSubscriberId());
+                    continue;
                 }
+
+                //clear collection and free memory
+                $subscriber->clearInstance();
+            }
+
+            if (! empty($subscribersToUpdate)) {
+                $filePath = $this->apsisFileHelper->getFilePath($file);
+                $this->profileBatchFactory->create()
+                    ->registerBatchItem(
+                        $store->getId(),
+                        $filePath,
+                        ProfileBatch::BATCH_TYPE_SUBSCRIBER,
+                        implode(',', $subscribersToUpdate),
+                        $this->apsisCoreHelper->serialize($jsonMappings)
+                    );
+                $this->profileResource->updateSubscribersSyncStatus(
+                    $subscribersToUpdate,
+                    $store->getId(),
+                    Profile::SYNC_STATUS_BATCHED
+                );
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            if (! empty($subscribersToUpdate)) {
+                $this->apsisCoreHelper->log('Skipped subscribers with id :' . implode(',', $subscribersToUpdate));
             }
         }
     }
@@ -194,65 +282,30 @@ class Subscribers
 
     /**
      * @param StoreInterface $store
-     * @param Collection $collection
-     * @param array $mappings
      */
-    private function batchSubscriberForStore(StoreInterface $store, Collection $collection, array $mappings)
+    public function syncBatchItems(StoreInterface $store)
     {
-        try {
-            $integrationIdsArray = $this->getIntegrationIdsArray($collection);
-            $file = strtolower($store->getCode() . '_subscriber_' . date('d_m_Y_His') . '.csv');
-            $mappings = array_merge(Profile::DEFAULT_HEADERS, $mappings);
-            $this->apsisFileHelper->outputCSV(
-                $file,
-                $mappings
-            );
-
-            $subscriberCollection = $this->getSubscribersFromIdsByStore(
-                $store,
-                $collection->getColumnValues('subscriber_id')
-            );
-            $subscribersToUpdate = [];
-
-            /** @var MagentoSubscriber $subscriber */
-            foreach ($subscriberCollection as $subscriber) {
+        $collection = $this->profileBatchFactory->create()
+            ->getBatchItemCollection($store->getId(), ProfileBatch::BATCH_TYPE_SUBSCRIBER);
+        $apiClient = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
+        if ($collection->getSize() && $apiClient) {
+            foreach ($collection as $item) {
                 try {
-                    $subscriber->setIntegrationUid($integrationIdsArray[$subscriber->getSubscriberId()]);
-                    $subscriberData = $this->subscriberDataFactory->create()
-                        ->setSubscriberData(array_keys($mappings), $subscriber)
-                        ->toCSVArray();
-                    $this->apsisFileHelper->outputCSV(
-                        $file,
-                        $subscriberData
-                    );
-                    $subscribersToUpdate[] = $subscriber->getSubscriberId();
-                } catch (Exception $e) {
-                    //@toDO maybe update the item with error msg
-                    $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
-                    $this->apsisCoreHelper->log('Skipped subscriber with id :' . $subscriber->getSubscriberId());
-                }
-
-                //clear collection and free memory
-                $subscriber->clearInstance();
-            }
-
-            if (! empty($subscribersToUpdate)) {
-                $filePath = $this->apsisFileHelper->getFilePath($file);
-                $this->profileBatchFactory->create()
-                    ->registerBatchItem(
+                    //@toDO file import api call
+                    $this->profileResource->updateSubscribersSyncStatus(
+                        explode(",", $item->getEntityIds()),
                         $store->getId(),
-                        $filePath,
-                        ProfileBatch::BATCH_TYPE_SUBSCRIBER,
-                        implode(',', $subscribersToUpdate)
+                        Profile::SYNC_STATUS_SYNCED
                     );
-                $this->profileResource->updateSubscribersSyncStatus(
-                    $subscribersToUpdate,
-                    $store->getId(),
-                    Profile::SYNC_STATUS_BATCHED
-                );
+                    $this->profileBatchFactory->create()
+                        ->updateItem($item, Profile::SYNC_STATUS_SYNCED);
+                } catch (Exception $e) {
+                    //@toDO maybe update the item and profiles with error msg
+                    $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+                    $this->apsisCoreHelper->log('Skipped batch item :' . $item->getId());
+                    continue;
+                }
             }
-        } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
         }
     }
 }

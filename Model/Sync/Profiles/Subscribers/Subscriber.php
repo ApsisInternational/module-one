@@ -52,6 +52,20 @@ class Subscriber
     }
 
     /**
+     * @param array $consentLists
+     *
+     * @return $this
+     */
+    public function setConsentListData(array $consentLists)
+    {
+        foreach ($consentLists as $consentList) {
+            $this->subscriberData[$consentList] =
+                ($this->subscriber->getSubscriberStatus() == MagentoSubscriber::STATUS_SUBSCRIBED) ? 1 : 0 ;
+        }
+        return $this;
+    }
+
+    /**
      * Contact data array.
      *
      * @return array

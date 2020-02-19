@@ -21,7 +21,7 @@ class Profile extends AbstractModel
     const IS_FLAGGED = 1;
     const IS_FLAGGED_NO = 0;
 
-    const DEFAULT_HEADERS = ['integration_uid' => 'integration_uid'];
+    const DEFAULT_HEADERS = 'integration_uid';
 
     /**
      * @var DateTime

@@ -114,12 +114,8 @@ class SaveUpdate implements ObserverInterface
             $customer->getStore(),
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_2_CUSTOMER
         );
-        $sync = (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $customer->getStore(),
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED
-        );
 
-        if ($event && $sync && $profile->getIsSubscriber() && ! $profile->getIsCustomer()) {
+        if ($event && $profile->getIsSubscriber() && ! $profile->getIsCustomer()) {
             $eventModel = $this->eventFactory->create()
                 ->setEventType(Event::EVENT_TYPE_SUBSCRIBER_BECOMES_CUSTOMER)
                 ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($customer, $profile)))
@@ -169,13 +165,9 @@ class SaveUpdate implements ObserverInterface
                 $profile->setEmail($customer->getEmail());
             }
 
-            if ($profile->getCustomerSyncStatus()) {
-                $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
-            }
-
-            $profile->setCustomerId($customer->getEntityId())
+            $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING)
+                ->setCustomerId($customer->getEntityId())
                 ->setIsCustomer(Profile::IS_FLAGGED);
-
             $this->profileResource->save($profile);
         } catch (Exception $e) {
             $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());

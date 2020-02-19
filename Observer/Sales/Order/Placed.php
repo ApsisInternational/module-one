@@ -8,6 +8,7 @@ use Apsis\One\Model\Event;
 use Apsis\One\Model\EventFactory;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
+use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Exception;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -41,19 +42,27 @@ class Placed implements ObserverInterface
     private $profileResourceCollectionFactory;
 
     /**
+     * @var ProfileResource
+     */
+    private $profileResource;
+
+    /**
      * Placed constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param EventFactory $eventFactory
      * @param EventResource $eventResource
      * @param ProfileResourceCollectionFactory $profileResourceCollectionFactory
+     * @param ProfileResource $profileResource
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
         EventFactory $eventFactory,
         EventResource $eventResource,
-        ProfileResourceCollectionFactory $profileResourceCollectionFactory
+        ProfileResourceCollectionFactory $profileResourceCollectionFactory,
+        ProfileResource $profileResource
     ) {
+        $this->profileResource = $profileResource;
         $this->profileResourceCollectionFactory = $profileResourceCollectionFactory;
         $this->eventFactory = $eventFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
@@ -69,25 +78,23 @@ class Placed implements ObserverInterface
     {
         /** @var Order $order */
         $order = $observer->getEvent()->getOrder();
-        $isSubscriber = false;
 
         if ($order->getCustomerIsGuest()) {
             $profile = $this->profileResourceCollectionFactory->create()
                 ->loadSubscriberByEmailAndStoreId($order->getCustomerEmail(), $order->getStoreId());
-
             if (! $profile) {
                 return $this;
             }
-
-            $isSubscriber = true;
         } else {
+            /** @var Profile $profile */
             $profile = $this->apsisCoreHelper->getProfileByEmailAndStoreId(
                 $order->getCustomerEmail(),
                 $order->getStore()->getId()
             );
+            $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
         }
 
-        if ($this->isOkToProceed($order->getStore(), $isSubscriber)) {
+        if ($this->isOkToProceed($order->getStore())) {
             try {
                 $mainData = $this->getDataArr($order, $profile->getSubscriberId());
                 $subData = $mainData['items'];
@@ -104,6 +111,10 @@ class Placed implements ObserverInterface
                     ->setStatus(Profile::SYNC_STATUS_PENDING);
 
                     $this->eventResource->save($eventModel);
+
+                if ($profile->hasDataChanges()) {
+                    $this->profileResource->save($profile);
+                }
             } catch (Exception $e) {
                 $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             }
@@ -163,27 +174,17 @@ class Placed implements ObserverInterface
 
     /**
      * @param Store $store
-     * @param boolean $isSubscriber
      *
      * @return bool
      */
-    private function isOkToProceed(Store $store, $isSubscriber = false)
+    private function isOkToProceed(Store $store)
     {
         $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
-
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_ORDER
         );
 
-        $profileSync = ($isSubscriber) ? (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED
-        ) : (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED
-        );
-
-        return ($account && $event && $profileSync);
+        return ($account && $event);
     }
 }

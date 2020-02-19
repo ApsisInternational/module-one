@@ -2,7 +2,6 @@
 
 namespace Apsis\One\Setup;
 
-use Apsis\One\Model\Event;
 use Magento\Framework\Setup\InstallSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
@@ -445,6 +444,13 @@ class InstallSchema implements InstallSchemaInterface
                 255,
                 ['nullable' => false],
                 'File Path'
+            )
+            ->addColumn(
+                'json_mappings',
+                Table::TYPE_BLOB,
+                null,
+                ['nullable' => false],
+                'JSON Mapping Data'
             )
             ->addColumn(
                 'batch_type',

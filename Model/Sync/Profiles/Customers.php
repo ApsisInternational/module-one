@@ -19,7 +19,7 @@ use Magento\Store\Model\ScopeInterface;
 
 class Customers
 {
-    const LIMIT = 500;
+    const LIMIT = 1000;
 
     /**
      * @var ProfileCollectionFactory
@@ -57,6 +57,16 @@ class Customers
     private $profileBatchFactory;
 
     /**
+     * @var string
+     */
+    private $keySpaceDiscriminator;
+
+    /**
+     * @var string
+     */
+    private $sectionDiscriminator;
+
+    /**
      * Customers constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -90,13 +100,22 @@ class Customers
      */
     public function batch(StoreInterface $store)
     {
+        $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
+            $store,
+            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+        );
         $sync = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,
             ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED
         );
         $mappings = $this->apsisConfigHelper->getCustomerAttributeMapping($store);
+        $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
 
-        if ($sync && ! empty($mappings) && isset($mappings['email'])) {
+        if ($client && $this->sectionDiscriminator && $sync && ! empty($mappings) && isset($mappings['email'])) {
+            $attributesArrWithVersionId = $this->apsisCoreHelper
+                ->getAttributesArrWithVersionId($client, $this->sectionDiscriminator);
+            $this->keySpaceDiscriminator = $this->apsisCoreHelper
+                ->getKeySpaceDiscriminator($this->sectionDiscriminator);
             $limit = $this->apsisCoreHelper->getStoreConfig(
                 $store,
                 ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_CUSTOMER_BATCH_SIZE
@@ -104,8 +123,8 @@ class Customers
             $collection = $this->profileCollectionFactory->create()
                 ->getCustomerToBatchByStore($store->getId(), ($limit) ? $limit : self::LIMIT);
 
-            if ($collection->getSize()) {
-                $this->batchCustomersForStore($store, $collection, $mappings);
+            if ($collection->getSize() && ! empty($attributesArrWithVersionId)) {
+                $this->batchCustomersForStore($store, $collection, $mappings, $attributesArrWithVersionId);
             }
         }
     }
@@ -133,6 +152,7 @@ class Customers
                     //@toDO maybe update the item and profiles with error msg
                     $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
                     $this->apsisCoreHelper->log('Skipped batch item :' . $item->getId());
+                    continue;
                 }
             }
         }
@@ -156,16 +176,28 @@ class Customers
      * @param StoreInterface $store
      * @param Collection $collection
      * @param array $mappings
+     * @param array $attributesArrWithVersionId
      */
-    private function batchCustomersForStore(StoreInterface $store, Collection $collection, array $mappings)
-    {
+    private function batchCustomersForStore(
+        StoreInterface $store,
+        Collection $collection,
+        array $mappings,
+        array $attributesArrWithVersionId
+    ) {
         try {
             $integrationIdsArray = $this->getIntegrationIdsArray($collection);
             $file = strtolower($store->getCode() . '_customer_' . date('d_m_Y_His') . '.csv');
-            $mappings = array_merge(Profile::DEFAULT_HEADERS, $mappings);
+
+            $jsonMappings = $this->apsisConfigHelper->getJsonMappingData(
+                $this->keySpaceDiscriminator,
+                $mappings,
+                $attributesArrWithVersionId
+            );
+
+            $mappings = array_merge([Profile::DEFAULT_HEADERS => Profile::DEFAULT_HEADERS], $mappings);
             $this->apsisFileHelper->outputCSV(
                 $file,
-                $mappings
+                array_keys($mappings)
             );
             $customerIds = $collection->getColumnValues('customer_id');
             $customerCollection = $this->profileResource->buildCustomerCollection(
@@ -194,9 +226,9 @@ class Customers
                     );
                     $customersToUpdate[] = $customer->getId();
                 } catch (Exception $e) {
-                    //@toDO maybe update the item with error msg
                     $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
                     $this->apsisCoreHelper->log('Skipped customer with id :' . $customer->getId());
+                    continue;
                 }
 
                 //clear collection and free memory
@@ -210,7 +242,8 @@ class Customers
                         $store->getId(),
                         $filePath,
                         ProfileBatch::BATCH_TYPE_CUSTOMER,
-                        implode(',', $customersToUpdate)
+                        implode(',', $customersToUpdate),
+                        $this->apsisCoreHelper->serialize($jsonMappings)
                     );
                 $this->profileResource->updateCustomerSyncStatus(
                     $customersToUpdate,
@@ -220,6 +253,9 @@ class Customers
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            if (! empty($customersToUpdate)) {
+                $this->apsisCoreHelper->log('Skipped customers with id :' . implode(',', $customersToUpdate));
+            }
         }
     }
 

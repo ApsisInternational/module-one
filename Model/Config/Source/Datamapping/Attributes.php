@@ -6,7 +6,6 @@ use Magento\Framework\Data\OptionSourceInterface;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Magento\Framework\Registry;
-use stdClass;
 
 class Attributes implements OptionSourceInterface
 {
@@ -70,29 +69,9 @@ class Attributes implements OptionSourceInterface
 
         $fields[] = ['value' => '0', 'label' => __('-- Please Select --')];
         foreach ($attributes->items as $attribute) {
-            $field = $this->getAttributeWithIdAndName($attribute);
-            if (! empty($field)) {
-                $fields[] = $field;
-            }
+            $fields[] = ['value' => $attribute->discriminator, 'label' => $attribute->name];
         }
 
         return $fields;
-    }
-
-    /**
-     * @param stdClass $attribute
-     *
-     * @return array
-     */
-    private function getAttributeWithIdAndName(stdClass $attribute)
-    {
-        $field = [];
-        foreach ($attribute->versions as $version) {
-            if ($version->deprecated_at === null) {
-                $field = ['value' => $version->id, 'label' => $attribute->name];
-                break;
-            }
-        }
-        return $field;
     }
 }

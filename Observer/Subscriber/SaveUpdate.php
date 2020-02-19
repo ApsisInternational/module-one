@@ -85,7 +85,6 @@ class SaveUpdate implements ObserverInterface
         /** @var Subscriber $subscriber */
         $subscriber = $observer->getEvent()->getSubscriber();
         $store = $this->apsisCoreHelper->getStore($subscriber->getStoreId());
-
         $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
 
         if ($account) {
@@ -115,18 +114,18 @@ class SaveUpdate implements ObserverInterface
         try {
             if ($profile->getIsSubscriber() && $subscriber->getStatus() == Subscriber::STATUS_UNSUBSCRIBED) {
                 $this->registerSubscriberUnsubscribeEvent($subscriber, $profile, $store);
-                $profile->setSubscriberStatus($subscriber->getStatus())
-                    ->setIsSubscriber(Profile::IS_FLAGGED_NO);
-
-                if ($profile->getSubscriberSyncStatus()) {
-                    $profile->setSubscriberSyncStatus(Profile::SYNC_STATUS_PENDING);
-                }
+                $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED)
+                    ->setIsSubscriber(Profile::IS_FLAGGED_NO)
+                    ->setSubscriberSyncStatus(Profile::SYNC_STATUS_PENDING);
                 $this->profileResource->save($profile);
-            } elseif (! $profile->getIsSubscriber() && $subscriber->getStatus() == Subscriber::STATUS_SUBSCRIBED) {
-                $this->registerCustomerBecomesSubscriberEvent($subscriber, $profile, $store);
+            } elseif ($subscriber->getStatus() == Subscriber::STATUS_SUBSCRIBED) {
+                if ($profile->getIsCustomer()) {
+                    $this->registerCustomerBecomesSubscriberEvent($subscriber, $profile, $store);
+                }
                 $profile->setSubscriberId($subscriber->getSubscriberId())
-                    ->setSubscriberStatus($subscriber->getStatus())
-                    ->setIsSubscriber(Profile::IS_FLAGGED);
+                    ->setSubscriberStatus(Subscriber::STATUS_SUBSCRIBED)
+                    ->setIsSubscriber(Profile::IS_FLAGGED)
+                    ->setSubscriberSyncStatus(Profile::SYNC_STATUS_PENDING);
                 $this->profileResource->save($profile);
             }
         } catch (Exception $e) {
@@ -144,15 +143,11 @@ class SaveUpdate implements ObserverInterface
         Profile $profile,
         StoreInterface $store
     ) {
-        $sync = (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED
-        );
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_2_SUBSCRIBER
         );
-        if ($event && $sync && $profile->getIsCustomer() && ! $profile->getIsSubscriber()) {
+        if ($event && $profile->getIsCustomer() && ! $profile->getIsSubscriber()) {
             $eventModel = $this->eventFactory->create()
                 ->setEventType(Event::EVENT_TYPE_CUSTOMER_BECOMES_SUBSCRIBER)
                 ->setEventData($this->apsisCoreHelper->serialize(
@@ -179,19 +174,15 @@ class SaveUpdate implements ObserverInterface
      */
     private function registerSubscriberUnsubscribeEvent(Subscriber $subscriber, Profile $profile, StoreInterface $store)
     {
-        $sync = (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED
-        );
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_UNSUBSCRIBE
         );
-        if ($event && $sync) {
+        if ($event) {
             $eventModel = $this->eventFactory->create()
                 ->setEventType(Event::EVENT_TYPE_SUBSCRIBER_UNSUBSCRIBE)
                 ->setEventData($this->apsisCoreHelper->serialize(
-                    $this->getDataArrForUnsubscribeEvent($subscriber, $profile)
+                    $this->getDataArrForUnsubscribeEvent($subscriber)
                 ))
                 ->setProfileId($profile->getId())
                 ->setSubscriberId($subscriber->getSubscriberId())
@@ -208,11 +199,10 @@ class SaveUpdate implements ObserverInterface
 
     /**
      * @param Subscriber $subscriber
-     * @param Profile $profile
      *
      * @return array
      */
-    private function getDataArrForUnsubscribeEvent(Subscriber $subscriber, Profile $profile)
+    private function getDataArrForUnsubscribeEvent(Subscriber $subscriber)
     {
         $data = [
             'subscriber_id' => (int) $subscriber->getSubscriberId(),
@@ -254,7 +244,7 @@ class SaveUpdate implements ObserverInterface
             try {
                 $profile = $this->profileFactory->create()
                     ->setSubscriberId($subscriber->getSubscriberId())
-                    ->setSubscriberStatus($subscriber->getStatus())
+                    ->setSubscriberStatus(Subscriber::STATUS_SUBSCRIBED)
                     ->setStoreId($subscriber->getStoreId())
                     ->setEmail($subscriber->getEmail())
                     ->setIsSubscriber(Profile::IS_FLAGGED);

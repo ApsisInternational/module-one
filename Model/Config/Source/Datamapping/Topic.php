@@ -63,7 +63,8 @@ class Topic implements OptionSourceInterface
             $formattedTopics = [];
             foreach ($topics->items as $topic) {
                 $formattedTopics[] = [
-                    'value' => $consentList->discriminator . '|' . $topic->discriminator,
+                    'value' => $consentList->discriminator . '|' . $topic->discriminator . '|'
+                        . $consentList->name . '_' . $topic->name,
                     'label' => $topic->name
                 ];
             }

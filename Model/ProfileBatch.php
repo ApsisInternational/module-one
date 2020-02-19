@@ -101,13 +101,15 @@ class ProfileBatch extends AbstractModel
      * @param string $filePath
      * @param int $type
      * @param string $ids
+     * @param string $jsonMappings
      *
      * @throws AlreadyExistsException
      */
-    public function registerBatchItem(int $storeId, string $filePath, int $type, string $ids)
+    public function registerBatchItem(int $storeId, string $filePath, int $type, string $ids, string $jsonMappings)
     {
         $this->setStoreId($storeId)
             ->setFilePath($filePath)
+            ->setJsonMappings($jsonMappings)
             ->setBatchType($type)
             ->setEntityIds($ids)
             ->setSyncStatus(Profile::SYNC_STATUS_PENDING);

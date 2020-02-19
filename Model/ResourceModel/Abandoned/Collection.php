@@ -38,4 +38,24 @@ class Collection extends AbstractCollection
 
         return false;
     }
+
+    /**
+     * @param int $profileId
+     * @param int $storeId
+     *
+     * @return bool|DataObject
+     */
+    public function loadByProfileIdAndStoreId(int $profileId, int $storeId)
+    {
+        $collection = $this->addFieldToFilter('profile_id', $profileId)
+            ->addFieldToFilter('store_id', $storeId)
+            ->setOrder($this->_idFieldName)
+            ->setPageSize(1);
+
+        if ($collection->getSize()) {
+            return $collection->getFirstItem();
+        }
+
+        return false;
+    }
 }

@@ -410,43 +410,36 @@
                        showInWebsite="1" showInStore="1">
                     <label>Subscriber Registers As Customer</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
-                    <comment><![CDATA[Subscriber profile sync need to be enabled as well.]]></comment>
                 </field>
                 <field id="customer_2_subscriber" translate="label" type="select" sortOrder="20" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Customer Becomes Subscriber</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
-                    <comment><![CDATA[Customer profile sync need to be enabled as well.]]></comment>
                 </field>
                 <field id="unsubscribe" translate="label" type="select" sortOrder="30" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Subscriber Unsubscribe From Magento</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
-                    <comment><![CDATA[Subscriber profile sync need to be enabled as well.]]></comment>
                 </field>
                 <field id="login" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Customer Login</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
-                    <comment><![CDATA[Customer profile sync need to be enabled as well.]]></comment>
                 </field>
                 <field id="order" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Customer/Subscriber Places An Order</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
-                    <comment><![CDATA[Customer/Subscriber profile sync need to be enabled as well.]]></comment>
                 </field>
                 <field id="review" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Customer Leaves A Product Review</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
-                    <comment><![CDATA[Customer profile sync need to be enabled as well.]]></comment>
                 </field>
                 <field id="wishlist" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Customer Adds Product To Wishlist</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
-                    <comment><![CDATA[Customer profile sync need to be enabled as well.]]></comment>
                 </field>
             </group>
         </section>

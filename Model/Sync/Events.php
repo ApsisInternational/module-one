@@ -160,7 +160,7 @@ class Events
     private function mapEventVersionIds(Client $client)
     {
         $eventDefinition = $client->getEventsTypes($this->sectionDiscriminator);
-        if (is_object($eventDefinition) && isset($eventDefinition->items)) {
+        if ($eventDefinition && isset($eventDefinition->items)) {
             foreach ($eventDefinition->items as $item) {
                 if (isset($this->eventsVersionMapping[$item->discriminator])) {
                     foreach ($item->versions as $version) {

@@ -807,7 +807,7 @@ class Core extends AbstractHelper
     {
         $attributesArr = [];
         $attributes = $client->getAttributes($sectionDiscriminator);
-        if (is_object($attributes) || isset($attributes->items)) {
+        if ($attributes && isset($attributes->items)) {
             foreach ($attributes->items as $attribute) {
                 foreach ($attribute->versions as $version) {
                     if ($version->deprecated_at === null) {

@@ -2,6 +2,7 @@
 
 namespace Apsis\One\ApiClient;
 
+use Exception;
 use stdClass;
 
 class Client extends Rest
@@ -282,6 +283,74 @@ class Client extends Rest
         $this->setUrl($url)
             ->setVerb(Rest::VERB_POST)
             ->buildBody(['items' => $events]);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * Initialize a Profile Import
+     *
+     * @param string $sectionDiscriminator
+     * @param array $data
+     *
+     * @return bool|stdClass
+     */
+    public function initializeProfileImport(string $sectionDiscriminator, array $data)
+    {
+        $this->setUrl(self::HOST_NAME . '/audience/audience/sections/' . $sectionDiscriminator . '/imports')
+            ->setVerb(Rest::VERB_POST)
+            ->buildBody($data);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * @param string $url
+     * @param array $fields
+     * @param string $fileNameWithPath
+     *
+     * @return bool|stdClass
+     */
+    public function uploadFileForProfileImport(string $url, array $fields, string $fileNameWithPath)
+    {
+        $ch = curl_init();
+        try {
+            if (function_exists('curl_file_create')) {
+                $fields['file'] = curl_file_create($fileNameWithPath, 'text/csv');
+            } else {
+                $fields['file'] = '@' . $fileNameWithPath;
+            }
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_ENCODING, "");
+            curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
+            curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, Rest::VERB_POST);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: multipart/form-data']);
+
+            $this->responseBody = $this->helper->unserialize(curl_exec($ch));
+            $this->responseInfo = curl_getinfo($ch);
+        } catch (Exception $e) {
+            curl_close($ch);
+            $this->helper->logMessage(__METHOD__, $e->getMessage());
+        }
+        return $this->processResponse($this->responseBody, __METHOD__);
+    }
+
+    /**
+     * Get status of Import
+     *
+     * @param string $sectionDiscriminator
+     * @param string $importId
+     *
+     * @return bool|stdClass
+     */
+    public function getImportStatus(string $sectionDiscriminator, string $importId)
+    {
+        $this->setUrl(self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/imports/' . $importId)
+            ->setVerb(Rest::VERB_GET);
         return $this->processResponse($this->execute(), __METHOD__);
     }
 

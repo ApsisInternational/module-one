@@ -43,12 +43,12 @@ class Rest
     /**
      * @var null|stdClass
      */
-    private $responseBody;
+    protected $responseBody;
 
     /**
      * @var string|array
      */
-    private $responseInfo;
+    protected $responseInfo;
 
     /**
      * @var ApsisCoreHelper
@@ -65,6 +65,9 @@ class Rest
      */
     protected function execute()
     {
+        $this->responseBody = null;
+        $this->responseInfo = null;
+        $this->curlError = '';
         $ch = curl_init();
         try {
             switch (strtoupper($this->verb)) {
@@ -225,7 +228,6 @@ class Rest
         curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
         curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $this->verb);
-        /** @todo remove verifyhost options */
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
         if (isset($this->token)) {

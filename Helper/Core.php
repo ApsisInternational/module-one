@@ -821,4 +821,20 @@ class Core extends AbstractHelper
         }
         return $attributesArr;
     }
+
+    /**
+     * @param string $inputDateTime
+     *
+     * @return bool
+     */
+    public function isExpired(string $inputDateTime)
+    {
+        $nowDateTime = $this->dateTimeFactory->create(
+            [
+                'time' => 'now',
+                'timezone' => $this->dateTimeZoneFactory->create(['timezone' => 'UTC'])
+            ]
+        )->format(Zend_Date::ISO_8601);
+        return ($nowDateTime > $inputDateTime);
+    }
 }

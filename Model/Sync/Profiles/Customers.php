@@ -98,7 +98,7 @@ class Customers
     /**
      * @param StoreInterface $store
      */
-    public function batch(StoreInterface $store)
+    public function batchForStore(StoreInterface $store)
     {
         $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
             $store,
@@ -125,35 +125,6 @@ class Customers
 
             if ($collection->getSize() && ! empty($attributesArrWithVersionId)) {
                 $this->batchCustomersForStore($store, $collection, $mappings, $attributesArrWithVersionId);
-            }
-        }
-    }
-
-    /**
-     * @param StoreInterface $store
-     */
-    public function syncBatchItems(StoreInterface $store)
-    {
-        $collection = $this->profileBatchFactory->create()
-            ->getBatchItemCollection($store->getId(), ProfileBatch::BATCH_TYPE_CUSTOMER);
-        $apiClient = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
-        if ($collection->getSize() && $apiClient) {
-            foreach ($collection as $item) {
-                try {
-                    //@toDO file import api call
-                    $this->profileResource->updateCustomerSyncStatus(
-                        explode(",", $item->getEntityIds()),
-                        $store->getId(),
-                        Profile::SYNC_STATUS_SYNCED
-                    );
-                    $this->profileBatchFactory->create()
-                        ->updateItem($item, Profile::SYNC_STATUS_SYNCED);
-                } catch (Exception $e) {
-                    //@toDO maybe update the item and profiles with error msg
-                    $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
-                    $this->apsisCoreHelper->log('Skipped batch item :' . $item->getId());
-                    continue;
-                }
             }
         }
     }

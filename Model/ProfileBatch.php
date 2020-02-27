@@ -19,6 +19,11 @@ class ProfileBatch extends AbstractModel
     const BATCH_TYPE_SUBSCRIBER = 1;
     const BATCH_TYPE_CUSTOMER = 2;
 
+    const SYNC_STATUS_PENDING = 0;
+    const SYNC_STATUS_PROCESSING = 1;
+    const SYNC_STATUS_COMPLETED = 2;
+    const SYNC_STATUS_FAILED = 3;
+
     const LIMIT = 5;
 
     /**
@@ -112,36 +117,40 @@ class ProfileBatch extends AbstractModel
             ->setJsonMappings($jsonMappings)
             ->setBatchType($type)
             ->setEntityIds($ids)
-            ->setSyncStatus(Profile::SYNC_STATUS_PENDING);
+            ->setSyncStatus(self::SYNC_STATUS_PENDING);
         $this->profileBatchResource->save($this);
     }
 
     /**
-     * @param ProfileBatch $item
-     * @param int $status
-     * @param string $msg
+     * @param int $storeId
      *
-     * @throws AlreadyExistsException
+     * @return ProfileBatchCollection
      */
-    public function updateItem(ProfileBatch $item, int $status, string $msg = '')
+    public function getPendingBatchItemsForStore(int $storeId)
     {
-        $item->setSyncStatus($status);
-        if (strlen($msg)) {
-            $item->setErrorMessage($msg);
-        }
-        $this->profileBatchResource->save($item);
+        return $this->getBatchItemCollectionForStoreByStatus($storeId, self::SYNC_STATUS_PENDING);
     }
 
     /**
      * @param int $storeId
-     * @param int $type
+     *
      * @return ProfileBatchCollection
      */
-    public function getBatchItemCollection(int $storeId, int $type)
+    public function getProcessingBatchItemsForStore(int $storeId)
+    {
+        return $this->getBatchItemCollectionForStoreByStatus($storeId, self::SYNC_STATUS_PROCESSING);
+    }
+
+    /**
+     * @param int $storeId
+     * @param int $status
+     *
+     * @return ProfileBatchCollection
+     */
+    private function getBatchItemCollectionForStoreByStatus(int $storeId, int $status)
     {
         return $this->profileBatchCollectionFactory->create()
-            ->addFieldToFilter('batch_type', $type)
-            ->addFieldToFilter('sync_status', Profile::SYNC_STATUS_PENDING)
+            ->addFieldToFilter('sync_status', $status)
             ->addFieldToFilter('store_id', $storeId)
             ->setPageSize(self::LIMIT);
     }

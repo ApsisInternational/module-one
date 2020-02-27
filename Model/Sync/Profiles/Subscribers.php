@@ -108,7 +108,7 @@ class Subscribers
     /**
      * @param StoreInterface $store
      */
-    public function batch(StoreInterface $store)
+    public function batchForStore(StoreInterface $store)
     {
         $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
             $store,
@@ -145,7 +145,7 @@ class Subscribers
             $topics = explode(',', $topics);
 
             if ($collection->getSize() && ! empty($topics) && ! empty($attributesArrWithVersionId)) {
-                $this->batchSubscriberForStore($store, $collection, $mappings, $topics, $attributesArrWithVersionId);
+                $this->batchSubscribersForStore($store, $collection, $mappings, $topics, $attributesArrWithVersionId);
             }
         }
     }
@@ -157,7 +157,7 @@ class Subscribers
      * @param array $topics
      * @param array $attributesArrWithVersionId
      */
-    private function batchSubscriberForStore(
+    private function batchSubscribersForStore(
         StoreInterface $store,
         Collection $collection,
         array $mappings,
@@ -278,34 +278,5 @@ class Subscribers
             );
 
         return $collection;
-    }
-
-    /**
-     * @param StoreInterface $store
-     */
-    public function syncBatchItems(StoreInterface $store)
-    {
-        $collection = $this->profileBatchFactory->create()
-            ->getBatchItemCollection($store->getId(), ProfileBatch::BATCH_TYPE_SUBSCRIBER);
-        $apiClient = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
-        if ($collection->getSize() && $apiClient) {
-            foreach ($collection as $item) {
-                try {
-                    //@toDO file import api call
-                    $this->profileResource->updateSubscribersSyncStatus(
-                        explode(",", $item->getEntityIds()),
-                        $store->getId(),
-                        Profile::SYNC_STATUS_SYNCED
-                    );
-                    $this->profileBatchFactory->create()
-                        ->updateItem($item, Profile::SYNC_STATUS_SYNCED);
-                } catch (Exception $e) {
-                    //@toDO maybe update the item and profiles with error msg
-                    $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
-                    $this->apsisCoreHelper->log('Skipped batch item :' . $item->getId());
-                    continue;
-                }
-            }
-        }
     }
 }

@@ -432,6 +432,20 @@ class InstallSchema implements InstallSchemaInterface
             'Primary Key'
         )
             ->addColumn(
+                'import_id',
+                Table::TYPE_TEXT,
+                255,
+                ['nullable' => false],
+                'One Import Id'
+            )
+            ->addColumn(
+                'file_upload_expires_at',
+                Table::TYPE_TEXT,
+                255,
+                ['nullable' => false],
+                'File Upload Url Expires At'
+            )
+            ->addColumn(
                 'store_id',
                 Table::TYPE_SMALLINT,
                 5,

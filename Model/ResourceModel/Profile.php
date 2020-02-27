@@ -82,20 +82,26 @@ class Profile extends AbstractDb
      * @param array $subscriberIds
      * @param int $storeId
      * @param int $status
+     * @param string $msg
      *
      * @return int
      */
-    public function updateSubscribersSyncStatus($subscriberIds, $storeId, $status)
+    public function updateSubscribersSyncStatus(array $subscriberIds, int $storeId, int $status, string $msg = '')
     {
         if (empty($subscriberIds)) {
             return 0;
+        }
+
+        $bind = ['subscriber_sync_status' => $status, 'updated_at' => $this->dateTime->formatDate(true)];
+        if (strlen($msg)) {
+            $bind['error_message'] = $msg;
         }
 
         try {
             $write = $this->getConnection();
             return $write->update(
                 $this->getMainTable(),
-                ['subscriber_sync_status' => $status, 'updated_at' => $this->dateTime->formatDate(true)],
+                $bind,
                 ["subscriber_id IN (?)" => $subscriberIds, "store_id = ?" => $storeId]
             );
         } catch (Exception $e) {
@@ -108,20 +114,26 @@ class Profile extends AbstractDb
      * @param array $customerIds
      * @param int $storeId
      * @param int $status
+     * @param string $msg
      *
      * @return int
      */
-    public function updateCustomerSyncStatus($customerIds, $storeId, $status)
+    public function updateCustomerSyncStatus(array $customerIds, int $storeId, int $status, string $msg = '')
     {
         if (empty($customerIds)) {
             return 0;
+        }
+
+        $bind = ['customer_sync_status' => $status, 'updated_at' => $this->dateTime->formatDate(true)];
+        if (strlen($msg)) {
+            $bind['error_message'] = $msg;
         }
 
         try {
             $write = $this->getConnection();
             return $write->update(
                 $this->getMainTable(),
-                ['customer_sync_status' => $status, 'updated_at' => $this->dateTime->formatDate(true)],
+                $bind,
                 ["customer_id IN (?)" => $customerIds, "store_id = ?" => $storeId]
             );
         } catch (Exception $e) {

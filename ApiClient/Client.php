@@ -10,12 +10,17 @@ class Client extends Rest
     const HOST_NAME = 'https://api.apsis.one';
 
     /**
+     * @var array
+     */
+    private $errorCodesToRetry = [500, 501, 503, 408, 429];
+
+    /**
      * Get access token
      *
      * @param string $clientId
      * @param string $clientSecret
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function getAccessToken(string $clientId, string $clientSecret)
     {
@@ -32,7 +37,7 @@ class Client extends Rest
     /**
      * Get all registered key spaces
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function getKeySpaces()
     {
@@ -44,7 +49,7 @@ class Client extends Rest
     /**
      * Get all available communication channels
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function getChannels()
     {
@@ -56,7 +61,7 @@ class Client extends Rest
     /**
      * Get all sections on the APSIS One account
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function getSections()
     {
@@ -70,7 +75,7 @@ class Client extends Rest
      *
      * @param string $sectionDiscriminator
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function getAttributes(string $sectionDiscriminator)
     {
@@ -84,7 +89,7 @@ class Client extends Rest
      *
      * @param string $sectionDiscriminator
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function getConsentLists(string $sectionDiscriminator)
     {
@@ -99,7 +104,7 @@ class Client extends Rest
      * @param string $sectionDiscriminator
      * @param string $consentListDiscriminator
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function getTopics(string $sectionDiscriminator, string $consentListDiscriminator)
     {
@@ -118,7 +123,7 @@ class Client extends Rest
      * @param string $sectionDiscriminator
      * @param array $attributes
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function createProfile(
         string $keySpaceDiscriminator,
@@ -141,7 +146,7 @@ class Client extends Rest
      * @param string $profileKey
      * @param string $sectionDiscriminator
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function getProfileAttributes(
         string $keySpaceDiscriminator,
@@ -163,7 +168,7 @@ class Client extends Rest
      * @param string $sectionDiscriminator
      * @param array $typeIds
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function getProfileEvents(
         string $keySpaceDiscriminator,
@@ -192,7 +197,7 @@ class Client extends Rest
      * @param string $consentListDiscriminator
      * @param string $topicDiscriminator
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function subscribeProfileToTopic(
         string $keySpaceDiscriminator,
@@ -224,7 +229,7 @@ class Client extends Rest
      * @param string $topicDiscriminator
      * @param string $type
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function createConsent(
         string $channelDiscriminator,
@@ -253,7 +258,7 @@ class Client extends Rest
      *
      * @param string $sectionDiscriminator
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function getEventsTypes(string $sectionDiscriminator)
     {
@@ -270,7 +275,7 @@ class Client extends Rest
      * @param string $sectionDiscriminator
      * @param array $events
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function postEventsToProfile(
         string $keySpaceDiscriminator,
@@ -292,7 +297,7 @@ class Client extends Rest
      * @param string $sectionDiscriminator
      * @param array $data
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function initializeProfileImport(string $sectionDiscriminator, array $data)
     {
@@ -307,7 +312,7 @@ class Client extends Rest
      * @param array $fields
      * @param string $fileNameWithPath
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function uploadFileForProfileImport(string $url, array $fields, string $fileNameWithPath)
     {
@@ -332,6 +337,7 @@ class Client extends Rest
 
             $this->responseBody = $this->helper->unserialize(curl_exec($ch));
             $this->responseInfo = curl_getinfo($ch);
+            $this->curlError = curl_error($ch);
         } catch (Exception $e) {
             curl_close($ch);
             $this->helper->logMessage(__METHOD__, $e->getMessage());
@@ -345,7 +351,7 @@ class Client extends Rest
      * @param string $sectionDiscriminator
      * @param string $importId
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     public function getImportStatus(string $sectionDiscriminator, string $importId)
     {
@@ -358,17 +364,18 @@ class Client extends Rest
      * @param null|stdClass $response
      * @param string $method
      *
-     * @return boolean|stdClass
+     * @return boolean|stdClass|string
      */
     private function processResponse($response, string $method)
     {
-        if ($this->curlError) {
+        if (strlen($this->curlError)) {
+            $this->helper->log('CURL ERROR: ' . $this->curlError);
             return false;
         }
-        /** Todo handle all error cases */
-        if (isset($response->detail)) {
+
+        if (isset($response->status) && isset($response->detail)) {
             $this->helper->debug($method, $this->getErrorArray($response));
-            return false;
+            return (in_array($response->status, $this->errorCodesToRetry)) ? false : (string) $response->detail;
         }
 
         return $response;

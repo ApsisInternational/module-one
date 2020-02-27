@@ -97,20 +97,26 @@ class Event extends AbstractDb
     /**
      * @param array $ids
      * @param int $status
+     * @param string $msg
      *
      * @return int
      */
-    public function updateSyncStatus($ids, $status)
+    public function updateSyncStatus($ids, $status, string $msg = '')
     {
         if (empty($ids)) {
             return 0;
+        }
+
+        $bind = ['status' => $status, 'updated_at' => $this->dateTime->formatDate(true)];
+        if (strlen($msg)) {
+            $bind['error_message'] = $msg;
         }
 
         try {
             $write = $this->getConnection();
             return $write->update(
                 $this->getMainTable(),
-                ['status' => $status, 'updated_at' => $this->dateTime->formatDate(true)],
+                $bind,
                 ["id IN (?)" => $ids]
             );
         } catch (Exception $e) {

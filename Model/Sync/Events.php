@@ -5,12 +5,14 @@ namespace Apsis\One\Model\Sync;
 use Apsis\One\ApiClient\Client;
 use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
+use \Exception;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use Apsis\One\Model\ResourceModel\Event\CollectionFactory as EventCollectionFactory;
 use Apsis\One\Model\ResourceModel\Event\Collection as EventCollection;
 use Apsis\One\Model\Event;
 use Apsis\One\Model\Profile;
+use Apsis\One\Model\ResourceModel\Profile as ProfileResourceModel;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use stdClass;
 use Apsis\One\Model\ResourceModel\Event as EventResourceModel;
@@ -44,6 +46,11 @@ class Events
      * @var AbandonedCollectionFactory
      */
     private $abandonedCollectionFactory;
+
+    /**
+     * @var ProfileResourceModel
+     */
+    private $profileResourceModel;
 
     /**
      * @var array
@@ -108,14 +115,17 @@ class Events
      * @param ProfileCollectionFactory $profileCollectionFactory
      * @param EventResourceModel $eventResourceModel
      * @param AbandonedCollectionFactory $abandonedCollectionFactory
+     * @param ProfileResourceModel $profileResourceModel
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
         EventCollectionFactory $eventCollectionFactory,
         ProfileCollectionFactory $profileCollectionFactory,
         EventResourceModel $eventResourceModel,
-        AbandonedCollectionFactory $abandonedCollectionFactory
+        AbandonedCollectionFactory $abandonedCollectionFactory,
+        ProfileResourceModel $profileResourceModel
     ) {
+        $this->profileResourceModel = $profileResourceModel;
         $this->eventResourceModel = $eventResourceModel;
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
@@ -190,39 +200,58 @@ class Events
     {
         $groupedEvents = $this->getEventsArrayGroupedByProfile($eventCollection);
         foreach ($groupedEvents as $profileEvents) {
-            $profile = $profileEvents['profile'];
-            $status = $this->syncProfileForEvent($client, $profile, $store);
-            if ($status === false) {
-                $this->apsisCoreHelper->log(
-                    'Unable to sync profile for events for store ' . $store->getCode() . ' profile ' . $profile->getId()
-                );
-                continue;
-            }
-
-            $events = $profileEvents['events'];
-            $groupedEventArray = [];
-            foreach ($events as $event) {
-                $eventArray = $this->getEventArr($event);
-                foreach ($eventArray as $eventData) {
-                    $groupedEventArray[] = $eventData;
-                }
-            }
-
-            if (! empty($groupedEventArray)) {
-                $status = $client->postEventsToProfile(
-                    $this->keySpaceDiscriminator,
-                    $profile->getIntegrationUid(),
-                    $this->sectionDiscriminator,
-                    $groupedEventArray
-                );
-
-                if ($status !== false) {
-                    $this->eventResourceModel->updateSyncStatus(array_keys($events), Profile::SYNC_STATUS_SYNCED);
-                } else {
+            try {
+                $profile = $profileEvents['profile'];
+                $events = $profileEvents['events'];
+                $status = $this->syncProfileForEvent($client, $profile, $store);
+                if ($status === false) {
                     $this->apsisCoreHelper->log(
-                        'Unable to post events for store ' . $store->getCode() . ' profile ' . $profile->getId()
+                        'Unable to sync profile for events for Store: ' . $store->getCode() .
+                        ' Profile: ' . $profile->getId()
                     );
+                    continue;
+                } elseif (is_string($status)) {
+                    $profile->setErrorMessage($status)
+                        ->setSubscriberSyncStatus(Profile::SYNC_STATUS_FAILED)
+                        ->setCustomerSyncStatus(Profile::SYNC_STATUS_FAILED);
+                    $this->profileResourceModel->save($profile);
+                    $this->eventResourceModel
+                        ->updateSyncStatus(array_keys($events), Profile::SYNC_STATUS_FAILED, $status);
+                    continue;
                 }
+
+                $groupedEventArray = [];
+                foreach ($events as $event) {
+                    $eventArray = $this->getEventArr($event);
+                    foreach ($eventArray as $eventData) {
+                        $groupedEventArray[] = $eventData;
+                    }
+                }
+
+                if (! empty($groupedEventArray)) {
+                    $status = $client->postEventsToProfile(
+                        $this->keySpaceDiscriminator,
+                        $profile->getIntegrationUid(),
+                        $this->sectionDiscriminator,
+                        $groupedEventArray
+                    );
+
+                    if ($status === false) {
+                        $this->apsisCoreHelper->log(
+                            'Unable to post events for store ' . $store->getCode() . ' profile ' . $profile->getId()
+                        );
+                        continue;
+                    } elseif (is_string($status)) {
+                        $this->eventResourceModel
+                            ->updateSyncStatus(array_keys($events), Profile::SYNC_STATUS_FAILED, $status);
+                        continue;
+                    }
+
+                    $this->eventResourceModel->updateSyncStatus(array_keys($events), Profile::SYNC_STATUS_SYNCED);
+                }
+            } catch (Exception $e) {
+                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+                continue;
             }
         }
     }
@@ -288,7 +317,7 @@ class Events
      * @param Profile $profile
      * @param StoreInterface $store
      *
-     * @return bool|stdClass
+     * @return bool|stdClass|string
      */
     private function syncProfileForEvent(Client $client, Profile $profile, StoreInterface $store)
     {
@@ -319,7 +348,7 @@ class Events
                 $attributesToSync
             );
         } else {
-            $this->apsisCoreHelper->log('Email attribute not mapped for profile sync for event');
+            $this->apsisCoreHelper->log('Email attribute not mapped for profile sync for events');
         }
         return false;
     }

@@ -190,13 +190,7 @@ class Rest
         $this->setCurlOpts($ch, $headers);
         $this->responseBody = $this->helper->unserialize(curl_exec($ch));
         $this->responseInfo = curl_getinfo($ch);
-        $err = curl_error($ch);
-
-        if ($err) {
-            $this->helper->log('CURL ERROR ' . $err);
-            $this->curlError = $err;
-        }
-
+        $this->curlError = curl_error($ch);
         curl_close($ch);
     }
 

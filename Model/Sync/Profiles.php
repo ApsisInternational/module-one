@@ -61,7 +61,7 @@ class Profiles
             if ($account) {
                 $this->subscribers->batchForStore($store);
                 $this->customers->batchForStore($store);
-                //$this->batch->syncBatchItemsForStore($store);
+                $this->batch->syncBatchItemsForStore($store);
             }
         }
     }

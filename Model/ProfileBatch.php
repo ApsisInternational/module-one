@@ -23,8 +23,10 @@ class ProfileBatch extends AbstractModel
     const SYNC_STATUS_PROCESSING = 1;
     const SYNC_STATUS_COMPLETED = 2;
     const SYNC_STATUS_FAILED = 3;
+    const SYNC_STATUS_ERROR = 4;
 
-    const LIMIT = 5;
+    const PROCESSING_LIMIT = 20;
+    const PENDING_LIMIT = 2;
 
     /**
      * @var DateTime
@@ -128,7 +130,11 @@ class ProfileBatch extends AbstractModel
      */
     public function getPendingBatchItemsForStore(int $storeId)
     {
-        return $this->getBatchItemCollectionForStoreByStatus($storeId, self::SYNC_STATUS_PENDING);
+        return $this->getBatchItemCollectionForStoreByStatus(
+            $storeId,
+            self::SYNC_STATUS_PENDING,
+            self::PENDING_LIMIT
+        );
     }
 
     /**
@@ -138,20 +144,25 @@ class ProfileBatch extends AbstractModel
      */
     public function getProcessingBatchItemsForStore(int $storeId)
     {
-        return $this->getBatchItemCollectionForStoreByStatus($storeId, self::SYNC_STATUS_PROCESSING);
+        return $this->getBatchItemCollectionForStoreByStatus(
+            $storeId,
+            self::SYNC_STATUS_PROCESSING,
+            self::PROCESSING_LIMIT
+        );
     }
 
     /**
      * @param int $storeId
      * @param int $status
+     * @param int $limit
      *
      * @return ProfileBatchCollection
      */
-    private function getBatchItemCollectionForStoreByStatus(int $storeId, int $status)
+    private function getBatchItemCollectionForStoreByStatus(int $storeId, int $status, int $limit)
     {
         return $this->profileBatchCollectionFactory->create()
             ->addFieldToFilter('sync_status', $status)
             ->addFieldToFilter('store_id', $storeId)
-            ->setPageSize(self::LIMIT);
+            ->setPageSize($limit);
     }
 }

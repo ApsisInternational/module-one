@@ -346,7 +346,7 @@
                        showInWebsite="1" showInStore="1">
                     <label>Consent List Topics</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Topic</source_model>
-                    <comment><![CDATA[Select multiple topics by pressing Ctrl button while selecting]]></comment>
+                    <comment><![CDATA[Select multiple topics by pressing Ctrl button while selecting. Current limitation is maximum 5 topics.]]></comment>
                     <depends>
                         <field id="subscriber_enabled">1</field>
                     </depends>

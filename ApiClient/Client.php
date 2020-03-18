@@ -7,7 +7,8 @@ use stdClass;
 
 class Client extends Rest
 {
-    const HOST_NAME = 'https://api.apsis.one';
+    //const HOST_NAME = 'https://api.apsis.one';
+    const HOST_NAME = 'https://api-stage.apsis.cloud';
 
     /**
      * @var array
@@ -301,7 +302,7 @@ class Client extends Rest
      */
     public function initializeProfileImport(string $sectionDiscriminator, array $data)
     {
-        $this->setUrl(self::HOST_NAME . '/audience/audience/sections/' . $sectionDiscriminator . '/imports')
+        $this->setUrl(self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/imports')
             ->setVerb(Rest::VERB_POST)
             ->buildBody($data);
         return $this->processResponse($this->execute(), __METHOD__);

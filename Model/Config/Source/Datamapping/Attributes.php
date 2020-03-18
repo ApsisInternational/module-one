@@ -64,7 +64,7 @@ class Attributes implements OptionSourceInterface
         }
 
         if (! $attributes || ! isset($attributes->items)) {
-            return [['value' => '0', 'label' => __('-- Invalid Request Or No Attributes Exist On Account--')]];
+            return [['value' => '0', 'label' => __('-- Invalid Request Or No Attributes Exist On Section--')]];
         }
 
         $fields[] = ['value' => '0', 'label' => __('-- Please Select --')];

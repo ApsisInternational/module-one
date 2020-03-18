@@ -167,7 +167,8 @@ class SaveUpdate implements ObserverInterface
 
             $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING)
                 ->setCustomerId($customer->getEntityId())
-                ->setIsCustomer(Profile::IS_FLAGGED);
+                ->setIsCustomer(Profile::IS_FLAGGED)
+                ->setErrorMessage('');
             $this->profileResource->save($profile);
         } catch (Exception $e) {
             $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());

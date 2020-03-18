@@ -193,7 +193,7 @@ class Core extends AbstractHelper
      * @param int $customerId
      * @return bool|CustomerInterface
      */
-    public function getCustomerById($customerId)
+    public function getCustomerById(int $customerId)
     {
         try {
             return $this->customerRepository->getById($customerId);
@@ -207,7 +207,7 @@ class Core extends AbstractHelper
      * @param int $productId
      * @return bool|ProductInterface
      */
-    public function getProductById($productId)
+    public function getProductById(int $productId)
     {
         try {
             return $this->productRepository->getById($productId);
@@ -312,12 +312,12 @@ class Core extends AbstractHelper
     /**
      * INFO (200): Interesting events.
      *
-     * @param string $data
+     * @param string $message
      * @param array $extra
      */
-    public function log($data, $extra = [])
+    public function log(string $message, $extra = [])
     {
-        $this->logger->info($data, $extra);
+        $this->logger->info($message, $extra);
     }
 
     /**
@@ -326,7 +326,7 @@ class Core extends AbstractHelper
      * @param string $message
      * @param array $extra
      */
-    public function debug($message, $extra = [])
+    public function debug(string $message, $extra = [])
     {
         $this->logger->debug($message, $extra);
     }
@@ -337,7 +337,7 @@ class Core extends AbstractHelper
      * @param string $message
      * @param array $extra
      */
-    public function error($message, $extra = [])
+    public function error(string $message, $extra = [])
     {
         $this->logger->error($message, $extra);
     }
@@ -481,13 +481,13 @@ class Core extends AbstractHelper
     /**
      * Get all stores.
      *
-     * @param bool|false $default
+     * @param bool $withDefault
      *
      * @return StoreInterface[]
      */
-    public function getStores($default = false)
+    public function getStores(bool $withDefault = false)
     {
-        return $this->storeManager->getStores($default);
+        return $this->storeManager->getStores($withDefault);
     }
 
     /**
@@ -496,7 +496,7 @@ class Core extends AbstractHelper
      *
      * @return mixed
      */
-    public function getStoreConfig(StoreInterface $store, $path)
+    public function getStoreConfig(StoreInterface $store, string $path)
     {
         return $store->getConfig($path);
     }
@@ -507,7 +507,7 @@ class Core extends AbstractHelper
      *
      * @return float
      */
-    public function round($price, $precision = 2)
+    public function round($price, int $precision = 2)
     {
         return (float) round($price, $precision);
     }
@@ -836,5 +836,26 @@ class Core extends AbstractHelper
             ]
         )->format(Zend_Date::ISO_8601);
         return ($nowDateTime > $inputDateTime);
+    }
+
+    /**
+     * @param string $inputDateTime
+     * @param int $day
+     *
+     * @return string
+     */
+    public function getFormattedDateTimeWithAddedInterval(string $inputDateTime, int $day = 1)
+    {
+        $interval = $this->dateIntervalFactory->create(
+            ['interval_spec' => sprintf('P%sD', $day)]
+        );
+        $fromTime = $this->dateTimeFactory->create(
+            [
+                'time' => $inputDateTime,
+                'timezone' => $this->dateTimeZoneFactory->create(['timezone' => 'UTC'])
+            ]
+        );
+        $fromTime->add($interval);
+        return $fromTime->format(Zend_Date::ISO_8601);
     }
 }

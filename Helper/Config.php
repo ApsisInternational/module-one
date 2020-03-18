@@ -198,6 +198,7 @@ class Config extends AbstractHelper
      * @param array $mappings
      * @param array $attributesArrWithVersionId
      * @param array $topicsMapping
+     * @param string $consentType
      *
      * @return array
      */
@@ -205,7 +206,8 @@ class Config extends AbstractHelper
         string $keySpaceDiscriminator,
         array $mappings,
         array $attributesArrWithVersionId,
-        array $topicsMapping = []
+        array $topicsMapping = [],
+        string $consentType = 'opt-in'
     ) {
         $attributeMappings = [];
         foreach ($mappings as $key => $mapping) {
@@ -216,11 +218,18 @@ class Config extends AbstractHelper
         }
 
         $jsonMappingData = [
-            'keyspace_mappings' => [[
-                'keyspace_discriminator' => $keySpaceDiscriminator,
-                'field_selector' => Profile::DEFAULT_HEADERS,
-                'merge_profiles' => false
-            ]],
+            'keyspace_mappings' => [
+                [
+                    'keyspace_discriminator' => $keySpaceDiscriminator,
+                    'field_selector' => Profile::INTEGRATION_KEYSPACE,
+                    'merge_profiles' => true
+                ],
+                [
+                    'keyspace_discriminator' => Profile::EMAIL_KEYSPACE_DISCRIMINATOR,
+                    'field_selector' => Profile::EMAIL_FIELD,
+                    'merge_profiles' => true
+                ]
+            ],
             'options' => ['update_existing_profiles' => true, 'clear_existing_attributes' => true],
             'attribute_mappings' => $attributeMappings
         ];
@@ -229,14 +238,17 @@ class Config extends AbstractHelper
             $consents = [];
             foreach ($topicsMapping as $field => $topicMapping) {
                 $consents[] = [
+                    'resubscribe_if_opted_out' => true,
                     'field_selector' => $field,
                     'channel_discriminator' => 'com.apsis1.channels.email',
                     'consent_list_discriminator' => $topicMapping[0],
                     'topic_discriminator' => $topicMapping[1],
-                    'type' => 'opt-in'
+                    'type' => $consentType
                 ];
             }
-            $jsonMappingData['consent_mappings'] = [['address_field_selector' => 'email', 'consents' => $consents]];
+            $jsonMappingData['consent_mappings'] = [
+                ['address_field_selector' => Profile::EMAIL_FIELD, 'consents' => $consents]
+            ];
         }
 
         return $jsonMappingData;

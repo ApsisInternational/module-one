@@ -103,6 +103,11 @@ class Events
     private $sectionDiscriminator = '';
 
     /**
+     * @var string
+     */
+    private $mappedEmailAttribute = '';
+
+    /**
      * @var array
      */
     private $attributesArrWithVersionId = [];
@@ -145,7 +150,12 @@ class Events
                 ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
             );
             $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
-            if ($this->sectionDiscriminator && $client) {
+            $this->mappedEmailAttribute = $this->apsisCoreHelper->getStoreConfig(
+                $store,
+                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
+            );
+
+            if ($this->sectionDiscriminator && $client && $this->mappedEmailAttribute) {
                 $this->attributesArrWithVersionId = $this->apsisCoreHelper
                     ->getAttributesArrWithVersionId($client, $this->sectionDiscriminator);
                 $this->keySpaceDiscriminator = $this->apsisCoreHelper
@@ -155,13 +165,29 @@ class Events
                     ->getPendingEventsByStore($store->getId(), self::LIMIT);
 
                 if ($eventCollection->getSize() &&
-                    ! empty($this->eventsVersionMapping) &&
-                    ! empty($this->attributesArrWithVersionId)
+                    $this->isMinimumEventsMapped() &&
+                    $this->mappedEmailAttribute &&
+                    isset($this->attributesArrWithVersionId[$this->mappedEmailAttribute])
                 ) {
                     $this->processEventCollection($client, $eventCollection, $store);
                 }
             }
         }
+    }
+
+    /**
+     * @return bool
+     */
+    private function isMinimumEventsMapped()
+    {
+        foreach ($this->eventsVersionMapping as $mapping) {
+            if ($mapping !== false) {
+                return true;
+            } else {
+                continue;
+            }
+        }
+        return false;
     }
 
     /**
@@ -172,17 +198,15 @@ class Events
         $eventDefinition = $client->getEventsTypes($this->sectionDiscriminator);
         if ($eventDefinition && isset($eventDefinition->items)) {
             foreach ($eventDefinition->items as $item) {
-                if (isset($this->eventsVersionMapping[$item->discriminator])) {
-                    foreach ($item->versions as $version) {
-                        if ($version->deprecated_at === null) {
-                            $this->eventsVersionMapping[$item->discriminator] = $version->id;
-                            break;
-                        }
+                if (! array_key_exists($item->discriminator, $this->eventsVersionMapping)) {
+                    continue;
+                }
+
+                foreach ($item->versions as $version) {
+                    if ($version->deprecated_at === null) {
+                        $this->eventsVersionMapping[$item->discriminator] = $version->id;
+                        break;
                     }
-                } else {
-                    $this->apsisCoreHelper->log(
-                        'No version found for event ' . $item->discriminator . ' section ' . $this->sectionDiscriminator
-                    );
                 }
             }
         } else {
@@ -211,12 +235,9 @@ class Events
                     );
                     continue;
                 } elseif (is_string($status)) {
-                    $profile->setErrorMessage($status)
-                        ->setSubscriberSyncStatus(Profile::SYNC_STATUS_FAILED)
-                        ->setCustomerSyncStatus(Profile::SYNC_STATUS_FAILED);
-                    $this->profileResourceModel->save($profile);
+                    $msg = 'Unable to sync profile with error: ' . $status;
                     $this->eventResourceModel
-                        ->updateSyncStatus(array_keys($events), Profile::SYNC_STATUS_FAILED, $status);
+                        ->updateSyncStatus(array_keys($events), Profile::SYNC_STATUS_FAILED, $msg);
                     continue;
                 }
 
@@ -266,6 +287,13 @@ class Events
         if ($event->getEventType() == Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART ||
             $event->getEventType() == Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER) {
             $typeArray = $this->eventsDiscriminatorMapping[$event->getEventType()];
+
+            if (empty($this->eventsVersionMapping[$typeArray['main']]) ||
+                empty($this->eventsVersionMapping[$typeArray['sub']])
+            ) {
+                return $eventData;
+            }
+
             $createdAt = $this->apsisCoreHelper->formatDateForPlatformCompatibility($event->getCreatedAt());
             $mainData = (array) $this->apsisCoreHelper->unserialize($event->getEventData());
             $subData = (array) $this->apsisCoreHelper->unserialize($event->getSubEventData());
@@ -282,6 +310,10 @@ class Events
                 ];
             }
         } else {
+            if (empty($this->eventsVersionMapping[$this->eventsDiscriminatorMapping[$event->getEventType()]])) {
+                return $eventData;
+            }
+
             $eventData[] = [
                 'event_time' => $this->apsisCoreHelper->formatDateForPlatformCompatibility($event->getCreatedAt()),
                 'version_id' => $this->eventsVersionMapping[$this->eventsDiscriminatorMapping[$event->getEventType()]],
@@ -321,35 +353,26 @@ class Events
      */
     private function syncProfileForEvent(Client $client, Profile $profile, StoreInterface $store)
     {
-        $mappedEmailAttribute = $this->apsisCoreHelper->getStoreConfig(
+        $attributesToSync[$this->attributesArrWithVersionId[$this->mappedEmailAttribute]] = $profile->getEmail();
+        $mappedAcTokenAttribute = $this->apsisCoreHelper->getStoreConfig(
             $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
+            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_AC_TOKEN
         );
-        if ($mappedEmailAttribute && isset($this->attributesArrWithVersionId[$mappedEmailAttribute])) {
-            $attributesToSync[$this->attributesArrWithVersionId[$mappedEmailAttribute]] = $profile->getEmail();
-            $mappedAcTokenAttribute = $this->apsisCoreHelper->getStoreConfig(
-                $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_AC_TOKEN
-            );
-            $latestAbandonedCart = $this->abandonedCollectionFactory->create()
-                ->loadByProfileIdAndStoreId((int) $profile->getId(), (int) $store->getId());
-            if ($mappedAcTokenAttribute &&
-                isset($this->attributesArrWithVersionId[$mappedAcTokenAttribute]) &&
-                $latestAbandonedCart
-            ) {
-                $attributesToSync[$this->attributesArrWithVersionId[$mappedAcTokenAttribute]] =
-                    $latestAbandonedCart->getToken();
-            }
-
-            return $client->createProfile(
-                $this->keySpaceDiscriminator,
-                $profile->getIntegrationUid(),
-                $this->sectionDiscriminator,
-                $attributesToSync
-            );
-        } else {
-            $this->apsisCoreHelper->log('Email attribute not mapped for profile sync for events');
+        $latestAbandonedCart = $this->abandonedCollectionFactory->create()
+            ->loadByProfileIdAndStoreId((int) $profile->getId(), (int) $store->getId());
+        if ($mappedAcTokenAttribute &&
+            isset($this->attributesArrWithVersionId[$mappedAcTokenAttribute]) &&
+            $latestAbandonedCart
+        ) {
+            $attributesToSync[$this->attributesArrWithVersionId[$mappedAcTokenAttribute]] =
+                $latestAbandonedCart->getToken();
         }
-        return false;
+
+        return $client->createProfile(
+            $this->keySpaceDiscriminator,
+            $profile->getIntegrationUid(),
+            $this->sectionDiscriminator,
+            $attributesToSync
+        );
     }
 }

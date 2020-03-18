@@ -53,15 +53,28 @@ class File extends AbstractHelper
     }
 
     /**
-     * @param $filename
+     * @param string $filename
      *
      * @return string
      *
      * @throws FileSystemException
      */
-    public function getFilePath($filename)
+    public function getFilePath(string $filename)
     {
         return $this->getOutputFolder() . DIRECTORY_SEPARATOR . $filename;
+    }
+
+    /**
+     * @param string $filePath
+     *
+     * @return bool
+     *
+     * @throws FileSystemException
+     * @throws ValidatorException
+     */
+    public function deleteFile(string $filePath)
+    {
+        return $this->write->delete($filePath);
     }
 
     /**

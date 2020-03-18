@@ -59,8 +59,7 @@ class Subscriber
     public function setConsentListData(array $consentLists)
     {
         foreach ($consentLists as $consentList) {
-            $this->subscriberData[$consentList] =
-                ($this->subscriber->getSubscriberStatus() == MagentoSubscriber::STATUS_SUBSCRIBED) ? 1 : 0 ;
+            $this->subscriberData[$consentList] = 1;
         }
         return $this;
     }

@@ -165,41 +165,31 @@ class Customers
                 $attributesArrWithVersionId
             );
 
-            $mappings = array_merge([Profile::DEFAULT_HEADERS => Profile::DEFAULT_HEADERS], $mappings);
-            $this->apsisFileHelper->outputCSV(
-                $file,
-                array_keys($mappings)
-            );
+            $mappings = array_merge([Profile::INTEGRATION_KEYSPACE => Profile::INTEGRATION_KEYSPACE], $mappings);
+            $this->apsisFileHelper->outputCSV($file, array_keys($mappings));
             $customerIds = $collection->getColumnValues('customer_id');
-            $customerCollection = $this->profileResource->buildCustomerCollection(
-                $store->getId(),
-                $customerIds
-            );
-            $salesData = $this->profileResource->getSalesDataForCustomers(
-                $store,
-                $customerIds
-            );
+            $customerCollection = $this->profileResource->buildCustomerCollection($store->getId(), $customerIds);
+            $salesData = $this->profileResource->getSalesDataForCustomers($store, $customerIds);
             $customersToUpdate = [];
 
             /** @var Customer $customer */
             foreach ($customerCollection as $customer) {
-                try {
-                    $customer->setIntegrationUid($integrationIdsArray[$customer->getId()]);
-                    if (isset($salesData[$customer->getId()])) {
-                        $customer = $this->setSalesDataOnCustomer($salesData[$customer->getId()], $customer);
+                if (isset($integrationIdsArray[$customer->getId()])) {
+                    try {
+                        $customer->setIntegrationUid($integrationIdsArray[$customer->getId()]);
+                        if (isset($salesData[$customer->getId()])) {
+                            $customer = $this->setSalesDataOnCustomer($salesData[$customer->getId()], $customer);
+                        }
+                        $subscriberData = $this->customerDataFactory->create()
+                            ->setCustomerData(array_keys($mappings), $customer)
+                            ->toCSVArray();
+                        $this->apsisFileHelper->outputCSV($file, $subscriberData);
+                        $customersToUpdate[] = $customer->getId();
+                    } catch (Exception $e) {
+                        $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+                        $this->apsisCoreHelper->log('Skipped customer with id :' . $customer->getId());
+                        continue;
                     }
-                    $subscriberData = $this->customerDataFactory->create()
-                        ->setCustomerData(array_keys($mappings), $customer)
-                        ->toCSVArray();
-                    $this->apsisFileHelper->outputCSV(
-                        $file,
-                        $subscriberData
-                    );
-                    $customersToUpdate[] = $customer->getId();
-                } catch (Exception $e) {
-                    $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
-                    $this->apsisCoreHelper->log('Skipped customer with id :' . $customer->getId());
-                    continue;
                 }
 
                 //clear collection and free memory

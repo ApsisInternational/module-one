@@ -115,8 +115,8 @@ class SaveUpdate implements ObserverInterface
             if ($profile->getIsSubscriber() && $subscriber->getStatus() == Subscriber::STATUS_UNSUBSCRIBED) {
                 $this->registerSubscriberUnsubscribeEvent($subscriber, $profile, $store);
                 $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED)
-                    ->setIsSubscriber(Profile::IS_FLAGGED_NO)
-                    ->setSubscriberSyncStatus(Profile::SYNC_STATUS_PENDING);
+                    ->setSubscriberSyncStatus(Profile::SYNC_STATUS_PENDING)
+                    ->setErrorMessage('');
                 $this->profileResource->save($profile);
             } elseif ($subscriber->getStatus() == Subscriber::STATUS_SUBSCRIBED) {
                 if ($profile->getIsCustomer()) {
@@ -125,7 +125,8 @@ class SaveUpdate implements ObserverInterface
                 $profile->setSubscriberId($subscriber->getSubscriberId())
                     ->setSubscriberStatus(Subscriber::STATUS_SUBSCRIBED)
                     ->setIsSubscriber(Profile::IS_FLAGGED)
-                    ->setSubscriberSyncStatus(Profile::SYNC_STATUS_PENDING);
+                    ->setSubscriberSyncStatus(Profile::SYNC_STATUS_PENDING)
+                    ->setErrorMessage('');
                 $this->profileResource->save($profile);
             }
         } catch (Exception $e) {

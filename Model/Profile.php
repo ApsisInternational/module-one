@@ -19,9 +19,10 @@ class Profile extends AbstractModel
     const SYNC_STATUS_FAILED = 3;
 
     const IS_FLAGGED = 1;
-    const IS_FLAGGED_NO = 0;
 
-    const DEFAULT_HEADERS = 'integration_uid';
+    const INTEGRATION_KEYSPACE = 'integration_uid';
+    const EMAIL_FIELD = 'email';
+    const EMAIL_KEYSPACE_DISCRIMINATOR = 'com.apsis1.keyspaces.email';
 
     /**
      * @var DateTime

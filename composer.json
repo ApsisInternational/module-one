@@ -2,7 +2,7 @@
   "name": "apsis/module-one",
   "description": "APSIS One integration for magento 2",
   "type": "magento2-module",
-  "version": "1.0.0-alpha",
+  "version": "1.0.0",
   "require": {
     "magento/framework": ">=100 <103",
     "magento/module-newsletter": "100.*",

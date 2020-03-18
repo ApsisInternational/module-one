@@ -12,23 +12,23 @@
             <sync>
                 <subscriber_enabled>0</subscriber_enabled>
                 <subscriber_consent_topic>0</subscriber_consent_topic>
-                <customer_enabled>0</customer_enabled>
+                <customer_enabled>1</customer_enabled>
             </sync>
         </apsis_one_sync>
         <apsis_one_abandoned>
             <customers>
-                <send_after>0</send_after>
+                <send_after>15</send_after>
             </customers>
         </apsis_one_abandoned>
         <apsis_one_events>
             <events>
-                <login>0</login>
-                <order>0</order>
-                <review>0</review>
-                <wishlist>0</wishlist>
-                <unsubscribe>0</unsubscribe>
-                <subscriber_2_customer>0</subscriber_2_customer>
-                <customer_2_subscriber>0</customer_2_subscriber>
+                <login>1</login>
+                <order>1</order>
+                <review>1</review>
+                <wishlist>1</wishlist>
+                <unsubscribe>1</unsubscribe>
+                <subscriber_2_customer>1</subscriber_2_customer>
+                <customer_2_subscriber>1</customer_2_subscriber>
             </events>
         </apsis_one_events>
         <apsis_one_mappings>
@@ -83,8 +83,8 @@
         <apsis_one_configuration>
             <profile_sync>
                 <order_status>pending,processing,complete</order_status>
-                <subscriber_batch_size>500</subscriber_batch_size>
-                <customer_batch_size>500</customer_batch_size>
+                <subscriber_batch_size>5000</subscriber_batch_size>
+                <customer_batch_size>1000</customer_batch_size>
             </profile_sync>
             <developer_settings>
                 <cleanup_after>30</cleanup_after>

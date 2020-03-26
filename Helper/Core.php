@@ -470,12 +470,13 @@ class Core extends AbstractHelper
 
     /**
      * @param string|null $date
+     * @param string $format
      *
      * @return string
      */
-    public function formatDateForPlatformCompatibility($date = null)
+    public function formatDateForPlatformCompatibility($date = null, $format = Zend_Date::ISO_8601)
     {
-        return $this->localeDate->date($date)->format(Zend_Date::ISO_8601);
+        return $this->localeDate->date($date)->format($format);
     }
 
     /**

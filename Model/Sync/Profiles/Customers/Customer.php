@@ -200,7 +200,7 @@ class Customer
     private function getDob()
     {
         return (string) ($this->customer->getDob()) ?
-            $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->customer->getDob()) : '';
+            $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->customer->getDob(), 'Y-m-d') : '';
     }
 
     /**

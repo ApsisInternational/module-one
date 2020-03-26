@@ -187,7 +187,7 @@ class Customers
                         $customersToUpdate[] = $customer->getId();
                     } catch (Exception $e) {
                         $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
-                        $this->apsisCoreHelper->log('Skipped customer with id :' . $customer->getId());
+                        $this->apsisCoreHelper->log(__METHOD__ . ': Skipped customer with id :' . $customer->getId());
                         continue;
                     }
                 }
@@ -215,7 +215,8 @@ class Customers
         } catch (Exception $e) {
             $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             if (! empty($customersToUpdate)) {
-                $this->apsisCoreHelper->log('Skipped customers with id :' . implode(',', $customersToUpdate));
+                $this->apsisCoreHelper->log(__METHOD__ . ': Skipped customers with id :' .
+                    implode(',', $customersToUpdate));
             }
         }
     }

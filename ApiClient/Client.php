@@ -370,7 +370,7 @@ class Client extends Rest
     private function processResponse($response, string $method)
     {
         if (strlen($this->curlError)) {
-            $this->helper->log('CURL ERROR: ' . $this->curlError);
+            $this->helper->log(__METHOD__ . ': CURL ERROR: ' . $this->curlError);
             return false;
         }
 

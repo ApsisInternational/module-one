@@ -35,15 +35,16 @@ class Section implements OptionSourceInterface
             $scope['context_scope_id']
         );
         if (! $apiClient) {
-            return [['value' => '0', 'label' => __('-- Account Is Not Enabled Or Invalid Credentials --')]];
+            return [];
         }
 
         $request = $apiClient->getSections();
         if (! $request || ! isset($request->items)) {
-            return [['value' => '0', 'label' => __('-- Invalid Request Or No Sections Exist On Account --')]];
+            $this->apsisCoreHelper->log(__METHOD__ . ': No section found on account');
+            return [];
         }
 
-        $fields[] = ['value' => '0', 'label' => __('-- Please Select --')];
+        $fields[] = ['value' => '', 'label' => __('-- Please Select --')];
         foreach ($request->items as $section) {
             $fields[] = ['value' => $section->discriminator, 'label' => $section->name];
         }

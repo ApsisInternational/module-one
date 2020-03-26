@@ -87,7 +87,7 @@ class Rest
                     $this->executeDelete($ch);
                     break;
                 default:
-                    $this->helper->log('Current verb (' . $this->verb . ') is an invalid REST verb.');
+                    $this->helper->log(__METHOD__ . ': Current verb (' . $this->verb . ') is an invalid REST verb.');
                     curl_close($ch);
             }
         } catch (Exception $e) {

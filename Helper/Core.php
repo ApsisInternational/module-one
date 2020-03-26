@@ -817,7 +817,7 @@ class Core extends AbstractHelper
                 }
             }
         } else {
-            $this->log('No attributes found on section ' . $sectionDiscriminator);
+            $this->log(__METHOD__ . ': No attributes found on section ' . $sectionDiscriminator);
         }
         return $attributesArr;
     }

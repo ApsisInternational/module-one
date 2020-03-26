@@ -210,7 +210,9 @@ class Events
                 }
             }
         } else {
-            $this->apsisCoreHelper->log('No event types found on section ' . $this->sectionDiscriminator);
+            $this->apsisCoreHelper->log(
+                __METHOD__ . ': No event types found on section ' . $this->sectionDiscriminator
+            );
             $this->eventsVersionMapping = [];
         }
     }
@@ -230,7 +232,7 @@ class Events
                 $status = $this->syncProfileForEvent($client, $profile, $store);
                 if ($status === false) {
                     $this->apsisCoreHelper->log(
-                        'Unable to sync profile for events for Store: ' . $store->getCode() .
+                        __METHOD__ . ': Unable to sync profile for events for Store: ' . $store->getCode() .
                         ' Profile: ' . $profile->getId()
                     );
                     continue;
@@ -259,7 +261,8 @@ class Events
 
                     if ($status === false) {
                         $this->apsisCoreHelper->log(
-                            'Unable to post events for store ' . $store->getCode() . ' profile ' . $profile->getId()
+                            __METHOD__ . ': Unable to post events for store ' . $store->getCode() .
+                            ' profile ' . $profile->getId()
                         );
                         continue;
                     } elseif (is_string($status)) {

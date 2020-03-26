@@ -11,7 +11,7 @@
         <apsis_one_sync>
             <sync>
                 <subscriber_enabled>0</subscriber_enabled>
-                <subscriber_consent_topic>0</subscriber_consent_topic>
+                <subscriber_consent_topic></subscriber_consent_topic>
                 <customer_enabled>1</customer_enabled>
             </sync>
         </apsis_one_sync>
@@ -33,51 +33,53 @@
         </apsis_one_events>
         <apsis_one_mappings>
             <section_topic_mapping>
-                <section>0</section>
+                <section></section>
             </section_topic_mapping>
             <customer_subscriber_common_attribute>
-                <website_id>0</website_id>
-                <store_id>0</store_id>
-                <website_name>0</website_name>
-                <store_name>0</store_name>
+                <website_id>com.apsis1.integrations.magento.attributes.website-id</website_id>
+                <store_id>com.apsis1.integrations.magento.attributes.store-id</store_id>
+                <website_name>com.apsis1.integrations.magento.attributes.website-name</website_name>
+                <store_name>com.apsis1.integrations.magento.attributes.store-name</store_name>
+                <email>com.apsis1.attributes.email</email>
             </customer_subscriber_common_attribute>
             <subscriber_attribute>
-                <subscriber_id>0</subscriber_id>
-                <subscriber_status>0</subscriber_status>
-                <change_status_at>0</change_status_at>
+                <subscriber_id>com.apsis1.integrations.magento.attributes.subscriber-id</subscriber_id>
+                <subscriber_status>com.apsis1.integrations.magento.attributes.subscriber-status</subscriber_status>
+                <change_status_at>com.apsis1.integrations.magento.attributes.status-change-at</change_status_at>
             </subscriber_attribute>
             <customer_attribute>
-                <title>0</title>
-                <customer_id>0</customer_id>
-                <first_name>0</first_name>
-                <last_name>0</last_name>
-                <dob>0</dob>
-                <gender>0</gender>
-                <created_at>0</created_at>
-                <last_logged_date>0</last_logged_date>
-                <customer_group>0</customer_group>
-                <review_count>0</review_count>
-                <last_review_date>0</last_review_date>
-                <billing_address_1>0</billing_address_1>
-                <billing_address_2>0</billing_address_2>
-                <billing_state>0</billing_state>
-                <billing_city>0</billing_city>
-                <billing_country>0</billing_country>
-                <billing_postcode>0</billing_postcode>
-                <billing_telephone>0</billing_telephone>
-                <billing_company>0</billing_company>
-                <delivery_address_1>0</delivery_address_1>
-                <delivery_address_2>0</delivery_address_2>
-                <delivery_city>0</delivery_city>
-                <delivery_state>0</delivery_state>
-                <delivery_country>0</delivery_country>
-                <delivery_postcode>0</delivery_postcode>
-                <delivery_telephone>0</delivery_telephone>
-                <delivery_company>0</delivery_company>
-                <last_order_date>0</last_order_date>
-                <number_of_orders>0</number_of_orders>
-                <average_order_value>0</average_order_value>
-                <ac_token>0</ac_token>
+                <title>com.apsis1.integrations.magento.attributes.title</title>
+                <customer_id>com.apsis1.integrations.magento.attributes.customer-id</customer_id>
+                <first_name>com.apsis1.attributes.firstname</first_name>
+                <last_name>com.apsis1.attributes.lastname</last_name>
+                <dob>com.apsis1.attributes.birthdate</dob>
+                <gender>com.apsis1.integrations.magento.attributes.gender</gender>
+                <created_at>com.apsis1.integrations.magento.attributes.created-at</created_at>
+                <last_logged_date>com.apsis1.integrations.magento.attributes.last-logged-in-date</last_logged_date>
+                <customer_group>com.apsis1.integrations.magento.attributes.customer-group</customer_group>
+                <review_count>com.apsis1.integrations.magento.attributes.review-count</review_count>
+                <last_review_date>com.apsis1.integrations.magento.attributes.last-review-date</last_review_date>
+                <billing_address_1>com.apsis1.integrations.magento.attributes.billing-address-line-1</billing_address_1>
+                <billing_address_2>com.apsis1.integrations.magento.attributes.billing-address-line-2</billing_address_2>
+                <billing_state>com.apsis1.integrations.magento.attributes.billing-state-region</billing_state>
+                <billing_city>com.apsis1.integrations.magento.attributes.billing-city</billing_city>
+                <billing_country>com.apsis1.integrations.magento.attributes.billing-country</billing_country>
+                <billing_postcode>com.apsis1.integrations.magento.attributes.billing-postcode</billing_postcode>
+                <billing_telephone>com.apsis1.integrations.magento.attributes.billing-telephone</billing_telephone>
+                <billing_company>com.apsis1.integrations.magento.attributes.billing-company</billing_company>
+                <delivery_address_1>com.apsis1.integrations.magento.attributes.delivery-address-1</delivery_address_1>
+                <delivery_address_2>com.apsis1.integrations.magento.attributes.delivery-address-2</delivery_address_2>
+                <delivery_city>com.apsis1.integrations.magento.attributes.delivery-city</delivery_city>
+                <delivery_state>com.apsis1.integrations.magento.attributes.delivery-state</delivery_state>
+                <delivery_country>com.apsis1.integrations.magento.attributes.delivery-country</delivery_country>
+                <delivery_postcode>com.apsis1.integrations.magento.attributes.delivery-postcode</delivery_postcode>
+                <delivery_telephone>com.apsis1.integrations.magento.attributes.delivery-telephone</delivery_telephone>
+                <delivery_company>com.apsis1.integrations.magento.attributes.delivery-company</delivery_company>
+                <last_order_date>com.apsis1.integrations.magento.attributes.last-purchase-date</last_order_date>
+                <number_of_orders>com.apsis1.integrations.magento.attributes.total-number-of-orders</number_of_orders>
+                <average_order_value>com.apsis1.integrations.magento.attributes.average-order-value</average_order_value>
+                <ac_token>com.apsis1.integrations.magento.attributes.abandoned-cart-token</ac_token>
+                <total_spend>com.apsis1.integrations.magento.attributes.total-spent</total_spend>
             </customer_attribute>
         </apsis_one_mappings>
         <apsis_one_configuration>

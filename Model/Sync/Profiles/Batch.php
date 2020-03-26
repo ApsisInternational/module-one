@@ -120,7 +120,8 @@ class Batch
 
                     if ($result === false || $result === null) {
                         $this->apsisCoreHelper->log(
-                            'Unable to initialise import for Store ' . $store->getCode() . ' Item ' . $item->getId()
+                            __METHOD__ . ': Unable to initialise import for Store ' . $store->getCode() .
+                            ' Item ' . $item->getId()
                         );
                         continue;
                     } elseif (is_string($result)) {
@@ -141,7 +142,8 @@ class Batch
 
                         if ($status === false) {
                             $this->apsisCoreHelper->log(
-                                'Unable to upload file for Store ' . $store->getCode() . ' Item ' . $item->getId()
+                                __METHOD__ . ': Unable to upload file for Store ' . $store->getCode() .
+                                ' Item ' . $item->getId()
                             );
                             continue;
                         } elseif (is_string($status)) {
@@ -155,7 +157,7 @@ class Batch
                     }
                 } catch (Exception $e) {
                     $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
-                    $this->apsisCoreHelper->log('Skipped batch item :' . $item->getId());
+                    $this->apsisCoreHelper->log(__METHOD__ . ': Skipped batch item :' . $item->getId());
                     continue;
                 }
             }
@@ -181,7 +183,8 @@ class Batch
 
                     if ($result === false) {
                         $this->apsisCoreHelper->log(
-                            'Unable to get import status for Store ' . $store->getCode() . ' Item ' . $item->getId()
+                            __METHOD__ . ': Unable to get import status for Store ' . $store->getCode() .
+                            ' Item ' . $item->getId()
                         );
                         continue;
                     }
@@ -198,7 +201,7 @@ class Batch
                     }
                 } catch (Exception $e) {
                     $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
-                    $this->apsisCoreHelper->log('Skipped batch item :' . $item->getId());
+                    $this->apsisCoreHelper->log(__METHOD__ . ': Skipped batch item :' . $item->getId());
                     continue;
                 }
             }

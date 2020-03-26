@@ -261,7 +261,8 @@ class Subscribers
                         $subscribersToUpdate[] = $subscriber->getSubscriberId();
                     } catch (Exception $e) {
                         $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
-                        $this->apsisCoreHelper->log('Skipped subscriber with id :' . $subscriber->getSubscriberId());
+                        $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscriber with id :' .
+                            $subscriber->getSubscriberId());
                         continue;
                     }
                 }
@@ -289,7 +290,8 @@ class Subscribers
         } catch (Exception $e) {
             $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             if (! empty($subscribersToUpdate)) {
-                $this->apsisCoreHelper->log('Skipped subscribers with id :' . implode(',', $subscribersToUpdate));
+                $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscribers with id :' .
+                    implode(',', $subscribersToUpdate));
             }
         }
     }

@@ -41,17 +41,13 @@ class Attributes implements OptionSourceInterface
         $section = $this->apsisCoreHelper->getMappedValueFromSelectedScope(
             ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
         );
-        if (! $section) {
-            return [['value' => '0', 'label' => __('-- Map & Save Section First --')]];
-        }
-
         $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
         $apiClient = $this->apsisCoreHelper->getApiClient(
             $scope['context_scope'],
             $scope['context_scope_id']
         );
-        if (! $apiClient) {
-            return [['value' => '0', 'label' => __('-- Account Is Not Enabled Or Invalid Credentials --')]];
+        if (! $apiClient || ! $section) {
+            return [];
         }
 
         $savedAttributes = $this->registry->registry('apsis_attributes');
@@ -64,10 +60,11 @@ class Attributes implements OptionSourceInterface
         }
 
         if (! $attributes || ! isset($attributes->items)) {
-            return [['value' => '0', 'label' => __('-- Invalid Request Or No Attributes Exist On Section--')]];
+            $this->apsisCoreHelper->log(__METHOD__ . ': No attributes found on section ' . $section);
+            return [];
         }
 
-        $fields[] = ['value' => '0', 'label' => __('-- Please Select --')];
+        $fields[] = ['value' => '', 'label' => __('-- Please Select --')];
         foreach ($attributes->items as $attribute) {
             $fields[] = ['value' => $attribute->discriminator, 'label' => $attribute->name];
         }

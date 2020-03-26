@@ -98,8 +98,6 @@ class ValidateApi implements ObserverInterface
      */
     private function isValid(string $id, string $secret, array $scope)
     {
-        $this->apsisCoreHelper->log('----VALIDATING ACCOUNT---');
-
         $tokenFromApi = $this->apsisCoreHelper->getTokenFromApi(
             $scope['context_scope'],
             $scope['context_scope_id'],
@@ -107,15 +105,12 @@ class ValidateApi implements ObserverInterface
             $secret
         );
         if (strlen($tokenFromApi)) {
-            $this->apsisCoreHelper->log(
-                'API Credentials Valid for scope : ' . $scope['context_scope'] . ' - id : ' . $scope['context_scope_id']
-            );
             $this->messageManager->addSuccessMessage(__('API Credentials Valid.'));
             return true;
         }
 
         $this->apsisCoreHelper->log(
-            'Authorization has been denied for scope : ' . $scope['context_scope'] .
+            __METHOD__ . ': Authorization has been denied for scope : ' . $scope['context_scope'] .
             ' - id :' . $scope['context_scope_id']
         );
         $this->messageManager->addWarningMessage(__('Authorization has been denied for this request.'));

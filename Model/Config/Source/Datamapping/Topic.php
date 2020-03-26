@@ -30,29 +30,24 @@ class Topic implements OptionSourceInterface
      */
     public function toOptionArray()
     {
+        $options = [];
         $section = $this->apsisCoreHelper->getMappedValueFromSelectedScope(
             ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
         );
-        if (! $section) {
-            return [['value' => '0', 'label' => __('-- Map & Save Section First --')]];
-        }
-
         $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
         $apiClient = $this->apsisCoreHelper->getApiClient(
             $scope['context_scope'],
             $scope['context_scope_id']
         );
-        if (! $apiClient) {
-            return [['value' => '0', 'label' => __('-- Account Is Not Enabled Or Invalid Credentials --')]];
+        if (! $apiClient || ! $section) {
+            return $options;
         }
 
         $consentLists = $apiClient->getConsentLists($section);
         if (! $consentLists || ! isset($consentLists->items)) {
-            return [['value' => '0', 'label' => __('-- Invalid Request Or No Consent Lists On Account --')]];
+            $this->apsisCoreHelper->log(__METHOD__ . ': No consent list / topic found on section ' . $section);
+            return $options;
         }
-
-        //default data option
-        $options[] = ['value' => '0', 'label' => __('-- Please Select --')];
 
         foreach ($consentLists->items as $consentList) {
             $topics = $apiClient->getTopics($section, $consentList->discriminator);

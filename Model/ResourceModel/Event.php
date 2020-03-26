@@ -3,6 +3,8 @@
 namespace Apsis\One\Model\ResourceModel;
 
 use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Profile;
+use Apsis\One\Model\ProfileBatch;
 use Exception;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Apsis\One\Helper\Core as Helper;
@@ -28,6 +30,24 @@ class Event extends AbstractDb
         Helper::APSIS_EVENT_TABLE => "updated_at",
         Helper::APSIS_ABANDONED_TABLE => "created_at",
         Helper::APSIS_PROFILE_BATCH_TABLE => "updated_at"
+    ];
+
+    /**
+     * @var array
+     */
+    private $cleanupTableWhereClauseMapping = [
+        Helper::APSIS_EVENT_TABLE => [
+            'column' => 'status',
+            'in' => [Profile::SYNC_STATUS_SYNCED, Profile::SYNC_STATUS_FAILED]
+        ],
+        Helper::APSIS_ABANDONED_TABLE => [],
+        Helper::APSIS_PROFILE_BATCH_TABLE => [
+            'column' => 'sync_status',
+            'in' => [
+                ProfileBatch::SYNC_STATUS_ERROR,
+                ProfileBatch::SYNC_STATUS_COMPLETED,
+                ProfileBatch::SYNC_STATUS_FAILED]
+        ],
     ];
 
     /**
@@ -131,10 +151,18 @@ class Event extends AbstractDb
     public function cleanupRecords(int $day)
     {
         foreach ($this->cleanupTableColumnMapping as $table => $column) {
-            $this->getConnection()->delete(
-                $this->getTable($table),
-                "$column < DATE_SUB(NOW(), INTERVAL $day DAY)"
-            );
+            try {
+                $where = ["$column < DATE_SUB(NOW(), INTERVAL $day DAY)"];
+                $mapping = $this->cleanupTableWhereClauseMapping[$table];
+                if (! empty($mapping)) {
+                    $whereColumn = $mapping['column'];
+                    $where["$whereColumn IN(?)"] = $mapping['in'];
+                }
+                $this->getConnection()->delete($this->getTable($table), $where);
+            } catch (Exception $e) {
+                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+                continue;
+            }
         }
     }
 }

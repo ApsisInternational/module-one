@@ -216,27 +216,27 @@ class AbandonedSub
         $items = [];
         foreach ($acData['items'] as $item) {
             $items [] = [
-                'cart_id' => $acData['cart_id'],
-                'product_id' => $item['product_id'],
+                'cartId' => $acData['cart_id'],
+                'productId' => $item['product_id'],
                 'sku' => $item['sku'],
                 'name' => $item['name'],
-                'product_url' => $item['product_url'],
-                'product_image_url' => $item['product_image_url'],
-                'qty_ordered' => $item['qty_ordered'],
-                'price_amount' => $item['price_amount'],
-                'row_total_amount' => $item['row_total_amount'],
+                'productUrl' => $item['product_url'],
+                'productImageUrl' => $item['product_image_url'],
+                'qtyOrdered' => $item['qty_ordered'],
+                'priceAmount' => $item['price_amount'],
+                'rowTotalAmount' => $item['row_total_amount'],
             ];
         }
 
         $eventData = [
-            'cart_id' => $acData['cart_id'],
-            'customer_id' => $acData['customer_info']['customer_id'],
-            'created_at' => $acData['created_at'],
-            'store_name' => $acData['store_name'],
-            'website_name' => $acData['website_name'],
-            'grand_total_amount' => $acData['grand_total_amount'],
-            'items_count' => $acData['items_count'],
-            'currency_code' => $acData['currency_code'],
+            'cartId' => $acData['cart_id'],
+            'customerId' => $acData['customer_info']['customer_id'],
+            'createdAt' => $acData['created_at'],
+            'storeName' => $acData['store_name'],
+            'websiteName' => $acData['website_name'],
+            'grandTotalAmount' => $acData['grand_total_amount'],
+            'itemsCount' => $acData['items_count'],
+            'currencyCode' => $acData['currency_code'],
             'items' => $items
         ];
 

@@ -99,16 +99,16 @@ class LoggerPlugin
     private function getDataArr(CustomerLog $customerLog)
     {
         $data = [
-            'customer_id' => (int) $customerLog->getCustomerId(),
-            'login_at' => (string) $this->apsisCoreHelper
+            'customerId' => (int) $customerLog->getCustomerId(),
+            'loginAt' => (string) $this->apsisCoreHelper
                 ->formatDateForPlatformCompatibility($customerLog->getLastLoginAt()),
-            'last_logout_at' => (string) $this->apsisCoreHelper
+            'lastLogoutAt' => (string) $this->apsisCoreHelper
                 ->formatDateForPlatformCompatibility($customerLog->getLastLogoutAt()),
-            'last_visit_at' => (string) $this->apsisCoreHelper
+            'lastVisitAt' => (string) $this->apsisCoreHelper
                 ->formatDateForPlatformCompatibility($customerLog->getLastVisitAt()),
-            'website_name' => (string) $this->apsisCoreHelper
+            'websiteName' => (string) $this->apsisCoreHelper
                 ->getWebsiteNameFromStoreId(),
-            'store_name' => (string) $this->apsisCoreHelper->getStoreNameFromId()
+            'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId()
         ];
         return $data;
     }
@@ -126,11 +126,6 @@ class LoggerPlugin
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_LOGIN
         );
 
-        $sync = (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED
-        );
-
-        return ($account && $event && $sync) ? true : false;
+        return ($account && $event) ? true : false;
     }
 }

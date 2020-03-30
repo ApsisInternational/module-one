@@ -135,24 +135,24 @@ class Product implements ObserverInterface
     {
         $voteCollection = $this->voteCollectionFactory->create()->setReviewFilter($reviewObject->getReviewId());
         $data = [
-            'review_id' => (int) $reviewObject->getReviewId(),
-            'customer_id' => (int) $reviewObject->getCustomerId(),
-            'created_at' => (string) $this->apsisCoreHelper
+            'reviewId' => (int) $reviewObject->getReviewId(),
+            'customerId' => (int) $reviewObject->getCustomerId(),
+            'createdAt' => (string) $this->apsisCoreHelper
                 ->formatDateForPlatformCompatibility($reviewObject->getCreatedAt()),
-            'website_name' => (string) $this->apsisCoreHelper
+            'websiteName' => (string) $this->apsisCoreHelper
                 ->getWebsiteNameFromStoreId(),
-            'store_name' => (string) $this->apsisCoreHelper->getStoreNameFromId(),
+            'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId(),
             'nickname' => (string) $reviewObject->getNickname(),
-            'review_title' => (string) $reviewObject->getTitle(),
-            'review_detail' => (string) $reviewObject->getDetail(),
-            'product_id' => (int) $product->getId(),
+            'reviewTitle' => (string) $reviewObject->getTitle(),
+            'reviewDetail' => (string) $reviewObject->getDetail(),
+            'productId' => (int) $product->getId(),
             'sku' => (string) $product->getSku(),
             'name' => (string) $product->getName(),
-            'product_url' => (string) $product->getProductUrl(),
-            'product_review_url' => (string) $reviewObject->getReviewUrl(),
-            'product_image_url' => (string) $this->apsisCoreHelper->getProductImageUrl($product),
-            'catalog_price_amount' => (float) $this->apsisCoreHelper->round($product->getPrice()),
-            'rating_star_value' => ($voteCollection->getSize()) ? (int) $voteCollection->getFirstItem()->getValue() : 0
+            'productUrl' => (string) $product->getProductUrl(),
+            'productReviewUrl' => (string) $reviewObject->getReviewUrl(),
+            'productImageUrl' => (string) $this->apsisCoreHelper->getProductImageUrl($product),
+            'catalogPriceAmount' => (float) $this->apsisCoreHelper->round($product->getPrice()),
+            'ratingStarValue' => ($voteCollection->getSize()) ? (int) $voteCollection->getFirstItem()->getValue() : 0
         ];
         return $data;
     }

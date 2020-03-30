@@ -206,12 +206,12 @@ class SaveUpdate implements ObserverInterface
     private function getDataArrForUnsubscribeEvent(Subscriber $subscriber)
     {
         $data = [
-            'subscriber_id' => (int) $subscriber->getSubscriberId(),
-            'unsubscribe_at' => (string) $this->apsisCoreHelper
+            'subscriberId' => (int) $subscriber->getSubscriberId(),
+            'unsubscribeAt' => (string) $this->apsisCoreHelper
                 ->formatDateForPlatformCompatibility($subscriber->getChangeStatusAt()),
-            'website_name' => (string) $this->apsisCoreHelper
+            'websiteName' => (string) $this->apsisCoreHelper
                 ->getWebsiteNameFromStoreId($subscriber->getStoreId()),
-            'store_name' => (string) $this->apsisCoreHelper->getStoreNameFromId($subscriber->getStoreId())
+            'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($subscriber->getStoreId())
         ];
         return $data;
     }
@@ -225,13 +225,13 @@ class SaveUpdate implements ObserverInterface
     private function getDataArrForSubscriberEvent(Subscriber $subscriber, Profile $profile)
     {
         $data = [
-            'subscriber_id' => (int) $subscriber->getSubscriberId(),
-            'customer_id' => (int) $profile->getCustomerId(),
-            'register_at' => (string) $this->apsisCoreHelper
+            'subscriberId' => (int) $subscriber->getSubscriberId(),
+            'customerId' => (int) $profile->getCustomerId(),
+            'registerAt' => (string) $this->apsisCoreHelper
                 ->formatDateForPlatformCompatibility($subscriber->getChangeStatusAt()),
-            'website_name' => (string) $this->apsisCoreHelper
+            'websiteName' => (string) $this->apsisCoreHelper
                 ->getWebsiteNameFromStoreId($subscriber->getStoreId()),
-            'store_name' => (string) $this->apsisCoreHelper->getStoreNameFromId($subscriber->getStoreId())
+            'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($subscriber->getStoreId())
         ];
         return $data;
     }

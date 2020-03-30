@@ -138,35 +138,35 @@ class Placed implements ObserverInterface
         foreach ($order->getAllVisibleItems() as $item) {
             $product = $item->getProduct();
             $items [] = [
-                'order_id' => (int) $order->getEntityId(),
-                'product_id' => (int) $item->getProductId(),
+                'orderId' => (int) $order->getEntityId(),
+                'productId' => (int) $item->getProductId(),
                 'sku' => (string) $item->getSku(),
                 'name' => (string) $item->getName(),
-                'product_url' => (string) $product->getProductUrl(),
-                'product_image_url' => (string) $this->apsisCoreHelper->getProductImageUrl($product),
-                'qty_ordered' => (float) $this->apsisCoreHelper->round($item->getQtyOrdered()),
-                'price_amount' => (float) $this->apsisCoreHelper->round($item->getPrice()),
-                'row_total_amount' => (float) $this->apsisCoreHelper->round($item->getRowTotal()),
+                'productUrl' => (string) $product->getProductUrl(),
+                'productImageUrl' => (string) $this->apsisCoreHelper->getProductImageUrl($product),
+                'qtyOrdered' => (float) $this->apsisCoreHelper->round($item->getQtyOrdered()),
+                'priceAmount' => (float) $this->apsisCoreHelper->round($item->getPrice()),
+                'rowTotalAmount' => (float) $this->apsisCoreHelper->round($item->getRowTotal()),
             ];
         }
 
         $data = [
-            'order_id' => (int) $order->getEntityId(),
-            'increment_id' => (string) $order->getIncrementId(),
-            'customer_id' => (int) $order->getCustomerId(),
-            'subscriber_id' => (int) $subscriberId,
-            'is_guest' => (boolean) $order->getCustomerIsGuest(),
-            'created_at' => (string) $this->apsisCoreHelper
+            'orderId' => (int) $order->getEntityId(),
+            'incrementId' => (string) $order->getIncrementId(),
+            'customerId' => (int) $order->getCustomerId(),
+            'subscriberId' => (int) $subscriberId,
+            'isGuest' => (boolean) $order->getCustomerIsGuest(),
+            'createdAt' => (string) $this->apsisCoreHelper
                 ->formatDateForPlatformCompatibility($order->getCreatedAt()),
-            'website_name' => (string) $order->getStore()->getWebsite()->getName(),
-            'store_name' => (string) $order->getStore()->getName(),
-            'grand_total_amount' => (float) $this->apsisCoreHelper->round($order->getGrandTotal()),
-            'shipping_amount' => (float) $this->apsisCoreHelper->round($order->getShippingAmount()),
-            'discount_amount' => (float) $this->apsisCoreHelper->round($order->getDiscountAmount()),
-            'shipping_method_name' => (string) $order->getShippingDescription(),
-            'payment_method_name' => (string) $order->getPayment()->getMethod(),
-            'items_count' => (int) $order->getTotalItemCount(),
-            'currency_code' => (string) $order->getOrderCurrencyCode(),
+            'websiteName' => (string) $order->getStore()->getWebsite()->getName(),
+            'storeName' => (string) $order->getStore()->getName(),
+            'grandTotalAmount' => (float) $this->apsisCoreHelper->round($order->getGrandTotal()),
+            'shippingAmount' => (float) $this->apsisCoreHelper->round($order->getShippingAmount()),
+            'discountAmount' => (float) $this->apsisCoreHelper->round($order->getDiscountAmount()),
+            'shippingMethodName' => (string) $order->getShippingDescription(),
+            'paymentMethodName' => (string) $order->getPayment()->getMethod(),
+            'itemsCount' => (int) $order->getTotalItemCount(),
+            'currencyCode' => (string) $order->getOrderCurrencyCode(),
             'items' => (array) $items
         ];
         return $data;

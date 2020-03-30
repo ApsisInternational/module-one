@@ -115,21 +115,21 @@ class AddProduct implements ObserverInterface
     private function getDataArr(Wishlist $wishlist, Store $store, WishlistItem $item, Product $product)
     {
         $data = [
-            'wishlist_id' => (int) $wishlist->getId(),
-            'wishlist_item_id' => (int) $item->getId(),
-            'wishlist_name' => (string) $wishlist->getName(),
-            'customer_id' => (int) $wishlist->getCustomerId(),
-            'website_name' => (string) $this->apsisCoreHelper->getWebsiteNameFromStoreId($store->getId()),
-            'store_name' => (string) $this->apsisCoreHelper->getStoreNameFromId($store->getId()),
-            'added_at' => (string) $this->apsisCoreHelper->formatDateForPlatformCompatibility($item->getAddedAt()),
-            'product_id' => (int) $product->getId(),
+            'wishlistId' => (int) $wishlist->getId(),
+            'wishlistItemId' => (int) $item->getId(),
+            'wishlistName' => (string) $wishlist->getName(),
+            'customerId' => (int) $wishlist->getCustomerId(),
+            'websiteName' => (string) $this->apsisCoreHelper->getWebsiteNameFromStoreId($store->getId()),
+            'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($store->getId()),
+            'addedAt' => (string) $this->apsisCoreHelper->formatDateForPlatformCompatibility($item->getAddedAt()),
+            'productId' => (int) $product->getId(),
             'sku' => (string) $product->getSku(),
             'name' => (string) $product->getName(),
-            'product_url' => (string) $product->getProductUrl(),
-            'product_image_url' => (string) $this->apsisCoreHelper->getProductImageUrl($product),
-            'catalog_price_amount' => (float) $this->apsisCoreHelper->round($product->getPrice()),
+            'productUrl' => (string) $product->getProductUrl(),
+            'productImageUrl' => (string) $this->apsisCoreHelper->getProductImageUrl($product),
+            'catalogPriceAmount' => (float) $this->apsisCoreHelper->round($product->getPrice()),
             'qty' => (float) $item->getQty(),
-            'currency_code' => (string) $store->getCurrentCurrencyCode(),
+            'currencyCode' => (string) $store->getCurrentCurrencyCode(),
         ];
         return $data;
     }

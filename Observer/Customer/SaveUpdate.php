@@ -142,13 +142,13 @@ class SaveUpdate implements ObserverInterface
     private function getDataArr(Customer $customer, Profile $profile)
     {
         $data = [
-            'subscriber_id' => (int) $profile->getSubscriberId(),
-            'customer_id' => (int) $customer->getEntityId(),
-            'register_at' => (string) $this->apsisCoreHelper
+            'subscriberId' => (int) $profile->getSubscriberId(),
+            'customerId' => (int) $customer->getEntityId(),
+            'registerAt' => (string) $this->apsisCoreHelper
                 ->formatDateForPlatformCompatibility($customer->getCreatedAt()),
-            'website_name' => (string) $this->apsisCoreHelper
+            'websiteName' => (string) $this->apsisCoreHelper
                 ->getWebsiteNameFromStoreId($customer->getStoreId()),
-            'store_name' => (string) $this->apsisCoreHelper->getStoreNameFromId($customer->getStoreId())
+            'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($customer->getStoreId())
         ];
         return $data;
     }

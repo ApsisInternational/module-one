@@ -4,6 +4,7 @@ namespace Apsis\One\Observer\Adminhtml;
 
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Magento\Backend\App\Action\Context;
+use Magento\Framework\App\Config\ReinitableConfigInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Message\ManagerInterface;
@@ -28,15 +29,23 @@ class ValidateApi implements ObserverInterface
     private $messageManager;
 
     /**
+     * @var ReinitableConfigInterface
+     */
+    private $config;
+
+    /**
      * ApiValidate constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param Context $context
+     * @param ReinitableConfigInterface $reinitableConfig
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
-        Context $context
+        Context $context,
+        ReinitableConfigInterface $reinitableConfig
     ) {
+        $this->config = $reinitableConfig;
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->context = $context;
         $this->messageManager = $context->getMessageManager();
@@ -83,6 +92,33 @@ class ValidateApi implements ObserverInterface
                     $scope['context_scope'],
                     $scope['context_scope_id']
                 );
+                $this->apsisCoreHelper->saveConfigValue(
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID,
+                    '',
+                    $scope['context_scope'],
+                    $scope['context_scope_id']
+                );
+                $this->apsisCoreHelper->saveConfigValue(
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET,
+                    '',
+                    $scope['context_scope'],
+                    $scope['context_scope_id']
+                );
+                $this->apsisCoreHelper->saveConfigValue(
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
+                    '',
+                    $scope['context_scope'],
+                    $scope['context_scope_id']
+                );
+                $this->apsisCoreHelper->saveConfigValue(
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE,
+                    '',
+                    $scope['context_scope'],
+                    $scope['context_scope_id']
+                );
+
+                //Clear config cache
+                $this->config->reinit();
             }
         }
 
@@ -98,22 +134,57 @@ class ValidateApi implements ObserverInterface
      */
     private function isValid(string $id, string $secret, array $scope)
     {
+        $isValid = false;
         $tokenFromApi = $this->apsisCoreHelper->getTokenFromApi(
             $scope['context_scope'],
             $scope['context_scope_id'],
             $id,
             $secret
         );
+
         if (strlen($tokenFromApi)) {
-            $this->messageManager->addSuccessMessage(__('API Credentials Valid.'));
-            return true;
+            $isValid = $this->isMagentoKeySpaceExist($scope);
+            ($isValid) ? $this->messageManager->addSuccessMessage(__('API credentials valid.')) :
+                $this->messageManager->addWarningMessage(__('API credentials invalid for integration.'));
+        } else {
+            $this->apsisCoreHelper->log(
+                __METHOD__ . ': Authorization has been denied for scope : ' . $scope['context_scope'] .
+                ' - id :' . $scope['context_scope_id']
+            );
+            $this->messageManager->addWarningMessage(__('Authorization has been denied for this request.'));
+        }
+        return $isValid;
+    }
+
+    /**
+     * @param array $scope
+     *
+     * @return bool
+     */
+    private function isMagentoKeySpaceExist(array $scope)
+    {
+        $client = $this->apsisCoreHelper->getApiClient($scope['context_scope'], $scope['context_scope_id']);
+        if (! $client) {
+            return false;
+        }
+
+        $keySpaces = $client->getKeySpaces();
+        if (! is_object($keySpaces)) {
+            return false;
+        }
+
+        if (isset($keySpaces->items)) {
+            foreach ($keySpaces->items as $item) {
+                if (strpos($item->discriminator, 'magento') !== false) {
+                    return true;
+                }
+            }
         }
 
         $this->apsisCoreHelper->log(
-            __METHOD__ . ': Authorization has been denied for scope : ' . $scope['context_scope'] .
+            __METHOD__ . ': API credentials invalid for integration for scope : ' . $scope['context_scope'] .
             ' - id :' . $scope['context_scope_id']
         );
-        $this->messageManager->addWarningMessage(__('Authorization has been denied for this request.'));
         return false;
     }
 }

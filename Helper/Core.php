@@ -667,6 +667,16 @@ class Core extends AbstractHelper
             return false;
         }
 
+        return $this->getApiClientFromToken($token);
+    }
+
+    /**
+     * @param string $token
+     *
+     * @return Client
+     */
+    public function getApiClientFromToken(string $token)
+    {
         /** @var Client $apiClient */
         $apiClient = $this->apiClientFactory->create();
         return $apiClient->setHelper($this)

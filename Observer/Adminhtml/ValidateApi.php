@@ -143,7 +143,7 @@ class ValidateApi implements ObserverInterface
         );
 
         if (strlen($tokenFromApi)) {
-            $isValid = $this->isMagentoKeySpaceExist($scope);
+            $isValid = $this->isMagentoKeySpaceExist($tokenFromApi, $scope);
             ($isValid) ? $this->messageManager->addSuccessMessage(__('API credentials valid.')) :
                 $this->messageManager->addWarningMessage(__('API credentials invalid for integration.'));
         } else {
@@ -157,18 +157,16 @@ class ValidateApi implements ObserverInterface
     }
 
     /**
+     * @param string $token
      * @param array $scope
      *
      * @return bool
      */
-    private function isMagentoKeySpaceExist(array $scope)
+    private function isMagentoKeySpaceExist(string $token, array $scope)
     {
-        $client = $this->apsisCoreHelper->getApiClient($scope['context_scope'], $scope['context_scope_id']);
-        if (! $client) {
-            return false;
-        }
-
+        $client = $this->apsisCoreHelper->getApiClientFromToken($token);
         $keySpaces = $client->getKeySpaces();
+
         if (! is_object($keySpaces)) {
             return false;
         }

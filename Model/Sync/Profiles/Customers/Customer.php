@@ -260,7 +260,7 @@ class Customer
      */
     private function getReviewCount()
     {
-        return count($this->reviewCollection);
+        return (int) count($this->reviewCollection);
     }
 
     /**

@@ -297,7 +297,7 @@ class Events
                 return $eventData;
             }
 
-            $createdAt = $this->apsisCoreHelper->formatDateForPlatformCompatibility($event->getCreatedAt());
+            $createdAt = (int) $this->apsisCoreHelper->formatDateForPlatformCompatibility($event->getCreatedAt());
             $mainData = (array) $this->apsisCoreHelper->unserialize($event->getEventData());
             $subData = (array) $this->apsisCoreHelper->unserialize($event->getSubEventData());
             $eventData[] = [
@@ -318,7 +318,7 @@ class Events
             }
 
             $eventData[] = [
-                'event_time' => $this->apsisCoreHelper->formatDateForPlatformCompatibility($event->getCreatedAt()),
+                'event_time' => (int)$this->apsisCoreHelper->formatDateForPlatformCompatibility($event->getCreatedAt()),
                 'version_id' => $this->eventsVersionMapping[$this->eventsDiscriminatorMapping[$event->getEventType()]],
                 'data' => (array) $this->apsisCoreHelper->unserialize($event->getEventData()),
             ];

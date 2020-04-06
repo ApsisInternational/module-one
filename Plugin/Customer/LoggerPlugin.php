@@ -100,11 +100,11 @@ class LoggerPlugin
     {
         $data = [
             'customerId' => (int) $customerLog->getCustomerId(),
-            'loginAt' => (string) $this->apsisCoreHelper
+            'loginAt' => (int) $this->apsisCoreHelper
                 ->formatDateForPlatformCompatibility($customerLog->getLastLoginAt()),
-            'lastLogoutAt' => (string) $this->apsisCoreHelper
+            'lastLogoutAt' => (int) $this->apsisCoreHelper
                 ->formatDateForPlatformCompatibility($customerLog->getLastLogoutAt()),
-            'lastVisitAt' => (string) $this->apsisCoreHelper
+            'lastVisitAt' => (int) $this->apsisCoreHelper
                 ->formatDateForPlatformCompatibility($customerLog->getLastVisitAt()),
             'websiteName' => (string) $this->apsisCoreHelper
                 ->getWebsiteNameFromStoreId(),

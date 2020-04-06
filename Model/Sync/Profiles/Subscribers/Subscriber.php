@@ -141,15 +141,15 @@ class Subscriber
             $status = 'unsubscribed';
         }
 
-        return (string) $status;
+        return $status;
     }
 
     /**
-     * @return string
+     * @return int
      */
     private function getChangeStatusAt()
     {
-        return (string) ($this->subscriber->getChangeStatusAt()) ?
-            $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->subscriber->getChangeStatusAt()) : '';
+        return (int) ($this->subscriber->getChangeStatusAt()) ?
+            $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->subscriber->getChangeStatusAt()) : 0;
     }
 }

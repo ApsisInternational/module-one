@@ -156,7 +156,7 @@ class Placed implements ObserverInterface
             'customerId' => (int) $order->getCustomerId(),
             'subscriberId' => (int) $subscriberId,
             'isGuest' => (boolean) $order->getCustomerIsGuest(),
-            'createdAt' => (string) $this->apsisCoreHelper
+            'createdAt' => (int) $this->apsisCoreHelper
                 ->formatDateForPlatformCompatibility($order->getCreatedAt()),
             'websiteName' => (string) $order->getStore()->getWebsite()->getName(),
             'storeName' => (string) $order->getStore()->getName(),
@@ -167,7 +167,7 @@ class Placed implements ObserverInterface
             'paymentMethodName' => (string) $order->getPayment()->getMethod(),
             'itemsCount' => (int) $order->getTotalItemCount(),
             'currencyCode' => (string) $order->getOrderCurrencyCode(),
-            'items' => (array) $items
+            'items' => $items
         ];
         return $data;
     }

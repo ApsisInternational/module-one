@@ -137,7 +137,7 @@ class Product implements ObserverInterface
         $data = [
             'reviewId' => (int) $reviewObject->getReviewId(),
             'customerId' => (int) $reviewObject->getCustomerId(),
-            'createdAt' => (string) $this->apsisCoreHelper
+            'createdAt' => (int) $this->apsisCoreHelper
                 ->formatDateForPlatformCompatibility($reviewObject->getCreatedAt()),
             'websiteName' => (string) $this->apsisCoreHelper
                 ->getWebsiteNameFromStoreId(),

@@ -121,7 +121,7 @@ class AddProduct implements ObserverInterface
             'customerId' => (int) $wishlist->getCustomerId(),
             'websiteName' => (string) $this->apsisCoreHelper->getWebsiteNameFromStoreId($store->getId()),
             'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($store->getId()),
-            'addedAt' => (string) $this->apsisCoreHelper->formatDateForPlatformCompatibility($item->getAddedAt()),
+            'addedAt' => (int) $this->apsisCoreHelper->formatDateForPlatformCompatibility($item->getAddedAt()),
             'productId' => (int) $product->getId(),
             'sku' => (string) $product->getSku(),
             'name' => (string) $product->getName(),

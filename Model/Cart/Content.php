@@ -107,9 +107,9 @@ class Content
     {
         $totals = $this->cartTotalRepository->get($quoteModel->getId());
         $quoteData['cart_id'] = (int) $quoteModel->getId();
-        $quoteData['created_at'] = (string) $this->apsisCoreHelper
+        $quoteData['created_at'] = (int) $this->apsisCoreHelper
             ->formatDateForPlatformCompatibility($quoteModel->getCreatedAt());
-        $quoteData['updated_at'] = (string) $this->apsisCoreHelper
+        $quoteData['updated_at'] = (int) $this->apsisCoreHelper
             ->formatDateForPlatformCompatibility($quoteModel->getUpdatedAt());
         $quoteData['store_name'] = (string) $quoteModel->getStore()->getName();
         $quoteData['website_name'] = (string) $quoteModel->getStore()->getWebsite()->getName();

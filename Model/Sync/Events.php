@@ -17,6 +17,7 @@ use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollection
 use stdClass;
 use Apsis\One\Model\ResourceModel\Event as EventResourceModel;
 use Apsis\One\Model\ResourceModel\Abandoned\CollectionFactory as AbandonedCollectionFactory;
+use Zend_Date;
 
 class Events
 {
@@ -287,6 +288,10 @@ class Events
     private function getEventArr(Event $event)
     {
         $eventData = [];
+        $createdAt = (string) $this->apsisCoreHelper->formatDateForPlatformCompatibility(
+            $event->getCreatedAt(),
+            Zend_Date::ISO_8601
+        );
         if ($event->getEventType() == Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART ||
             $event->getEventType() == Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER) {
             $typeArray = $this->eventsDiscriminatorMapping[$event->getEventType()];
@@ -297,7 +302,6 @@ class Events
                 return $eventData;
             }
 
-            $createdAt = (int) $this->apsisCoreHelper->formatDateForPlatformCompatibility($event->getCreatedAt());
             $mainData = (array) $this->apsisCoreHelper->unserialize($event->getEventData());
             $subData = (array) $this->apsisCoreHelper->unserialize($event->getSubEventData());
             $eventData[] = [
@@ -318,7 +322,7 @@ class Events
             }
 
             $eventData[] = [
-                'event_time' => (int)$this->apsisCoreHelper->formatDateForPlatformCompatibility($event->getCreatedAt()),
+                'event_time' => $createdAt,
                 'version_id' => $this->eventsVersionMapping[$this->eventsDiscriminatorMapping[$event->getEventType()]],
                 'data' => (array) $this->apsisCoreHelper->unserialize($event->getEventData()),
             ];

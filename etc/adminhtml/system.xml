@@ -104,7 +104,7 @@
                        showInWebsite="1" showInStore="1">
                     <label>Status Change At</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
-                    <comment><![CDATA[Attribute Type: Date ISO-8601]]></comment>
+                    <comment><![CDATA[Attribute Type: Number Unix time]]></comment>
                 </field>
             </group>
             <group id="customer_attribute" translate="label" sortOrder="40" showInDefault="1" showInWebsite="1"
@@ -143,7 +143,7 @@
                        showInStore="1">
                     <label>D.O.B</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
-                    <comment><![CDATA[Attribute Type: Date ISO-8601]]></comment>
+                    <comment><![CDATA[Attribute Type: Text ISO-8601 Date]]></comment>
                 </field>
                 <field id="gender" type="select" translate="label" sortOrder="70" showInDefault="1" showInWebsite="1"
                        showInStore="1">
@@ -155,13 +155,13 @@
                        showInWebsite="1" showInStore="1">
                     <label>Created At</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
-                    <comment><![CDATA[Attribute Type: Date ISO-8601]]></comment>
+                    <comment><![CDATA[Attribute Type: Number Unix time]]></comment>
                 </field>
                 <field id="last_logged_date" type="select" translate="label" sortOrder="90" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Last Logged In Date</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
-                    <comment><![CDATA[Attribute Type: Date ISO-8601]]></comment>
+                    <comment><![CDATA[Attribute Type: Number Unix time]]></comment>
                 </field>
                 <field id="customer_group" type="select" translate="label" sortOrder="100" showInDefault="1"
                        showInWebsite="1" showInStore="1">
@@ -179,7 +179,7 @@
                        showInWebsite="1" showInStore="1">
                     <label>Last Review Date</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
-                    <comment><![CDATA[Attribute Type: Date ISO-8601]]></comment>
+                    <comment><![CDATA[Attribute Type: Number Unix time]]></comment>
                 </field>
                 <field id="address_title" translate="label" sortOrder="130" showInDefault="1" showInWebsite="1"
                        showInStore="1">
@@ -290,7 +290,7 @@
                        showInWebsite="1" showInStore="1">
                     <label>Last Purchase Date</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
-                    <comment><![CDATA[Attribute Type: Date ISO-8601]]></comment>
+                    <comment><![CDATA[Attribute Type: Number Unix time]]></comment>
                 </field>
                 <field id="number_of_orders" type="select" translate="label" sortOrder="330" showInDefault="1"
                        showInWebsite="1" showInStore="1">

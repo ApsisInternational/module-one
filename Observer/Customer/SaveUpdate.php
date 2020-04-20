@@ -144,8 +144,6 @@ class SaveUpdate implements ObserverInterface
         $data = [
             'subscriberId' => (int) $profile->getSubscriberId(),
             'customerId' => (int) $customer->getEntityId(),
-            'registerAt' => (int) $this->apsisCoreHelper
-                ->formatDateForPlatformCompatibility($customer->getCreatedAt()),
             'websiteName' => (string) $this->apsisCoreHelper
                 ->getWebsiteNameFromStoreId($customer->getStoreId()),
             'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($customer->getStoreId())

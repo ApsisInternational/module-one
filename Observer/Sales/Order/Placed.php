@@ -156,8 +156,6 @@ class Placed implements ObserverInterface
             'customerId' => (int) $order->getCustomerId(),
             'subscriberId' => (int) $subscriberId,
             'isGuest' => (boolean) $order->getCustomerIsGuest(),
-            'createdAt' => (int) $this->apsisCoreHelper
-                ->formatDateForPlatformCompatibility($order->getCreatedAt()),
             'websiteName' => (string) $order->getStore()->getWebsite()->getName(),
             'storeName' => (string) $order->getStore()->getName(),
             'grandTotalAmount' => (float) $this->apsisCoreHelper->round($order->getGrandTotal()),

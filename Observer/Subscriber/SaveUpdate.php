@@ -207,8 +207,6 @@ class SaveUpdate implements ObserverInterface
     {
         $data = [
             'subscriberId' => (int) $subscriber->getSubscriberId(),
-            'unsubscribeAt' => (int) $this->apsisCoreHelper
-                ->formatDateForPlatformCompatibility($subscriber->getChangeStatusAt()),
             'websiteName' => (string) $this->apsisCoreHelper
                 ->getWebsiteNameFromStoreId($subscriber->getStoreId()),
             'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($subscriber->getStoreId())
@@ -227,8 +225,6 @@ class SaveUpdate implements ObserverInterface
         $data = [
             'subscriberId' => (int) $subscriber->getSubscriberId(),
             'customerId' => (int) $profile->getCustomerId(),
-            'registerAt' => (int) $this->apsisCoreHelper
-                ->formatDateForPlatformCompatibility($subscriber->getChangeStatusAt()),
             'websiteName' => (string) $this->apsisCoreHelper
                 ->getWebsiteNameFromStoreId($subscriber->getStoreId()),
             'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($subscriber->getStoreId())

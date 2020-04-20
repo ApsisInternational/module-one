@@ -231,7 +231,6 @@ class AbandonedSub
         $eventData = [
             'cartId' => $acData['cart_id'],
             'customerId' => $acData['customer_info']['customer_id'],
-            'createdAt' => $acData['created_at'],
             'storeName' => $acData['store_name'],
             'websiteName' => $acData['website_name'],
             'grandTotalAmount' => $acData['grand_total_amount'],

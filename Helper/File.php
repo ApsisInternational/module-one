@@ -118,9 +118,13 @@ class File extends AbstractHelper
         }
         try {
             $pathLogfile = $this->directoryList->getPath('log') . DIRECTORY_SEPARATOR . $filename;
+            if (! $this->write->getDriver()->isExists($pathLogfile)) {
+                return "Log file does not exist at this moment. File path is " . $pathLogfile;
+            }
+
             $lengthBefore = 500000;
             $contents = '';
-            $handle = fopen($pathLogfile, 'r');
+            $handle = $this->write->getDriver()->fileOpen($pathLogfile, 'r');
             fseek($handle, -$lengthBefore, SEEK_END);
             if (! $handle) {
                 return "Log file is not readable or does not exist at this moment. File path is "
@@ -128,12 +132,11 @@ class File extends AbstractHelper
             }
 
             if (filesize($pathLogfile) > 0) {
-                $contents = fread($handle, filesize($pathLogfile));
+                $contents = $this->write->getDriver()->fileRead($handle, filesize($pathLogfile));
                 if ($contents === false) {
-                    return "Log file is not readable or does not exist at this moment. File path is "
-                        . $pathLogfile;
+                    return "Log file is not readable or does not exist at this moment. File path is " . $pathLogfile;
                 }
-                fclose($handle);
+                $this->write->getDriver()->fileClose($handle);
             }
             return $contents;
         } catch (Exception $e) {

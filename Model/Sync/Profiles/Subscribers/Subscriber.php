@@ -145,11 +145,12 @@ class Subscriber
     }
 
     /**
-     * @return int
+     * @return int|string
      */
     private function getChangeStatusAt()
     {
-        return (int) ($this->subscriber->getChangeStatusAt()) ?
-            $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->subscriber->getChangeStatusAt()) : 0;
+        return ($this->subscriber->getChangeStatusAt()) ?
+            (int) $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->subscriber->getChangeStatusAt()) :
+            '';
     }
 }

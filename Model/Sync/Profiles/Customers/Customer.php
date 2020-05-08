@@ -220,23 +220,23 @@ class Customer
     }
 
     /**
-     * @return int
+     * @return int|string
      */
     private function getCreatedAt()
     {
-        return (int) ($this->customer->getCreatedAt()) ?
-            $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->customer->getCreatedAt()) : 0;
+        return ($this->customer->getCreatedAt()) ?
+            (int) $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->customer->getCreatedAt()) : '';
     }
 
     /**
      * Get customer last logged in date.
      *
-     * @return int
+     * @return int|string
      */
     private function getLastLoggedDate()
     {
-        return (int) ($this->customer->getLastLoggedDate()) ?
-            $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->customer->getLastLoggedDate()) : 0;
+        return ($this->customer->getLastLoggedDate()) ?
+            (int) $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->customer->getLastLoggedDate()) : '';
     }
 
     /**
@@ -264,7 +264,7 @@ class Customer
     }
 
     /**
-     * @return int
+     * @return int|string
      */
     private function getLastReviewDate()
     {
@@ -273,7 +273,7 @@ class Customer
             $createdAt = $this->reviewCollection
                 ->getFirstItem()
                 ->getCreatedAt();
-            return (int) ($createdAt) ? $this->apsisCoreHelper->formatDateForPlatformCompatibility($createdAt) : 0;
+            return ($createdAt) ? (int) $this->apsisCoreHelper->formatDateForPlatformCompatibility($createdAt) : '';
         }
 
         return 0;
@@ -520,12 +520,12 @@ class Customer
     }
 
     /**
-     * @return string
+     * @return int|string
      */
     private function getLastOrderDate()
     {
-        return (int) ($this->customer->getLastOrderDate()) ?
-            $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->customer->getLastOrderDate()) : 0;
+        return ($this->customer->getLastOrderDate()) ?
+            (int) $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->customer->getLastOrderDate()) : '';
     }
 
     /**

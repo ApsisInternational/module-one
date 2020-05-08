@@ -135,9 +135,9 @@ class Subscriber
      */
     private function getSubscriberStatus()
     {
-        $statusId = $this->subscriber->getSubscriberStatus();
-        $status = 'subscribed';
-        if ($statusId === MagentoSubscriber::STATUS_UNSUBSCRIBED) {
+        if ($this->subscriber->getSubscriberStatus() === MagentoSubscriber::STATUS_SUBSCRIBED) {
+            $status = 'subscribed';
+        } else {
             $status = 'unsubscribed';
         }
 

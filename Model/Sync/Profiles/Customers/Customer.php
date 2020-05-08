@@ -284,6 +284,12 @@ class Customer
      */
     private function getBillingAddress1()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+            ! $this->customer->getBillingStreet()
+        ) {
+            return (string) $this->getStreet($this->customer->getShippingStreet(), 1);
+        }
+
         return (string) $this->getStreet($this->customer->getBillingStreet(), 1);
     }
 
@@ -292,6 +298,12 @@ class Customer
      */
     private function getBillingAddress2()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+            ! $this->customer->getBillingStreet()
+        ) {
+            return (string) $this->getStreet($this->customer->getShippingStreet(), 2);
+        }
+
         return (string) $this->getStreet($this->customer->getBillingStreet(), 2);
     }
 
@@ -300,6 +312,12 @@ class Customer
      */
     private function getBillingCity()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+        ! $this->customer->getBillingCity()
+        ) {
+            return (string) $this->customer->getShippingCity();
+        }
+
         return (string) $this->customer->getBillingCity();
     }
 
@@ -308,6 +326,12 @@ class Customer
      */
     private function getBillingCountry()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+        ! $this->customer->getBillingCountryCode()
+        ) {
+            return (string) $this->customer->getShippingCountryCode();
+        }
+
         return (string) $this->customer->getBillingCountryCode();
     }
 
@@ -316,6 +340,12 @@ class Customer
      */
     private function getBillingState()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+        ! $this->customer->getBillingRegion()
+        ) {
+            return (string) $this->customer->getShippingRegion();
+        }
+
         return (string) $this->customer->getBillingRegion();
     }
 
@@ -324,6 +354,12 @@ class Customer
      */
     private function getBillingPostcode()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+            $this->customer->getBillingPostcode()
+        ) {
+            return (string) $this->customer->getShippingPostcode();
+        }
+
         return (string) $this->customer->getBillingPostcode();
     }
 
@@ -332,6 +368,12 @@ class Customer
      */
     private function getBillingTelephone()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+        ! $this->customer->getBillingTelephone()
+        ) {
+            return (string) $this->customer->getShippingTelephone();
+        }
+
         return (string) $this->customer->getBillingTelephone();
     }
 
@@ -340,6 +382,12 @@ class Customer
      */
     private function getBillingCompany()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+        ! $this->customer->getBillingCompany()
+        ) {
+            return (string) $this->customer->getShippingCompany();
+        }
+
         return (string) $this->customer->getBillingCompany();
     }
 
@@ -348,6 +396,12 @@ class Customer
      */
     private function getDeliveryAddress1()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+        ! $this->customer->getShippingStreet()
+        ) {
+            return (string) $this->getStreet($this->customer->getBillingStreet(), 1);
+        }
+
         return (string) $this->getStreet($this->customer->getShippingStreet(), 1);
     }
 
@@ -356,6 +410,12 @@ class Customer
      */
     private function getDeliveryAddress2()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+        ! $this->customer->getShippingStreet()
+        ) {
+            return (string) $this->getStreet($this->customer->getBillingStreet(), 2);
+        }
+
         return (string) $this->getStreet($this->customer->getShippingStreet(), 2);
     }
 
@@ -364,6 +424,12 @@ class Customer
      */
     private function getDeliveryCity()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+        ! $this->customer->getShippingCity()
+        ) {
+            return (string) $this->customer->getBillingCity();
+        }
+
         return (string) $this->customer->getShippingCity();
     }
 
@@ -372,6 +438,12 @@ class Customer
      */
     private function getDeliveryCountry()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+        ! $this->customer->getShippingCountryCode()
+        ) {
+            return (string) $this->customer->getBillingCountryCode();
+        }
+
         return (string) $this->customer->getShippingCountryCode();
     }
 
@@ -380,6 +452,12 @@ class Customer
      */
     private function getDeliveryState()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+        ! $this->customer->getShippingRegion()
+        ) {
+            return (string) $this->customer->getBillingState();
+        }
+
         return (string) $this->customer->getShippingRegion();
     }
 
@@ -388,6 +466,12 @@ class Customer
      */
     private function getDeliveryPostcode()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+        ! $this->customer->getShippingPostcode()
+        ) {
+            return (string) $this->customer->getBillingPostcode();
+        }
+
         return (string) $this->customer->getShippingPostcode();
     }
 
@@ -396,6 +480,12 @@ class Customer
      */
     private function getDeliveryTelephone()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+        ! $this->customer->getShippingTelephone()
+        ) {
+            return (string) $this->customer->getBillingTelephone();
+        }
+
         return (string) $this->customer->getShippingTelephone();
     }
 
@@ -404,6 +494,12 @@ class Customer
      */
     private function getDeliveryCompany()
     {
+        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
+        ! $this->customer->getShippingCompany()
+        ) {
+            return (string) $this->customer->getBillingCompany();
+        }
+
         return (string) $this->customer->getShippingCompany();
     }
 

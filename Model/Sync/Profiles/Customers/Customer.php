@@ -255,11 +255,11 @@ class Customer
     }
 
     /**
-     * @return int
+     * @return int|string
      */
     private function getReviewCount()
     {
-        return (int) count($this->reviewCollection);
+        return ($this->reviewCollection->getSize()) ? $this->reviewCollection->getSize() : '';
     }
 
     /**
@@ -275,7 +275,7 @@ class Customer
             return ($createdAt) ? (int) $this->apsisCoreHelper->formatDateForPlatformCompatibility($createdAt) : '';
         }
 
-        return 0;
+        return '';
     }
 
     /**

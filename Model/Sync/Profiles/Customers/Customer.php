@@ -131,11 +131,11 @@ class Customer
     }
 
     /**
-     * @return int
+     * @return int|string
      */
     private function getStoreId()
     {
-        return (int) $this->customer->getStoreId();
+        return ($this->customer->getStoreId()) ? (int) $this->customer->getStoreId() : '';
     }
 
     /**
@@ -147,11 +147,11 @@ class Customer
     }
 
     /**
-     * @return int
+     * @return int|string
      */
     private function getWebsiteId()
     {
-        return (int) $this->customer->getWebsiteId();
+        return ($this->customer->getWebsiteId()) ? (int) $this->customer->getWebsiteId() : '';
     }
 
     /**
@@ -171,11 +171,11 @@ class Customer
     }
 
     /**
-     * @return int
+     * @return int|string
      */
     private function getCustomerId()
     {
-        return (int) $this->customer->getId();
+        return ($this->customer->getId()) ? (int) $this->customer->getId() : '';
     }
 
     /**
@@ -199,7 +199,7 @@ class Customer
      */
     private function getDob()
     {
-        return (string) ($this->customer->getDob()) ? $this->customer->getDob() : '';
+        return (string) $this->customer->getDob();
     }
 
     /**
@@ -259,7 +259,7 @@ class Customer
      */
     private function getReviewCount()
     {
-        return ($this->reviewCollection->getSize()) ? $this->reviewCollection->getSize() : '';
+        return ($this->reviewCollection->getSize()) ? (int) $this->reviewCollection->getSize() : '';
     }
 
     /**
@@ -528,26 +528,28 @@ class Customer
     }
 
     /**
-     * @return int
+     * @return int|string
      */
     private function getNumberOfOrders()
     {
-        return (int) $this->customer->getNumberOfOrders();
+        return ($this->customer->getNumberOfOrders()) ? (int) $this->customer->getNumberOfOrders() : '';
     }
 
     /**
-     * @return float
+     * @return float|string
      */
     private function getAverageOrderValue()
     {
-        return (float) $this->apsisCoreHelper->round($this->customer->getAverageOrderValue());
+        return ($this->customer->getAverageOrderValue()) ?
+            (float) $this->apsisCoreHelper->round($this->customer->getAverageOrderValue()) : '';
     }
 
     /**
-     * @return float
+     * @return float|string
      */
     private function getTotalSpend()
     {
-        return (float) $this->apsisCoreHelper->round($this->customer->getTotalSpend());
+        return ($this->customer->getTotalSpend()) ?
+            (float) $this->apsisCoreHelper->round($this->customer->getTotalSpend()) : '';
     }
 }

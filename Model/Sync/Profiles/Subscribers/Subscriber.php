@@ -91,11 +91,11 @@ class Subscriber
     }
 
     /**
-     * @return int
+     * @return int|string
      */
     private function getStoreId()
     {
-        return (int) $this->subscriber->getStoreId();
+        return ($this->subscriber->getStoreId()) ? (int) $this->subscriber->getStoreId() : '';
     }
 
     /**
@@ -107,11 +107,11 @@ class Subscriber
     }
 
     /**
-     * @return int
+     * @return int|string
      */
     private function getWebsiteId()
     {
-        return (int) $this->subscriber->getWebsiteId();
+        return ($this->subscriber->getWebsiteId()) ? (int) $this->subscriber->getWebsiteId() : '';
     }
 
     /**
@@ -123,11 +123,11 @@ class Subscriber
     }
 
     /**
-     * @return int
+     * @return int|string
      */
     private function getSubscriberId()
     {
-        return (int) $this->subscriber->getSubscriberId();
+        return ($this->subscriber->getSubscriberId()) ? (int) $this->subscriber->getSubscriberId() : '';
     }
 
     /**

@@ -8,6 +8,7 @@ use Apsis\One\Model\EventFactory;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\Registry;
 use Magento\Newsletter\Model\Subscriber;
 use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
@@ -51,6 +52,11 @@ class SaveUpdate implements ObserverInterface
     private $profileFactory;
 
     /**
+     * @var Registry
+     */
+    private $registry;
+
+    /**
      * SaveUpdate constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -59,6 +65,7 @@ class SaveUpdate implements ObserverInterface
      * @param ProfileCollectionFactory $profileCollectionFactory
      * @param ProfileResource $profileResource
      * @param ProfileFactory $profileFactory
+     * @param Registry $registry
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -66,8 +73,10 @@ class SaveUpdate implements ObserverInterface
         EventResource $eventResource,
         ProfileCollectionFactory $profileCollectionFactory,
         ProfileResource $profileResource,
-        ProfileFactory $profileFactory
+        ProfileFactory $profileFactory,
+        Registry $registry
     ) {
+        $this->registry = $registry;
         $this->profileResource = $profileResource;
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->profileFactory = $profileFactory;
@@ -116,9 +125,10 @@ class SaveUpdate implements ObserverInterface
                 $this->registerSubscriberUnsubscribeEvent($subscriber, $profile, $store);
                 $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED)
                     ->setSubscriberSyncStatus(Profile::SYNC_STATUS_PENDING)
+                    ->setIsSubscriber(Profile::NO_FLAGGED)
                     ->setErrorMessage('');
                 $this->profileResource->save($profile);
-            } elseif ($subscriber->getStatus() == Subscriber::STATUS_SUBSCRIBED) {
+            } elseif ($subscriber->getSubscriberStatus() == Subscriber::STATUS_SUBSCRIBED) {
                 if ($profile->getIsCustomer()) {
                     $this->registerCustomerBecomesSubscriberEvent($subscriber, $profile, $store);
                 }
@@ -172,9 +182,18 @@ class SaveUpdate implements ObserverInterface
      * @param Subscriber $subscriber
      * @param Profile $profile
      * @param StoreInterface $store
+     *
+     * @return $this
      */
     private function registerSubscriberUnsubscribeEvent(Subscriber $subscriber, Profile $profile, StoreInterface $store)
     {
+        $emailReg = $this->registry->registry($subscriber->getEmail() . '_subscriber_save_after');
+        if ($emailReg) {
+            return $this;
+        }
+        $this->registry->unregister($subscriber->getEmail() . '_subscriber_save_after');
+        $this->registry->register($subscriber->getEmail() . '_subscriber_save_after', $subscriber->getEmail());
+
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_UNSUBSCRIBE

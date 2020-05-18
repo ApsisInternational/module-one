@@ -19,6 +19,7 @@ class Profile extends AbstractModel
     const SYNC_STATUS_FAILED = 3;
 
     const IS_FLAGGED = 1;
+    const NO_FLAGGED = 0;
 
     const INTEGRATION_KEYSPACE = 'integration_uid';
     const EMAIL_FIELD = 'email';

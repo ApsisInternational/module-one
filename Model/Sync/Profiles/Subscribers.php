@@ -223,7 +223,7 @@ class Subscribers
     ) {
         try {
             $integrationIdsArray = $this->getIntegrationIdsArray($collection);
-            $file = strtolower($store->getCode() . '_subscriber_' . date('d_m_Y_His') . '.csv');
+            $file = strtolower($store->getCode() . '_subscriber_'. $consentType . '_' . date('d_m_Y_His') . '.csv');
 
             $topicsMapping = [];
             foreach ($topics as $topic) {

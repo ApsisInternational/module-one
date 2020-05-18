@@ -15,6 +15,7 @@ use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ProfileFactory;
 use Apsis\One\Model\Profile;
 use \Exception;
+use Magento\Framework\Registry;
 use Magento\Store\Model\ScopeInterface;
 
 class SaveUpdate implements ObserverInterface
@@ -50,6 +51,11 @@ class SaveUpdate implements ObserverInterface
     private $profileFactory;
 
     /**
+     * @var Registry
+     */
+    private $registry;
+
+    /**
      * SaveUpdate constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -58,6 +64,7 @@ class SaveUpdate implements ObserverInterface
      * @param ProfileCollectionFactory $profileCollectionFactory
      * @param ProfileResource $profileResource
      * @param ProfileFactory $profileFactory
+     * @param Registry $registry
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -65,8 +72,10 @@ class SaveUpdate implements ObserverInterface
         EventResource $eventResource,
         ProfileCollectionFactory $profileCollectionFactory,
         ProfileResource $profileResource,
-        ProfileFactory $profileFactory
+        ProfileFactory $profileFactory,
+        Registry $registry
     ) {
+        $this->registry = $registry;
         $this->profileResource = $profileResource;
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->profileFactory = $profileFactory;
@@ -84,6 +93,14 @@ class SaveUpdate implements ObserverInterface
     {
         /** @var Customer $customer */
         $customer = $observer->getEvent()->getCustomer();
+
+        $emailReg = $this->registry->registry($customer->getEmail() . '_customer_save_after');
+        if ($emailReg) {
+            return $this;
+        }
+        $this->registry->unregister($customer->getEmail() . '_customer_save_after');
+        $this->registry->register($customer->getEmail() . '_customer_save_after', $customer->getEmail());
+
         $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $customer->getStoreId());
 
         if ($account) {

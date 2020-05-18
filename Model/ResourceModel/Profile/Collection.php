@@ -89,7 +89,6 @@ class Collection extends AbstractCollection
     {
         return $this->addFieldToSelect('*')
             ->addFieldToFilter('subscriber_id', ['notnull' => true])
-            ->addFieldToFilter('is_subscriber', Profile::IS_FLAGGED)
             ->addFieldToFilter('subscriber_status', $subscriberStatus)
             ->addFieldToFilter('subscriber_sync_status', Profile::SYNC_STATUS_PENDING)
             ->addFieldToFilter('store_id', $storeId)

@@ -468,7 +468,23 @@
                     <label>Customer Sync Size</label>
                 </field>
             </group>
-            <group id="developer_settings" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1"
+            <group id="tracking" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Tracking</label>
+                <attribute type="expanded">1</attribute>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="script" translate="label" type="textarea" sortOrder="20" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Tracking Script</label>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                </field>
+            </group>
+            <group id="developer_settings" translate="label" sortOrder="30" showInDefault="1" showInWebsite="1"
                    showInStore="1">
                 <label>Developer Settings</label>
                 <field id="cleanup_after" translate="label" sortOrder="10" type="select" showInDefault="1">

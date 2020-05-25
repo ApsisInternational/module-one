@@ -107,7 +107,7 @@ class Config extends AbstractHelper
      * Abandoned carts section
      */
     const CONFIG_APSIS_ONE_ABANDONED_CARTS_GROUP = 'apsis_one_abandoned/customers';
-    const CONFIG_APSIS_ONE_ABANDONED_CARTS__URL = 'apsis_one_abandoned/customers/url';
+    const CONFIG_APSIS_ONE_ABANDONED_CARTS_URL = 'apsis_one_abandoned/customers/url';
     const CONFIG_APSIS_ONE_ABANDONED_CARTS_SEND_AFTER = 'apsis_one_abandoned/customers/send_after';
 
     /**
@@ -137,6 +137,10 @@ class Config extends AbstractHelper
     const CONFIG_APSIS_ONE_CONFIGURATION_DEVELOPER_SETTING_SECTION = 'apsis_one_configuration/developer_settings';
     const CONFIG_APSIS_ONE_CONFIGURATION_DEVELOPER_SETTING_CLEANUP_AFTER =
         'apsis_one_configuration/developer_settings/cleanup_after';
+    /** Tracking Script */
+    const CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_SECTION = 'apsis_one_configuration/tracking';
+    const CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_ENABLED = 'apsis_one_configuration/tracking/enabled';
+    const CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_SCRIPT = 'apsis_one_configuration/tracking/script';
 
     /**
      * @param StoreInterface $store

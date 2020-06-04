@@ -111,7 +111,7 @@ class Config extends AbstractHelper
     const CONFIG_APSIS_ONE_ABANDONED_CARTS_SEND_AFTER = 'apsis_one_abandoned/customers/send_after';
 
     /**
-     * Customer events section
+     * Events section
      */
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_GROUP = 'apsis_one_events/events';
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_LOGIN = 'apsis_one_events/events/login';
@@ -121,6 +121,7 @@ class Config extends AbstractHelper
     const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_UNSUBSCRIBE = 'apsis_one_events/events/unsubscribe';
     const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_2_CUSTOMER = 'apsis_one_events/events/subscriber_2_customer';
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_2_SUBSCRIBER = 'apsis_one_events/events/customer_2_subscriber';
+    const CONFIG_APSIS_ONE_EVENTS_PRODUCT_CARTED = 'apsis_one_events/events/product_carted';
 
     /**
      * Configuration section

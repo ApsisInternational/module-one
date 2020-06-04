@@ -29,6 +29,7 @@
                 <unsubscribe>1</unsubscribe>
                 <subscriber_2_customer>1</subscriber_2_customer>
                 <customer_2_subscriber>1</customer_2_subscriber>
+                <product_carted>1</product_carted>
             </events>
         </apsis_one_events>
         <apsis_one_mappings>
@@ -90,6 +91,8 @@
             </profile_sync>
             <developer_settings>
                 <cleanup_after>30</cleanup_after>
+                <cron_schedule_profile_sync>*/5 * * * *</cron_schedule_profile_sync>
+                <cron_schedule_events_sync>*/5 * * * *</cron_schedule_events_sync>
             </developer_settings>
         </apsis_one_configuration>
     </default>

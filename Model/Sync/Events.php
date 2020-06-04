@@ -64,17 +64,17 @@ class Events
         Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST =>
             'com.apsis1.integrations.magento.events.wishlist-product',
         Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW => 'com.apsis1.integrations.magento.events.product-review',
-        Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART =>
-            [
-                'main' => 'com.apsis1.integrations.magento.events.abandoned-cart',
-                'sub' => 'com.apsis1.integrations.magento.events.abandoned-product'
-            ],
+        Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART => [
+            'main' => 'com.apsis1.integrations.magento.events.abandoned-cart',
+            'sub' => 'com.apsis1.integrations.magento.events.abandoned-product'
+        ],
         Event::EVENT_TYPE_CUSTOMER_BECOMES_SUBSCRIBER =>
             'com.apsis1.integrations.magento.events.customer-becomes-subscriber',
         Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER => [
             'main' => 'com.apsis1.integrations.magento.events.order',
             'sub' => 'com.apsis1.integrations.magento.events.order-product'
-        ]
+        ],
+        Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART => 'com.apsis1.integrations.magento.events.product-carted',
     ];
 
     /**
@@ -90,7 +90,8 @@ class Events
         'com.apsis1.integrations.magento.events.abandoned-product' => false,
         'com.apsis1.integrations.magento.events.customer-becomes-subscriber' => false,
         'com.apsis1.integrations.magento.events.order' => false,
-        'com.apsis1.integrations.magento.events.order-product' => false
+        'com.apsis1.integrations.magento.events.order-product' => false,
+        'com.apsis1.integrations.magento.events.product-carted' => false
     ];
 
     /**
@@ -211,9 +212,6 @@ class Events
                 }
             }
         } else {
-            $this->apsisCoreHelper->log(
-                __METHOD__ . ': No event types found on section ' . $this->sectionDiscriminator
-            );
             $this->eventsVersionMapping = [];
         }
     }

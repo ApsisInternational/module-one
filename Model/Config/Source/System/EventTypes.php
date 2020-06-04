@@ -45,6 +45,10 @@ class EventTypes implements OptionSourceInterface
                 'value' => Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST,
                 'label' => 'Customer Added Product To Wishlist'
             ],
+            [
+                'value' => Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART,
+                'label' => 'Customer Added Product To Cart'
+            ]
         ];
 
         return $options;

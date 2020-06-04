@@ -60,7 +60,6 @@ class Attributes implements OptionSourceInterface
         }
 
         if (! $attributes || ! isset($attributes->items)) {
-            $this->apsisCoreHelper->log(__METHOD__ . ': No attributes found on section ' . $section);
             return [];
         }
 

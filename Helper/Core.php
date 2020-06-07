@@ -43,7 +43,6 @@ class Core extends AbstractHelper
     const APSIS_EVENT_TABLE = 'apsis_event';
     const APSIS_ABANDONED_TABLE = 'apsis_abandoned';
 
-    const TOKEN_STRING_LENGTH = 36;
     const APSIS_ATTRIBUTE_TYPE_TEXT_LIMIT = 100;
 
     /**
@@ -867,5 +866,15 @@ class Core extends AbstractHelper
         );
         $fromTime->add($interval);
         return $fromTime->format(Zend_Date::ISO_8601);
+    }
+
+    /**
+     * @param string $string
+     *
+     * @return bool
+     */
+    public function isClean(string $string)
+    {
+        return ! preg_match("/[^a-zA-Z\d-]/i", $string);
     }
 }

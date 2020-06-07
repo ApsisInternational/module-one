@@ -116,19 +116,6 @@ class ValidateApi implements ObserverInterface
                     $scope['context_scope'],
                     $scope['context_scope_id']
                 );
-                $this->apsisCoreHelper->saveConfigValue(
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION,
-                    '',
-                    $scope['context_scope'],
-                    $scope['context_scope_id']
-                );
-                $this->apsisCoreHelper->saveConfigValue(
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC,
-                    '',
-                    $scope['context_scope'],
-                    $scope['context_scope_id']
-                );
-
                 //Clear config cache
                 $this->config->reinit();
             }

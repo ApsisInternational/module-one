@@ -2,7 +2,6 @@
 
 namespace Apsis\One\Block\Adminhtml\Config\Abandoned;
 
-use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Magento\Config\Block\System\Config\Form\Field;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Magento\Backend\Block\Template\Context;
@@ -37,20 +36,10 @@ class Url extends Field
      */
     public function _getElementHtml(AbstractElement $element)
     {
-        $baseUrl = $this->apsisCoreHelper->generateBaseUrlForDynamicContent();
-        $mappedAttributeForAcToken = $this->apsisCoreHelper->getMappedValueFromSelectedScope(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_AC_TOKEN
-        );
-
-        if (! $mappedAttributeForAcToken) {
-            $mappedAttributeForAcToken = __('PLEASE MAP TOKEN ATTRIBUTE');
-        }
-
         $text = sprintf(
             '%sapsis/abandoned/cart/token/TOKEN/output/OUTPUT_TYPE/limit/NUMBER_LIMIT',
-            $baseUrl
+            $this->apsisCoreHelper->generateBaseUrlForDynamicContent()
         );
-
         $element->setData('value', $text);
         return parent::_getElementHtml($element);
     }

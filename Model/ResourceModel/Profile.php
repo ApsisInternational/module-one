@@ -386,4 +386,27 @@ class Profile extends AbstractDb
 
         return $columnData;
     }
+
+    /**
+     * @return bool
+     */
+    public function resetProfilesSyncStatus()
+    {
+        try {
+            $this->getConnection()
+                ->update(
+                    $this->getMainTable(),
+                    [
+                        'subscriber_sync_status' => 0,
+                        'customer_sync_status' => 0,
+                        'error_message' => '',
+                        'updated_at' => $this->expressionFactory->create(["expression" => "null"])
+                    ]
+                );
+            return true;
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            return false;
+        }
+    }
 }

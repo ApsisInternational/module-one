@@ -5,6 +5,7 @@ namespace Apsis\One\Model\ResourceModel;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ProfileBatch;
+use Apsis\One\Model\Sql\ExpressionFactory;
 use Exception;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Apsis\One\Helper\Core as Helper;
@@ -22,6 +23,11 @@ class Event extends AbstractDb
      * @var DateTime
      */
     private $dateTime;
+
+    /**
+     * @var ExpressionFactory
+     */
+    private $expressionFactory;
 
     /**
      * @var array
@@ -56,16 +62,19 @@ class Event extends AbstractDb
      * @param Context $context
      * @param Helper $apsisCoreHelper
      * @param DateTime $dateTime
+     * @param ExpressionFactory $expressionFactory
      * @param null $connectionName
      */
     public function __construct(
         Context $context,
         ApsisCoreHelper $apsisCoreHelper,
         DateTime $dateTime,
+        ExpressionFactory $expressionFactory,
         $connectionName = null
     ) {
         $this->dateTime = $dateTime;
         $this->apsisCoreHelper = $apsisCoreHelper;
+        $this->expressionFactory = $expressionFactory;
         parent::__construct($context, $connectionName);
     }
 
@@ -163,6 +172,28 @@ class Event extends AbstractDb
                 $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
                 continue;
             }
+        }
+    }
+
+    /**
+     * @return bool
+     */
+    public function resetEventSyncStatus()
+    {
+        try {
+            $this->getConnection()
+                ->update(
+                    $this->getMainTable(),
+                    [
+                        'status' => 0,
+                        'error_message' => '',
+                        'updated_at' => $this->expressionFactory->create(["expression" => "null"])
+                    ]
+                );
+            return true;
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            return false;
         }
     }
 }

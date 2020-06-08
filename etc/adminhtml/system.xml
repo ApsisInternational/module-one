@@ -489,8 +489,7 @@
                     </depends>
                 </field>
             </group>
-            <group id="developer_settings" translate="label" sortOrder="30" showInDefault="1" showInWebsite="1"
-                   showInStore="1">
+            <group id="developer_settings" translate="label" sortOrder="30" showInDefault="1">
                 <label>Developer Settings</label>
                 <field id="cleanup_after" translate="label" sortOrder="10" type="select" showInDefault="1">
                     <label>DB Cleanup - After</label>
@@ -504,6 +503,11 @@
                 <field id="cron_schedule_events_sync" translate="label" sortOrder="30" type="select" showInDefault="1">
                     <label>Events Sync - Cron Schedule</label>
                     <source_model>Apsis\One\Model\Config\Source\System\CronSchedule</source_model>
+                </field>
+                <field id="reset" translate="label" sortOrder="40" showInDefault="1">
+                    <label>Reset Module</label>
+                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Developer\Reset</frontend_model>
+                    <comment><![CDATA[NOTE: This will remove all saved config for the module and reset all Profiles and Events to re-sync. This is done on all scopes.]]></comment>
                 </field>
             </group>
         </section>

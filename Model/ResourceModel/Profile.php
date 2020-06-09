@@ -476,7 +476,7 @@ class Profile extends AbstractDb
         try {
             if ($this->getConnection()->isTableExists($this->getMainTable())) {
                 $this->getConnection()->query('SET FOREIGN_KEY_CHECKS = 0');
-                $this->getConnection()->query('TRUNCATE TABLE ' . $this->getMainTable());
+                $this->getConnection()->truncateTable($this->getMainTable());
                 $this->getConnection()->query('SET FOREIGN_KEY_CHECKS = 1');
             }
             return true;

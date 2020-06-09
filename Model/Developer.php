@@ -7,6 +7,7 @@ use Magento\Framework\App\Config\ReinitableConfigInterface;
 use Apsis\One\Model\ResourceModel\ProfileBatch;
 use Apsis\One\Model\ResourceModel\Profile;
 use Apsis\One\Model\ResourceModel\Event;
+use Apsis\One\Model\ResourceModel\Abandoned;
 use Magento\Config\Model\ResourceModel\Config as configResource;
 use Exception;
 
@@ -38,6 +39,11 @@ class Developer
     private $event;
 
     /**
+     * @var Abandoned
+     */
+    private $abandoned;
+
+    /**
      * @var configResource
      */
     private $configResource;
@@ -51,6 +57,7 @@ class Developer
      * @param Profile $profile
      * @param Event $event
      * @param configResource $configResource
+     * @param Abandoned $abandoned
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -58,8 +65,10 @@ class Developer
         ProfileBatch $profileBatch,
         Profile $profile,
         Event $event,
-        configResource $configResource
+        configResource $configResource,
+        Abandoned $abandoned
     ) {
+        $this->abandoned = $abandoned;
         $this->config = $reinitableConfig;
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->profileBatch = $profileBatch;
@@ -73,10 +82,13 @@ class Developer
      */
     public function resetModule()
     {
-        return ($this->profileBatch->truncateTable() &&
-            $this->profile->resetProfilesSyncStatus() &&
-            $this->event->resetEventSyncStatus() &&
-            $this->deleteAllModuleConfig());
+        return (
+            $this->profileBatch->truncateTable() &&
+            $this->event->truncateTable() &&
+            $this->abandoned->truncateTable() &&
+            $this->profile->truncateTableAndPopulateProfiles() &&
+            $this->deleteAllModuleConfig()
+        );
     }
 
     /**

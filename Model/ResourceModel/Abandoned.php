@@ -54,4 +54,18 @@ class Abandoned extends AbstractDb
             return 0;
         }
     }
+
+    /**
+     * @return bool
+     */
+    public function truncateTable()
+    {
+        try {
+            $this->getConnection()->truncateTable($this->getMainTable());
+            return true;
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            return false;
+        }
+    }
 }

@@ -507,7 +507,7 @@
                 <field id="reset" translate="label" sortOrder="40" showInDefault="1">
                     <label>Reset Module</label>
                     <frontend_model>Apsis\One\Block\Adminhtml\Config\Developer\Reset</frontend_model>
-                    <comment><![CDATA[NOTE: This will remove all saved config for the module and reset all Profiles and Events to re-sync. This is done on all scopes.]]></comment>
+                    <comment><![CDATA[NOTE: This will remove all saved configuration for the module, truncate all tables and re-populate Profile table. Not recommended on production]]></comment>
                 </field>
             </group>
         </section>

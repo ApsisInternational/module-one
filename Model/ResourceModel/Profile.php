@@ -7,11 +7,13 @@ use Apsis\One\Model\Sql\ExpressionFactory;
 use Exception;
 use Magento\Customer\Model\ResourceModel\Customer\Collection;
 use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
+use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Magento\Framework\Model\ResourceModel\Db\Context;
 use Magento\Framework\Stdlib\DateTime;
+use Magento\Newsletter\Model\Subscriber;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
 use Magento\Store\Api\Data\StoreInterface;
 
@@ -162,8 +164,8 @@ class Profile extends AbstractDb
         $customerCollection->getSelect()->columns([
             'last_logged_date' => $this->expressionFactory->create(
                 ["expression" => "(
-                    SELECT last_login_at 
-                    FROM  $customerLog 
+                    SELECT last_login_at
+                    FROM  $customerLog
                     WHERE customer_id = e.entity_id ORDER BY log_id DESC LIMIT 1
                 )"]
             ),
@@ -378,7 +380,7 @@ class Profile extends AbstractDb
                     SELECT created_at
                     FROM $salesOrderGrid
                     WHERE customer_id = main_table.customer_id AND $salesOrderGrid.store_id = $storeId AND $statusText
-                    ORDER BY created_at DESC 
+                    ORDER BY created_at DESC
                     LIMIT 1
                 )"]
             ),
@@ -388,22 +390,128 @@ class Profile extends AbstractDb
     }
 
     /**
+     * @param AdapterInterface $connection
+     * @param string $magentoTable
+     * @param string $apsisTable
+     */
+    public function fetchAndPopulateCustomers(AdapterInterface $connection, string $magentoTable, string $apsisTable)
+    {
+        $select = $connection->select()
+            ->from(
+                ['customer' => $magentoTable],
+                [
+                    'integration_uid' => $this->expressionFactory->create(["expression" => ('UUID()')]),
+                    'customer_id' => 'entity_id',
+                    'email',
+                    'is_customer' => $this->expressionFactory->create(["expression" => ('1')]),
+                    'store_id'
+                ]
+            );
+        $sqlQuery = $select->insertFromSelect(
+            $apsisTable,
+            ['integration_uid', 'customer_id', 'email', 'is_customer', 'store_id'],
+            false
+        );
+        $connection->query($sqlQuery);
+    }
+
+    /**
+     * @param AdapterInterface $connection
+     * @param string $magentoTable
+     * @param string $apsisTable
+     */
+    public function fetchAndPopulateSubscribers(AdapterInterface $connection, string $magentoTable, string $apsisTable)
+    {
+        $select = $connection->select()
+            ->from(
+                ['subscriber' => $magentoTable],
+                [
+                    'integration_uid' => $this->expressionFactory->create(["expression" => ('UUID()')]),
+                    'subscriber_id',
+                    'store_id',
+                    'email' => 'subscriber_email',
+                    'subscriber_status',
+                    'is_subscriber' => $this->expressionFactory->create(["expression" => ('1')]),
+                ]
+            )
+            ->where('subscriber_status = ?', Subscriber::STATUS_SUBSCRIBED)
+            ->where('customer_id = ?', 0);
+
+        $sqlQuery = $select->insertFromSelect(
+            $apsisTable,
+            ['integration_uid', 'subscriber_id', 'store_id', 'email', 'subscriber_status', 'is_subscriber'],
+            false
+        );
+        $connection->query($sqlQuery);
+    }
+
+    /**
+     * @param AdapterInterface $connection
+     * @param string $magentoTable
+     * @param string $apsisTable
+     */
+    public function updateCustomerProfiles(AdapterInterface $connection, string $magentoTable, string $apsisTable)
+    {
+        $select = $connection->select();
+        $select->from(
+            ['subscriber' => $magentoTable],
+            [
+                'subscriber_id',
+                'subscriber_status',
+                'is_subscriber' => $this->expressionFactory->create(["expression" => ('1')]),
+            ]
+        )
+            ->where('subscriber.subscriber_status = ?', Subscriber::STATUS_SUBSCRIBED)
+            ->where('subscriber.customer_id = profile.customer_id');
+
+        $sqlQuery = $select->crossUpdateFromSelect(['profile' => $apsisTable]);
+        $connection->query($sqlQuery);
+    }
+
+    /**
      * @return bool
      */
-    public function resetProfilesSyncStatus()
+    public function truncateTable()
     {
         try {
-            $this->getConnection()
-                ->update(
-                    $this->getMainTable(),
-                    [
-                        'subscriber_sync_status' => 0,
-                        'customer_sync_status' => 0,
-                        'error_message' => '',
-                        'updated_at' => $this->expressionFactory->create(["expression" => "null"])
-                    ]
-                );
+            if ($this->getConnection()->isTableExists($this->getMainTable())) {
+                $this->getConnection()->query('SET FOREIGN_KEY_CHECKS = 0');
+                $this->getConnection()->query('TRUNCATE TABLE ' . $this->getMainTable());
+                $this->getConnection()->query('SET FOREIGN_KEY_CHECKS = 1');
+            }
             return true;
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * @return bool
+     */
+    public function truncateTableAndPopulateProfiles()
+    {
+        try {
+            if ($this->truncateTable()) {
+                $magentoSubscriberTable = $this->getTable('newsletter_subscriber');
+                $this->fetchAndPopulateCustomers(
+                    $this->getConnection(),
+                    $this->getTable('customer_entity'),
+                    $this->getMainTable()
+                );
+                $this->fetchAndPopulateSubscribers(
+                    $this->getConnection(),
+                    $magentoSubscriberTable,
+                    $this->getMainTable()
+                );
+                $this->updateCustomerProfiles(
+                    $this->getConnection(),
+                    $magentoSubscriberTable,
+                    $this->getMainTable()
+                );
+                return true;
+            }
+            return false;
         } catch (Exception $e) {
             $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             return false;

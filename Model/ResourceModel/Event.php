@@ -178,18 +178,10 @@ class Event extends AbstractDb
     /**
      * @return bool
      */
-    public function resetEventSyncStatus()
+    public function truncateTable()
     {
         try {
-            $this->getConnection()
-                ->update(
-                    $this->getMainTable(),
-                    [
-                        'status' => 0,
-                        'error_message' => '',
-                        'updated_at' => $this->expressionFactory->create(["expression" => "null"])
-                    ]
-                );
+            $this->getConnection()->truncateTable($this->getMainTable());
             return true;
         } catch (Exception $e) {
             $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());

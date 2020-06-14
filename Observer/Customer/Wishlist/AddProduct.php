@@ -4,6 +4,7 @@ namespace Apsis\One\Observer\Customer\Wishlist;
 
 use Apsis\One\Model\Profile;
 use Exception;
+use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -36,17 +37,25 @@ class AddProduct implements ObserverInterface
     private $eventResource;
 
     /**
+     * @var CustomerRepositoryInterface
+     */
+    private $customerRepository;
+
+    /**
      * AddProduct constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param EventFactory $eventFactory
      * @param EventResource $eventResource
+     * @param CustomerRepositoryInterface $customerRepository
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
         EventFactory $eventFactory,
-        EventResource $eventResource
+        EventResource $eventResource,
+        CustomerRepositoryInterface $customerRepository
     ) {
+        $this->customerRepository = $customerRepository;
         $this->eventFactory = $eventFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->eventResource = $eventResource;
@@ -54,36 +63,36 @@ class AddProduct implements ObserverInterface
 
     public function execute(Observer $observer)
     {
-        /** @var Wishlist $wishlist */
-        $wishlist = $observer->getEvent()->getWishlist();
-        $store = $wishlist->getStore();
-        /** @var Customer $customer */
-        $customer = $this->apsisCoreHelper->getCustomerById($wishlist->getCustomerId());
-        $profile = $this->apsisCoreHelper->getProfileByEmailAndStoreId($customer->getEmail(), $store->getId());
+        try {
+            /** @var Wishlist $wishlist */
+            $wishlist = $observer->getEvent()->getWishlist();
+            $store = $wishlist->getStore();
+            /** @var Customer $customer */
+            $customer = $this->customerRepository->getById($wishlist->getCustomerId());
+            $profile = $this->apsisCoreHelper->getProfileByEmailAndStoreId($customer->getEmail(), $store->getId());
 
-        if ($customer && $this->isOkToProceed($store) && $profile) {
-            /** @var Product $product */
-            $product = $observer->getEvent()->getProduct();
-            /** @var WishlistItem $item */
-            $item = $observer->getEvent()->getItem();
+            if ($customer && $this->isOkToProceed($store) && $profile) {
+                /** @var Product $product */
+                $product = $observer->getEvent()->getProduct();
+                /** @var WishlistItem $item */
+                $item = $observer->getEvent()->getItem();
 
-            $eventModel = $this->eventFactory
-                ->create()
-                ->setEventType(Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST)
-                ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($wishlist, $store, $item, $product)))
-                ->setProfileId($profile->getId())
-                ->setCustomerId($wishlist->getCustomerId())
-                ->setStoreId($store->getId())
-                ->setEmail($customer->getEmail())
-                ->setStatus(Profile::SYNC_STATUS_PENDING);
-
-            try {
+                $eventModel = $this->eventFactory
+                    ->create()
+                    ->setEventType(Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST)
+                    ->setEventData(
+                        $this->apsisCoreHelper->serialize($this->getDataArr($wishlist, $store, $item, $product))
+                    )
+                    ->setProfileId($profile->getId())
+                    ->setCustomerId($wishlist->getCustomerId())
+                    ->setStoreId($store->getId())
+                    ->setEmail($customer->getEmail())
+                    ->setStatus(Profile::SYNC_STATUS_PENDING);
                 $this->eventResource->save($eventModel);
-            } catch (Exception $e) {
-                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
         }
-
         return $this;
     }
 

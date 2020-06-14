@@ -3,6 +3,7 @@
 namespace Apsis\One\Model\Sync\Profiles\Customers;
 
 use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Helper\Date as ApsisDateHelper;
 use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Customer\Model\GroupFactory;
 use Magento\Customer\Model\Group;
@@ -49,17 +50,25 @@ class Customer
     private $groupResource;
 
     /**
+     * @var ApsisDateHelper
+     */
+    private $apsisDateHelper;
+
+    /**
      * Customer constructor.
      *
      * @param ReviewCollectionFactory $reviewCollectionFactory
      * @param GroupFactory $groupFactory
      * @param GroupResource $groupResource
+     * @param ApsisDateHelper $apsisDateHelper
      */
     public function __construct(
         ReviewCollectionFactory $reviewCollectionFactory,
         GroupFactory $groupFactory,
-        GroupResource $groupResource
+        GroupResource $groupResource,
+        ApsisDateHelper $apsisDateHelper
     ) {
+        $this->apsisDateHelper = $apsisDateHelper;
         $this->reviewCollectionFactory = $reviewCollectionFactory;
         $this->groupFactory = $groupFactory;
         $this->groupResource = $groupResource;
@@ -223,7 +232,7 @@ class Customer
     private function getCreatedAt()
     {
         return ($this->customer->getCreatedAt()) ?
-            (int) $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->customer->getCreatedAt()) : '';
+            (int) $this->apsisDateHelper->formatDateForPlatformCompatibility($this->customer->getCreatedAt()) : '';
     }
 
     /**
@@ -234,7 +243,7 @@ class Customer
     private function getLastLoggedDate()
     {
         return ($this->customer->getLastLoggedDate()) ?
-            (int) $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->customer->getLastLoggedDate()) : '';
+            (int) $this->apsisDateHelper->formatDateForPlatformCompatibility($this->customer->getLastLoggedDate()) : '';
     }
 
     /**
@@ -271,7 +280,7 @@ class Customer
             $createdAt = $this->reviewCollection
                 ->getFirstItem()
                 ->getCreatedAt();
-            return ($createdAt) ? (int) $this->apsisCoreHelper->formatDateForPlatformCompatibility($createdAt) : '';
+            return ($createdAt) ? (int) $this->apsisDateHelper->formatDateForPlatformCompatibility($createdAt) : '';
         }
 
         return '';
@@ -523,7 +532,7 @@ class Customer
     private function getLastOrderDate()
     {
         return ($this->customer->getLastOrderDate()) ?
-            (int) $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->customer->getLastOrderDate()) : '';
+            (int) $this->apsisDateHelper->formatDateForPlatformCompatibility($this->customer->getLastOrderDate()) : '';
     }
 
     /**

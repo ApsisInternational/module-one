@@ -4,9 +4,12 @@
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
         <arguments>
             <argument name="collections" xsi:type="array">
-                <item name="apsis_abandoned_report_grid_data_source" xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Abandoned\Collection</item>
-                <item name="apsis_event_report_grid_data_source" xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Event\Collection</item>
-                <item name="apsis_profile_report_grid_data_source" xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Profile\Collection</item>
+                <item name="apsis_abandoned_report_grid_data_source"
+                      xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Abandoned\Collection</item>
+                <item name="apsis_event_report_grid_data_source"
+                      xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Event\Collection</item>
+                <item name="apsis_profile_report_grid_data_source"
+                      xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Profile\Collection</item>
             </argument>
         </arguments>
     </type>
@@ -34,4 +37,22 @@
                 type="Magento\Framework\Filesystem\Directory\Write" />
     <preference for="Magento\Framework\Filesystem\DriverInterface"
                 type="Magento\Framework\Filesystem\Driver\File" />
+    <preference for="Magento\Store\Model\StoreManagerInterface"
+                type="Magento\Store\Model\StoreManager" />
+    <preference for="Magento\Quote\Api\Data\CartInterface"
+                type="Magento\Quote\Model\Quote" />
+    <preference for="Magento\Framework\Encryption\EncryptorInterface"
+                type="Magento\Framework\Encryption\Encryptor" />
+    <preference for="Magento\Framework\App\Config\Storage\WriterInterface"
+                type="Magento\Framework\App\Config\Storage\Writer" />
+    <preference for="Magento\Framework\Stdlib\DateTime\TimezoneInterface"
+                type="Magento\Framework\Stdlib\DateTime\Timezone" />
+    <preference for="Magento\Framework\App\Config\ReinitableConfigInterface"
+                type="Magento\Framework\App\ReinitableConfig" />
+    <preference for="Magento\Quote\Api\CartTotalRepositoryInterface"
+                type="Magento\Quote\Model\Cart\CartTotalRepository" />
+    <preference for="Magento\Catalog\Api\ProductRepositoryInterface"
+                type="Magento\Catalog\Model\ProductRepository" />
+    <preference for="Magento\Customer\Api\CustomerRepositoryInterface"
+                type="Magento\Customer\Model\ResourceModel\CustomerRepository" />
 </config>

@@ -3,39 +3,21 @@
 namespace Apsis\One\Model\Abandoned;
 
 use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Helper\Date as ApsisDateHelper;
 use Apsis\One\Model\Cart\ContentFactory;
-use Apsis\One\Model\DateInterval;
 use Apsis\One\Model\Event;
 use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
-use Apsis\One\Model\DateIntervalFactory;
 use Apsis\One\Model\Sql\ExpressionFactory;
 use Exception;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Quote\Model\ResourceModel\Quote\Collection;
 use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
 use Magento\Store\Api\Data\StoreInterface;
-use Apsis\One\Model\DateTimeFactory;
-use Apsis\One\Model\DateTimeZoneFactory;
 use Apsis\One\Model\Profile;
 
 class AbandonedSub
 {
-    /**
-     * @var DateTimeFactory
-     */
-    private $dateTimeFactory;
-
-    /**
-     * @var DateTimeZoneFactory
-     */
-    private $dateTimeZoneFactory;
-
-    /**
-     * @var DateIntervalFactory
-     */
-    private $dateIntervalFactory;
-
     /**
      * @var EventResource
      */
@@ -67,38 +49,37 @@ class AbandonedSub
     private $expressionFactory;
 
     /**
+     * @var ApsisDateHelper
+     */
+    private $apsisDateHelper;
+
+    /**
      * AbandonedSub constructor.
      *
      * @param ContentFactory $cartContentFactory
      * @param QuoteCollectionFactory $quoteCollectionFactory
      * @param AbandonedResource $abandonedResource
-     * @param DateIntervalFactory $dateIntervalFactory
      * @param EventResource $eventResource
-     * @param DateTimeFactory $dateTimeFactory
-     * @param DateTimeZoneFactory $dateTimeZoneFactory
      * @param DateTime $dateTime
      * @param ExpressionFactory $expressionFactory
+     * @param ApsisDateHelper $apsisDateHelper
      */
     public function __construct(
         ContentFactory $cartContentFactory,
         QuoteCollectionFactory $quoteCollectionFactory,
         AbandonedResource $abandonedResource,
-        DateIntervalFactory $dateIntervalFactory,
         EventResource $eventResource,
-        DateTimeFactory $dateTimeFactory,
-        DateTimeZoneFactory $dateTimeZoneFactory,
         DateTime $dateTime,
-        ExpressionFactory $expressionFactory
+        ExpressionFactory $expressionFactory,
+        ApsisDateHelper $apsisDateHelper
     ) {
+        $this->apsisDateHelper = $apsisDateHelper;
         $this->expressionFactory = $expressionFactory;
         $this->dateTime = $dateTime;
-        $this->dateTimeFactory = $dateTimeFactory;
-        $this->dateTimeZoneFactory = $dateTimeZoneFactory;
         $this->eventResource = $eventResource;
         $this->abandonedResource = $abandonedResource;
         $this->quoteCollectionFactory = $quoteCollectionFactory;
         $this->cartContentFactory = $cartContentFactory;
-        $this->dateIntervalFactory = $dateIntervalFactory;
     }
 
     /**
@@ -111,16 +92,11 @@ class AbandonedSub
     public function getQuoteCollectionByStore(StoreInterface $store, $acDelayPeriod, ApsisCoreHelper $apsisCoreHelper)
     {
         try {
-            $interval = $this->getInterval($acDelayPeriod);
-            $fromTime = $this->dateTimeFactory->create(
-                [
-                    'time' => 'now',
-                    'timezone' => $this->dateTimeZoneFactory->create(['timezone' => 'UTC'])
-                ]
-            );
-            $fromTime->sub($interval);
+            $interval = $this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('PT%sM', $acDelayPeriod));
+            $fromTime = $this->apsisDateHelper->getDateTimeFromTimeAndTimeZone()
+                ->sub($interval);
             $toTime = clone $fromTime;
-            $fromTime->sub($this->dateIntervalFactory->create(['interval_spec' => 'PT5M']));
+            $fromTime->sub($this->apsisDateHelper->getDateIntervalFromIntervalSpec('PT5M'));
             $updated = [
                 'from' => $fromTime->format('Y-m-d H:i:s'),
                 'to' => $toTime->format('Y-m-d H:i:s'),
@@ -138,19 +114,6 @@ class AbandonedSub
             $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             return false;
         }
-    }
-
-    /**
-     * @param string|int $acDelayPeriod
-     *
-     * @return DateInterval
-     */
-    private function getInterval($acDelayPeriod)
-    {
-        $interval = $this->dateIntervalFactory->create(
-            ['interval_spec' => sprintf('PT%sM', $acDelayPeriod)]
-        );
-        return $interval;
     }
 
     /**

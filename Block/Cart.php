@@ -81,12 +81,11 @@ class Cart extends Template
      */
     private function getItemsWithLimitApplied(array $items)
     {
-        $limit = $this->getRequest()->getParam('limit');
-        if (! $limit) {
+        $limit = (int) $this->getRequest()->getParam('limit');
+        if (empty($limit)) {
             return $items;
         }
 
-        $limit = (int) $limit;
         if (count($items) > $limit) {
             return array_splice($items, 0, $limit);
         }

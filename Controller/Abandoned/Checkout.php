@@ -10,7 +10,7 @@ use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Model\Quote;
-use Magento\Quote\Model\QuoteFactory;
+use Magento\Quote\Api\Data\CartInterfaceFactory as QuoteFactory;
 use Magento\Quote\Model\ResourceModel\Quote as QuoteResource;
 
 class Checkout extends Action
@@ -44,7 +44,7 @@ class Checkout extends Action
         QuoteFactory $quoteFactory,
         CustomerSessionFactory $customerSessionFactory
     ) {
-        $this->quoteFactory    = $quoteFactory;
+        $this->quoteFactory = $quoteFactory;
         $this->quoteResource = $quoteResource;
         $this->customerSessionFactory = $customerSessionFactory;
         parent::__construct($context);

@@ -5,6 +5,7 @@ namespace Apsis\One\Model\Sync;
 use Apsis\One\ApiClient\Client;
 use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Helper\Date as ApsisDateHelper;
 use \Exception;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -52,6 +53,11 @@ class Events
      * @var ProfileResourceModel
      */
     private $profileResourceModel;
+
+    /**
+     * @var ApsisDateHelper
+     */
+    private $apsisDateHelper;
 
     /**
      * @var array
@@ -122,14 +128,17 @@ class Events
      * @param EventResourceModel $eventResourceModel
      * @param AbandonedCollectionFactory $abandonedCollectionFactory
      * @param ProfileResourceModel $profileResourceModel
+     * @param ApsisDateHelper $apsisDateHelper
      */
     public function __construct(
         EventCollectionFactory $eventCollectionFactory,
         ProfileCollectionFactory $profileCollectionFactory,
         EventResourceModel $eventResourceModel,
         AbandonedCollectionFactory $abandonedCollectionFactory,
-        ProfileResourceModel $profileResourceModel
+        ProfileResourceModel $profileResourceModel,
+        ApsisDateHelper $apsisDateHelper
     ) {
+        $this->apsisDateHelper = $apsisDateHelper;
         $this->profileResourceModel = $profileResourceModel;
         $this->eventResourceModel = $eventResourceModel;
         $this->profileCollectionFactory = $profileCollectionFactory;
@@ -298,7 +307,7 @@ class Events
     private function getEventArr(Event $event)
     {
         $eventData = [];
-        $createdAt = (string) $this->apsisCoreHelper->formatDateForPlatformCompatibility(
+        $createdAt = (string) $this->apsisDateHelper->formatDateForPlatformCompatibility(
             $event->getCreatedAt(),
             Zend_Date::ISO_8601
         );

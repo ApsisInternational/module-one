@@ -4,11 +4,13 @@ namespace Apsis\One\Plugin\Customer;
 
 use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Helper\Date as ApsisDateHelper;
 use Apsis\One\Model\Event;
 use Apsis\One\Model\EventFactory;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Exception;
+use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Logger as CustomerLogger;
 use Magento\Customer\Model\Log as CustomerLog;
 use Magento\Store\Model\ScopeInterface;
@@ -36,19 +38,35 @@ class LoggerPlugin
     private $customerLogger;
 
     /**
+     * @var ApsisDateHelper
+     */
+    private $apsisDateHelper;
+
+    /**
+     * @var CustomerRepositoryInterface
+     */
+    private $customerRepository;
+
+    /**
      * Account constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param EventFactory $eventFactory
      * @param EventResource $eventResource
      * @param CustomerLogger $customerLogger
+     * @param ApsisDateHelper $apsisDateHelper
+     * @param CustomerRepositoryInterface $customerRepository
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
         EventFactory $eventFactory,
         EventResource $eventResource,
-        CustomerLogger $customerLogger
+        CustomerLogger $customerLogger,
+        ApsisDateHelper $apsisDateHelper,
+        CustomerRepositoryInterface $customerRepository
     ) {
+        $this->customerRepository = $customerRepository;
+        $this->apsisDateHelper = $apsisDateHelper;
         $this->customerLogger = $customerLogger;
         $this->eventFactory = $eventFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
@@ -65,29 +83,26 @@ class LoggerPlugin
      */
     public function afterLog(CustomerLogger $logger, $result, $customerId, array $data)
     {
-        $customer = $this->apsisCoreHelper->getCustomerById($customerId);
-        $profile = $this->apsisCoreHelper->getProfileByEmailAndStoreId($customer->getEmail(), $customer->getStoreId());
-        if ($this->isOkToProceed() && $customer && isset($data['last_login_at']) && $profile) {
-            /** @var CustomerLog $customerLog */
-            $customerLog = $this->customerLogger->get($customerId);
-
-            $eventModel = $this->eventFactory->create()
-                ->setEventType(Event::EVENT_TYPE_CUSTOMER_LOGIN)
-                ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($customerLog)))
-                ->setProfileId($profile->getId())
-                ->setCustomerId($customerLog->getCustomerId())
-                ->setStoreId($this->apsisCoreHelper->getStore()->getId())
-                ->setEmail($customer->getEmail())
-                ->setStatus(Profile::SYNC_STATUS_PENDING);
-
-            try {
+        try {
+            $customer = $this->customerRepository->getById($customerId);
+            $profile = $this->apsisCoreHelper
+                ->getProfileByEmailAndStoreId($customer->getEmail(), $customer->getStoreId());
+            if ($this->isOkToProceed() && $customer && isset($data['last_login_at']) && $profile) {
+                /** @var CustomerLog $customerLog */
+                $customerLog = $this->customerLogger->get($customerId);
+                $eventModel = $this->eventFactory->create()
+                    ->setEventType(Event::EVENT_TYPE_CUSTOMER_LOGIN)
+                    ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($customerLog)))
+                    ->setProfileId($profile->getId())
+                    ->setCustomerId($customerLog->getCustomerId())
+                    ->setStoreId($this->apsisCoreHelper->getStore()->getId())
+                    ->setEmail($customer->getEmail())
+                    ->setStatus(Profile::SYNC_STATUS_PENDING);
                 $this->eventResource->save($eventModel);
-            } catch (Exception $e) {
-                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
-                return $result;
             }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
         }
-
         return $result;
     }
 
@@ -100,9 +115,9 @@ class LoggerPlugin
     {
         $data = [
             'customerId' => (int) $customerLog->getCustomerId(),
-            'lastLogoutAt' => (int) $this->apsisCoreHelper
+            'lastLogoutAt' => (int) $this->apsisDateHelper
                 ->formatDateForPlatformCompatibility($customerLog->getLastLogoutAt()),
-            'lastVisitAt' => (int) $this->apsisCoreHelper
+            'lastVisitAt' => (int) $this->apsisDateHelper
                 ->formatDateForPlatformCompatibility($customerLog->getLastVisitAt()),
             'websiteName' => (string) $this->apsisCoreHelper
                 ->getWebsiteNameFromStoreId(),

@@ -86,6 +86,10 @@ class Placed implements ObserverInterface
         /** @var Order $order */
         $order = $observer->getEvent()->getOrder();
 
+        if (! $this->isOkToProceed($order->getStore())) {
+            return $this;
+        }
+
         if ($order->getCustomerIsGuest()) {
             $profile = $this->profileResourceCollectionFactory->create()
                 ->loadSubscriberByEmailAndStoreId($order->getCustomerEmail(), $order->getStoreId());
@@ -101,30 +105,28 @@ class Placed implements ObserverInterface
             $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
         }
 
-        if ($this->isOkToProceed($order->getStore())) {
-            try {
-                $mainData = $this->orderData->getDataArr($order, $this->apsisCoreHelper, $profile->getSubscriberId());
-                $subData = $mainData['items'];
-                unset($mainData['items']);
-                $eventModel = $this->eventFactory->create()
-                    ->setEventType(Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER)
-                    ->setEventData($this->apsisCoreHelper->serialize($mainData))
-                    ->setSubEventData($this->apsisCoreHelper->serialize($subData))
-                    ->setProfileId($profile->getId())
-                    ->setCustomerId($order->getCustomerId())
-                    ->setSubscriberId($profile->getSubscriberId())
-                    ->setStoreId($order->getStore()->getId())
-                    ->setEmail($order->getCustomerEmail())
-                    ->setStatus(Profile::SYNC_STATUS_PENDING);
+        try {
+            $mainData = $this->orderData->getDataArr($order, $this->apsisCoreHelper, $profile->getSubscriberId());
+            $subData = $mainData['items'];
+            unset($mainData['items']);
+            $eventModel = $this->eventFactory->create()
+                ->setEventType(Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER)
+                ->setEventData($this->apsisCoreHelper->serialize($mainData))
+                ->setSubEventData($this->apsisCoreHelper->serialize($subData))
+                ->setProfileId($profile->getId())
+                ->setCustomerId($order->getCustomerId())
+                ->setSubscriberId($profile->getSubscriberId())
+                ->setStoreId($order->getStore()->getId())
+                ->setEmail($order->getCustomerEmail())
+                ->setStatus(Profile::SYNC_STATUS_PENDING);
 
-                    $this->eventResource->save($eventModel);
+                $this->eventResource->save($eventModel);
 
-                if ($profile->hasDataChanges()) {
-                    $this->profileResource->save($profile);
-                }
-            } catch (Exception $e) {
-                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            if ($profile->hasDataChanges()) {
+                $this->profileResource->save($profile);
             }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
         }
 
         return $this;

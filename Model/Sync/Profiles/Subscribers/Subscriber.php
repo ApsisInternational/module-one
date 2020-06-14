@@ -3,6 +3,7 @@
 namespace Apsis\One\Model\Sync\Profiles\Subscribers;
 
 use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Helper\Date as ApsisDateHelper;
 use Magento\Newsletter\Model\Subscriber as MagentoSubscriber;
 
 class Subscriber
@@ -21,6 +22,21 @@ class Subscriber
      * @var ApsisCoreHelper
      */
     private $apsisCoreHelper;
+
+    /**
+     * @var ApsisDateHelper
+     */
+    private $apsisDateHelper;
+
+    /**
+     * Subscriber constructor.
+     *
+     * @param ApsisDateHelper $apsisDateHelper
+     */
+    public function __construct(ApsisDateHelper $apsisDateHelper)
+    {
+        $this->apsisDateHelper = $apsisDateHelper;
+    }
 
     /**
      * @param array $mappingHash
@@ -146,7 +162,7 @@ class Subscriber
     private function getChangeStatusAt()
     {
         return ($this->subscriber->getChangeStatusAt()) ?
-            (int) $this->apsisCoreHelper->formatDateForPlatformCompatibility($this->subscriber->getChangeStatusAt()) :
+            (int) $this->apsisDateHelper->formatDateForPlatformCompatibility($this->subscriber->getChangeStatusAt()) :
             '';
     }
 }

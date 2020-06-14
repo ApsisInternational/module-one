@@ -3,25 +3,19 @@
 namespace Apsis\One\Helper;
 
 use Apsis\One\Helper\Config as ApsisConfigHelper;
-use Apsis\One\Model\DateIntervalFactory;
-use Apsis\One\Model\DateTimeFactory;
-use Apsis\One\Model\DateTimeZoneFactory;
+use Apsis\One\Helper\Date as ApsisDateHelper;
 use Magento\Catalog\Api\Data\ProductInterface;
-use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\DataObject;
 use Magento\Framework\Encryption\EncryptorInterface;
-use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Exception;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use stdClass;
-use Zend_Date;
 use Apsis\One\Logger\Logger;
-use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Catalog\Helper\Image;
 use Apsis\One\ApiClient\ClientFactory;
 use Apsis\One\ApiClient\Client;
@@ -46,11 +40,6 @@ class Core extends LogHelper
     private $storeManager;
 
     /**
-     * @var TimezoneInterface
-     */
-    private $localeDate;
-
-    /**
      * @var EncryptorInterface
      */
     private $encryptor;
@@ -59,11 +48,6 @@ class Core extends LogHelper
      * @var Image
      */
     private $imageHelper;
-
-    /**
-     * @var CustomerRepositoryInterface
-     */
-    private $customerRepository;
 
     /**
      * @var WriterInterface
@@ -76,21 +60,6 @@ class Core extends LogHelper
     private $apiClientFactory;
 
     /**
-     * @var DateTimeFactory
-     */
-    private $dateTimeFactory;
-
-    /**
-     * @var DateTimeZoneFactory
-     */
-    private $dateTimeZoneFactory;
-
-    /**
-     * @var DateIntervalFactory
-     */
-    private $dateIntervalFactory;
-
-    /**
      * @var DataCollectionFactory
      */
     private $dataCollectionFactory;
@@ -101,49 +70,42 @@ class Core extends LogHelper
     private $profileCollectionFactory;
 
     /**
+     * @var ApsisDateHelper
+     */
+    private $apsisDateHelper;
+
+    /**
      * Core constructor.
      *
      * @param Context $context
      * @param Logger $logger
      * @param StoreManagerInterface $storeManager
-     * @param TimezoneInterface $localeDate
      * @param EncryptorInterface $encryptor
      * @param Image $imageHelper
-     * @param CustomerRepositoryInterface $customerRepository
      * @param WriterInterface $writer
      * @param ClientFactory $clientFactory
-     * @param DateTimeFactory $dateTimeFactory
-     * @param DateTimeZoneFactory $dateTimeZoneFactory
-     * @param DateIntervalFactory $dateIntervalFactory
      * @param DataCollectionFactory $dataCollectionFactory
      * @param ProfileCollectionFactory $profileCollectionFactory
+     * @param ApsisDateHelper $apsisDateHelper
      */
     public function __construct(
         Context $context,
         Logger $logger,
         StoreManagerInterface $storeManager,
-        TimezoneInterface $localeDate,
         EncryptorInterface $encryptor,
         Image $imageHelper,
-        CustomerRepositoryInterface $customerRepository,
         WriterInterface $writer,
         ClientFactory $clientFactory,
-        DateTimeFactory $dateTimeFactory,
-        DateTimeZoneFactory $dateTimeZoneFactory,
-        DateIntervalFactory $dateIntervalFactory,
         DataCollectionFactory $dataCollectionFactory,
-        ProfileCollectionFactory $profileCollectionFactory
+        ProfileCollectionFactory $profileCollectionFactory,
+        ApsisDateHelper $apsisDateHelper
     ) {
+        $this->apsisDateHelper = $apsisDateHelper;
         $this->dataCollectionFactory = $dataCollectionFactory;
-        $this->dateIntervalFactory = $dateIntervalFactory;
-        $this->dateTimeFactory = $dateTimeFactory;
-        $this->dateTimeZoneFactory = $dateTimeZoneFactory;
         $this->apiClientFactory = $clientFactory;
         $this->writer = $writer;
-        $this->customerRepository = $customerRepository;
         $this->imageHelper = $imageHelper;
         $this->encryptor = $encryptor;
-        $this->localeDate = $localeDate;
         $this->storeManager = $storeManager;
         $this->profileCollectionFactory = $profileCollectionFactory;
         parent::__construct($context, $logger);
@@ -159,20 +121,6 @@ class Core extends LogHelper
     {
         return $this->profileCollectionFactory->create()
             ->loadByEmailAndStoreId($email, $storeId);
-    }
-
-    /**
-     * @param int $customerId
-     * @return bool|CustomerInterface
-     */
-    public function getCustomerById(int $customerId)
-    {
-        try {
-            return $this->customerRepository->getById($customerId);
-        } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage());
-            return false;
-        }
     }
 
     /**
@@ -310,17 +258,6 @@ class Core extends LogHelper
             $scope['context_scope'],
             $scope['context_scope_id']
         );
-    }
-
-    /**
-     * @param string|null $date
-     * @param string $format
-     *
-     * @return string|int
-     */
-    public function formatDateForPlatformCompatibility($date = null, $format = Zend_Date::TIMESTAMP)
-    {
-        return $this->localeDate->date($date)->format($format);
     }
 
     /**
@@ -484,12 +421,7 @@ class Core extends LogHelper
         if ($dataCollection->getSize()) {
             $expiryTime = $dataCollection->getFirstItem()->getValue();
         }
-        $nowTime = $this->dateTimeFactory->create(
-            [
-                'time' => 'now',
-                'timezone' => $this->dateTimeZoneFactory->create(['timezone' => 'UTC'])
-            ]
-        )->format('Y-m-d H:i:s');
+        $nowTime = $this->apsisDateHelper->getDateTimeFromTimeAndTimeZone()->format('Y-m-d H:i:s');
         return ($nowTime > $expiryTime);
     }
 
@@ -539,12 +471,9 @@ class Core extends LogHelper
             $scopeId
         );
 
-        $time = $this->dateTimeFactory->create(
-            [
-                'time' => 'now',
-                'timezone' => $this->dateTimeZoneFactory->create(['timezone' => 'UTC'])
-            ]
-        )->add($this->dateIntervalFactory->create(['interval_spec' => sprintf('PT%sS', $request->expires_in)]));
+        $time = $this->apsisDateHelper
+            ->getDateTimeFromTimeAndTimeZone()
+            ->add($this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('PT%sS', $request->expires_in)));
         $this->saveConfigValue(
             ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE,
             $time->format('Y-m-d H:i:s'),
@@ -672,42 +601,5 @@ class Core extends LogHelper
         }
 
         return $attributesArr;
-    }
-
-    /**
-     * @param string $inputDateTime
-     *
-     * @return bool
-     */
-    public function isExpired(string $inputDateTime)
-    {
-        $nowDateTime = $this->dateTimeFactory->create(
-            [
-                'time' => 'now',
-                'timezone' => $this->dateTimeZoneFactory->create(['timezone' => 'UTC'])
-            ]
-        )->format(Zend_Date::ISO_8601);
-        return ($nowDateTime > $inputDateTime);
-    }
-
-    /**
-     * @param string $inputDateTime
-     * @param int $day
-     *
-     * @return string
-     */
-    public function getFormattedDateTimeWithAddedInterval(string $inputDateTime, int $day = 1)
-    {
-        $interval = $this->dateIntervalFactory->create(
-            ['interval_spec' => sprintf('P%sD', $day)]
-        );
-        $fromTime = $this->dateTimeFactory->create(
-            [
-                'time' => $inputDateTime,
-                'timezone' => $this->dateTimeZoneFactory->create(['timezone' => 'UTC'])
-            ]
-        );
-        $fromTime->add($interval);
-        return $fromTime->format(Zend_Date::ISO_8601);
     }
 }

@@ -53,10 +53,10 @@ class InstallData implements InstallDataInterface
             $apsisProfileTable
         );
         $this->profileResource->fetchAndPopulateSubscribers(
-                $installer->getConnection(),
-                $magentoSubscriberTable,
-                $apsisProfileTable
-            );
+            $installer->getConnection(),
+            $magentoSubscriberTable,
+            $apsisProfileTable
+        );
         $this->profileResource->updateCustomerProfiles(
             $installer->getConnection(),
             $magentoSubscriberTable,

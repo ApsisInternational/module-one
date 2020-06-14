@@ -79,14 +79,14 @@ class Cart extends Action
      */
     private function renderOutput(DataObject $cart)
     {
-        $output = $this->getRequest()->getParam('output');
-        if ($output === 'json') {
-            return $this->renderJson((string) $cart->getCartData());
-        } elseif ($output === 'html') {
-            $this->registry->register('apsis_one_cart', $cart, true);
-            return $this->renderHtml();
-        } else {
-            return $this->sendResponse(204);
+        switch ($this->getRequest()->getParam('output')) {
+            case 'json':
+                return $this->renderJson((string) $cart->getCartData());
+            case 'html':
+                $this->registry->register('apsis_one_cart', $cart, true);
+                return $this->renderHtml();
+            default:
+                return $this->sendResponse(204);
         }
     }
 

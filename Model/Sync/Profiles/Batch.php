@@ -5,6 +5,7 @@ namespace Apsis\One\Model\Sync\Profiles;
 use Apsis\One\ApiClient\Client;
 use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Helper\Date as ApsisDateHelper;
 use Apsis\One\Helper\File as ApsisFileHelper;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ProfileBatch;
@@ -45,6 +46,11 @@ class Batch
     private $apsisFileHelper;
 
     /**
+     * @var ApsisDateHelper
+     */
+    private $apsisDateHelper;
+
+    /**
      * @var int
      */
     private $importCountInProcessingStatus;
@@ -61,13 +67,16 @@ class Batch
      * @param ProfileResource $profileResource
      * @param ProfileBatchResource $profileBatchResource
      * @param ApsisFileHelper $apsisFileHelper
+     * @param ApsisDateHelper $apsisDateHelper
      */
     public function __construct(
         ProfileBatchFactory $profileBatchFactory,
         ProfileResource $profileResource,
         ProfileBatchResource $profileBatchResource,
-        ApsisFileHelper $apsisFileHelper
+        ApsisFileHelper $apsisFileHelper,
+        ApsisDateHelper $apsisDateHelper
     ) {
+        $this->apsisDateHelper = $apsisDateHelper;
         $this->apsisFileHelper = $apsisFileHelper;
         $this->profileBatchResource = $profileBatchResource;
         $this->profileBatchFactory = $profileBatchFactory;
@@ -276,15 +285,14 @@ class Batch
             $this->updateProfilesStatus($store, $item, Profile::SYNC_STATUS_FAILED, $msg);
             $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $msg);
         } elseif ($result->result->status === 'waiting_for_file' &&
-            $this->apsisCoreHelper->isExpired($item->getFileUploadExpireAt())
+            $this->apsisDateHelper->isExpired($item->getFileUploadExpireAt())
         ) {
             $msg = 'File upload time expired';
             $this->updateProfilesStatus($store, $item, Profile::SYNC_STATUS_FAILED, $msg);
             $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $msg);
         } elseif (in_array($result->result->status, $this->statusToCheckIfExpired)) {
-            $inputDateTime = $this->apsisCoreHelper
-                ->getFormattedDateTimeWithAddedInterval($item->getUpdatedAt());
-            if ($this->apsisCoreHelper->isExpired($inputDateTime)) {
+            $inputDateTime = $this->apsisDateHelper->getFormattedDateTimeWithAddedInterval($item->getUpdatedAt());
+            if ($this->apsisDateHelper->isExpired($inputDateTime)) {
                 $msg = 'Expired. Stuck in processing state for 1 day';
                 $this->updateItem($item, ProfileBatch::SYNC_STATUS_ERROR, $msg);
                 $this->updateProfilesStatus($store, $item, Profile::SYNC_STATUS_PENDING);

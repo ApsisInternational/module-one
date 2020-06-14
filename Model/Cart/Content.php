@@ -10,9 +10,10 @@ use Magento\Quote\Model\Quote\Item;
 use Magento\Store\Model\App\EmulationFactory;
 use Magento\Store\Model\App\Emulation;
 use Magento\Quote\Model\Quote;
-use Magento\Quote\Model\Cart\CartTotalRepository;
+use Magento\Quote\Api\CartTotalRepositoryInterface;
 use Magento\Quote\Model\Quote\Address;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Helper\Date as ApsisDateHelper;
 
 class Content
 {
@@ -27,7 +28,7 @@ class Content
     private $emulationFactory;
 
     /**
-     * @var CartTotalRepository
+     * @var CartTotalRepositoryInterface
      */
     private $cartTotalRepository;
 
@@ -37,17 +38,25 @@ class Content
     private $apsisCoreHelper;
 
     /**
+     * @var ApsisDateHelper
+     */
+    private $apsisDateHelper;
+
+    /**
      * Content constructor.
      *
      * @param EmulationFactory $emulationFactory
      * @param Data $priceHelper
-     * @param CartTotalRepository $cartTotalRepository
+     * @param CartTotalRepositoryInterface $cartTotalRepository
+     * @param ApsisDateHelper $apsisDateHelper
      */
     public function __construct(
         EmulationFactory $emulationFactory,
         Data $priceHelper,
-        CartTotalRepository $cartTotalRepository
+        CartTotalRepositoryInterface $cartTotalRepository,
+        ApsisDateHelper $apsisDateHelper
     ) {
+        $this->apsisDateHelper = $apsisDateHelper;
         $this->cartTotalRepository = $cartTotalRepository;
         $this->priceHelper = $priceHelper;
         $this->emulationFactory = $emulationFactory;
@@ -106,9 +115,9 @@ class Content
     {
         $totals = $this->cartTotalRepository->get($quoteModel->getId());
         $quoteData['cart_id'] = (int) $quoteModel->getId();
-        $quoteData['created_at'] = (int) $this->apsisCoreHelper
+        $quoteData['created_at'] = (int) $this->apsisDateHelper
             ->formatDateForPlatformCompatibility($quoteModel->getCreatedAt());
-        $quoteData['updated_at'] = (int) $this->apsisCoreHelper
+        $quoteData['updated_at'] = (int) $this->apsisDateHelper
             ->formatDateForPlatformCompatibility($quoteModel->getUpdatedAt());
         $quoteData['store_name'] = (string) $quoteModel->getStore()->getName();
         $quoteData['website_name'] = (string) $quoteModel->getStore()->getWebsite()->getName();

@@ -7,6 +7,7 @@ use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Exception;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Review\Model\Review;
@@ -53,6 +54,11 @@ class Product implements ObserverInterface
     private $productRepository;
 
     /**
+     * @var CustomerRepositoryInterface
+     */
+    private $customerRepository;
+
+    /**
      * Product constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -61,6 +67,7 @@ class Product implements ObserverInterface
      * @param ProfileResource $profileResource
      * @param Data $reviewData
      * @param ProductRepositoryInterface $productRepository
+     * @param CustomerRepositoryInterface $customerRepository
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -68,8 +75,10 @@ class Product implements ObserverInterface
         EventResource $eventResource,
         ProfileResource $profileResource,
         Data $reviewData,
-        ProductRepositoryInterface $productRepository
+        ProductRepositoryInterface $productRepository,
+        CustomerRepositoryInterface $customerRepository
     ) {
+        $this->customerRepository = $customerRepository;
         $this->productRepository = $productRepository;
         $this->reviewData = $reviewData;
         $this->profileResource = $profileResource;
@@ -84,22 +93,22 @@ class Product implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        /** @var Review $reviewObject */
-        $reviewObject = $observer->getEvent()->getDataObject();
+        try {
+            /** @var Review $reviewObject */
+            $reviewObject = $observer->getEvent()->getDataObject();
 
-        if (empty($reviewObject->getCustomerId())) {
-            return $this;
-        }
+            if (empty($reviewObject->getCustomerId())) {
+                return $this;
+            }
 
-        /** @var MagentoProduct $product */
-        $product = $this->getProductById($reviewObject->getEntityPkValue());
-        /** @var Customer $customer */
-        $customer = $this->apsisCoreHelper->getCustomerById($reviewObject->getCustomerId());
-        $profile = $this->apsisCoreHelper
-            ->getProfileByEmailAndStoreId($customer->getEmail(), $this->apsisCoreHelper->getStore()->getId());
+            /** @var MagentoProduct $product */
+            $product = $this->getProductById($reviewObject->getEntityPkValue());
+            /** @var Customer $customer */
+            $customer = $this->customerRepository->getById($reviewObject->getCustomerId());
+            $profile = $this->apsisCoreHelper
+                ->getProfileByEmailAndStoreId($customer->getEmail(), $this->apsisCoreHelper->getStore()->getId());
 
-        if ($customer && $product && $this->isOkToProceed() && $profile && $reviewObject->isApproved()) {
-            try {
+            if ($customer && $product && $this->isOkToProceed() && $profile && $reviewObject->isApproved()) {
                 $eventModel = $this->eventFactory->create()
                     ->setEventType(Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW)
                     ->setEventData(
@@ -112,13 +121,12 @@ class Product implements ObserverInterface
                     ->setStoreId($this->apsisCoreHelper->getStore()->getId())
                     ->setEmail($customer->getEmail())
                     ->setStatus(Profile::SYNC_STATUS_PENDING);
-
                 $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
                 $this->eventResource->save($eventModel);
                 $this->profileResource->save($profile);
-            } catch (Exception $e) {
-                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
         }
         return $this;
     }

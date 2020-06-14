@@ -122,6 +122,10 @@ class Config extends AbstractHelper
     const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_2_CUSTOMER = 'apsis_one_events/events/subscriber_2_customer';
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_2_SUBSCRIBER = 'apsis_one_events/events/customer_2_subscriber';
     const CONFIG_APSIS_ONE_EVENTS_PRODUCT_CARTED = 'apsis_one_events/events/product_carted';
+    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_EVENTS_DURATION = 'apsis_one_events/events/historical_event_duration';
+    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_EVENTS_DURATION_TIMESTAMP =
+        'apsis_one_events/events/historical_event_duration_timestamp';
+    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_EVENTS_DONE_FLAG = 'apsis_one_events/events/historical_event_done_flag';
 
     /**
      * Configuration section

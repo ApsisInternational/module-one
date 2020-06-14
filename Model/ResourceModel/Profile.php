@@ -3,6 +3,7 @@
 namespace Apsis\One\Model\ResourceModel;
 
 use Apsis\One\Helper\Config as ApsisConfigHelper;
+use Apsis\One\Helper\Log as ApsisLogHelper;
 use Apsis\One\Model\Sql\ExpressionFactory;
 use Exception;
 use Magento\Customer\Model\ResourceModel\Customer\Collection;
@@ -19,11 +20,6 @@ use Magento\Store\Api\Data\StoreInterface;
 
 class Profile extends AbstractDb
 {
-    /**
-     * @var ApsisCoreHelper
-     */
-    private $apsisCoreHelper;
-
     /**
      * @var CustomerCollectionFactory
      */
@@ -56,7 +52,6 @@ class Profile extends AbstractDb
      * Profile constructor.
      *
      * @param Context $context
-     * @param ApsisCoreHelper $apsisCoreHelper
      * @param CustomerCollectionFactory $customerCollectionFactory
      * @param ExpressionFactory $expressionFactory
      * @param OrderCollectionFactory $orderCollectionFactory
@@ -65,7 +60,6 @@ class Profile extends AbstractDb
      */
     public function __construct(
         Context $context,
-        ApsisCoreHelper $apsisCoreHelper,
         CustomerCollectionFactory $customerCollectionFactory,
         ExpressionFactory $expressionFactory,
         OrderCollectionFactory $orderCollectionFactory,
@@ -73,7 +67,6 @@ class Profile extends AbstractDb
         $connectionName = null
     ) {
         $this->dateTime = $dateTime;
-        $this->apsisCoreHelper = $apsisCoreHelper;
         $this->customerCollectionFactory = $customerCollectionFactory;
         $this->expressionFactory = $expressionFactory;
         $this->orderCollectionFactory = $orderCollectionFactory;
@@ -84,12 +77,18 @@ class Profile extends AbstractDb
      * @param array $subscriberIds
      * @param int $storeId
      * @param int $status
+     * @param ApsisCoreHelper $apsisCoreHelper
      * @param string $msg
      *
      * @return int
      */
-    public function updateSubscribersSyncStatus(array $subscriberIds, int $storeId, int $status, string $msg = '')
-    {
+    public function updateSubscribersSyncStatus(
+        array $subscriberIds,
+        int $storeId,
+        int $status,
+        ApsisCoreHelper $apsisCoreHelper,
+        string $msg = ''
+    ) {
         if (empty($subscriberIds)) {
             return 0;
         }
@@ -107,7 +106,7 @@ class Profile extends AbstractDb
                 ["subscriber_id IN (?)" => $subscriberIds, "store_id = ?" => $storeId]
             );
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             return 0;
         }
     }
@@ -116,12 +115,18 @@ class Profile extends AbstractDb
      * @param array $customerIds
      * @param int $storeId
      * @param int $status
+     * @param ApsisCoreHelper $apsisCoreHelper
      * @param string $msg
      *
      * @return int
      */
-    public function updateCustomerSyncStatus(array $customerIds, int $storeId, int $status, string $msg = '')
-    {
+    public function updateCustomerSyncStatus(
+        array $customerIds,
+        int $storeId,
+        int $status,
+        ApsisCoreHelper $apsisCoreHelper,
+        string $msg = ''
+    ) {
         if (empty($customerIds)) {
             return 0;
         }
@@ -139,7 +144,7 @@ class Profile extends AbstractDb
                 ["customer_id IN (?)" => $customerIds, "store_id = ?" => $storeId]
             );
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             return 0;
         }
     }
@@ -325,14 +330,18 @@ class Profile extends AbstractDb
     /**
      * @param StoreInterface $store
      * @param array $customerIds
+     * @param ApsisCoreHelper $apsisCoreHelper
      *
      * @return array
      */
-    public function getSalesDataForCustomers(StoreInterface $store, array $customerIds)
-    {
+    public function getSalesDataForCustomers(
+        StoreInterface $store,
+        array $customerIds,
+        ApsisCoreHelper $apsisCoreHelper
+    ) {
         $orderCollection = $this->orderCollectionFactory->create();
         $salesOrderGrid = $orderCollection->getTable('sales_order_grid');
-        $statuses = $this->apsisCoreHelper->getStoreConfig(
+        $statuses = $apsisCoreHelper->getStoreConfig(
             $store,
             ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_ORDER_STATUSES
         );
@@ -469,9 +478,11 @@ class Profile extends AbstractDb
     }
 
     /**
+     * @param ApsisLogHelper $apsisLogHelper
+     *
      * @return bool
      */
-    public function truncateTable()
+    private function truncateTable(ApsisLogHelper $apsisLogHelper)
     {
         try {
             if ($this->getConnection()->isTableExists($this->getMainTable())) {
@@ -481,18 +492,20 @@ class Profile extends AbstractDb
             }
             return true;
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisLogHelper->logMessage(__METHOD__, $e->getMessage());
             return false;
         }
     }
 
     /**
+     * @param ApsisLogHelper $apsisLogHelper
+     *
      * @return bool
      */
-    public function truncateTableAndPopulateProfiles()
+    public function truncateTableAndPopulateProfiles(ApsisLogHelper $apsisLogHelper)
     {
         try {
-            if ($this->truncateTable()) {
+            if ($this->truncateTable($apsisLogHelper)) {
                 $magentoSubscriberTable = $this->getTable('newsletter_subscriber');
                 $this->fetchAndPopulateCustomers(
                     $this->getConnection(),
@@ -513,7 +526,7 @@ class Profile extends AbstractDb
             }
             return false;
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisLogHelper->logMessage(__METHOD__, $e->getMessage());
             return false;
         }
     }

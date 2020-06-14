@@ -2,34 +2,14 @@
 
 namespace Apsis\One\Model\ResourceModel;
 
+use Apsis\One\Helper\Log as ApsisLogHelper;
 use Exception;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
-use Magento\Framework\Model\ResourceModel\Db\Context;
+use Apsis\One\Model\ProfileBatch as ProfileBatchModel;
 
 class ProfileBatch extends AbstractDb
 {
-    /**
-     * @var ApsisCoreHelper
-     */
-    private $apsisCoreHelper;
-
-    /**
-     * ProfileBatch constructor.
-     *
-     * @param Context $context
-     * @param ApsisCoreHelper $apsisCoreHelper
-     * @param null $connectionName
-     */
-    public function __construct(
-        Context $context,
-        ApsisCoreHelper $apsisCoreHelper,
-        $connectionName = null
-    ) {
-        $this->apsisCoreHelper = $apsisCoreHelper;
-        parent::__construct($context, $connectionName);
-    }
-
     /**
      * Initialize resource.
      */
@@ -39,16 +19,39 @@ class ProfileBatch extends AbstractDb
     }
 
     /**
+     * @param ApsisLogHelper $apsisLogHelper
+     *
      * @return bool
      */
-    public function truncateTable()
+    public function truncateTable(ApsisLogHelper $apsisLogHelper)
     {
         try {
             $this->getConnection()->truncateTable($this->getMainTable());
             return true;
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisLogHelper->logMessage(__METHOD__, $e->getMessage());
             return false;
+        }
+    }
+
+    /**
+     * @param int $day
+     * @param ApsisCoreHelper $apsisCoreHelper
+     */
+    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper)
+    {
+        try {
+            $where = [
+                "updated_at < DATE_SUB(NOW(), INTERVAL ? DAY)" => $day,
+                "sync_status IN(?)" => [
+                    ProfileBatchModel::SYNC_STATUS_ERROR,
+                    ProfileBatchModel::SYNC_STATUS_COMPLETED,
+                    ProfileBatchModel::SYNC_STATUS_FAILED
+                ]
+            ];
+            $this->getConnection()->delete($this->getMainTable(), $where);
+        } catch (Exception $e) {
+            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
         }
     }
 }

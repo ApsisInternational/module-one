@@ -12,12 +12,11 @@ use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Exception;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Model\Order;
-use Magento\Sales\Model\Order\Item;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileResourceCollectionFactory;
+use Apsis\One\Model\Events\Historical\Orders\Data;
 
 class Placed implements ObserverInterface
 {
@@ -47,6 +46,11 @@ class Placed implements ObserverInterface
     private $profileResource;
 
     /**
+     * @var Data
+     */
+    private $orderData;
+
+    /**
      * Placed constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -54,14 +58,17 @@ class Placed implements ObserverInterface
      * @param EventResource $eventResource
      * @param ProfileResourceCollectionFactory $profileResourceCollectionFactory
      * @param ProfileResource $profileResource
+     * @param Data $orderData
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
         EventFactory $eventFactory,
         EventResource $eventResource,
         ProfileResourceCollectionFactory $profileResourceCollectionFactory,
-        ProfileResource $profileResource
+        ProfileResource $profileResource,
+        Data $orderData
     ) {
+        $this->orderData = $orderData;
         $this->profileResource = $profileResource;
         $this->profileResourceCollectionFactory = $profileResourceCollectionFactory;
         $this->eventFactory = $eventFactory;
@@ -96,7 +103,7 @@ class Placed implements ObserverInterface
 
         if ($this->isOkToProceed($order->getStore())) {
             try {
-                $mainData = $this->getDataArr($order, $profile->getSubscriberId());
+                $mainData = $this->orderData->getDataArr($order, $this->apsisCoreHelper, $profile->getSubscriberId());
                 $subData = $mainData['items'];
                 unset($mainData['items']);
                 $eventModel = $this->eventFactory->create()
@@ -121,53 +128,6 @@ class Placed implements ObserverInterface
         }
 
         return $this;
-    }
-
-    /**
-     * @param Order $order
-     * @param int $subscriberId
-     *
-     * @return array
-     *
-     * @throws NoSuchEntityException
-     */
-    private function getDataArr(Order $order, $subscriberId = 0)
-    {
-        $items = [];
-        /** @var Item $item */
-        foreach ($order->getAllVisibleItems() as $item) {
-            $product = $item->getProduct();
-            $items [] = [
-                'orderId' => (int) $order->getEntityId(),
-                'productId' => (int) $item->getProductId(),
-                'sku' => (string) $item->getSku(),
-                'name' => (string) $item->getName(),
-                'productUrl' => (string) $product->getProductUrl(),
-                'productImageUrl' => (string) $this->apsisCoreHelper->getProductImageUrl($product),
-                'qtyOrdered' => (float) $this->apsisCoreHelper->round($item->getQtyOrdered()),
-                'priceAmount' => (float) $this->apsisCoreHelper->round($item->getPrice()),
-                'rowTotalAmount' => (float) $this->apsisCoreHelper->round($item->getRowTotal()),
-            ];
-        }
-
-        $data = [
-            'orderId' => (int) $order->getEntityId(),
-            'incrementId' => (string) $order->getIncrementId(),
-            'customerId' => (int) $order->getCustomerId(),
-            'subscriberId' => (int) $subscriberId,
-            'isGuest' => (boolean) $order->getCustomerIsGuest(),
-            'websiteName' => (string) $order->getStore()->getWebsite()->getName(),
-            'storeName' => (string) $order->getStore()->getName(),
-            'grandTotalAmount' => (float) $this->apsisCoreHelper->round($order->getGrandTotal()),
-            'shippingAmount' => (float) $this->apsisCoreHelper->round($order->getShippingAmount()),
-            'discountAmount' => (float) $this->apsisCoreHelper->round($order->getDiscountAmount()),
-            'shippingMethodName' => (string) $order->getShippingDescription(),
-            'paymentMethodName' => (string) $order->getPayment()->getMethod(),
-            'itemsCount' => (int) $order->getTotalItemCount(),
-            'currencyCode' => (string) $order->getOrderCurrencyCode(),
-            'items' => $items
-        ];
-        return $data;
     }
 
     /**

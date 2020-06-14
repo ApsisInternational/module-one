@@ -446,6 +446,19 @@
                     <label>Customer Adds A Product To Cart</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
                 </field>
+                <field id="historical_event_title" translate="label" sortOrder="90" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Historical Data Sync</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                </field>
+                <field id="historical_event_duration" translate="label" type="select" sortOrder="100" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Past Events</label>
+                    <source_model>Apsis\One\Model\Config\Source\System\PastEvents</source_model>
+                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Event\HistoricalData</frontend_model>
+                    <backend_model>Apsis\One\Model\Config\Backend\PastEvents</backend_model>
+                    <comment><![CDATA[This is a one time selection. After import this config will be disabled. Past events(Order , Cart and Review) will be fetched at midnight.]]></comment>
+                </field>
             </group>
         </section>
         <section id="apsis_one_configuration" translate="label" sortOrder="60" showInDefault="1" showInWebsite="1"

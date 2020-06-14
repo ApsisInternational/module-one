@@ -6,9 +6,13 @@ use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Apsis\One\Model\ResourceModel\Cron\CollectionFactory as CronCollectionFactory;
 use Apsis\One\Model\ResourceModel\Event;
+use Apsis\One\Model\ResourceModel\ProfileBatch;
+use Apsis\One\Model\ResourceModel\Abandoned;
 use Apsis\One\Model\Sync\Profiles;
 use Apsis\One\Model\Sync\Events;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Apsis\One\Model\Abandoned\Find;
+use Apsis\One\Model\Events\Historical;
 
 class Cron
 {
@@ -18,9 +22,9 @@ class Cron
     private $cronCollectionFactory;
 
     /**
-     * @var AbandonedFactory
+     * @var Find
      */
-    private $abandonedFactory;
+    private $abandonedFind;
 
     /**
      * @var Profiles
@@ -38,33 +42,57 @@ class Cron
     private $eventResource;
 
     /**
+     * @var ProfileBatch
+     */
+    private $profileBatchResource;
+
+    /**
+     * @var Abandoned
+     */
+    private $abandonedResource;
+
+    /**
      * @var ApsisCoreHelper
      */
     private $coreHelper;
 
     /**
+     * @var Historical
+     */
+    private $historicalEvents;
+
+    /**
      * Cron constructor.
      *
      * @param CronCollectionFactory $cronCollectionFactory
-     * @param AbandonedFactory $abandonedFactory
+     * @param Find $abandonedFind
      * @param Profiles $profiles
      * @param Events $events
      * @param Event $eventResource
      * @param ApsisCoreHelper $coreHelper
+     * @param ProfileBatch $profileBatchResource
+     * @param Abandoned $abandonedResource
+     * @param Historical $historicalEvents
      */
     public function __construct(
         CronCollectionFactory $cronCollectionFactory,
-        AbandonedFactory $abandonedFactory,
+        Find $abandonedFind,
         Profiles $profiles,
         Events $events,
         Event $eventResource,
-        ApsisCoreHelper $coreHelper
+        ApsisCoreHelper $coreHelper,
+        ProfileBatch $profileBatchResource,
+        Abandoned $abandonedResource,
+        Historical $historicalEvents
     ) {
+        $this->historicalEvents = $historicalEvents;
+        $this->abandonedResource = $abandonedResource;
+        $this->profileBatchResource = $profileBatchResource;
         $this->eventResource = $eventResource;
         $this->coreHelper = $coreHelper;
         $this->eventsSyncModel = $events;
         $this->profileSyncModel = $profiles;
-        $this->abandonedFactory = $abandonedFactory;
+        $this->abandonedFind = $abandonedFind;
         $this->cronCollectionFactory = $cronCollectionFactory;
     }
 
@@ -73,7 +101,7 @@ class Cron
      */
     public function cleanup()
     {
-        if ($this->hasJobAlreadyRun('apsis_one_cleanup')) {
+        if ($this->checkIfJobAlreadyRan('apsis_one_cleanup')) {
             return;
         }
 
@@ -84,7 +112,9 @@ class Cron
         );
 
         if ($days) {
-            $this->eventResource->cleanupRecords($days);
+            $this->eventResource->cleanupRecords($days, $this->coreHelper);
+            $this->abandonedResource->cleanupRecords($days, $this->coreHelper);
+            $this->profileBatchResource->cleanupRecords($days, $this->coreHelper);
         }
     }
 
@@ -93,11 +123,11 @@ class Cron
      */
     public function syncEvents()
     {
-        if ($this->hasJobAlreadyRun('apsis_one_sync_events')) {
+        if ($this->checkIfJobAlreadyRan('apsis_one_sync_events')) {
             return;
         }
 
-        $this->eventsSyncModel->sync();
+        $this->eventsSyncModel->sync($this->coreHelper);
     }
 
     /**
@@ -105,11 +135,11 @@ class Cron
      */
     public function syncProfiles()
     {
-        if ($this->hasJobAlreadyRun('apsis_one_sync_profiles')) {
+        if ($this->checkIfJobAlreadyRan('apsis_one_sync_profiles')) {
             return;
         }
 
-        $this->profileSyncModel->batchAndSyncProfiles();
+        $this->profileSyncModel->batchAndSyncProfiles($this->coreHelper);
     }
 
     /**
@@ -117,20 +147,31 @@ class Cron
      */
     public function findAbandonedCarts()
     {
-        if ($this->hasJobAlreadyRun('apsis_one_find_abandoned_carts')) {
+        if ($this->checkIfJobAlreadyRan('apsis_one_find_abandoned_carts')) {
             return;
         }
 
-        $this->abandonedFactory
-            ->create()
-            ->processAbandonedCarts();
+        $this->abandonedFind->processAbandonedCarts($this->coreHelper);
+    }
+
+    /**
+     * Find past events
+     */
+    public function findHistoricalEvents()
+    {
+        if ($this->checkIfJobAlreadyRan('apsis_one_find_historical_events')) {
+            return;
+        }
+
+        $this->historicalEvents->processHistoricalEvents($this->coreHelper);
     }
 
     /**
      * @param string $jobCode
+     *
      * @return bool
      */
-    private function hasJobAlreadyRun($jobCode)
+    private function checkIfJobAlreadyRan(string $jobCode)
     {
         $currentRunningJob = $this->cronCollectionFactory
             ->create()
@@ -138,14 +179,21 @@ class Cron
             ->addFieldToFilter('status', 'running')
             ->setPageSize(1);
 
-        if ($currentRunningJob->getSize()) {
-            $jobAlreadyExecuted =  $this->cronCollectionFactory
-                ->create()
-                ->addFieldToFilter('job_code', $jobCode)
-                ->addFieldToFilter('scheduled_at', $currentRunningJob->getFirstItem()->getScheduledAt())
-                ->addFieldToFilter('status', ['in' => ['success', 'failed']]);
-            return ($jobAlreadyExecuted->getSize()) ? true : false;
+        if (! $currentRunningJob->getSize()) {
+            return false;
         }
-        return false;
+
+        $jobAlreadyExecuted =  $this->cronCollectionFactory
+            ->create()
+            ->addFieldToFilter(
+                'scheduled_at',
+                $currentRunningJob->getFirstItem()->getScheduledAt()
+            )
+            ->addFieldToFilter('job_code', $jobCode)
+            ->addFieldToFilter(
+                'status',
+                ['in' => ['success', 'failed']]
+            );
+        return (boolean) ($jobAlreadyExecuted->getSize());
     }
 }

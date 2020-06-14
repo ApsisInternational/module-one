@@ -117,7 +117,6 @@ class Events
     /**
      * Profiles constructor.
      *
-     * @param ApsisCoreHelper $apsisCoreHelper
      * @param EventCollectionFactory $eventCollectionFactory
      * @param ProfileCollectionFactory $profileCollectionFactory
      * @param EventResourceModel $eventResourceModel
@@ -125,7 +124,6 @@ class Events
      * @param ProfileResourceModel $profileResourceModel
      */
     public function __construct(
-        ApsisCoreHelper $apsisCoreHelper,
         EventCollectionFactory $eventCollectionFactory,
         ProfileCollectionFactory $profileCollectionFactory,
         EventResourceModel $eventResourceModel,
@@ -135,16 +133,16 @@ class Events
         $this->profileResourceModel = $profileResourceModel;
         $this->eventResourceModel = $eventResourceModel;
         $this->profileCollectionFactory = $profileCollectionFactory;
-        $this->apsisCoreHelper = $apsisCoreHelper;
         $this->eventCollectionFactory = $eventCollectionFactory;
         $this->abandonedCollectionFactory = $abandonedCollectionFactory;
     }
 
     /**
-     * Sync events
+     * @param ApsisCoreHelper $apsisCoreHelper
      */
-    public function sync()
+    public function sync(ApsisCoreHelper $apsisCoreHelper)
     {
+        $this->apsisCoreHelper = $apsisCoreHelper;
         $stores = $this->apsisCoreHelper->getStores();
         foreach ($stores as $store) {
             $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
@@ -238,7 +236,12 @@ class Events
                 } elseif (is_string($status)) {
                     $msg = 'Unable to sync profile with error: ' . $status;
                     $this->eventResourceModel
-                        ->updateSyncStatus(array_keys($events), Profile::SYNC_STATUS_FAILED, $msg);
+                        ->updateSyncStatus(
+                            array_keys($events),
+                            Profile::SYNC_STATUS_FAILED,
+                            $this->apsisCoreHelper,
+                            $msg
+                        );
                     continue;
                 }
 
@@ -266,11 +269,20 @@ class Events
                         continue;
                     } elseif (is_string($status)) {
                         $this->eventResourceModel
-                            ->updateSyncStatus(array_keys($events), Profile::SYNC_STATUS_FAILED, $status);
+                            ->updateSyncStatus(
+                                array_keys($events),
+                                Profile::SYNC_STATUS_FAILED,
+                                $this->apsisCoreHelper,
+                                $status
+                            );
                         continue;
                     }
 
-                    $this->eventResourceModel->updateSyncStatus(array_keys($events), Profile::SYNC_STATUS_SYNCED);
+                    $this->eventResourceModel->updateSyncStatus(
+                        array_keys($events),
+                        Profile::SYNC_STATUS_SYNCED,
+                        $this->apsisCoreHelper
+                    );
                 }
             } catch (Exception $e) {
                 $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());

@@ -3,30 +3,41 @@
 namespace Apsis\One\Block\Adminhtml\Config\Abandoned;
 
 use Magento\Config\Block\System\Config\Form\Field;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Helper\Log as ApsisLogHelper;
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Data\Form\Element\AbstractElement;
+use Magento\Framework\UrlInterface;
+use Exception;
+use Magento\Store\Model\StoreManagerInterface;
 
 class Url extends Field
 {
     /**
-     * @var ApsisCoreHelper
+     * @var ApsisLogHelper
      */
-    private $apsisCoreHelper;
+    private $apsisLogHelper;
+
+    /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
 
     /**
      * Url constructor.
      *
      * @param Context $context
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param ApsisLogHelper $apsisLogHelper
+     * @param StoreManagerInterface $storeManager,
      * @param array $data
      */
     public function __construct(
         Context $context,
-        ApsisCoreHelper $apsisCoreHelper,
+        ApsisLogHelper $apsisLogHelper,
+        StoreManagerInterface $storeManager,
         array $data = []
     ) {
-        $this->apsisCoreHelper = $apsisCoreHelper;
+        $this->storeManager = $storeManager;
+        $this->apsisLogHelper = $apsisLogHelper;
         parent::__construct($context, $data);
     }
 
@@ -38,9 +49,25 @@ class Url extends Field
     {
         $text = sprintf(
             '%sapsis/abandoned/cart/token/TOKEN/output/OUTPUT_TYPE/limit/NUMBER_LIMIT',
-            $this->apsisCoreHelper->generateBaseUrlForDynamicContent()
+            $this->generateBaseUrlForDynamicContent()
         );
         $element->setData('value', $text);
         return parent::_getElementHtml($element);
+    }
+
+    /**
+     * @return string
+     */
+    private function generateBaseUrlForDynamicContent()
+    {
+        try {
+            $website = $this->storeManager->getWebsite($this->_request->getParam('website', 0));
+            $defaultGroup = $website->getDefaultGroup();
+            $store =  (! $defaultGroup) ? null : $defaultGroup->getDefaultStore();
+            return $this->storeManager->getStore($store)->getBaseUrl(UrlInterface::URL_TYPE_LINK);
+        } catch (Exception $e) {
+            $this->apsisLogHelper->logMessage(__METHOD__, $e->getMessage());
+            return '';
+        }
     }
 }

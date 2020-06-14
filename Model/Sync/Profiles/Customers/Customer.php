@@ -9,6 +9,7 @@ use Magento\Customer\Model\Group;
 use Magento\Customer\Model\ResourceModel\Group as GroupResource;
 use Magento\Review\Model\ResourceModel\Review\CollectionFactory as ReviewCollectionFactory;
 use Magento\Review\Model\ResourceModel\Review\Collection as ReviewCollection;
+use Magento\Review\Model\Review;
 
 class Customer
 {
@@ -50,18 +51,15 @@ class Customer
     /**
      * Customer constructor.
      *
-     * @param ApsisCoreHelper $apsisCoreHelper
      * @param ReviewCollectionFactory $reviewCollectionFactory
      * @param GroupFactory $groupFactory
      * @param GroupResource $groupResource
      */
     public function __construct(
-        ApsisCoreHelper $apsisCoreHelper,
         ReviewCollectionFactory $reviewCollectionFactory,
         GroupFactory $groupFactory,
         GroupResource $groupResource
     ) {
-        $this->apsisCoreHelper = $apsisCoreHelper;
         $this->reviewCollectionFactory = $reviewCollectionFactory;
         $this->groupFactory = $groupFactory;
         $this->groupResource = $groupResource;
@@ -70,12 +68,14 @@ class Customer
     /**
      * @param array $mappingHash
      * @param MagentoCustomer $customer
+     * @param ApsisCoreHelper $apsisCoreHelper
      *
      * @return $this
      */
-    public function setCustomerData(array $mappingHash, MagentoCustomer $customer)
+    public function setCustomerData(array $mappingHash, MagentoCustomer $customer, ApsisCoreHelper $apsisCoreHelper)
     {
         $this->customer = $customer;
+        $this->apsisCoreHelper = $apsisCoreHelper;
         $this->setReviewCollection();
         foreach ($mappingHash as $key) {
             $function = 'get';
@@ -95,12 +95,11 @@ class Customer
      */
     private function setReviewCollection()
     {
-        $collection = $this->reviewCollectionFactory->create()
+        $this->reviewCollection = $this->reviewCollectionFactory->create()
             ->addCustomerFilter($this->customer->getId())
+            ->addStoreFilter($this->customer->getStoreId())
+            ->addStatusFilter(Review::STATUS_APPROVED)
             ->setOrder('review_id', 'DESC');
-
-        $this->reviewCollection = $collection;
-
         return $this;
     }
 

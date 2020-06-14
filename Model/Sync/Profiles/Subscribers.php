@@ -77,7 +77,6 @@ class Subscribers
     /**
      * Subscribers constructor.
      *
-     * @param ApsisCoreHelper $apsisCoreHelper
      * @param ProfileCollectionFactory $profileCollectionFactory
      * @param ProfileResource $profileResource
      * @param ApsisConfigHelper $apsisConfigHelper
@@ -87,7 +86,6 @@ class Subscribers
      * @param ProfileBatchFactory $profileBatchFactory
      */
     public function __construct(
-        ApsisCoreHelper $apsisCoreHelper,
         ProfileCollectionFactory $profileCollectionFactory,
         ProfileResource $profileResource,
         ApsisConfigHelper $apsisConfigHelper,
@@ -100,7 +98,6 @@ class Subscribers
         $this->subscriberCollectionFactory = $subscriberCollectionFactory;
         $this->apsisFileHelper = $apsisFileHelper;
         $this->apsisConfigHelper = $apsisConfigHelper;
-        $this->apsisCoreHelper = $apsisCoreHelper;
         $this->profileResource = $profileResource;
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->profileBatchFactory = $profileBatchFactory;
@@ -108,9 +105,11 @@ class Subscribers
 
     /**
      * @param StoreInterface $store
+     * @param ApsisCoreHelper $apsisCoreHelper
      */
-    public function batchForStore(StoreInterface $store)
+    public function batchForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
     {
+        $this->apsisCoreHelper = $apsisCoreHelper;
         $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
             $store,
             ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
@@ -254,7 +253,7 @@ class Subscribers
                     try {
                         $subscriber->setIntegrationUid($integrationIdsArray[$subscriber->getSubscriberId()]);
                         $subscriberData = $this->subscriberDataFactory->create()
-                            ->setSubscriberData(array_keys($mappings), $subscriber)
+                            ->setSubscriberData(array_keys($mappings), $subscriber, $this->apsisCoreHelper)
                             ->setConsentListData(array_keys($topicsMapping))
                             ->toCSVArray();
                         $this->apsisFileHelper->outputCSV($file, $subscriberData);
@@ -284,7 +283,8 @@ class Subscribers
                 $this->profileResource->updateSubscribersSyncStatus(
                     $subscribersToUpdate,
                     $store->getId(),
-                    Profile::SYNC_STATUS_BATCHED
+                    Profile::SYNC_STATUS_BATCHED,
+                    $this->apsisCoreHelper
                 );
             }
         } catch (Exception $e) {

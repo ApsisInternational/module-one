@@ -42,15 +42,12 @@ class Content
      * @param EmulationFactory $emulationFactory
      * @param Data $priceHelper
      * @param CartTotalRepository $cartTotalRepository
-     * @param ApsisCoreHelper $apsisCoreHelper
      */
     public function __construct(
         EmulationFactory $emulationFactory,
         Data $priceHelper,
-        CartTotalRepository $cartTotalRepository,
-        ApsisCoreHelper $apsisCoreHelper
+        CartTotalRepository $cartTotalRepository
     ) {
-        $this->apsisCoreHelper = $apsisCoreHelper;
         $this->cartTotalRepository = $cartTotalRepository;
         $this->priceHelper = $priceHelper;
         $this->emulationFactory = $emulationFactory;
@@ -58,11 +55,13 @@ class Content
 
     /**
      * @param Quote $quoteModel
+     * @param ApsisCoreHelper $apsisCoreHelper
      *
      * @return array
      */
-    public function getCartData(Quote $quoteModel)
+    public function getCartData(Quote $quoteModel, ApsisCoreHelper $apsisCoreHelper)
     {
+        $this->apsisCoreHelper = $apsisCoreHelper;
         /** @var Emulation $appEmulation */
         $appEmulation = $this->emulationFactory->create();
 
@@ -202,7 +201,7 @@ class Content
      *
      * @return array
      */
-    public function getProductOptions(Item $item)
+    private function getProductOptions(Item $item)
     {
         $options = $item->getProduct()->getTypeInstance()->getOrderOptions($item->getProduct());
         $sortedOptions = [];

@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Controller\Adminhtml\Event;
 
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Helper\Log as ApsisLogHelper;
 use Exception;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Ui\Component\MassAction\Filter;
@@ -39,27 +39,27 @@ class MassDelete extends Action
     private $filter;
 
     /**
-     * @var ApsisCoreHelper
+     * @var ApsisLogHelper
      */
-    private $apsisCoreHelper;
+    private $apsisLogHelper;
 
     /**
      * MassDelete constructor.
      *
      * @param Context $context
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param ApsisLogHelper $apsisLogHelper
      * @param EventResource $eventResource
      * @param Filter $filter
      * @param EventCollectionFactory $eventCollectionFactory
      */
     public function __construct(
         Context $context,
-        ApsisCoreHelper $apsisCoreHelper,
+        ApsisLogHelper $apsisLogHelper,
         EventResource $eventResource,
         Filter $filter,
         EventCollectionFactory $eventCollectionFactory
     ) {
-        $this->apsisCoreHelper = $apsisCoreHelper;
+        $this->apsisLogHelper = $apsisLogHelper;
         $this->filter = $filter;
         $this->eventCollectionFactory = $eventCollectionFactory;
         $this->eventResource = $eventResource;
@@ -84,7 +84,7 @@ class MassDelete extends Action
 
             $this->messageManager->addSuccessMessage(__('A total of %1 record(s) have been deleted.', $collectionSize));
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $this->apsisLogHelper->logMessage(__METHOD__, $e->getMessage());
             $this->messageManager->addErrorMessage(__('An error happen during execution. Please check logs'));
         }
 

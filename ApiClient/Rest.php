@@ -2,7 +2,7 @@
 
 namespace Apsis\One\ApiClient;
 
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Helper\Log as LogHelper;
 use Exception;
 use stdClass;
 
@@ -51,7 +51,7 @@ class Rest
     protected $responseInfo;
 
     /**
-     * @var ApsisCoreHelper
+     * @var LogHelper
      */
     protected $helper;
 
@@ -59,6 +59,16 @@ class Rest
      * @var string
      */
     protected $curlError;
+
+    /**
+     * Rest constructor.
+     *
+     * @param LogHelper $helper
+     */
+    public function __construct(LogHelper $helper)
+    {
+        $this->helper = $helper;
+    }
 
     /**
      * @return null|stdClass
@@ -274,17 +284,6 @@ class Rest
     public function setVerb($verb)
     {
         $this->verb = $verb;
-        return $this;
-    }
-
-    /**
-     * @param ApsisCoreHelper $apsisCoreHelper
-     *
-     * @return $this
-     */
-    public function setHelper(ApsisCoreHelper $apsisCoreHelper)
-    {
-        $this->helper = $apsisCoreHelper;
         return $this;
     }
 }

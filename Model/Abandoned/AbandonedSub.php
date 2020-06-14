@@ -104,10 +104,11 @@ class AbandonedSub
     /**
      * @param StoreInterface $store
      * @param string|int $acDelayPeriod
+     * @param ApsisCoreHelper $apsisCoreHelper
      *
      * @return Collection|boolean
      */
-    public function getQuoteCollectionByStore(StoreInterface $store, $acDelayPeriod)
+    public function getQuoteCollectionByStore(StoreInterface $store, $acDelayPeriod, ApsisCoreHelper $apsisCoreHelper)
     {
         try {
             $interval = $this->getInterval($acDelayPeriod);
@@ -134,6 +135,7 @@ class AbandonedSub
                 ->addFieldToFilter('main_table.updated_at', $updated);
             return $quoteCollection;
         } catch (Exception $e) {
+            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             return false;
         }
     }
@@ -162,7 +164,7 @@ class AbandonedSub
         $createdAt = $this->dateTime->formatDate(true);
         foreach ($quoteCollection as $quote) {
             $cartData = $this->cartContentFactory->create()
-                ->getCartData($quote);
+                ->getCartData($quote, $apsisCoreHelper);
             $profile = $apsisCoreHelper->getProfileByEmailAndStoreId($quote->getCustomerEmail(), $quote->getStoreId());
 
             if (! empty($cartData) && $profile) {
@@ -198,10 +200,10 @@ class AbandonedSub
         }
 
         if (! empty($abandonedCarts)) {
-            $result = $this->abandonedResource->insertAbandonedCarts($abandonedCarts);
+            $result = $this->abandonedResource->insertAbandonedCarts($abandonedCarts, $apsisCoreHelper);
 
             if ($result && ! empty($events)) {
-                $this->eventResource->insertEvents($events);
+                $this->eventResource->insertEvents($events, $apsisCoreHelper);
             }
         }
     }

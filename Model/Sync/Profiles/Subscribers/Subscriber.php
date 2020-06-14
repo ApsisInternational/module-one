@@ -23,23 +23,19 @@ class Subscriber
     private $apsisCoreHelper;
 
     /**
-     * Subscriber constructor.
-     * @param ApsisCoreHelper $apsisCoreHelper
-     */
-    public function __construct(ApsisCoreHelper $apsisCoreHelper)
-    {
-        $this->apsisCoreHelper = $apsisCoreHelper;
-    }
-
-    /**
      * @param array $mappingHash
      * @param MagentoSubscriber $subscriber
+     * @param ApsisCoreHelper $apsisCoreHelper
      *
      * @return $this
      */
-    public function setSubscriberData(array $mappingHash, MagentoSubscriber $subscriber)
-    {
+    public function setSubscriberData(
+        array $mappingHash,
+        MagentoSubscriber $subscriber,
+        ApsisCoreHelper $apsisCoreHelper
+    ) {
         $this->subscriber = $subscriber;
+        $this->apsisCoreHelper = $apsisCoreHelper;
         foreach ($mappingHash as $key) {
             $function = 'get';
             $exploded = explode('_', $key);

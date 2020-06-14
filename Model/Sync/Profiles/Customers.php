@@ -69,7 +69,6 @@ class Customers
     /**
      * Customers constructor.
      *
-     * @param ApsisCoreHelper $apsisCoreHelper
      * @param ProfileCollectionFactory $profileCollectionFactory
      * @param ProfileResource $profileResource
      * @param ApsisConfigHelper $apsisConfigHelper
@@ -78,7 +77,6 @@ class Customers
      * @param ProfileBatchFactory $profileBatchFactory
      */
     public function __construct(
-        ApsisCoreHelper $apsisCoreHelper,
         ProfileCollectionFactory $profileCollectionFactory,
         ProfileResource $profileResource,
         ApsisConfigHelper $apsisConfigHelper,
@@ -89,7 +87,6 @@ class Customers
         $this->customerDataFactory = $customerDataFactory;
         $this->apsisFileHelper = $apsisFileHelper;
         $this->apsisConfigHelper = $apsisConfigHelper;
-        $this->apsisCoreHelper = $apsisCoreHelper;
         $this->profileResource = $profileResource;
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->profileBatchFactory = $profileBatchFactory;
@@ -97,9 +94,11 @@ class Customers
 
     /**
      * @param StoreInterface $store
+     * @param ApsisCoreHelper $apsisCoreHelper
      */
-    public function batchForStore(StoreInterface $store)
+    public function batchForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
     {
+        $this->apsisCoreHelper = $apsisCoreHelper;
         $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
             $store,
             ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
@@ -169,7 +168,7 @@ class Customers
             $this->apsisFileHelper->outputCSV($file, array_keys($mappings));
             $customerIds = $collection->getColumnValues('customer_id');
             $customerCollection = $this->profileResource->buildCustomerCollection($store->getId(), $customerIds);
-            $salesData = $this->profileResource->getSalesDataForCustomers($store, $customerIds);
+            $salesData = $this->profileResource->getSalesDataForCustomers($store, $customerIds, $this->apsisCoreHelper);
             $customersToUpdate = [];
 
             /** @var Customer $customer */
@@ -181,7 +180,7 @@ class Customers
                             $customer = $this->setSalesDataOnCustomer($salesData[$customer->getId()], $customer);
                         }
                         $subscriberData = $this->customerDataFactory->create()
-                            ->setCustomerData(array_keys($mappings), $customer)
+                            ->setCustomerData(array_keys($mappings), $customer, $this->apsisCoreHelper)
                             ->toCSVArray();
                         $this->apsisFileHelper->outputCSV($file, $subscriberData);
                         $customersToUpdate[] = $customer->getId();
@@ -209,7 +208,8 @@ class Customers
                 $this->profileResource->updateCustomerSyncStatus(
                     $customersToUpdate,
                     $store->getId(),
-                    Profile::SYNC_STATUS_BATCHED
+                    Profile::SYNC_STATUS_BATCHED,
+                    $this->apsisCoreHelper
                 );
             }
         } catch (Exception $e) {

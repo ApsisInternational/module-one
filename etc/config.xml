@@ -30,6 +30,7 @@
                 <subscriber_2_customer>1</subscriber_2_customer>
                 <customer_2_subscriber>1</customer_2_subscriber>
                 <product_carted>1</product_carted>
+                <historical_event_duration>0</historical_event_duration>
             </events>
         </apsis_one_events>
         <apsis_one_mappings>

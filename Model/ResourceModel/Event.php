@@ -3,9 +3,8 @@
 namespace Apsis\One\Model\ResourceModel;
 
 use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Helper\Log as ApsisLogHelper;
 use Apsis\One\Model\Profile;
-use Apsis\One\Model\ProfileBatch;
-use Apsis\One\Model\Sql\ExpressionFactory;
 use Exception;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Apsis\One\Helper\Core as Helper;
@@ -15,66 +14,23 @@ use Magento\Framework\Stdlib\DateTime;
 class Event extends AbstractDb
 {
     /**
-     * @var ApsisCoreHelper
-     */
-    private $apsisCoreHelper;
-
-    /**
      * @var DateTime
      */
     private $dateTime;
 
     /**
-     * @var ExpressionFactory
-     */
-    private $expressionFactory;
-
-    /**
-     * @var array
-     */
-    private $cleanupTableColumnMapping = [
-        Helper::APSIS_EVENT_TABLE => "updated_at",
-        Helper::APSIS_ABANDONED_TABLE => "created_at",
-        Helper::APSIS_PROFILE_BATCH_TABLE => "updated_at"
-    ];
-
-    /**
-     * @var array
-     */
-    private $cleanupTableWhereClauseMapping = [
-        Helper::APSIS_EVENT_TABLE => [
-            'column' => 'status',
-            'in' => [Profile::SYNC_STATUS_SYNCED, Profile::SYNC_STATUS_FAILED]
-        ],
-        Helper::APSIS_ABANDONED_TABLE => [],
-        Helper::APSIS_PROFILE_BATCH_TABLE => [
-            'column' => 'sync_status',
-            'in' => [
-                ProfileBatch::SYNC_STATUS_ERROR,
-                ProfileBatch::SYNC_STATUS_COMPLETED,
-                ProfileBatch::SYNC_STATUS_FAILED]
-        ],
-    ];
-
-    /**
      * Event constructor.
      *
      * @param Context $context
-     * @param Helper $apsisCoreHelper
      * @param DateTime $dateTime
-     * @param ExpressionFactory $expressionFactory
      * @param null $connectionName
      */
     public function __construct(
         Context $context,
-        ApsisCoreHelper $apsisCoreHelper,
         DateTime $dateTime,
-        ExpressionFactory $expressionFactory,
         $connectionName = null
     ) {
         $this->dateTime = $dateTime;
-        $this->apsisCoreHelper = $apsisCoreHelper;
-        $this->expressionFactory = $expressionFactory;
         parent::__construct($context, $connectionName);
     }
 
@@ -88,16 +44,17 @@ class Event extends AbstractDb
 
     /**
      * @param array $events
+     * @param ApsisCoreHelper $apsisCoreHelper
      *
      * @return int
      */
-    public function insertEvents(array $events)
+    public function insertEvents(array $events, ApsisCoreHelper $apsisCoreHelper)
     {
         try {
             $write = $this->getConnection();
             return $write->insertMultiple($this->getMainTable(), $events);
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             return 0;
         }
     }
@@ -105,10 +62,11 @@ class Event extends AbstractDb
     /**
      * @param string $oldEmail
      * @param string $newEmail
+     * @param ApsisCoreHelper $apsisCoreHelper
      *
      * @return int
      */
-    public function updateEventsEmail(string $oldEmail, string $newEmail)
+    public function updateEventsEmail(string $oldEmail, string $newEmail, ApsisCoreHelper $apsisCoreHelper)
     {
         try {
             $write = $this->getConnection();
@@ -118,7 +76,7 @@ class Event extends AbstractDb
                 $this->getConnection()->quoteInto('email = ?', $oldEmail)
             );
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             return 0;
         }
     }
@@ -126,11 +84,12 @@ class Event extends AbstractDb
     /**
      * @param array $ids
      * @param int $status
+     * @param ApsisCoreHelper $apsisCoreHelper
      * @param string $msg
      *
      * @return int
      */
-    public function updateSyncStatus($ids, $status, string $msg = '')
+    public function updateSyncStatus(array $ids, int $status, ApsisCoreHelper $apsisCoreHelper, string $msg = '')
     {
         if (empty($ids)) {
             return 0;
@@ -149,42 +108,40 @@ class Event extends AbstractDb
                 ["id IN (?)" => $ids]
             );
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
             return 0;
         }
     }
 
     /**
      * @param int $day
+     * @param ApsisCoreHelper $apsisCoreHelper
      */
-    public function cleanupRecords(int $day)
+    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper)
     {
-        foreach ($this->cleanupTableColumnMapping as $table => $column) {
-            try {
-                $where = ["$column < DATE_SUB(NOW(), INTERVAL $day DAY)"];
-                $mapping = $this->cleanupTableWhereClauseMapping[$table];
-                if (! empty($mapping)) {
-                    $whereColumn = $mapping['column'];
-                    $where["$whereColumn IN(?)"] = $mapping['in'];
-                }
-                $this->getConnection()->delete($this->getTable($table), $where);
-            } catch (Exception $e) {
-                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
-                continue;
-            }
+        try {
+            $where = [
+                "updated_at < DATE_SUB(NOW(), INTERVAL ? DAY)" => $day,
+                "status IN(?)" => [Profile::SYNC_STATUS_SYNCED, Profile::SYNC_STATUS_FAILED]
+            ];
+            $this->getConnection()->delete($this->getMainTable(), $where);
+        } catch (Exception $e) {
+            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
         }
     }
 
     /**
+     * @param ApsisLogHelper $apsisLogHelper
+     *
      * @return bool
      */
-    public function truncateTable()
+    public function truncateTable(ApsisLogHelper $apsisLogHelper)
     {
         try {
             $this->getConnection()->truncateTable($this->getMainTable());
             return true;
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisLogHelper->logMessage(__METHOD__, $e->getMessage());
             return false;
         }
     }

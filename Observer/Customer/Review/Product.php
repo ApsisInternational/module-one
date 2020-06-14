@@ -5,6 +5,8 @@ namespace Apsis\One\Observer\Customer\Review;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Exception;
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Review\Model\Review;
@@ -16,7 +18,7 @@ use Magento\Catalog\Model\Product as MagentoProduct;
 use Magento\Customer\Model\Customer;
 use Apsis\One\Helper\Config as ApsisConfigHelper;
 use Magento\Store\Model\ScopeInterface;
-use Magento\Review\Model\ResourceModel\Rating\Option\Vote\CollectionFactory as VoteCollectionFactory;
+use Apsis\One\Model\Events\Historical\Reviews\Data;
 
 class Product implements ObserverInterface
 {
@@ -41,9 +43,14 @@ class Product implements ObserverInterface
     private $profileResource;
 
     /**
-     * @var VoteCollectionFactory
+     * @var Data
      */
-    private $voteCollectionFactory;
+    private $reviewData;
+
+    /**
+     * @var ProductRepositoryInterface
+     */
+    private $productRepository;
 
     /**
      * Product constructor.
@@ -52,16 +59,19 @@ class Product implements ObserverInterface
      * @param EventFactory $eventFactory
      * @param EventResource $eventResource
      * @param ProfileResource $profileResource
-     * @param VoteCollectionFactory $voteCollectionFactory
+     * @param Data $reviewData
+     * @param ProductRepositoryInterface $productRepository
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
         EventFactory $eventFactory,
         EventResource $eventResource,
         ProfileResource $profileResource,
-        VoteCollectionFactory $voteCollectionFactory
+        Data $reviewData,
+        ProductRepositoryInterface $productRepository
     ) {
-        $this->voteCollectionFactory = $voteCollectionFactory;
+        $this->productRepository = $productRepository;
+        $this->reviewData = $reviewData;
         $this->profileResource = $profileResource;
         $this->eventFactory = $eventFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
@@ -82,24 +92,28 @@ class Product implements ObserverInterface
         }
 
         /** @var MagentoProduct $product */
-        $product = $this->apsisCoreHelper->getProductById($reviewObject->getEntityPkValue());
+        $product = $this->getProductById($reviewObject->getEntityPkValue());
         /** @var Customer $customer */
         $customer = $this->apsisCoreHelper->getCustomerById($reviewObject->getCustomerId());
         $profile = $this->apsisCoreHelper
             ->getProfileByEmailAndStoreId($customer->getEmail(), $this->apsisCoreHelper->getStore()->getId());
 
         if ($customer && $product && $this->isOkToProceed() && $profile && $reviewObject->isApproved()) {
-            $eventModel = $this->eventFactory->create()
-                ->setEventType(Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW)
-                ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($reviewObject, $product)))
-                ->setProfileId($profile->getId())
-                ->setCustomerId($reviewObject->getCustomerId())
-                ->setStoreId($this->apsisCoreHelper->getStore()->getId())
-                ->setEmail($customer->getEmail())
-                ->setStatus(Profile::SYNC_STATUS_PENDING);
-
-            $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
             try {
+                $eventModel = $this->eventFactory->create()
+                    ->setEventType(Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW)
+                    ->setEventData(
+                        $this->apsisCoreHelper->serialize(
+                            $this->reviewData->getDataArr($reviewObject, $product, $this->apsisCoreHelper)
+                        )
+                    )
+                    ->setProfileId($profile->getId())
+                    ->setCustomerId($reviewObject->getCustomerId())
+                    ->setStoreId($this->apsisCoreHelper->getStore()->getId())
+                    ->setEmail($customer->getEmail())
+                    ->setStatus(Profile::SYNC_STATUS_PENDING);
+
+                $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
                 $this->eventResource->save($eventModel);
                 $this->profileResource->save($profile);
             } catch (Exception $e) {
@@ -126,32 +140,16 @@ class Product implements ObserverInterface
     }
 
     /**
-     * @param Review $reviewObject
-     * @param MagentoProduct $product
-     *
-     * @return array
+     * @param int $productId
+     * @return bool|ProductInterface
      */
-    private function getDataArr(Review $reviewObject, MagentoProduct $product)
+    private function getProductById(int $productId)
     {
-        $voteCollection = $this->voteCollectionFactory->create()->setReviewFilter($reviewObject->getReviewId());
-        $data = [
-            'reviewId' => (int) $reviewObject->getReviewId(),
-            'customerId' => (int) $reviewObject->getCustomerId(),
-            'websiteName' => (string) $this->apsisCoreHelper
-                ->getWebsiteNameFromStoreId(),
-            'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId(),
-            'nickname' => (string) $reviewObject->getNickname(),
-            'reviewTitle' => (string) $reviewObject->getTitle(),
-            'reviewDetail' => (string) $reviewObject->getDetail(),
-            'productId' => (int) $product->getId(),
-            'sku' => (string) $product->getSku(),
-            'name' => (string) $product->getName(),
-            'productUrl' => (string) $product->getProductUrl(),
-            'productReviewUrl' => (string) $reviewObject->getReviewUrl(),
-            'productImageUrl' => (string) $this->apsisCoreHelper->getProductImageUrl($product),
-            'catalogPriceAmount' => (float) $this->apsisCoreHelper->round($product->getPrice()),
-            'ratingStarValue' => ($voteCollection->getSize()) ? (int) $voteCollection->getFirstItem()->getValue() : 0
-        ];
-        return $data;
+        try {
+            return $this->productRepository->getById($productId);
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            return false;
+        }
     }
 }

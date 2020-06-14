@@ -2,29 +2,18 @@
 
 namespace Apsis\One\Controller\Abandoned;
 
+use Apsis\One\Model\ResourceModel\Abandoned\CollectionFactory as AbandonedCollectionFactory;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\DataObject;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Magento\Framework\App\Action\Context;
-use Apsis\One\Model\AbandonedFactory;
 use Magento\Framework\Registry;
 
 class Cart extends Action
 {
-    /**
-     * @var ApsisCoreHelper
-     */
-    private $apsisCoreHelper;
-
-    /**
-     * @var AbandonedFactory
-     */
-    private $abandonedFactory;
-
     /**
      * @var JsonFactory
      */
@@ -36,25 +25,27 @@ class Cart extends Action
     private $registry;
 
     /**
+     * @var AbandonedCollectionFactory
+     */
+    private $abandonedCollectionFactory;
+
+    /**
      * Cart constructor.
      *
      * @param Context $context
-     * @param ApsisCoreHelper $apsisCoreHelper
      * @param JsonFactory $resultJsonFactory
-     * @param AbandonedFactory $abandonedFactory
      * @param Registry $registry
+     * @param AbandonedCollectionFactory $abandonedCollectionFactory
      */
     public function __construct(
         Context $context,
-        ApsisCoreHelper $apsisCoreHelper,
         JsonFactory $resultJsonFactory,
-        AbandonedFactory $abandonedFactory,
-        Registry $registry
+        Registry $registry,
+        AbandonedCollectionFactory $abandonedCollectionFactory
     ) {
+        $this->abandonedCollectionFactory = $abandonedCollectionFactory;
         $this->registry = $registry;
-        $this->abandonedFactory = $abandonedFactory;
         $this->resultJsonFactory = $resultJsonFactory;
-        $this->apsisCoreHelper = $apsisCoreHelper;
         parent::__construct($context);
     }
 
@@ -64,11 +55,21 @@ class Cart extends Action
     public function execute()
     {
         $token = (string) $this->getRequest()->getParam('token');
-        if ($this->apsisCoreHelper->isClean($token) && $cart = $this->abandonedFactory->create()->getCart($token)) {
+        if ($this->isClean($token) && $cart = $this->getCart($token)) {
             return (strlen($cart->getCartData())) ? $this->renderOutput($cart) : $this->sendResponse(204);
         } else {
             return $this->sendResponse(401, '401 Unauthorized');
         }
+    }
+
+    /**
+     * @param string $token
+     * @return bool|DataObject
+     */
+    private function getCart(string $token)
+    {
+        return $this->abandonedCollectionFactory->create()
+            ->loadByToken($token);
     }
 
     /**
@@ -129,5 +130,15 @@ class Cart extends Action
         }
 
         return $this->getResponse();
+    }
+
+    /**
+     * @param string $string
+     *
+     * @return bool
+     */
+    private function isClean(string $string)
+    {
+        return ! preg_match("/[^a-zA-Z\d-]/i", $string);
     }
 }

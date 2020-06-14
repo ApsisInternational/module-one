@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Model;
 
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Helper\Log as ApsisLogHelper;
 use Magento\Framework\App\Config\ReinitableConfigInterface;
 use Apsis\One\Model\ResourceModel\ProfileBatch;
 use Apsis\One\Model\ResourceModel\Profile;
@@ -19,9 +19,9 @@ class Developer
     private $config;
 
     /**
-     * @var ApsisCoreHelper
+     * @var ApsisLogHelper
      */
-    private $apsisCoreHelper;
+    private $apsisLogHelper;
 
     /**
      * @var ProfileBatch
@@ -51,7 +51,7 @@ class Developer
     /**
      * Developer constructor.
      *
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param ApsisLogHelper $apsisLogHelper
      * @param ReinitableConfigInterface $reinitableConfig
      * @param ProfileBatch $profileBatch
      * @param Profile $profile
@@ -60,7 +60,7 @@ class Developer
      * @param Abandoned $abandoned
      */
     public function __construct(
-        ApsisCoreHelper $apsisCoreHelper,
+        ApsisLogHelper $apsisLogHelper,
         ReinitableConfigInterface $reinitableConfig,
         ProfileBatch $profileBatch,
         Profile $profile,
@@ -70,7 +70,7 @@ class Developer
     ) {
         $this->abandoned = $abandoned;
         $this->config = $reinitableConfig;
-        $this->apsisCoreHelper = $apsisCoreHelper;
+        $this->apsisLogHelper = $apsisLogHelper;
         $this->profileBatch = $profileBatch;
         $this->profile = $profile;
         $this->event = $event;
@@ -83,10 +83,10 @@ class Developer
     public function resetModule()
     {
         return (
-            $this->profileBatch->truncateTable() &&
-            $this->event->truncateTable() &&
-            $this->abandoned->truncateTable() &&
-            $this->profile->truncateTableAndPopulateProfiles() &&
+            $this->profileBatch->truncateTable($this->apsisLogHelper) &&
+            $this->event->truncateTable($this->apsisLogHelper) &&
+            $this->abandoned->truncateTable($this->apsisLogHelper) &&
+            $this->profile->truncateTableAndPopulateProfiles($this->apsisLogHelper) &&
             $this->deleteAllModuleConfig()
         );
     }
@@ -105,7 +105,7 @@ class Developer
             $this->config->reinit();
             return true;
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $this->apsisLogHelper->logMessage(__METHOD__, $e->getMessage());
             return false;
         }
     }

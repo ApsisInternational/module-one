@@ -58,30 +58,29 @@ class Batch
      * Batch constructor.
      *
      * @param ProfileBatchFactory $profileBatchFactory
-     * @param ApsisCoreHelper $apsisCoreHelper
      * @param ProfileResource $profileResource
      * @param ProfileBatchResource $profileBatchResource
      * @param ApsisFileHelper $apsisFileHelper
      */
     public function __construct(
         ProfileBatchFactory $profileBatchFactory,
-        ApsisCoreHelper $apsisCoreHelper,
         ProfileResource $profileResource,
         ProfileBatchResource $profileBatchResource,
         ApsisFileHelper $apsisFileHelper
     ) {
         $this->apsisFileHelper = $apsisFileHelper;
         $this->profileBatchResource = $profileBatchResource;
-        $this->apsisCoreHelper = $apsisCoreHelper;
         $this->profileBatchFactory = $profileBatchFactory;
         $this->profileResource = $profileResource;
     }
 
     /**
      * @param StoreInterface $store
+     * @param ApsisCoreHelper $apsisCoreHelper
      */
-    public function syncBatchItemsForStore(StoreInterface $store)
+    public function syncBatchItemsForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
     {
+        $this->apsisCoreHelper = $apsisCoreHelper;
         $this->importCountInProcessingStatus = 0;
         $apiClient = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
         $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
@@ -246,6 +245,7 @@ class Batch
                 explode(",", $item->getEntityIds()),
                 $store->getId(),
                 $status,
+                $this->apsisCoreHelper,
                 $msg
             );
         } elseif ($item->getBatchType() == ProfileBatch::BATCH_TYPE_SUBSCRIBER) {
@@ -253,6 +253,7 @@ class Batch
                 explode(",", $item->getEntityIds()),
                 $store->getId(),
                 $status,
+                $this->apsisCoreHelper,
                 $msg
             );
         }

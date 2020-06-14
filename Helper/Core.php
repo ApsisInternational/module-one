@@ -10,7 +10,6 @@ use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
-use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\DataObject;
 use Magento\Framework\Encryption\EncryptorInterface;
@@ -19,12 +18,9 @@ use Exception;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\Framework\UrlInterface;
-use Magento\Framework\Stdlib\StringUtils;
 use stdClass;
 use Zend_Date;
 use Apsis\One\Logger\Logger;
-use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Catalog\Helper\Image;
 use Apsis\One\ApiClient\ClientFactory;
@@ -32,8 +28,9 @@ use Apsis\One\ApiClient\Client;
 use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as DataCollectionFactory;
 use Magento\Config\Model\ResourceModel\Config\Data\Collection as DataCollection;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
+use Apsis\One\Helper\Log as LogHelper;
 
-class Core extends AbstractHelper
+class Core extends LogHelper
 {
     /**
      * APSIS table names
@@ -43,22 +40,10 @@ class Core extends AbstractHelper
     const APSIS_EVENT_TABLE = 'apsis_event';
     const APSIS_ABANDONED_TABLE = 'apsis_abandoned';
 
-    const APSIS_ATTRIBUTE_TYPE_TEXT_LIMIT = 100;
-
-    /**
-     * @var Logger
-     */
-    private $logger;
-
     /**
      * @var StoreManagerInterface
      */
     private $storeManager;
-
-    /**
-     * @var StringUtils
-     */
-    private $stringUtils;
 
     /**
      * @var TimezoneInterface
@@ -74,11 +59,6 @@ class Core extends AbstractHelper
      * @var Image
      */
     private $imageHelper;
-
-    /**
-     * @var ProductRepositoryInterface
-     */
-    private $productRepository;
 
     /**
      * @var CustomerRepositoryInterface
@@ -124,13 +104,11 @@ class Core extends AbstractHelper
      * Core constructor.
      *
      * @param Context $context
+     * @param Logger $logger
      * @param StoreManagerInterface $storeManager
-     * @param StringUtils $stringUtils
      * @param TimezoneInterface $localeDate
      * @param EncryptorInterface $encryptor
-     * @param Logger $logger
      * @param Image $imageHelper
-     * @param ProductRepositoryInterface $productRepository
      * @param CustomerRepositoryInterface $customerRepository
      * @param WriterInterface $writer
      * @param ClientFactory $clientFactory
@@ -142,13 +120,11 @@ class Core extends AbstractHelper
      */
     public function __construct(
         Context $context,
+        Logger $logger,
         StoreManagerInterface $storeManager,
-        StringUtils $stringUtils,
         TimezoneInterface $localeDate,
         EncryptorInterface $encryptor,
-        Logger $logger,
         Image $imageHelper,
-        ProductRepositoryInterface $productRepository,
         CustomerRepositoryInterface $customerRepository,
         WriterInterface $writer,
         ClientFactory $clientFactory,
@@ -165,15 +141,12 @@ class Core extends AbstractHelper
         $this->apiClientFactory = $clientFactory;
         $this->writer = $writer;
         $this->customerRepository = $customerRepository;
-        $this->productRepository = $productRepository;
         $this->imageHelper = $imageHelper;
-        $this->logger = $logger;
         $this->encryptor = $encryptor;
         $this->localeDate = $localeDate;
         $this->storeManager = $storeManager;
-        $this->stringUtils = $stringUtils;
         $this->profileCollectionFactory = $profileCollectionFactory;
-        parent::__construct($context);
+        parent::__construct($context, $logger);
     }
 
     /**
@@ -203,20 +176,6 @@ class Core extends AbstractHelper
     }
 
     /**
-     * @param int $productId
-     * @return bool|ProductInterface
-     */
-    public function getProductById(int $productId)
-    {
-        try {
-            return $this->productRepository->getById($productId);
-        } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
      * @param ProductInterface $product
      * @param string $imageId
      *
@@ -229,35 +188,6 @@ class Core extends AbstractHelper
             ->setImageFile($product->getSmallImage());
 
         return $image->getUrl();
-    }
-
-    /**
-     * @param string|int|float|bool|array|null $data
-     * @return string|bool
-     */
-    public function serialize($data)
-    {
-        try {
-            return json_encode($data);
-        } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage());
-            return '{}';
-        }
-    }
-
-    /**
-     * @param string $string
-     *
-     * @return array|bool|float|int|mixed|string|null|object
-     */
-    public function unserialize(string $string)
-    {
-        try {
-            return json_decode($string);
-        } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage());
-            return [];
-        }
     }
 
     /**
@@ -297,48 +227,6 @@ class Core extends AbstractHelper
             $this->logMessage(__METHOD__, $e->getMessage());
             return '';
         }
-    }
-
-    /**
-     * @param string $classMethodName
-     * @param string $text
-     */
-    public function logMessage(string $classMethodName, string $text)
-    {
-        $this->log($this->getStringForLog($classMethodName, $text));
-    }
-
-    /**
-     * INFO (200): Interesting events.
-     *
-     * @param string $message
-     * @param array $extra
-     */
-    public function log(string $message, $extra = [])
-    {
-        $this->logger->info($message, $extra);
-    }
-
-    /**
-     * DEBUG (100): Detailed debug information.
-     *
-     * @param string $message
-     * @param array $extra
-     */
-    public function debug(string $message, $extra = [])
-    {
-        $this->logger->debug($message, $extra);
-    }
-
-    /**
-     * ERROR (400): Runtime errors.
-     *
-     * @param string $message
-     * @param array $extra
-     */
-    public function error(string $message, $extra = [])
-    {
-        $this->logger->error($message, $extra);
     }
 
     /**
@@ -422,49 +310,6 @@ class Core extends AbstractHelper
             $scope['context_scope'],
             $scope['context_scope_id']
         );
-    }
-
-    /**
-     * @return string
-     */
-    public function generateBaseUrlForDynamicContent()
-    {
-        try {
-            $website = $this->storeManager->getWebsite($this->_request->getParam('website', 0));
-            $defaultGroup = $website->getDefaultGroup();
-            $store =  (! $defaultGroup) ? null : $defaultGroup->getDefaultStore();
-            return $this->storeManager->getStore($store)->getBaseUrl(UrlInterface::URL_TYPE_LINK);
-        } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage());
-            return '';
-        }
-    }
-
-    /**
-     * @param string $functionName
-     * @param string $text
-     *
-     * @return string
-     */
-    public function getStringForLog(string $functionName, string $text)
-    {
-        return ' - Class & Method: ' . $functionName . ' - Text: ' . $text;
-    }
-
-    /**
-     *  Check string length and limit to set in class constant.
-     *
-     * @param string $string
-     *
-     * @return string
-     */
-    public function limitStringLength($string)
-    {
-        if ($this->stringUtils->strlen($string) > self::APSIS_ATTRIBUTE_TYPE_TEXT_LIMIT) {
-            $string = $this->stringUtils->substr($string, 0, self::APSIS_ATTRIBUTE_TYPE_TEXT_LIMIT);
-        }
-
-        return $string;
     }
 
     /**
@@ -590,8 +435,7 @@ class Core extends AbstractHelper
         if (! empty($clientId) && ! empty($clientSecret)) {
             /** @var Client $apiClient */
             $apiClient = $this->apiClientFactory->create();
-            $request = $apiClient->setHelper($this)
-                ->getAccessToken($clientId, $clientSecret);
+            $request = $apiClient->getAccessToken($clientId, $clientSecret);
 
             if ($request && isset($request->access_token)) {
                 $scopeArray = $this->resolveContext($contextScope, $scopeId);
@@ -678,8 +522,7 @@ class Core extends AbstractHelper
     {
         /** @var Client $apiClient */
         $apiClient = $this->apiClientFactory->create();
-        return $apiClient->setHelper($this)
-            ->setToken($token);
+        return $apiClient->setToken($token);
     }
 
     /**
@@ -866,15 +709,5 @@ class Core extends AbstractHelper
         );
         $fromTime->add($interval);
         return $fromTime->format(Zend_Date::ISO_8601);
-    }
-
-    /**
-     * @param string $string
-     *
-     * @return bool
-     */
-    public function isClean(string $string)
-    {
-        return ! preg_match("/[^a-zA-Z\d-]/i", $string);
     }
 }

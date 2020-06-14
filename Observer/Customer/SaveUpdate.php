@@ -176,7 +176,11 @@ class SaveUpdate implements ObserverInterface
     {
         try {
             if ($customer->getEmail() != $profile->getEmail()) {
-                $this->eventResource->updateEventsEmail($profile->getEmail(), $customer->getEmail());
+                $this->eventResource->updateEventsEmail(
+                    $profile->getEmail(),
+                    $customer->getEmail(),
+                    $this->apsisCoreHelper
+                );
                 $profile->setEmail($customer->getEmail());
             }
 

@@ -7,7 +7,7 @@ use Magento\Framework\DataObject;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Magento\Framework\Registry;
 use Magento\Framework\View\Element\Template;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Helper\Log as ApsisLogHelper;
 
 /**
  * Cart block
@@ -16,6 +16,11 @@ use Apsis\One\Helper\Core as ApsisCoreHelper;
  */
 class Cart extends Template
 {
+    /**
+     * @var ApsisLogHelper
+     */
+    private $apsisLogHelper;
+
     /**
      * @var Registry
      */
@@ -32,27 +37,22 @@ class Cart extends Template
     private $cart;
 
     /**
-     * @var ApsisCoreHelper
-     */
-    private $apsisCoreHelper;
-
-    /**
      * Cart constructor.
      *
      * @param Template\Context $context
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param ApsisLogHelper $apsisLogHelper
      * @param Registry $registry
      * @param PriceHelper $priceHelper
      * @param array $data
      */
     public function __construct(
         Template\Context $context,
-        ApsisCoreHelper $apsisCoreHelper,
+        ApsisLogHelper $apsisLogHelper,
         Registry $registry,
         PriceHelper $priceHelper,
         array $data = []
     ) {
-        $this->apsisCoreHelper = $apsisCoreHelper;
+        $this->apsisLogHelper = $apsisLogHelper;
         $this->priceHelper = $priceHelper;
         $this->registry = $registry;
         parent::__construct($context, $data);
@@ -66,7 +66,7 @@ class Cart extends Template
         $cart = $this->registry->registry('apsis_one_cart');
         if ($cart instanceof DataObject) {
             $this->cart = $cart;
-            $obj = $this->apsisCoreHelper->unserialize($this->cart->getCartData());
+            $obj = $this->apsisLogHelper->unserialize($this->cart->getCartData());
             if (isset($obj->items) && is_array($obj->items)) {
                 return $this->getItemsWithLimitApplied($obj->items);
             }

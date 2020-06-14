@@ -11,11 +11,6 @@ use Magento\Store\Model\ScopeInterface;
 class Profiles
 {
     /**
-     * @var ApsisCoreHelper
-     */
-    private $apsisCoreHelper;
-
-    /**
      * @var Subscribers
      */
     private $subscribers;
@@ -33,13 +28,11 @@ class Profiles
     /**
      * Profiles constructor.
      *
-     * @param ApsisCoreHelper $apsisCoreHelper
      * @param Subscribers $subscribers
      * @param Customers $customers
      * @param Batch $batch
      */
     public function __construct(
-        ApsisCoreHelper $apsisCoreHelper,
         Subscribers $subscribers,
         Customers $customers,
         Batch $batch
@@ -47,21 +40,20 @@ class Profiles
         $this->batch = $batch;
         $this->customers = $customers;
         $this->subscribers = $subscribers;
-        $this->apsisCoreHelper = $apsisCoreHelper;
     }
 
     /**
-     * Sync subscribers and customers
+     * @param ApsisCoreHelper $apsisCoreHelper
      */
-    public function batchAndSyncProfiles()
+    public function batchAndSyncProfiles(ApsisCoreHelper $apsisCoreHelper)
     {
-        $stores = $this->apsisCoreHelper->getStores();
+        $stores = $apsisCoreHelper->getStores();
         foreach ($stores as $store) {
-            $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
+            $account = $apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
             if ($account) {
-                $this->subscribers->batchForStore($store);
-                $this->customers->batchForStore($store);
-                $this->batch->syncBatchItemsForStore($store);
+                $this->subscribers->batchForStore($store, $apsisCoreHelper);
+                $this->customers->batchForStore($store, $apsisCoreHelper);
+                $this->batch->syncBatchItemsForStore($store, $apsisCoreHelper);
             }
         }
     }

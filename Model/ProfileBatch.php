@@ -10,7 +10,6 @@ use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
 use Apsis\One\Model\ResourceModel\ProfileBatch\CollectionFactory as ProfileBatchCollectionFactory;
 use Apsis\One\Model\ResourceModel\ProfileBatch\Collection as ProfileBatchCollection;
 
@@ -39,11 +38,6 @@ class ProfileBatch extends AbstractModel
     private $profileBatchResource;
 
     /**
-     * @var ApsisCoreHelper
-     */
-    private $apsisCoreHelper;
-
-    /**
      * @var ProfileBatchCollectionFactory
      */
     private $profileBatchCollectionFactory;
@@ -55,7 +49,6 @@ class ProfileBatch extends AbstractModel
      * @param Registry $registry
      * @param DateTime $dateTime
      * @param ProfileBatchResource $profileBatchResource
-     * @param ApsisCoreHelper $apsisCoreHelper
      * @param ProfileBatchCollectionFactory $profileBatchCollectionFactory
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
@@ -66,7 +59,6 @@ class ProfileBatch extends AbstractModel
         Registry $registry,
         DateTime $dateTime,
         ProfileBatchResource $profileBatchResource,
-        ApsisCoreHelper $apsisCoreHelper,
         ProfileBatchCollectionFactory $profileBatchCollectionFactory,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
@@ -75,7 +67,6 @@ class ProfileBatch extends AbstractModel
         $this->profileBatchCollectionFactory = $profileBatchCollectionFactory;
         $this->dateTime = $dateTime;
         $this->profileBatchResource = $profileBatchResource;
-        $this->apsisCoreHelper = $apsisCoreHelper;
         parent::__construct(
             $context,
             $registry,

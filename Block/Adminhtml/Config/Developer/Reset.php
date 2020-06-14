@@ -5,16 +5,16 @@ namespace Apsis\One\Block\Adminhtml\Config\Developer;
 use Exception;
 use Magento\Backend\Block\Widget\Button;
 use Magento\Config\Block\System\Config\Form\Field;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Helper\Log as ApsisLogHelper;
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 
 class Reset extends Field
 {
     /**
-     * @var ApsisCoreHelper
+     * @var ApsisLogHelper
      */
-    private $apsisCoreHelper;
+    private $apsisLogHelper;
 
     /**
      * @var string
@@ -36,15 +36,15 @@ class Reset extends Field
      * Url constructor.
      *
      * @param Context $context
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param ApsisLogHelper $apsisLogHelper
      * @param array $data
      */
     public function __construct(
         Context $context,
-        ApsisCoreHelper $apsisCoreHelper,
+        ApsisLogHelper $apsisLogHelper,
         array $data = []
     ) {
-        $this->apsisCoreHelper = $apsisCoreHelper;
+        $this->apsisLogHelper = $apsisLogHelper;
         parent::__construct($context, $data);
     }
 
@@ -64,7 +64,7 @@ class Reset extends Field
                 ->setLabel($this->buttonLabel)
                 ->toHtml();
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $this->apsisLogHelper->logMessage(__METHOD__, $e->getMessage());
             return parent::_getElementHtml($element);
         }
     }

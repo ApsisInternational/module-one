@@ -12,13 +12,13 @@ use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Exception;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Catalog\Model\Product;
+use Apsis\One\Model\Events\Historical\Carts\Data;
 
 class AddProduct implements ObserverInterface
 {
@@ -48,6 +48,11 @@ class AddProduct implements ObserverInterface
     private $profileResource;
 
     /**
+     * @var Data
+     */
+    private $cartData;
+
+    /**
      * AddProduct constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -55,14 +60,17 @@ class AddProduct implements ObserverInterface
      * @param EventResource $eventResource
      * @param ProfileResource $profileResource
      * @param CheckoutSession $checkoutSession
+     * @param Data $cartData
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
         EventFactory $eventFactory,
         EventResource $eventResource,
         ProfileResource $profileResource,
-        CheckoutSession $checkoutSession
+        CheckoutSession $checkoutSession,
+        Data $cartData
     ) {
+        $this->cartData = $cartData;
         $this->checkoutSession = $checkoutSession;
         $this->profileResource = $profileResource;
         $this->eventFactory = $eventFactory;
@@ -80,7 +88,7 @@ class AddProduct implements ObserverInterface
         try {
             /** @var Quote $cart */
             $cart = $this->checkoutSession->getQuote();
-            if ($cart->getCustomerIsGuest()) {
+            if ($cart->getCustomerIsGuest() || empty($cart->getCustomerId())) {
                 return $this;
             }
 
@@ -97,10 +105,13 @@ class AddProduct implements ObserverInterface
             );
 
             if ($this->isOkToProceed($cart->getStore()) && $profile && $item) {
-                $eventData = $this->getDataArr($cart, $item, $product);
                 $eventModel = $this->eventFactory->create()
                     ->setEventType(Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART)
-                    ->setEventData($this->apsisCoreHelper->serialize($eventData))
+                    ->setEventData(
+                        $this->apsisCoreHelper->serialize(
+                            $this->cartData->getDataArr($cart, $item, $this->apsisCoreHelper)
+                        )
+                    )
                     ->setProfileId($profile->getId())
                     ->setCustomerId($cart->getCustomerId())
                     ->setStoreId($cart->getStore()->getId())
@@ -116,35 +127,6 @@ class AddProduct implements ObserverInterface
         }
 
         return $this;
-    }
-
-    /**
-     * @param Quote $cart
-     * @param Item $item
-     * @param Product $product
-     *
-     * @return array
-     *
-     * @throws NoSuchEntityException
-     */
-    private function getDataArr(Quote $cart, Item $item, Product $product)
-    {
-        return [
-            'cartId' => (int) $cart->getId(),
-            'customerId' => (int) $cart->getCustomerId(),
-            'storeName' => (string) $cart->getStore()->getName(),
-            'websiteName' => (string) $cart->getStore()->getWebsite()->getName(),
-            'currencyCode' => (string) $cart->getQuoteCurrencyCode(),
-            'productId' => (int) $item->getProductId(),
-            'sku' => (string) $item->getSku(),
-            'name' => (string) $item->getName(),
-            'productUrl' => (string) $product->getProductUrl(),
-            'productImageUrl' => (string) $this->apsisCoreHelper->getProductImageUrl($product),
-            'qtyOrdered' => (float) $item->getQty() ? $item->getQty() :
-                ($item->getQtyOrdered() ? $item->getQtyOrdered() : 1),
-            'priceAmount' => (float) $this->apsisCoreHelper->round($item->getPrice()),
-            'rowTotalAmount' => (float) $this->apsisCoreHelper->round($item->getRowTotal()),
-        ];
     }
 
     /**

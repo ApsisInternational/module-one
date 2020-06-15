@@ -4,6 +4,7 @@ namespace Apsis\One\Observer\Customer\Review;
 
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
+use Apsis\One\Model\Service\Profile as ProfileServiceProvider;
 use Exception;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
@@ -11,18 +12,23 @@ use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Review\Model\Review;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\EventFactory;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\Event;
 use Magento\Catalog\Model\Product as MagentoProduct;
 use Magento\Customer\Model\Customer;
-use Apsis\One\Helper\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Magento\Store\Model\ScopeInterface;
 use Apsis\One\Model\Events\Historical\Reviews\Data;
 
 class Product implements ObserverInterface
 {
+    /**
+     * @var ProfileServiceProvider
+     */
+    private $profileServiceProvider;
+
     /**
      * @var ApsisCoreHelper
      */
@@ -68,6 +74,7 @@ class Product implements ObserverInterface
      * @param Data $reviewData
      * @param ProductRepositoryInterface $productRepository
      * @param CustomerRepositoryInterface $customerRepository
+     * @param ProfileServiceProvider $profileServiceProvider
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -76,8 +83,10 @@ class Product implements ObserverInterface
         ProfileResource $profileResource,
         Data $reviewData,
         ProductRepositoryInterface $productRepository,
-        CustomerRepositoryInterface $customerRepository
+        CustomerRepositoryInterface $customerRepository,
+        ProfileServiceProvider $profileServiceProvider
     ) {
+        $this->profileServiceProvider = $profileServiceProvider;
         $this->customerRepository = $customerRepository;
         $this->productRepository = $productRepository;
         $this->reviewData = $reviewData;
@@ -105,7 +114,7 @@ class Product implements ObserverInterface
             $product = $this->getProductById($reviewObject->getEntityPkValue());
             /** @var Customer $customer */
             $customer = $this->customerRepository->getById($reviewObject->getCustomerId());
-            $profile = $this->apsisCoreHelper
+            $profile = $this->profileServiceProvider
                 ->getProfileByEmailAndStoreId($customer->getEmail(), $this->apsisCoreHelper->getStore()->getId());
 
             if ($customer && $product && $this->isOkToProceed() && $profile && $reviewObject->isApproved()) {

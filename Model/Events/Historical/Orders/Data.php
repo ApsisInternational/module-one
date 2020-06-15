@@ -2,13 +2,30 @@
 
 namespace Apsis\One\Model\Events\Historical\Orders;
 
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Product as ProductServiceProvider;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Item;
 
 class Data
 {
+    /**
+     * @var ProductServiceProvider
+     */
+    private $productServiceProvider;
+
+    /**
+     * Data constructor.
+     *
+     * @param ProductServiceProvider $productServiceProvider
+     */
+    public function __construct(
+        ProductServiceProvider $productServiceProvider
+    ) {
+        $this->productServiceProvider = $productServiceProvider;
+    }
+
     /**
      * @param Order $order
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -30,7 +47,7 @@ class Data
                 'sku' => (string) $item->getSku(),
                 'name' => (string) $item->getName(),
                 'productUrl' => (string) $product->getProductUrl(),
-                'productImageUrl' => (string) $apsisCoreHelper->getProductImageUrl($product),
+                'productImageUrl' => (string) $this->productServiceProvider->getProductImageUrl($product),
                 'qtyOrdered' => (float) $apsisCoreHelper->round($item->getQtyOrdered()),
                 'priceAmount' => (float) $apsisCoreHelper->round($item->getPrice()),
                 'rowTotalAmount' => (float) $apsisCoreHelper->round($item->getRowTotal()),

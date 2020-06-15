@@ -2,13 +2,13 @@
 
 namespace Apsis\One\Observer\Adminhtml;
 
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\App\Config\ReinitableConfigInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Message\ManagerInterface;
-use Apsis\One\Helper\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Magento\Store\Model\ScopeInterface;
 
 class ValidateApi implements ObserverInterface

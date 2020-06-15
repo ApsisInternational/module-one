@@ -2,13 +2,19 @@
 
 namespace Apsis\One\Model\Events\Historical\Reviews;
 
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Product as ProductServiceProvider;
 use Magento\Catalog\Model\Product as MagentoProduct;
 use Magento\Review\Model\Review;
 use Magento\Review\Model\ResourceModel\Rating\Option\Vote\CollectionFactory as VoteCollectionFactory;
 
 class Data
 {
+    /**
+     * @var ProductServiceProvider
+     */
+    private $productServiceProvider;
+
     /**
      * @var VoteCollectionFactory
      */
@@ -18,9 +24,13 @@ class Data
      * Data constructor.
      *
      * @param VoteCollectionFactory $voteCollectionFactory
+     * @param ProductServiceProvider $productServiceProvider
      */
-    public function __construct(VoteCollectionFactory $voteCollectionFactory)
-    {
+    public function __construct(
+        VoteCollectionFactory $voteCollectionFactory,
+        ProductServiceProvider $productServiceProvider
+    ) {
+        $this->productServiceProvider = $productServiceProvider;
         $this->voteCollectionFactory = $voteCollectionFactory;
     }
 
@@ -47,7 +57,7 @@ class Data
             'name' => (string) $product->getName(),
             'productUrl' => (string) $product->getProductUrl(),
             'productReviewUrl' => (string) $reviewObject->getReviewUrl(),
-            'productImageUrl' => (string) $apsisCoreHelper->getProductImageUrl($product),
+            'productImageUrl' => (string) $this->productServiceProvider->getProductImageUrl($product),
             'catalogPriceAmount' => (float) $apsisCoreHelper->round($product->getPrice()),
             'ratingStarValue' => ($voteCollection->getSize()) ? (int) $voteCollection->getFirstItem()->getValue() : 0
         ];

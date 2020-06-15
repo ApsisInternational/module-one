@@ -2,14 +2,14 @@
 
 namespace Apsis\One\Observer\Customer;
 
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\EventFactory;
 use Apsis\One\Model\Event;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Customer\Model\Customer;
-use Apsis\One\Helper\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ProfileFactory;

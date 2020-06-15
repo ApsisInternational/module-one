@@ -2,8 +2,8 @@
 
 namespace Apsis\One\Model\Sync\Profiles\Customers;
 
-use Apsis\One\Helper\Core as ApsisCoreHelper;
-use Apsis\One\Helper\Date as ApsisDateHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Customer\Model\GroupFactory;
 use Magento\Customer\Model\Group;

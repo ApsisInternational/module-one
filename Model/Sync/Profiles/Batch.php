@@ -3,10 +3,10 @@
 namespace Apsis\One\Model\Sync\Profiles;
 
 use Apsis\One\ApiClient\Client;
-use Apsis\One\Helper\Config as ApsisConfigHelper;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
-use Apsis\One\Helper\Date as ApsisDateHelper;
-use Apsis\One\Helper\File as ApsisFileHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Date as ApsisDateHelper;
+use Apsis\One\Model\Service\File as ApsisFileHelper;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ProfileBatch;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
@@ -284,7 +284,7 @@ class Batch
             $msg = 'Import failed with returned "error" status';
             $this->updateProfilesStatus($store, $item, Profile::SYNC_STATUS_FAILED, $msg);
             $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $msg);
-        } elseif ($result->result->status === 'waiting_for_file' &&
+        } elseif ($result->result->status === 'waiting_for_file' && $item->getFileUploadExpireAt() &&
             $this->apsisDateHelper->isExpired($item->getFileUploadExpireAt())
         ) {
             $msg = 'File upload time expired';
@@ -292,7 +292,7 @@ class Batch
             $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $msg);
         } elseif (in_array($result->result->status, $this->statusToCheckIfExpired)) {
             $inputDateTime = $this->apsisDateHelper->getFormattedDateTimeWithAddedInterval($item->getUpdatedAt());
-            if ($this->apsisDateHelper->isExpired($inputDateTime)) {
+            if ($inputDateTime && $this->apsisDateHelper->isExpired($inputDateTime)) {
                 $msg = 'Expired. Stuck in processing state for 1 day';
                 $this->updateItem($item, ProfileBatch::SYNC_STATUS_ERROR, $msg);
                 $this->updateProfilesStatus($store, $item, Profile::SYNC_STATUS_PENDING);

@@ -2,12 +2,13 @@
 
 namespace Apsis\One\Model\Abandoned;
 
-use Apsis\One\Helper\Core as ApsisCoreHelper;
-use Apsis\One\Helper\Date as ApsisDateHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Cart\ContentFactory;
 use Apsis\One\Model\Event;
 use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
+use Apsis\One\Model\Service\Profile as ProfileServiceProvider;
 use Apsis\One\Model\Sql\ExpressionFactory;
 use Exception;
 use Magento\Framework\Stdlib\DateTime;
@@ -18,6 +19,11 @@ use Apsis\One\Model\Profile;
 
 class AbandonedSub
 {
+    /**
+     * @var ProfileServiceProvider
+     */
+    private $profileServiceProvider;
+
     /**
      * @var EventResource
      */
@@ -63,6 +69,7 @@ class AbandonedSub
      * @param DateTime $dateTime
      * @param ExpressionFactory $expressionFactory
      * @param ApsisDateHelper $apsisDateHelper
+     * @param ProfileServiceProvider $profileServiceProvider
      */
     public function __construct(
         ContentFactory $cartContentFactory,
@@ -71,8 +78,10 @@ class AbandonedSub
         EventResource $eventResource,
         DateTime $dateTime,
         ExpressionFactory $expressionFactory,
-        ApsisDateHelper $apsisDateHelper
+        ApsisDateHelper $apsisDateHelper,
+        ProfileServiceProvider $profileServiceProvider
     ) {
+        $this->profileServiceProvider = $profileServiceProvider;
         $this->apsisDateHelper = $apsisDateHelper;
         $this->expressionFactory = $expressionFactory;
         $this->dateTime = $dateTime;
@@ -128,7 +137,8 @@ class AbandonedSub
         foreach ($quoteCollection as $quote) {
             $cartData = $this->cartContentFactory->create()
                 ->getCartData($quote, $apsisCoreHelper);
-            $profile = $apsisCoreHelper->getProfileByEmailAndStoreId($quote->getCustomerEmail(), $quote->getStoreId());
+            $profile = $this->profileServiceProvider
+                ->getProfileByEmailAndStoreId($quote->getCustomerEmail(), $quote->getStoreId());
 
             if (! empty($cartData) && $profile) {
                 $abandonedCarts[] = [

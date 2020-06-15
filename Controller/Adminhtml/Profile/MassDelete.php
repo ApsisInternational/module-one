@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Controller\Adminhtml\Profile;
 
-use Apsis\One\Helper\Log as ApsisLogHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Exception;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultFactory;

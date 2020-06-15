@@ -2,10 +2,10 @@
 
 namespace Apsis\One\Model\ResourceModel;
 
-use Apsis\One\Helper\Log as ApsisLogHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Exception;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\ProfileBatch as ProfileBatchModel;
 
 class ProfileBatch extends AbstractDb

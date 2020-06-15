@@ -3,7 +3,7 @@
 namespace Apsis\One\Block\Adminhtml;
 
 use Magento\Backend\Block\Widget\Container;
-use Apsis\One\Helper\File;
+use Apsis\One\Model\Service\File;
 use Magento\Backend\Block\Widget\Context;
 
 /**

@@ -1,13 +1,11 @@
 <?php
 
-namespace Apsis\One\Helper;
+namespace Apsis\One\Model\Service;
 
-use Magento\Framework\App\Helper\AbstractHelper;
-use Magento\Framework\App\Helper\Context;
 use Apsis\One\Logger\Logger;
 use Exception;
 
-class Log extends AbstractHelper
+class Log
 {
     /**
      * @var Logger
@@ -17,15 +15,11 @@ class Log extends AbstractHelper
     /**
      * Log constructor.
      *
-     * @param Context $context
      * @param Logger $logger
      */
-    public function __construct(
-        Context $context,
-        Logger $logger
-    ) {
+    public function __construct(Logger $logger)
+    {
         $this->logger = $logger;
-        parent::__construct($context);
     }
 
     /**

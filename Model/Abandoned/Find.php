@@ -2,8 +2,8 @@
 
 namespace Apsis\One\Model\Abandoned;
 
-use Apsis\One\Helper\Config as ApsisConfigHelper;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Store\Model\ScopeInterface;
 
 class Find

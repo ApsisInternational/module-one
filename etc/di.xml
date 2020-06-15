@@ -55,4 +55,6 @@
                 type="Magento\Catalog\Model\ProductRepository" />
     <preference for="Magento\Customer\Api\CustomerRepositoryInterface"
                 type="Magento\Customer\Model\ResourceModel\CustomerRepository" />
+    <preference for="Magento\Framework\App\Config\ScopeConfigInterface"
+                type="Magento\Framework\App\Config" />
 </config>

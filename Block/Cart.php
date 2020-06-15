@@ -7,7 +7,7 @@ use Magento\Framework\DataObject;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Magento\Framework\Registry;
 use Magento\Framework\View\Element\Template;
-use Apsis\One\Helper\Log as ApsisLogHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 
 /**
  * Cart block

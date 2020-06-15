@@ -2,8 +2,8 @@
 
 namespace Apsis\One\Model;
 
-use Apsis\One\Helper\Config as ApsisConfigHelper;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\ResourceModel\Cron\CollectionFactory as CronCollectionFactory;
 use Apsis\One\Model\ResourceModel\Event;
 use Apsis\One\Model\ResourceModel\ProfileBatch;

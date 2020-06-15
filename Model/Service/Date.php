@@ -1,18 +1,16 @@
 <?php
 
-namespace Apsis\One\Helper;
+namespace Apsis\One\Model\Service;
 
 use Apsis\One\Model\DateInterval;
 use Apsis\One\Model\DateIntervalFactory;
 use Apsis\One\Model\DateTime;
 use Apsis\One\Model\DateTimeFactory;
 use Apsis\One\Model\DateTimeZoneFactory;
-use Magento\Framework\App\Helper\AbstractHelper;
-use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Zend_Date;
 
-class Date extends AbstractHelper
+class Date
 {
     /**
      * @var TimezoneInterface
@@ -37,14 +35,12 @@ class Date extends AbstractHelper
     /**
      * Date constructor.
      *
-     * @param Context $context
      * @param TimezoneInterface $localeDate
      * @param DateTimeFactory $dateTimeFactory
      * @param DateTimeZoneFactory $dateTimeZoneFactory
      * @param DateIntervalFactory $dateIntervalFactory
      */
     public function __construct(
-        Context $context,
         TimezoneInterface $localeDate,
         DateTimeFactory $dateTimeFactory,
         DateTimeZoneFactory $dateTimeZoneFactory,
@@ -54,7 +50,6 @@ class Date extends AbstractHelper
         $this->dateIntervalFactory = $dateIntervalFactory;
         $this->dateTimeFactory = $dateTimeFactory;
         $this->localeDate = $localeDate;
-        parent::__construct($context);
     }
 
     /**

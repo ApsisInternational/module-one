@@ -2,13 +2,14 @@
 
 namespace Apsis\One\Observer\Sales\Order;
 
-use Apsis\One\Helper\Config as ApsisConfigHelper;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Event;
 use Apsis\One\Model\EventFactory;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
+use Apsis\One\Model\Service\Profile as ProfileServiceProvider;
 use Exception;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -20,6 +21,11 @@ use Apsis\One\Model\Events\Historical\Orders\Data;
 
 class Placed implements ObserverInterface
 {
+    /**
+     * @var ProfileServiceProvider
+     */
+    private $profileServiceProvider;
+
     /**
      * @var ApsisCoreHelper
      */
@@ -59,6 +65,7 @@ class Placed implements ObserverInterface
      * @param ProfileResourceCollectionFactory $profileResourceCollectionFactory
      * @param ProfileResource $profileResource
      * @param Data $orderData
+     * @param ProfileServiceProvider $profileServiceProvider
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -66,8 +73,10 @@ class Placed implements ObserverInterface
         EventResource $eventResource,
         ProfileResourceCollectionFactory $profileResourceCollectionFactory,
         ProfileResource $profileResource,
-        Data $orderData
+        Data $orderData,
+        ProfileServiceProvider $profileServiceProvider
     ) {
+        $this->profileServiceProvider = $profileServiceProvider;
         $this->orderData = $orderData;
         $this->profileResource = $profileResource;
         $this->profileResourceCollectionFactory = $profileResourceCollectionFactory;
@@ -98,7 +107,7 @@ class Placed implements ObserverInterface
             }
         } else {
             /** @var Profile $profile */
-            $profile = $this->apsisCoreHelper->getProfileByEmailAndStoreId(
+            $profile = $this->profileServiceProvider->getProfileByEmailAndStoreId(
                 $order->getCustomerEmail(),
                 $order->getStore()->getId()
             );

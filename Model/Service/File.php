@@ -1,17 +1,15 @@
 <?php
 
-namespace Apsis\One\Helper;
+namespace Apsis\One\Model\Service;
 
 use Exception;
-use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\ValidatorException;
 use Magento\Framework\Filesystem\Directory\WriteFactory;
 use Magento\Framework\Filesystem\Directory\Write;
 
-class File extends AbstractHelper
+class File
 {
     /**
      * @var DirectoryList
@@ -26,20 +24,17 @@ class File extends AbstractHelper
     /**
      * File constructor.
      *
-     * @param Context $context
      * @param DirectoryList $directoryList
      * @param WriteFactory $write
      *
      * @throws FileSystemException
      */
     public function __construct(
-        Context $context,
         DirectoryList $directoryList,
         WriteFactory $write
     ) {
         $this->directoryList = $directoryList;
         $this->write = $write->create($this->getOutputFolder());
-        parent::__construct($context);
     }
 
     /**

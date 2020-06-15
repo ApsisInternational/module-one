@@ -3,9 +3,9 @@
 namespace Apsis\One\Model\Sync;
 
 use Apsis\One\ApiClient\Client;
-use Apsis\One\Helper\Config as ApsisConfigHelper;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
-use Apsis\One\Helper\Date as ApsisDateHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use \Exception;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;

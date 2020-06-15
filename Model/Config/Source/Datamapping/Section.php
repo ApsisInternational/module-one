@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Model\Config\Source\Datamapping;
 
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Framework\Data\OptionSourceInterface;
 
 class Section implements OptionSourceInterface

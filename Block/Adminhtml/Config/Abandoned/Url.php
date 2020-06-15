@@ -3,7 +3,7 @@
 namespace Apsis\One\Block\Adminhtml\Config\Abandoned;
 
 use Magento\Config\Block\System\Config\Form\Field;
-use Apsis\One\Helper\Log as ApsisLogHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Framework\UrlInterface;

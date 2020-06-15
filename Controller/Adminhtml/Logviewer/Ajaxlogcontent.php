@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Controller\Adminhtml\Logviewer;
 
-use Apsis\One\Helper\File;
+use Apsis\One\Model\Service\File;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\Escaper;

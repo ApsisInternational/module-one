@@ -3,8 +3,8 @@
 namespace Apsis\One\Block\Adminhtml\Config\Event;
 
 use Magento\Config\Block\System\Config\Form\Field;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
-use Apsis\One\Helper\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 

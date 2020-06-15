@@ -2,8 +2,8 @@
 
 namespace Apsis\One\Model\ResourceModel;
 
-use Apsis\One\Helper\Config as ApsisConfigHelper;
-use Apsis\One\Helper\Log as ApsisLogHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Apsis\One\Model\Sql\ExpressionFactory;
 use Exception;
 use Magento\Customer\Model\ResourceModel\Customer\Collection;
@@ -11,7 +11,7 @@ use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as CustomerC
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Framework\Model\ResourceModel\Db\Context;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Newsletter\Model\Subscriber;

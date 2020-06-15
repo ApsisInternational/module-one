@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Controller\Adminhtml\Abandoned;
 
-use Apsis\One\Helper\Log as ApsisLogHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Exception;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Ui\Component\MassAction\Filter;

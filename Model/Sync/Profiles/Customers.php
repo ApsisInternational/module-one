@@ -2,15 +2,15 @@
 
 namespace Apsis\One\Model\Sync\Profiles;
 
-use Apsis\One\Helper\Config as ApsisConfigHelper;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\ResourceModel\Profile\Collection;
 use \Exception;
 use Magento\Customer\Model\Customer;
 use Magento\Store\Api\Data\StoreInterface;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
-use Apsis\One\Helper\File as ApsisFileHelper;
+use Apsis\One\Model\Service\File as ApsisFileHelper;
 use Apsis\One\Model\Sync\Profiles\Customers\CustomerFactory as CustomerDataFactory;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ProfileBatchFactory;

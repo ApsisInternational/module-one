@@ -1,14 +1,12 @@
 <?php
 
-namespace Apsis\One\Helper;
+namespace Apsis\One\Model\Service;
 
-use Apsis\One\Helper\Config as ApsisConfigHelper;
-use Apsis\One\Helper\Date as ApsisDateHelper;
-use Magento\Catalog\Api\Data\ProductInterface;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
-use Magento\Framework\App\Helper\Context;
-use Magento\Framework\DataObject;
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Exception;
 use Magento\Store\Api\Data\StoreInterface;
@@ -16,15 +14,13 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use stdClass;
 use Apsis\One\Logger\Logger;
-use Magento\Catalog\Helper\Image;
 use Apsis\One\ApiClient\ClientFactory;
 use Apsis\One\ApiClient\Client;
 use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as DataCollectionFactory;
 use Magento\Config\Model\ResourceModel\Config\Data\Collection as DataCollection;
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
-use Apsis\One\Helper\Log as LogHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 
-class Core extends LogHelper
+class Core extends ApsisLogHelper
 {
     /**
      * APSIS table names
@@ -45,11 +41,6 @@ class Core extends LogHelper
     private $encryptor;
 
     /**
-     * @var Image
-     */
-    private $imageHelper;
-
-    /**
      * @var WriterInterface
      */
     private $writer;
@@ -65,77 +56,55 @@ class Core extends LogHelper
     private $dataCollectionFactory;
 
     /**
-     * @var ProfileCollectionFactory
-     */
-    private $profileCollectionFactory;
-
-    /**
      * @var ApsisDateHelper
      */
     private $apsisDateHelper;
 
     /**
+     * Request object
+     *
+     * @var RequestInterface
+     */
+    private $request;
+
+    /**
+     * @var ScopeConfigInterface
+     */
+    private $scopeConfig;
+
+    /**
      * Core constructor.
      *
-     * @param Context $context
      * @param Logger $logger
      * @param StoreManagerInterface $storeManager
      * @param EncryptorInterface $encryptor
-     * @param Image $imageHelper
      * @param WriterInterface $writer
      * @param ClientFactory $clientFactory
      * @param DataCollectionFactory $dataCollectionFactory
-     * @param ProfileCollectionFactory $profileCollectionFactory
      * @param ApsisDateHelper $apsisDateHelper
+     * @param RequestInterface $request
+     * @param ScopeConfigInterface $scopeConfig
      */
     public function __construct(
-        Context $context,
         Logger $logger,
         StoreManagerInterface $storeManager,
         EncryptorInterface $encryptor,
-        Image $imageHelper,
         WriterInterface $writer,
         ClientFactory $clientFactory,
         DataCollectionFactory $dataCollectionFactory,
-        ProfileCollectionFactory $profileCollectionFactory,
-        ApsisDateHelper $apsisDateHelper
+        ApsisDateHelper $apsisDateHelper,
+        RequestInterface $request,
+        ScopeConfigInterface $scopeConfig
     ) {
+        $this->scopeConfig = $scopeConfig;
+        $this->request = $request;
         $this->apsisDateHelper = $apsisDateHelper;
         $this->dataCollectionFactory = $dataCollectionFactory;
         $this->apiClientFactory = $clientFactory;
         $this->writer = $writer;
-        $this->imageHelper = $imageHelper;
         $this->encryptor = $encryptor;
         $this->storeManager = $storeManager;
-        $this->profileCollectionFactory = $profileCollectionFactory;
-        parent::__construct($context, $logger);
-    }
-
-    /**
-     * @param string $email
-     * @param int $storeId
-     *
-     * @return bool|DataObject
-     */
-    public function getProfileByEmailAndStoreId(string $email, int $storeId)
-    {
-        return $this->profileCollectionFactory->create()
-            ->loadByEmailAndStoreId($email, $storeId);
-    }
-
-    /**
-     * @param ProductInterface $product
-     * @param string $imageId
-     *
-     * @return string
-     */
-    public function getProductImageUrl(ProductInterface $product, string $imageId = 'small_image')
-    {
-        $image = $this->imageHelper
-            ->init($product, $imageId)
-            ->setImageFile($product->getSmallImage());
-
-        return $image->getUrl();
+        parent::__construct($logger);
     }
 
     /**
@@ -185,14 +154,14 @@ class Core extends LogHelper
     public function getSelectedScopeInAdmin()
     {
         $scope = [];
-        $storeId = $this->_request->getParam('store');
+        $storeId = $this->request->getParam('store');
         if ($storeId) {
             $scope['context_scope'] = ScopeInterface::SCOPE_STORES;
             $scope['context_scope_id'] = $storeId;
             return $scope;
         }
 
-        $websiteId = $this->_request->getParam('website', 0);
+        $websiteId = $this->request->getParam('website', 0);
         $contextScope = ($websiteId) ? ScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
 
         $scope['context_scope'] = $contextScope;
@@ -599,7 +568,6 @@ class Core extends LogHelper
                 }
             }
         }
-
         return $attributesArr;
     }
 }

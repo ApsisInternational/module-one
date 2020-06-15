@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Model\Sync;
 
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers;
 use Apsis\One\Model\Sync\Profiles\Customers;
 use Apsis\One\Model\Sync\Profiles\Batch;

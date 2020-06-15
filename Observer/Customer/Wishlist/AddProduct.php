@@ -3,12 +3,13 @@
 namespace Apsis\One\Observer\Customer\Wishlist;
 
 use Apsis\One\Model\Profile;
+use Apsis\One\Model\Service\Profile as ProfileServiceProvider;
 use Exception;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\EventFactory;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\Event;
@@ -16,11 +17,22 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Wishlist\Model\Wishlist;
 use Magento\Catalog\Model\Product;
 use Magento\Wishlist\Model\Item as WishlistItem;
-use Apsis\One\Helper\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Magento\Store\Model\Store;
+use Apsis\One\Model\Service\Product as ProductServiceProvider;
 
 class AddProduct implements ObserverInterface
 {
+    /**
+     * @var ProfileServiceProvider
+     */
+    private $profileServiceProvider;
+
+    /**
+     * @var ProductServiceProvider
+     */
+    private $productServiceProvider;
+
     /**
      * @var ApsisCoreHelper
      */
@@ -48,13 +60,19 @@ class AddProduct implements ObserverInterface
      * @param EventFactory $eventFactory
      * @param EventResource $eventResource
      * @param CustomerRepositoryInterface $customerRepository
+     * @param ProductServiceProvider $productServiceProvider
+     * @param ProfileServiceProvider $profileServiceProvider
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
         EventFactory $eventFactory,
         EventResource $eventResource,
-        CustomerRepositoryInterface $customerRepository
+        CustomerRepositoryInterface $customerRepository,
+        ProductServiceProvider $productServiceProvider,
+        ProfileServiceProvider $profileServiceProvider
     ) {
+        $this->profileServiceProvider = $profileServiceProvider;
+        $this->productServiceProvider = $productServiceProvider;
         $this->customerRepository = $customerRepository;
         $this->eventFactory = $eventFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
@@ -69,7 +87,8 @@ class AddProduct implements ObserverInterface
             $store = $wishlist->getStore();
             /** @var Customer $customer */
             $customer = $this->customerRepository->getById($wishlist->getCustomerId());
-            $profile = $this->apsisCoreHelper->getProfileByEmailAndStoreId($customer->getEmail(), $store->getId());
+            $profile = $this->profileServiceProvider
+                ->getProfileByEmailAndStoreId($customer->getEmail(), $store->getId());
 
             if ($customer && $this->isOkToProceed($store) && $profile) {
                 /** @var Product $product */
@@ -134,7 +153,7 @@ class AddProduct implements ObserverInterface
             'sku' => (string) $product->getSku(),
             'name' => (string) $product->getName(),
             'productUrl' => (string) $product->getProductUrl(),
-            'productImageUrl' => (string) $this->apsisCoreHelper->getProductImageUrl($product),
+            'productImageUrl' => (string) $this->productServiceProvider->getProductImageUrl($product),
             'catalogPriceAmount' => (float) $this->apsisCoreHelper->round($product->getPrice()),
             'qty' => (float) $item->getQty(),
             'currencyCode' => (string) $store->getCurrentCurrencyCode(),

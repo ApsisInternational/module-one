@@ -2,12 +2,11 @@
 
 namespace Apsis\One\Model\ResourceModel;
 
-use Apsis\One\Helper\Core as ApsisCoreHelper;
-use Apsis\One\Helper\Log as ApsisLogHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Apsis\One\Model\Profile;
 use Exception;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
-use Apsis\One\Helper\Core as Helper;
 use Magento\Framework\Model\ResourceModel\Db\Context;
 use Magento\Framework\Stdlib\DateTime;
 
@@ -39,7 +38,7 @@ class Event extends AbstractDb
      */
     public function _construct()
     {
-        $this->_init(Helper::APSIS_EVENT_TABLE, 'id');
+        $this->_init(ApsisCoreHelper::APSIS_EVENT_TABLE, 'id');
     }
 
     /**

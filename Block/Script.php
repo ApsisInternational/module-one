@@ -4,9 +4,9 @@ namespace Apsis\One\Block;
 
 use Exception;
 use Magento\Framework\View\Element\Template;
-use Apsis\One\Helper\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Magento\Store\Model\StoreManagerInterface;
-use Apsis\One\Helper\Log as ApsisLogHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 
 /**
  * Script block

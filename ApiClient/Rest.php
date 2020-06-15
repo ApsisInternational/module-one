@@ -2,7 +2,7 @@
 
 namespace Apsis\One\ApiClient;
 
-use Apsis\One\Helper\Log as LogHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Exception;
 use stdClass;
 
@@ -51,7 +51,7 @@ class Rest
     protected $responseInfo;
 
     /**
-     * @var LogHelper
+     * @var ApsisLogHelper
      */
     protected $helper;
 
@@ -63,9 +63,9 @@ class Rest
     /**
      * Rest constructor.
      *
-     * @param LogHelper $helper
+     * @param ApsisLogHelper $helper
      */
-    public function __construct(LogHelper $helper)
+    public function __construct(ApsisLogHelper $helper)
     {
         $this->helper = $helper;
     }

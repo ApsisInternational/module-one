@@ -2,8 +2,8 @@
 
 namespace Apsis\One\Model\Sync\Profiles\Subscribers;
 
-use Apsis\One\Helper\Core as ApsisCoreHelper;
-use Apsis\One\Helper\Date as ApsisDateHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Magento\Newsletter\Model\Subscriber as MagentoSubscriber;
 
 class Subscriber

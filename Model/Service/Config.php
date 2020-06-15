@@ -1,13 +1,13 @@
 <?php
 
-namespace Apsis\One\Helper;
+namespace Apsis\One\Model\Service;
 
 use Apsis\One\Model\Profile;
-use Magento\Framework\App\Helper\AbstractHelper;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 
-class Config extends AbstractHelper
+class Config
 {
     /**
      * Accounts section
@@ -146,6 +146,21 @@ class Config extends AbstractHelper
     const CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_SECTION = 'apsis_one_configuration/tracking';
     const CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_ENABLED = 'apsis_one_configuration/tracking/enabled';
     const CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_SCRIPT = 'apsis_one_configuration/tracking/script';
+
+    /**
+     * @var ScopeConfigInterface
+     */
+    private $scopeConfig;
+
+    /**
+     * Config constructor.
+     *
+     * @param ScopeConfigInterface $scopeConfig
+     */
+    public function __construct(ScopeConfigInterface $scopeConfig)
+    {
+        $this->scopeConfig = $scopeConfig;
+    }
 
     /**
      * @param StoreInterface $store

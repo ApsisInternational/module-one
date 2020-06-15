@@ -2,9 +2,9 @@
 
 namespace Apsis\One\Plugin\Customer;
 
-use Apsis\One\Helper\Config as ApsisConfigHelper;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
-use Apsis\One\Helper\Date as ApsisDateHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Event;
 use Apsis\One\Model\EventFactory;
 use Apsis\One\Model\Profile;
@@ -14,9 +14,15 @@ use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Logger as CustomerLogger;
 use Magento\Customer\Model\Log as CustomerLog;
 use Magento\Store\Model\ScopeInterface;
+use Apsis\One\Model\Service\Profile as ProfileServiceProvider;
 
 class LoggerPlugin
 {
+    /**
+     * @var ProfileServiceProvider
+     */
+    private $profileServiceProvider;
+
     /**
      * @var ApsisCoreHelper
      */
@@ -56,6 +62,7 @@ class LoggerPlugin
      * @param CustomerLogger $customerLogger
      * @param ApsisDateHelper $apsisDateHelper
      * @param CustomerRepositoryInterface $customerRepository
+     * @param ProfileServiceProvider $profileServiceProvider
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -63,8 +70,10 @@ class LoggerPlugin
         EventResource $eventResource,
         CustomerLogger $customerLogger,
         ApsisDateHelper $apsisDateHelper,
-        CustomerRepositoryInterface $customerRepository
+        CustomerRepositoryInterface $customerRepository,
+        ProfileServiceProvider $profileServiceProvider
     ) {
+        $this->profileServiceProvider = $profileServiceProvider;
         $this->customerRepository = $customerRepository;
         $this->apsisDateHelper = $apsisDateHelper;
         $this->customerLogger = $customerLogger;
@@ -85,7 +94,7 @@ class LoggerPlugin
     {
         try {
             $customer = $this->customerRepository->getById($customerId);
-            $profile = $this->apsisCoreHelper
+            $profile = $this->profileServiceProvider
                 ->getProfileByEmailAndStoreId($customer->getEmail(), $customer->getStoreId());
             if ($this->isOkToProceed() && $customer && isset($data['last_login_at']) && $profile) {
                 /** @var CustomerLog $customerLog */

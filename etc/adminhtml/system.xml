@@ -49,6 +49,7 @@
                        showInStore="1">
                     <label>Section</label>
                     <source_model>Apsis\One\Model\Config\Source\Datamapping\Section</source_model>
+                    <comment><![CDATA[Once SECTION is mapped, attributes are auto mapped. ]]></comment>
                 </field>
             </group>
             <group id="customer_subscriber_common_attribute" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1"

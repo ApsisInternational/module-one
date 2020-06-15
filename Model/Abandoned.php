@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Model;
 
-use Apsis\One\Helper\Log as ApsisLogHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Apsis\One\Model\Sql\ExpressionFactory;
 use Magento\Framework\Model\AbstractModel;
 use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;

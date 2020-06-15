@@ -2,8 +2,8 @@
 
 namespace Apsis\One\Model\Events;
 
-use Apsis\One\Helper\Core as ApsisCoreHelper;
-use Apsis\One\Helper\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Magento\Store\Model\ScopeInterface;
 use Apsis\One\Model\Events\Historical\Carts;
 use Apsis\One\Model\Events\Historical\Orders;

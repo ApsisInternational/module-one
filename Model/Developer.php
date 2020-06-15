@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Model;
 
-use Apsis\One\Helper\Log as ApsisLogHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Magento\Framework\App\Config\ReinitableConfigInterface;
 use Apsis\One\Model\ResourceModel\ProfileBatch;
 use Apsis\One\Model\ResourceModel\Profile;

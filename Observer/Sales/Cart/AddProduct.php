@@ -2,13 +2,14 @@
 
 namespace Apsis\One\Observer\Sales\Cart;
 
-use Apsis\One\Helper\Config as ApsisConfigHelper;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Event;
 use Apsis\One\Model\EventFactory;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
+use Apsis\One\Model\Service\Profile as ProfileServiceProvider;
 use Exception;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -22,6 +23,11 @@ use Apsis\One\Model\Events\Historical\Carts\Data;
 
 class AddProduct implements ObserverInterface
 {
+    /**
+     * @var ProfileServiceProvider
+     */
+    private $profileServiceProvider;
+
     /**
      * @var CheckoutSession
      */
@@ -61,6 +67,7 @@ class AddProduct implements ObserverInterface
      * @param ProfileResource $profileResource
      * @param CheckoutSession $checkoutSession
      * @param Data $cartData
+     * @param ProfileServiceProvider $profileServiceProvider
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -68,8 +75,10 @@ class AddProduct implements ObserverInterface
         EventResource $eventResource,
         ProfileResource $profileResource,
         CheckoutSession $checkoutSession,
-        Data $cartData
+        Data $cartData,
+        ProfileServiceProvider $profileServiceProvider
     ) {
+        $this->profileServiceProvider = $profileServiceProvider;
         $this->cartData = $cartData;
         $this->checkoutSession = $checkoutSession;
         $this->profileResource = $profileResource;
@@ -99,7 +108,7 @@ class AddProduct implements ObserverInterface
             $item = $cart->getItemByProduct($product);
 
             /** @var Profile $profile */
-            $profile = $this->apsisCoreHelper->getProfileByEmailAndStoreId(
+            $profile = $this->profileServiceProvider->getProfileByEmailAndStoreId(
                 $cart->getCustomerEmail(),
                 $cart->getStore()->getId()
             );

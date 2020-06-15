@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Model\Cart;
 
+use Apsis\One\Model\Service\Product as ProductServiceProvider;
 use Exception;
 use Magento\Framework\App\Area;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -12,11 +13,16 @@ use Magento\Store\Model\App\Emulation;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Api\CartTotalRepositoryInterface;
 use Magento\Quote\Model\Quote\Address;
-use Apsis\One\Helper\Core as ApsisCoreHelper;
-use Apsis\One\Helper\Date as ApsisDateHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Date as ApsisDateHelper;
 
 class Content
 {
+    /**
+     * @var ProductServiceProvider
+     */
+    private $productServiceProvider;
+
     /**
      * @var Data
      */
@@ -49,13 +55,16 @@ class Content
      * @param Data $priceHelper
      * @param CartTotalRepositoryInterface $cartTotalRepository
      * @param ApsisDateHelper $apsisDateHelper
+     * @param ProductServiceProvider $productServiceProvider
      */
     public function __construct(
         EmulationFactory $emulationFactory,
         Data $priceHelper,
         CartTotalRepositoryInterface $cartTotalRepository,
-        ApsisDateHelper $apsisDateHelper
+        ApsisDateHelper $apsisDateHelper,
+        ProductServiceProvider $productServiceProvider
     ) {
+        $this->productServiceProvider = $productServiceProvider;
         $this->apsisDateHelper = $apsisDateHelper;
         $this->cartTotalRepository = $cartTotalRepository;
         $this->priceHelper = $priceHelper;
@@ -192,7 +201,7 @@ class Content
             'sku' => (string) $quoteItem->getSku(),
             'name' => (string) $quoteItem->getName(),
             'product_url' => (string) $product->getProductUrl(),
-            'product_image_url' => (string) $this->apsisCoreHelper->getProductImageUrl($product),
+            'product_image_url' => (string) $this->productServiceProvider->getProductImageUrl($product),
             'qty_ordered' => (float) $quoteItem->getQty() ? $quoteItem->getQty() :
                 ($quoteItem->getQtyOrdered() ? $quoteItem->getQtyOrdered() : 1),
             'price_amount' => (float) $this->apsisCoreHelper->round($quoteItem->getPrice()),

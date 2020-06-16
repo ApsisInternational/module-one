@@ -413,12 +413,14 @@ class Profile extends AbstractDb
                     'customer_id' => 'entity_id',
                     'email',
                     'is_customer' => $this->expressionFactory->create(["expression" => ('1')]),
-                    'store_id'
+                    'store_id',
+                    'updated_at' => $this->expressionFactory
+                        ->create(["expression" => "'" . $this->dateTime->formatDate(true) . "'"])
                 ]
             );
         $sqlQuery = $select->insertFromSelect(
             $apsisTable,
-            ['integration_uid', 'customer_id', 'email', 'is_customer', 'store_id'],
+            ['integration_uid', 'customer_id', 'email', 'is_customer', 'store_id', 'updated_at'],
             false
         );
         $connection->query($sqlQuery);
@@ -441,6 +443,8 @@ class Profile extends AbstractDb
                     'email' => 'subscriber_email',
                     'subscriber_status',
                     'is_subscriber' => $this->expressionFactory->create(["expression" => ('1')]),
+                    'updated_at' => $this->expressionFactory
+                        ->create(["expression" => "'" . $this->dateTime->formatDate(true) . "'"])
                 ]
             )
             ->where('subscriber_status = ?', Subscriber::STATUS_SUBSCRIBED)
@@ -448,7 +452,15 @@ class Profile extends AbstractDb
 
         $sqlQuery = $select->insertFromSelect(
             $apsisTable,
-            ['integration_uid', 'subscriber_id', 'store_id', 'email', 'subscriber_status', 'is_subscriber'],
+            [
+                'integration_uid',
+                'subscriber_id',
+                'store_id',
+                'email',
+                'subscriber_status',
+                'is_subscriber',
+                'updated_at'
+            ],
             false
         );
         $connection->query($sqlQuery);

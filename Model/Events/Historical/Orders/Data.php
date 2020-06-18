@@ -2,29 +2,19 @@
 
 namespace Apsis\One\Model\Events\Historical\Orders;
 
+use Apsis\One\Model\Events\Historical\EventData;
+use Apsis\One\Model\Events\Historical\EventDataInterface;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Service\Product as ProductServiceProvider;
-use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Model\AbstractModel;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Item;
 
-class Data
+class Data extends EventData implements EventDataInterface
 {
     /**
-     * @var ProductServiceProvider
+     * @var int
      */
-    private $productServiceProvider;
-
-    /**
-     * Data constructor.
-     *
-     * @param ProductServiceProvider $productServiceProvider
-     */
-    public function __construct(
-        ProductServiceProvider $productServiceProvider
-    ) {
-        $this->productServiceProvider = $productServiceProvider;
-    }
+    private $subscriberId;
 
     /**
      * @param Order $order
@@ -32,10 +22,20 @@ class Data
      * @param int $subscriberId
      *
      * @return array
-     *
-     * @throws NoSuchEntityException
      */
-    public function getDataArr(Order $order, ApsisCoreHelper $apsisCoreHelper, $subscriberId = 0)
+    public function getDataArr(Order $order, ApsisCoreHelper $apsisCoreHelper, int $subscriberId = 0)
+    {
+        $this->subscriberId = $subscriberId;
+        return $this->getProcessedDataArr($order, $apsisCoreHelper);
+    }
+
+    /**
+     * @param AbstractModel $order
+     * @param ApsisCoreHelper $apsisCoreHelper
+     *
+     * @return array
+     */
+    public function getProcessedDataArr(AbstractModel $order, ApsisCoreHelper $apsisCoreHelper)
     {
         $items = [];
         /** @var Item $item */
@@ -54,11 +54,11 @@ class Data
             ];
         }
 
-        $data = [
+        return [
             'orderId' => (int) $order->getEntityId(),
             'incrementId' => (string) $order->getIncrementId(),
             'customerId' => (int) $order->getCustomerId(),
-            'subscriberId' => (int) $subscriberId,
+            'subscriberId' => (int) $this->subscriberId,
             'isGuest' => (boolean) $order->getCustomerIsGuest(),
             'websiteName' => (string) $order->getStore()->getWebsite()->getName(),
             'storeName' => (string) $order->getStore()->getName(),
@@ -71,6 +71,5 @@ class Data
             'currencyCode' => (string) $order->getOrderCurrencyCode(),
             'items' => $items
         ];
-        return $data;
     }
 }

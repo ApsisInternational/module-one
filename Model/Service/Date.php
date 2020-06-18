@@ -80,6 +80,16 @@ class Date
     }
 
     /**
+     * @param string $time
+     *
+     * @return DateTime
+     */
+    public function getDateTimeFromTime($time = 'now')
+    {
+        return $this->dateTimeFactory->create(['time' => $time]);
+    }
+
+    /**
      * @param $intervalSpec
      *
      * @return DateInterval

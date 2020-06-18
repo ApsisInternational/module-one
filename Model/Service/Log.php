@@ -25,21 +25,25 @@ class Log
     /**
      * @param string $classMethodName
      * @param string $text
+     * @param string $trace
+     * @param array $extra
      */
-    public function logMessage(string $classMethodName, string $text)
+    public function logMessage(string $classMethodName, string $text, string $trace = '', array $extra = [])
     {
-        $this->log($this->getStringForLog($classMethodName, $text));
+        $this->log($this->getStringForLog($classMethodName, $text, $trace), $extra);
     }
 
     /**
      * @param string $functionName
      * @param string $text
+     * @param string $trace
      *
      * @return string
      */
-    private function getStringForLog(string $functionName, string $text)
+    private function getStringForLog(string $functionName, string $text, string $trace)
     {
-        return ' - Class & Method: ' . $functionName . ' - Text: ' . $text;
+        $string = ' - Class & Method: ' . $functionName . ' - Text: ' . $text;
+        return strlen($trace) ? $string . PHP_EOL . $trace : $string;
     }
 
     /**
@@ -84,7 +88,7 @@ class Log
         try {
             return json_encode($data);
         } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage());
+            $this->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return '{}';
         }
     }
@@ -99,7 +103,7 @@ class Log
         try {
             return json_decode($string);
         } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage());
+            $this->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return [];
         }
     }

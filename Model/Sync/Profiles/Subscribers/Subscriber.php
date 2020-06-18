@@ -4,9 +4,11 @@ namespace Apsis\One\Model\Sync\Profiles\Subscribers;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
+use Apsis\One\Model\Sync\Profiles\ProfileDataInterface;
+use Magento\Framework\Model\AbstractModel;
 use Magento\Newsletter\Model\Subscriber as MagentoSubscriber;
 
-class Subscriber
+class Subscriber implements ProfileDataInterface
 {
     /**
      * @var array
@@ -40,14 +42,14 @@ class Subscriber
 
     /**
      * @param array $mappingHash
-     * @param MagentoSubscriber $subscriber
+     * @param AbstractModel $subscriber
      * @param ApsisCoreHelper $apsisCoreHelper
      *
      * @return $this
      */
-    public function setSubscriberData(
+    public function setModelData(
         array $mappingHash,
-        MagentoSubscriber $subscriber,
+        AbstractModel $subscriber,
         ApsisCoreHelper $apsisCoreHelper
     ) {
         $this->subscriber = $subscriber;

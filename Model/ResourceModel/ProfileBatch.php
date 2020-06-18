@@ -8,7 +8,7 @@ use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\ProfileBatch as ProfileBatchModel;
 
-class ProfileBatch extends AbstractDb
+class ProfileBatch extends AbstractDb implements ResourceInterface
 {
     /**
      * Initialize resource.
@@ -29,7 +29,7 @@ class ProfileBatch extends AbstractDb
             $this->getConnection()->truncateTable($this->getMainTable());
             return true;
         } catch (Exception $e) {
-            $apsisLogHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisLogHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return false;
         }
     }
@@ -51,7 +51,7 @@ class ProfileBatch extends AbstractDb
             ];
             $this->getConnection()->delete($this->getMainTable(), $where);
         } catch (Exception $e) {
-            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
     }
 }

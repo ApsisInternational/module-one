@@ -102,7 +102,7 @@ class Rest
             }
         } catch (Exception $e) {
             curl_close($ch);
-            $this->helper->logMessage(__METHOD__, $e->getMessage());
+            $this->helper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $this->responseBody;
     }

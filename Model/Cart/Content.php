@@ -88,7 +88,7 @@ class Content
             $cartData = (array) $this->getMainCartData($quoteModel);
             $cartData['items'] = (array) $this->getItemData($quoteModel->getAllVisibleItems());
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             $appEmulation->stopEnvironmentEmulation();
             return [];
         }

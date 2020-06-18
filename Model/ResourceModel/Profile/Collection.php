@@ -120,4 +120,16 @@ class Collection extends AbstractCollection
         return $this->addFieldToSelect('*')
             ->addFieldToFilter('id', ['in' => $ids]);
     }
+
+    /**
+     * @param int $storeId
+     *
+     * @return Collection
+     */
+    public function getCustomerProfileCollectionForStore(int $storeId)
+    {
+        return $this->addFieldToFilter('store_id', $storeId)
+            ->addFieldToFilter('is_customer', 1)
+            ->addFieldToFilter('customer_id', ['notnull' => true]);
+    }
 }

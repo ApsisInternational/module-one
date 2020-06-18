@@ -5,8 +5,9 @@ namespace Apsis\One\Model\Abandoned;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Store\Model\ScopeInterface;
+use Apsis\One\Model\Sync\SyncInterface;
 
-class Find
+class Find implements SyncInterface
 {
     /**
      * @var AbandonedSub
@@ -26,7 +27,7 @@ class Find
     /**
      * @param ApsisCoreHelper $apsisCoreHelper
      */
-    public function processAbandonedCarts(ApsisCoreHelper $apsisCoreHelper)
+    public function process(ApsisCoreHelper $apsisCoreHelper)
     {
         $stores = $apsisCoreHelper->getStores();
         foreach ($stores as $store) {

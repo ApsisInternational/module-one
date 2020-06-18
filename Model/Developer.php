@@ -86,7 +86,8 @@ class Developer
             $this->profileBatch->truncateTable($this->apsisLogHelper) &&
             $this->event->truncateTable($this->apsisLogHelper) &&
             $this->abandoned->truncateTable($this->apsisLogHelper) &&
-            $this->profile->truncateTableAndPopulateProfiles($this->apsisLogHelper) &&
+            $this->profile->truncateTable($this->apsisLogHelper) &&
+            $this->profile->populateProfilesTable($this->apsisLogHelper) &&
             $this->deleteAllModuleConfig()
         );
     }
@@ -105,7 +106,7 @@ class Developer
             $this->config->reinit();
             return true;
         } catch (Exception $e) {
-            $this->apsisLogHelper->logMessage(__METHOD__, $e->getMessage());
+            $this->apsisLogHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return false;
         }
     }

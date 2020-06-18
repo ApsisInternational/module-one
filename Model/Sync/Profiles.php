@@ -8,7 +8,7 @@ use Apsis\One\Model\Sync\Profiles\Customers;
 use Apsis\One\Model\Sync\Profiles\Batch;
 use Magento\Store\Model\ScopeInterface;
 
-class Profiles
+class Profiles implements SyncInterface
 {
     /**
      * @var Subscribers
@@ -45,15 +45,15 @@ class Profiles
     /**
      * @param ApsisCoreHelper $apsisCoreHelper
      */
-    public function batchAndSyncProfiles(ApsisCoreHelper $apsisCoreHelper)
+    public function process(ApsisCoreHelper $apsisCoreHelper)
     {
         $stores = $apsisCoreHelper->getStores();
         foreach ($stores as $store) {
             $account = $apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
             if ($account) {
-                $this->subscribers->batchForStore($store, $apsisCoreHelper);
-                $this->customers->batchForStore($store, $apsisCoreHelper);
-                $this->batch->syncBatchItemsForStore($store, $apsisCoreHelper);
+                $this->subscribers->processForStore($store, $apsisCoreHelper);
+                $this->customers->processForStore($store, $apsisCoreHelper);
+                $this->batch->processForStore($store, $apsisCoreHelper);
             }
         }
     }

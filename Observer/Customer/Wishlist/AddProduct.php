@@ -3,7 +3,7 @@
 namespace Apsis\One\Observer\Customer\Wishlist;
 
 use Apsis\One\Model\Profile;
-use Apsis\One\Model\Service\Profile as ProfileServiceProvider;
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Exception;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Customer;
@@ -20,13 +20,14 @@ use Magento\Wishlist\Model\Item as WishlistItem;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Magento\Store\Model\Store;
 use Apsis\One\Model\Service\Product as ProductServiceProvider;
+use Apsis\One\Model\Events\Historical\Wishlist\Data as WishlistData;
 
 class AddProduct implements ObserverInterface
 {
     /**
-     * @var ProfileServiceProvider
+     * @var ProfileCollectionFactory
      */
-    private $profileServiceProvider;
+    private $profileCollectionFactory;
 
     /**
      * @var ProductServiceProvider
@@ -54,6 +55,11 @@ class AddProduct implements ObserverInterface
     private $customerRepository;
 
     /**
+     * @var WishlistData
+     */
+    private $wishlistData;
+
+    /**
      * AddProduct constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -61,7 +67,8 @@ class AddProduct implements ObserverInterface
      * @param EventResource $eventResource
      * @param CustomerRepositoryInterface $customerRepository
      * @param ProductServiceProvider $productServiceProvider
-     * @param ProfileServiceProvider $profileServiceProvider
+     * @param ProfileCollectionFactory $profileCollectionFactory
+     * @param WishlistData $wishlistData
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -69,9 +76,11 @@ class AddProduct implements ObserverInterface
         EventResource $eventResource,
         CustomerRepositoryInterface $customerRepository,
         ProductServiceProvider $productServiceProvider,
-        ProfileServiceProvider $profileServiceProvider
+        ProfileCollectionFactory $profileCollectionFactory,
+        WishlistData $wishlistData
     ) {
-        $this->profileServiceProvider = $profileServiceProvider;
+        $this->wishlistData = $wishlistData;
+        $this->profileCollectionFactory = $profileCollectionFactory;
         $this->productServiceProvider = $productServiceProvider;
         $this->customerRepository = $customerRepository;
         $this->eventFactory = $eventFactory;
@@ -87,8 +96,8 @@ class AddProduct implements ObserverInterface
             $store = $wishlist->getStore();
             /** @var Customer $customer */
             $customer = $this->customerRepository->getById($wishlist->getCustomerId());
-            $profile = $this->profileServiceProvider
-                ->getProfileByEmailAndStoreId($customer->getEmail(), $store->getId());
+            $profile = $this->profileCollectionFactory->create()
+                ->loadByEmailAndStoreId($customer->getEmail(), $store->getId());
 
             if ($customer && $this->isOkToProceed($store) && $profile) {
                 /** @var Product $product */
@@ -100,7 +109,9 @@ class AddProduct implements ObserverInterface
                     ->create()
                     ->setEventType(Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST)
                     ->setEventData(
-                        $this->apsisCoreHelper->serialize($this->getDataArr($wishlist, $store, $item, $product))
+                        $this->apsisCoreHelper->serialize(
+                            $this->wishlistData->getDataArr($wishlist, $store, $item, $product, $this->apsisCoreHelper)
+                        )
                     )
                     ->setProfileId($profile->getId())
                     ->setCustomerId($wishlist->getCustomerId())
@@ -110,7 +121,7 @@ class AddProduct implements ObserverInterface
                 $this->eventResource->save($eventModel);
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $this;
     }
@@ -130,34 +141,5 @@ class AddProduct implements ObserverInterface
         );
 
         return ($account && $event);
-    }
-
-    /**
-     * @param Wishlist $wishlist
-     * @param Store $store
-     * @param WishlistItem $item
-     * @param Product $product
-     *
-     * @return array
-     */
-    private function getDataArr(Wishlist $wishlist, Store $store, WishlistItem $item, Product $product)
-    {
-        $data = [
-            'wishlistId' => (int) $wishlist->getId(),
-            'wishlistItemId' => (int) $item->getId(),
-            'wishlistName' => (string) $wishlist->getName(),
-            'customerId' => (int) $wishlist->getCustomerId(),
-            'websiteName' => (string) $this->apsisCoreHelper->getWebsiteNameFromStoreId($store->getId()),
-            'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($store->getId()),
-            'productId' => (int) $product->getId(),
-            'sku' => (string) $product->getSku(),
-            'name' => (string) $product->getName(),
-            'productUrl' => (string) $product->getProductUrl(),
-            'productImageUrl' => (string) $this->productServiceProvider->getProductImageUrl($product),
-            'catalogPriceAmount' => (float) $this->apsisCoreHelper->round($product->getPrice()),
-            'qty' => (float) $item->getQty(),
-            'currencyCode' => (string) $store->getCurrentCurrencyCode(),
-        ];
-        return $data;
     }
 }

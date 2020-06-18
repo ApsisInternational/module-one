@@ -18,7 +18,7 @@ use Magento\Newsletter\Model\Subscriber;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
 use Magento\Store\Api\Data\StoreInterface;
 
-class Profile extends AbstractDb
+class Profile extends AbstractDb implements ResourceInterface
 {
     /**
      * @var CustomerCollectionFactory
@@ -106,7 +106,7 @@ class Profile extends AbstractDb
                 ["subscriber_id IN (?)" => $subscriberIds, "store_id = ?" => $storeId]
             );
         } catch (Exception $e) {
-            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return 0;
         }
     }
@@ -144,7 +144,7 @@ class Profile extends AbstractDb
                 ["customer_id IN (?)" => $customerIds, "store_id = ?" => $storeId]
             );
         } catch (Exception $e) {
-            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return 0;
         }
     }
@@ -494,17 +494,15 @@ class Profile extends AbstractDb
      *
      * @return bool
      */
-    private function truncateTable(ApsisLogHelper $apsisLogHelper)
+    public function truncateTable(ApsisLogHelper $apsisLogHelper)
     {
         try {
-            if ($this->getConnection()->isTableExists($this->getMainTable())) {
-                $this->getConnection()->query('SET FOREIGN_KEY_CHECKS = 0');
-                $this->getConnection()->truncateTable($this->getMainTable());
-                $this->getConnection()->query('SET FOREIGN_KEY_CHECKS = 1');
-            }
+            $this->getConnection()->query('SET FOREIGN_KEY_CHECKS = 0');
+            $this->getConnection()->truncateTable($this->getMainTable());
+            $this->getConnection()->query('SET FOREIGN_KEY_CHECKS = 1');
             return true;
         } catch (Exception $e) {
-            $apsisLogHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisLogHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return false;
         }
     }
@@ -514,32 +512,38 @@ class Profile extends AbstractDb
      *
      * @return bool
      */
-    public function truncateTableAndPopulateProfiles(ApsisLogHelper $apsisLogHelper)
+    public function populateProfilesTable(ApsisLogHelper $apsisLogHelper)
     {
         try {
-            if ($this->truncateTable($apsisLogHelper)) {
-                $magentoSubscriberTable = $this->getTable('newsletter_subscriber');
-                $this->fetchAndPopulateCustomers(
-                    $this->getConnection(),
-                    $this->getTable('customer_entity'),
-                    $this->getMainTable()
-                );
-                $this->fetchAndPopulateSubscribers(
-                    $this->getConnection(),
-                    $magentoSubscriberTable,
-                    $this->getMainTable()
-                );
-                $this->updateCustomerProfiles(
-                    $this->getConnection(),
-                    $magentoSubscriberTable,
-                    $this->getMainTable()
-                );
-                return true;
-            }
-            return false;
+            $magentoSubscriberTable = $this->getTable('newsletter_subscriber');
+            $this->fetchAndPopulateCustomers(
+                $this->getConnection(),
+                $this->getTable('customer_entity'),
+                $this->getMainTable()
+            );
+            $this->fetchAndPopulateSubscribers(
+                $this->getConnection(),
+                $magentoSubscriberTable,
+                $this->getMainTable()
+            );
+            $this->updateCustomerProfiles(
+                $this->getConnection(),
+                $magentoSubscriberTable,
+                $this->getMainTable()
+            );
+            return true;
         } catch (Exception $e) {
-            $apsisLogHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisLogHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return false;
         }
+    }
+
+    /**
+     * @param int $day
+     * @param ApsisCoreHelper $apsisCoreHelper
+     */
+    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper)
+    {
+        // TODO: Implement cleanupRecords() method.
     }
 }

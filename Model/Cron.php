@@ -127,7 +127,7 @@ class Cron
             return;
         }
 
-        $this->eventsSyncModel->sync($this->coreHelper);
+        $this->eventsSyncModel->process($this->coreHelper);
     }
 
     /**
@@ -139,7 +139,7 @@ class Cron
             return;
         }
 
-        $this->profileSyncModel->batchAndSyncProfiles($this->coreHelper);
+        $this->profileSyncModel->process($this->coreHelper);
     }
 
     /**
@@ -151,7 +151,7 @@ class Cron
             return;
         }
 
-        $this->abandonedFind->processAbandonedCarts($this->coreHelper);
+        $this->abandonedFind->process($this->coreHelper);
     }
 
     /**
@@ -163,7 +163,7 @@ class Cron
             return;
         }
 
-        $this->historicalEvents->processHistoricalEvents($this->coreHelper);
+        $this->historicalEvents->process($this->coreHelper);
     }
 
     /**

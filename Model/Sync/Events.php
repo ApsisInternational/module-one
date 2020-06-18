@@ -20,7 +20,7 @@ use Apsis\One\Model\ResourceModel\Event as EventResourceModel;
 use Apsis\One\Model\ResourceModel\Abandoned\CollectionFactory as AbandonedCollectionFactory;
 use Zend_Date;
 
-class Events
+class Events implements SyncInterface
 {
     const LIMIT = 50;
 
@@ -149,7 +149,7 @@ class Events
     /**
      * @param ApsisCoreHelper $apsisCoreHelper
      */
-    public function sync(ApsisCoreHelper $apsisCoreHelper)
+    public function process(ApsisCoreHelper $apsisCoreHelper)
     {
         $this->apsisCoreHelper = $apsisCoreHelper;
         $stores = $this->apsisCoreHelper->getStores();
@@ -294,7 +294,7 @@ class Events
                     );
                 }
             } catch (Exception $e) {
-                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
                 continue;
             }
         }

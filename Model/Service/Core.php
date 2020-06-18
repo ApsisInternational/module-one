@@ -116,7 +116,7 @@ class Core extends ApsisLogHelper
         try {
             return $this->storeManager->getStore($storeId);
         } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage());
+            $this->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return false;
         }
     }
@@ -141,7 +141,7 @@ class Core extends ApsisLogHelper
             $store = $this->getStore($storeId);
             return ($store) ? $this->storeManager->getWebsite($store->getWebsiteId())->getName() : '';
         } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage());
+            $this->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return '';
         }
     }
@@ -336,20 +336,24 @@ class Core extends ApsisLogHelper
      */
     public function getTokenFromApi(string $contextScope, int $scopeId, $id = '', $secret = '')
     {
-        $clientId = ($id) ? $id : $this->getClientId($contextScope, $scopeId);
-        $clientSecret = ($secret) ? $secret : $this->getClientSecret($contextScope, $scopeId);
-        if (! empty($clientId) && ! empty($clientSecret)) {
-            /** @var Client $apiClient */
-            $apiClient = $this->apiClientFactory->create();
-            $request = $apiClient->getAccessToken($clientId, $clientSecret);
+        try {
+            $clientId = ($id) ? $id : $this->getClientId($contextScope, $scopeId);
+            $clientSecret = ($secret) ? $secret : $this->getClientSecret($contextScope, $scopeId);
+            if (! empty($clientId) && ! empty($clientSecret)) {
+                /** @var Client $apiClient */
+                $apiClient = $this->apiClientFactory->create();
+                $request = $apiClient->getAccessToken($clientId, $clientSecret);
 
-            if ($request && isset($request->access_token)) {
-                $scopeArray = $this->resolveContext($contextScope, $scopeId);
-                $contextScope = $scopeArray['scope'];
-                $scopeId = $scopeArray['id'];
-                $this->saveTokenAndExpiry($contextScope, $scopeId, $request);
-                return $request->access_token;
+                if ($request && isset($request->access_token)) {
+                    $scopeArray = $this->resolveContext($contextScope, $scopeId);
+                    $contextScope = $scopeArray['scope'];
+                    $scopeId = $scopeArray['id'];
+                    $this->saveTokenAndExpiry($contextScope, $scopeId, $request);
+                    return $request->access_token;
+                }
             }
+        } catch (Exception $e) {
+            $this->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return '';
     }

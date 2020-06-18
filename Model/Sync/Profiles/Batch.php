@@ -18,7 +18,7 @@ use \Exception;
 use Apsis\One\Model\ProfileBatchFactory;
 use stdClass;
 
-class Batch
+class Batch implements ProfileSyncInterface
 {
     /**
      * @var ProfileBatchFactory
@@ -87,7 +87,7 @@ class Batch
      * @param StoreInterface $store
      * @param ApsisCoreHelper $apsisCoreHelper
      */
-    public function syncBatchItemsForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
+    public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
     {
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->importCountInProcessingStatus = 0;
@@ -164,7 +164,7 @@ class Batch
                         $this->updateItem($item, ProfileBatch::SYNC_STATUS_PROCESSING);
                     }
                 } catch (Exception $e) {
-                    $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+                    $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
                     $this->apsisCoreHelper->log(__METHOD__ . ': Skipped batch item :' . $item->getId());
                     continue;
                 }
@@ -208,7 +208,7 @@ class Batch
                         $this->processImportStatus($store, $result, $item);
                     }
                 } catch (Exception $e) {
-                    $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+                    $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
                     $this->apsisCoreHelper->log(__METHOD__ . ': Skipped batch item :' . $item->getId());
                     continue;
                 }
@@ -236,7 +236,7 @@ class Batch
             try {
                 $this->apsisFileHelper->deleteFile($item->getFilePath());
             } catch (Exception $e) {
-                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             }
         }
     }

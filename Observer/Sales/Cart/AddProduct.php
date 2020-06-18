@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Observer\Sales\Cart;
 
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Event;
@@ -9,7 +10,6 @@ use Apsis\One\Model\EventFactory;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
-use Apsis\One\Model\Service\Profile as ProfileServiceProvider;
 use Exception;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -24,9 +24,9 @@ use Apsis\One\Model\Events\Historical\Carts\Data;
 class AddProduct implements ObserverInterface
 {
     /**
-     * @var ProfileServiceProvider
+     * @var ProfileCollectionFactory
      */
-    private $profileServiceProvider;
+    private $profileCollectionFactory;
 
     /**
      * @var CheckoutSession
@@ -67,7 +67,7 @@ class AddProduct implements ObserverInterface
      * @param ProfileResource $profileResource
      * @param CheckoutSession $checkoutSession
      * @param Data $cartData
-     * @param ProfileServiceProvider $profileServiceProvider
+     * @param ProfileCollectionFactory $profileCollectionFactory
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -76,9 +76,9 @@ class AddProduct implements ObserverInterface
         ProfileResource $profileResource,
         CheckoutSession $checkoutSession,
         Data $cartData,
-        ProfileServiceProvider $profileServiceProvider
+        ProfileCollectionFactory $profileCollectionFactory
     ) {
-        $this->profileServiceProvider = $profileServiceProvider;
+        $this->profileCollectionFactory = $profileCollectionFactory;
         $this->cartData = $cartData;
         $this->checkoutSession = $checkoutSession;
         $this->profileResource = $profileResource;
@@ -108,10 +108,11 @@ class AddProduct implements ObserverInterface
             $item = $cart->getItemByProduct($product);
 
             /** @var Profile $profile */
-            $profile = $this->profileServiceProvider->getProfileByEmailAndStoreId(
-                $cart->getCustomerEmail(),
-                $cart->getStore()->getId()
-            );
+            $profile = $this->profileCollectionFactory->create()
+                ->loadByEmailAndStoreId(
+                    $cart->getCustomerEmail(),
+                    $cart->getStore()->getId()
+                );
 
             if ($this->isOkToProceed($cart->getStore()) && $profile && $item) {
                 $eventModel = $this->eventFactory->create()
@@ -132,7 +133,7 @@ class AddProduct implements ObserverInterface
                 $this->profileResource->save($profile);
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
 
         return $this;

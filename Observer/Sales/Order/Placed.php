@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Observer\Sales\Order;
 
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Event;
@@ -9,7 +10,6 @@ use Apsis\One\Model\EventFactory;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
-use Apsis\One\Model\Service\Profile as ProfileServiceProvider;
 use Exception;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -22,9 +22,9 @@ use Apsis\One\Model\Events\Historical\Orders\Data;
 class Placed implements ObserverInterface
 {
     /**
-     * @var ProfileServiceProvider
+     * @var ProfileCollectionFactory
      */
-    private $profileServiceProvider;
+    private $profileCollectionFactory;
 
     /**
      * @var ApsisCoreHelper
@@ -65,7 +65,7 @@ class Placed implements ObserverInterface
      * @param ProfileResourceCollectionFactory $profileResourceCollectionFactory
      * @param ProfileResource $profileResource
      * @param Data $orderData
-     * @param ProfileServiceProvider $profileServiceProvider
+     * @param ProfileCollectionFactory $profileCollectionFactory
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -74,9 +74,9 @@ class Placed implements ObserverInterface
         ProfileResourceCollectionFactory $profileResourceCollectionFactory,
         ProfileResource $profileResource,
         Data $orderData,
-        ProfileServiceProvider $profileServiceProvider
+        ProfileCollectionFactory $profileCollectionFactory
     ) {
-        $this->profileServiceProvider = $profileServiceProvider;
+        $this->profileCollectionFactory = $profileCollectionFactory;
         $this->orderData = $orderData;
         $this->profileResource = $profileResource;
         $this->profileResourceCollectionFactory = $profileResourceCollectionFactory;
@@ -107,15 +107,16 @@ class Placed implements ObserverInterface
             }
         } else {
             /** @var Profile $profile */
-            $profile = $this->profileServiceProvider->getProfileByEmailAndStoreId(
-                $order->getCustomerEmail(),
-                $order->getStore()->getId()
-            );
+            $profile = $this->profileCollectionFactory->create()
+                ->loadByEmailAndStoreId(
+                    $order->getCustomerEmail(),
+                    $order->getStore()->getId()
+                );
             $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
         }
 
         try {
-            $mainData = $this->orderData->getDataArr($order, $this->apsisCoreHelper, $profile->getSubscriberId());
+            $mainData = $this->orderData->getDataArr($order, $this->apsisCoreHelper, (int) $profile->getSubscriberId());
             $subData = $mainData['items'];
             unset($mainData['items']);
             $eventModel = $this->eventFactory->create()
@@ -135,7 +136,7 @@ class Placed implements ObserverInterface
                 $this->profileResource->save($profile);
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
 
         return $this;

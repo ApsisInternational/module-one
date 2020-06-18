@@ -2,13 +2,13 @@
 
 namespace Apsis\One\Model\Abandoned;
 
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Cart\ContentFactory;
 use Apsis\One\Model\Event;
 use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
-use Apsis\One\Model\Service\Profile as ProfileServiceProvider;
 use Apsis\One\Model\Sql\ExpressionFactory;
 use Exception;
 use Magento\Framework\Stdlib\DateTime;
@@ -20,9 +20,9 @@ use Apsis\One\Model\Profile;
 class AbandonedSub
 {
     /**
-     * @var ProfileServiceProvider
+     * @var ProfileCollectionFactory
      */
-    private $profileServiceProvider;
+    private $profileCollectionFactory;
 
     /**
      * @var EventResource
@@ -69,7 +69,7 @@ class AbandonedSub
      * @param DateTime $dateTime
      * @param ExpressionFactory $expressionFactory
      * @param ApsisDateHelper $apsisDateHelper
-     * @param ProfileServiceProvider $profileServiceProvider
+     * @param ProfileCollectionFactory $profileCollectionFactory
      */
     public function __construct(
         ContentFactory $cartContentFactory,
@@ -79,9 +79,9 @@ class AbandonedSub
         DateTime $dateTime,
         ExpressionFactory $expressionFactory,
         ApsisDateHelper $apsisDateHelper,
-        ProfileServiceProvider $profileServiceProvider
+        ProfileCollectionFactory $profileCollectionFactory
     ) {
-        $this->profileServiceProvider = $profileServiceProvider;
+        $this->profileCollectionFactory = $profileCollectionFactory;
         $this->apsisDateHelper = $apsisDateHelper;
         $this->expressionFactory = $expressionFactory;
         $this->dateTime = $dateTime;
@@ -120,7 +120,7 @@ class AbandonedSub
                 ->addFieldToFilter('main_table.updated_at', $updated);
             return $quoteCollection;
         } catch (Exception $e) {
-            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return false;
         }
     }
@@ -137,8 +137,8 @@ class AbandonedSub
         foreach ($quoteCollection as $quote) {
             $cartData = $this->cartContentFactory->create()
                 ->getCartData($quote, $apsisCoreHelper);
-            $profile = $this->profileServiceProvider
-                ->getProfileByEmailAndStoreId($quote->getCustomerEmail(), $quote->getStoreId());
+            $profile = $this->profileCollectionFactory->create()
+                ->loadByEmailAndStoreId($quote->getCustomerEmail(), $quote->getStoreId());
 
             if (! empty($cartData) && $profile) {
                 $abandonedCarts[] = [

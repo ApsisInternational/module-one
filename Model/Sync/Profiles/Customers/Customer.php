@@ -8,11 +8,13 @@ use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Customer\Model\GroupFactory;
 use Magento\Customer\Model\Group;
 use Magento\Customer\Model\ResourceModel\Group as GroupResource;
+use Magento\Framework\Model\AbstractModel;
 use Magento\Review\Model\ResourceModel\Review\CollectionFactory as ReviewCollectionFactory;
 use Magento\Review\Model\ResourceModel\Review\Collection as ReviewCollection;
 use Magento\Review\Model\Review;
+use Apsis\One\Model\Sync\Profiles\ProfileDataInterface;
 
-class Customer
+class Customer implements ProfileDataInterface
 {
     /**
      * @var array
@@ -76,12 +78,12 @@ class Customer
 
     /**
      * @param array $mappingHash
-     * @param MagentoCustomer $customer
+     * @param AbstractModel $customer
      * @param ApsisCoreHelper $apsisCoreHelper
      *
      * @return $this
      */
-    public function setCustomerData(array $mappingHash, MagentoCustomer $customer, ApsisCoreHelper $apsisCoreHelper)
+    public function setModelData(array $mappingHash, AbstractModel $customer, ApsisCoreHelper $apsisCoreHelper)
     {
         $this->customer = $customer;
         $this->apsisCoreHelper = $apsisCoreHelper;

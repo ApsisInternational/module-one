@@ -2,30 +2,20 @@
 
 namespace Apsis\One\Model\Events\Historical\Carts;
 
+use Apsis\One\Model\Events\Historical\EventData;
+use Apsis\One\Model\Events\Historical\EventDataInterface;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Service\Product as ProductServiceProvider;
 use Magento\Catalog\Model\Product;
-use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Model\AbstractModel;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item;
 
-class Data
+class Data extends EventData implements EventDataInterface
 {
     /**
-     * @var ProductServiceProvider
+     * @var Item
      */
-    private $productServiceProvider;
-
-    /**
-     * Data constructor.
-     *
-     * @param ProductServiceProvider $productServiceProvider
-     */
-    public function __construct(
-        ProductServiceProvider $productServiceProvider
-    ) {
-        $this->productServiceProvider = $productServiceProvider;
-    }
+    private $cartItem;
 
     /**
      * @param Quote $cart
@@ -33,28 +23,38 @@ class Data
      * @param ApsisCoreHelper $apsisCoreHelper
      *
      * @return array
-     *
-     * @throws NoSuchEntityException
      */
     public function getDataArr(Quote $cart, Item $item, ApsisCoreHelper $apsisCoreHelper)
     {
+        $this->cartItem = $item;
+        return $this->getProcessedDataArr($cart, $apsisCoreHelper);
+    }
+
+    /**
+     * @param AbstractModel $cart
+     * @param ApsisCoreHelper $apsisCoreHelper
+     *
+     * @return array
+     */
+    public function getProcessedDataArr(AbstractModel $cart, ApsisCoreHelper $apsisCoreHelper)
+    {
         /** @var Product $product */
-        $product = $item->getProduct();
+        $product = $this->cartItem->getProduct();
         return [
             'cartId' => (int) $cart->getId(),
             'customerId' => (int) $cart->getCustomerId(),
             'storeName' => (string) $cart->getStore()->getName(),
             'websiteName' => (string) $cart->getStore()->getWebsite()->getName(),
             'currencyCode' => (string) $cart->getQuoteCurrencyCode(),
-            'productId' => (int) $item->getProductId(),
-            'sku' => (string) $item->getSku(),
-            'name' => (string) $item->getName(),
+            'productId' => (int) $this->cartItem->getProductId(),
+            'sku' => (string) $this->cartItem->getSku(),
+            'name' => (string) $this->cartItem->getName(),
             'productUrl' => (string) $product->getProductUrl(),
             'productImageUrl' => (string) $this->productServiceProvider->getProductImageUrl($product),
-            'qtyOrdered' => (float) $item->getQty() ? $item->getQty() :
-                ($item->getQtyOrdered() ? $item->getQtyOrdered() : 1),
-            'priceAmount' => (float) $apsisCoreHelper->round($item->getPrice()),
-            'rowTotalAmount' => (float) $apsisCoreHelper->round($item->getRowTotal()),
+            'qtyOrdered' => (float) $this->cartItem->getQty() ? $this->cartItem->getQty() :
+                ($this->cartItem->getQtyOrdered() ? $this->cartItem->getQtyOrdered() : 1),
+            'priceAmount' => (float) $apsisCoreHelper->round($this->cartItem->getPrice()),
+            'rowTotalAmount' => (float) $apsisCoreHelper->round($this->cartItem->getRowTotal()),
         ];
     }
 }

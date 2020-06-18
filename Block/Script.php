@@ -61,7 +61,7 @@ class Script extends Template
             }
             return '';
         } catch (Exception $e) {
-            $this->apsisLogHelper->logMessage(__METHOD__, $e->getMessage());
+            $this->apsisLogHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return '';
         }
     }

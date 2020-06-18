@@ -458,7 +458,7 @@
                     <source_model>Apsis\One\Model\Config\Source\System\PastEvents</source_model>
                     <frontend_model>Apsis\One\Block\Adminhtml\Config\Event\HistoricalData</frontend_model>
                     <backend_model>Apsis\One\Model\Config\Backend\PastEvents</backend_model>
-                    <comment><![CDATA[This is a one time selection. After import this config will be disabled. Past events(Order , Cart and Review) will be fetched at midnight.]]></comment>
+                    <comment><![CDATA[This is a one time selection. After import this config will be disabled. Past events (Order, Cart, Wishlist and Review) will be fetched at midnight.]]></comment>
                 </field>
             </group>
         </section>

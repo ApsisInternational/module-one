@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Plugin\Customer;
 
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
@@ -14,14 +15,13 @@ use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Logger as CustomerLogger;
 use Magento\Customer\Model\Log as CustomerLog;
 use Magento\Store\Model\ScopeInterface;
-use Apsis\One\Model\Service\Profile as ProfileServiceProvider;
 
 class LoggerPlugin
 {
     /**
-     * @var ProfileServiceProvider
+     * @var ProfileCollectionFactory
      */
-    private $profileServiceProvider;
+    private $profileCollectionFactory;
 
     /**
      * @var ApsisCoreHelper
@@ -62,7 +62,7 @@ class LoggerPlugin
      * @param CustomerLogger $customerLogger
      * @param ApsisDateHelper $apsisDateHelper
      * @param CustomerRepositoryInterface $customerRepository
-     * @param ProfileServiceProvider $profileServiceProvider
+     * @param ProfileCollectionFactory $profileCollectionFactory
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -71,9 +71,9 @@ class LoggerPlugin
         CustomerLogger $customerLogger,
         ApsisDateHelper $apsisDateHelper,
         CustomerRepositoryInterface $customerRepository,
-        ProfileServiceProvider $profileServiceProvider
+        ProfileCollectionFactory $profileCollectionFactory
     ) {
-        $this->profileServiceProvider = $profileServiceProvider;
+        $this->profileCollectionFactory = $profileCollectionFactory;
         $this->customerRepository = $customerRepository;
         $this->apsisDateHelper = $apsisDateHelper;
         $this->customerLogger = $customerLogger;
@@ -94,8 +94,8 @@ class LoggerPlugin
     {
         try {
             $customer = $this->customerRepository->getById($customerId);
-            $profile = $this->profileServiceProvider
-                ->getProfileByEmailAndStoreId($customer->getEmail(), $customer->getStoreId());
+            $profile = $this->profileCollectionFactory->create()
+                ->loadByEmailAndStoreId($customer->getEmail(), $customer->getStoreId());
             if ($this->isOkToProceed() && $customer && isset($data['last_login_at']) && $profile) {
                 /** @var CustomerLog $customerLog */
                 $customerLog = $this->customerLogger->get($customerId);
@@ -110,7 +110,7 @@ class LoggerPlugin
                 $this->eventResource->save($eventModel);
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $result;
     }

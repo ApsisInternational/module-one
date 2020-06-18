@@ -20,7 +20,7 @@ use Magento\Newsletter\Model\Subscriber as MagentoSubscriber;
 use Apsis\One\Model\ProfileBatch;
 use Magento\Store\Model\ScopeInterface;
 
-class Subscribers
+class Subscribers implements ProfileSyncInterface
 {
     const LIMIT = 5000;
 
@@ -107,7 +107,7 @@ class Subscribers
      * @param StoreInterface $store
      * @param ApsisCoreHelper $apsisCoreHelper
      */
-    public function batchForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
+    public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
     {
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
@@ -253,13 +253,13 @@ class Subscribers
                     try {
                         $subscriber->setIntegrationUid($integrationIdsArray[$subscriber->getSubscriberId()]);
                         $subscriberData = $this->subscriberDataFactory->create()
-                            ->setSubscriberData(array_keys($mappings), $subscriber, $this->apsisCoreHelper)
+                            ->setModelData(array_keys($mappings), $subscriber, $this->apsisCoreHelper)
                             ->setConsentListData(array_keys($topicsMapping))
                             ->toCSVArray();
                         $this->apsisFileHelper->outputCSV($file, $subscriberData);
                         $subscribersToUpdate[] = $subscriber->getSubscriberId();
                     } catch (Exception $e) {
-                        $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+                        $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
                         $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscriber with id :' .
                             $subscriber->getSubscriberId());
                         continue;
@@ -288,7 +288,7 @@ class Subscribers
                 );
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             if (! empty($subscribersToUpdate)) {
                 $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscribers with id :' .
                     implode(',', $subscribersToUpdate));

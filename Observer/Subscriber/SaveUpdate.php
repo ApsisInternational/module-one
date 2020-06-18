@@ -140,7 +140,7 @@ class SaveUpdate implements ObserverInterface
                 $this->profileResource->save($profile);
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
     }
 
@@ -173,7 +173,7 @@ class SaveUpdate implements ObserverInterface
             try {
                 $this->eventResource->save($eventModel);
             } catch (Exception $e) {
-                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             }
         }
     }
@@ -212,7 +212,7 @@ class SaveUpdate implements ObserverInterface
             try {
                 $this->eventResource->save($eventModel);
             } catch (Exception $e) {
-                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             }
         }
     }
@@ -266,7 +266,7 @@ class SaveUpdate implements ObserverInterface
                     ->setIsSubscriber(Profile::IS_FLAGGED);
                 $this->profileResource->save($profile);
             } catch (Exception $e) {
-                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             }
         }
     }

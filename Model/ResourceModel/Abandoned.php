@@ -7,7 +7,7 @@ use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Exception;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 
-class Abandoned extends AbstractDb
+class Abandoned extends AbstractDb implements ResourceInterface
 {
     /**
      * Initialize resource.
@@ -29,7 +29,7 @@ class Abandoned extends AbstractDb
             $write = $this->getConnection();
             return $write->insertMultiple($this->getMainTable(), $carts);
         } catch (Exception $e) {
-            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return 0;
         }
     }
@@ -45,7 +45,7 @@ class Abandoned extends AbstractDb
             $this->getConnection()->truncateTable($this->getMainTable());
             return true;
         } catch (Exception $e) {
-            $apsisLogHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisLogHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return false;
         }
     }
@@ -62,7 +62,7 @@ class Abandoned extends AbstractDb
                 ["created_at < DATE_SUB(NOW(), INTERVAL ? DAY)" => $day]
             );
         } catch (Exception $e) {
-            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
     }
 }

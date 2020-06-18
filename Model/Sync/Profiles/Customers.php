@@ -17,7 +17,7 @@ use Apsis\One\Model\ProfileBatchFactory;
 use Apsis\One\Model\ProfileBatch;
 use Magento\Store\Model\ScopeInterface;
 
-class Customers
+class Customers implements ProfileSyncInterface
 {
     const LIMIT = 1000;
 
@@ -96,7 +96,7 @@ class Customers
      * @param StoreInterface $store
      * @param ApsisCoreHelper $apsisCoreHelper
      */
-    public function batchForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
+    public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
     {
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
@@ -180,12 +180,12 @@ class Customers
                             $customer = $this->setSalesDataOnCustomer($salesData[$customer->getId()], $customer);
                         }
                         $subscriberData = $this->customerDataFactory->create()
-                            ->setCustomerData(array_keys($mappings), $customer, $this->apsisCoreHelper)
+                            ->setModelData(array_keys($mappings), $customer, $this->apsisCoreHelper)
                             ->toCSVArray();
                         $this->apsisFileHelper->outputCSV($file, $subscriberData);
                         $customersToUpdate[] = $customer->getId();
                     } catch (Exception $e) {
-                        $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+                        $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
                         $this->apsisCoreHelper->log(__METHOD__ . ': Skipped customer with id :' . $customer->getId());
                         continue;
                     }
@@ -213,7 +213,7 @@ class Customers
                 );
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage());
+            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             if (! empty($customersToUpdate)) {
                 $this->apsisCoreHelper->log(__METHOD__ . ': Skipped customers with id :' .
                     implode(',', $customersToUpdate));

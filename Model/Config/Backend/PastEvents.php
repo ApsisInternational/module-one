@@ -25,6 +25,17 @@ class PastEvents extends Value
      */
     private $writer;
 
+    const TYPE_DURATION_TO_TIMESTAMP_MAPPING = [
+        ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_HISTORICAL_ORDER_EVENTS_DURATION =>
+            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_HISTORICAL_ORDER_DURATION_TIMESTAMP,
+        ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_HISTORICAL_CART_EVENTS_DURATION =>
+            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_HISTORICAL_CART_DURATION_TIMESTAMP,
+        ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_HISTORICAL_REVIEW_EVENTS_DURATION =>
+            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_HISTORICAL_REVIEW_DURATION_TIMESTAMP,
+        ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_HISTORICAL_WISHLIST_EVENTS_DURATION =>
+            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_HISTORICAL_WISHLIST_DURATION_TIMESTAMP
+    ];
+
     /**
      * PastEvents constructor.
      *
@@ -64,14 +75,14 @@ class PastEvents extends Value
      */
     public function afterSave()
     {
-        if ($this->getValue()) {
+        if ((boolean) $this->getValue() && $this->isValueChanged()) {
             $this->writer->save(
-                ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_HISTORICAL_EVENTS_DURATION_TIMESTAMP,
+                self::TYPE_DURATION_TO_TIMESTAMP_MAPPING[$this->getPath()],
                 $this->dateTime->formatDate(true),
                 $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                 $this->getScopeCode()
             );
-        } else {
+        } elseif (! (boolean) $this->getValue()) {
             $this->deleteDependantConfig();
         }
         return parent::afterSave();
@@ -92,7 +103,7 @@ class PastEvents extends Value
     private function deleteDependantConfig()
     {
         $this->writer->delete(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_HISTORICAL_EVENTS_DURATION_TIMESTAMP,
+            self::TYPE_DURATION_TO_TIMESTAMP_MAPPING[$this->getPath()],
             $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
             $this->getScopeCode()
         );

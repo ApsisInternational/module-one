@@ -122,10 +122,26 @@ class Config
     const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_2_CUSTOMER = 'apsis_one_events/events/subscriber_2_customer';
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_2_SUBSCRIBER = 'apsis_one_events/events/customer_2_subscriber';
     const CONFIG_APSIS_ONE_EVENTS_PRODUCT_CARTED = 'apsis_one_events/events/product_carted';
-    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_EVENTS_DURATION = 'apsis_one_events/events/historical_event_duration';
-    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_EVENTS_DURATION_TIMESTAMP =
-        'apsis_one_events/events/historical_event_duration_timestamp';
-    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_EVENTS_DONE_FLAG = 'apsis_one_events/events/historical_event_done_flag';
+    const CONFIG_APSIS_ONE_EVENTS_ORDER_HISTORY_DONE_FLAG = 'apsis_one_events/events/order_history_done_flag';
+    const CONFIG_APSIS_ONE_EVENTS_QUOTE_HISTORY_DONE_FLAG = 'apsis_one_events/events/quote_history_done_flag';
+    const CONFIG_APSIS_ONE_EVENTS_REVIEW_HISTORY_DONE_FLAG = 'apsis_one_events/events/review_history_done_flag';
+    const CONFIG_APSIS_ONE_EVENTS_WISHLIST_HISTORY_DONE_FLAG = 'apsis_one_events/events/wishlist_history_done_flag';
+    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_ORDER_EVENTS_DURATION =
+        'apsis_one_events/events/order_historical_event_duration';
+    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_CART_EVENTS_DURATION =
+        'apsis_one_events/events/cart_historical_event_duration';
+    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_REVIEW_EVENTS_DURATION =
+        'apsis_one_events/events/review_historical_event_duration';
+    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_WISHLIST_EVENTS_DURATION =
+        'apsis_one_events/events/wishlist_historical_event_duration';
+    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_CART_DURATION_TIMESTAMP =
+        'apsis_one_events/events/cart_event_duration_timestamp';
+    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_ORDER_DURATION_TIMESTAMP =
+        'apsis_one_events/events/order_event_duration_timestamp';
+    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_REVIEW_DURATION_TIMESTAMP =
+        'apsis_one_events/events/review_event_duration_timestamp';
+    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_WISHLIST_DURATION_TIMESTAMP =
+        'apsis_one_events/events/wishlist_event_duration_timestamp';
 
     /**
      * Configuration section

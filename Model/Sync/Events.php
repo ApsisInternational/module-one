@@ -22,7 +22,14 @@ use Zend_Date;
 
 class Events implements SyncInterface
 {
-    const LIMIT = 50;
+    /**
+     * Maximum collection limit per store
+     */
+    const COLLECTION_LIMIT = 1000;
+    /**
+     * Maximum event limit per profile
+     */
+    const PROFILE_EVENT_LIMIT = 100;
 
     /**
      * @var ApsisCoreHelper
@@ -171,7 +178,7 @@ class Events implements SyncInterface
                     ->getKeySpaceDiscriminator($this->sectionDiscriminator);
                 $this->mapEventVersionIds($client);
                 $eventCollection = $this->eventCollectionFactory->create()
-                    ->getPendingEventsByStore($store->getId(), self::LIMIT);
+                    ->getPendingEventsByStore($store->getId(), self::COLLECTION_LIMIT);
 
                 if ($eventCollection->getSize() &&
                     $this->isMinimumEventsMapped() &&
@@ -235,6 +242,17 @@ class Events implements SyncInterface
             try {
                 $profile = $profileEvents['profile'];
                 $events = $profileEvents['events'];
+                //** @ToDo remove log */
+                $this->apsisCoreHelper->log(
+                    'Store Id: ' . $store->getId() .
+                    ' - Profile Id: ' . $profile->getId() .
+                    ' - Profile Email: ' . $profile->getEmail() .
+                    ' - Event Count: ' . $profileEvents['eventCount']
+                );
+                if (empty($events)) {
+                    continue;
+                }
+
                 $status = $this->syncProfileForEvent($client, $profile, $store);
                 if ($status === false) {
                     $this->apsisCoreHelper->log(
@@ -365,7 +383,13 @@ class Events implements SyncInterface
             $groupedEvents[$profile->getId()]['profile'] = $profile;
         }
         foreach ($eventCollection as $event) {
-            $groupedEvents[$event->getProfileId()]['events'][$event->getId()] = $event;
+            if (! isset($groupedEvents[$event->getProfileId()]['eventCount'])) {
+                $groupedEvents[$event->getProfileId()]['eventCount'] = 0;
+            }
+            if ($groupedEvents[$event->getProfileId()]['eventCount'] <= self::PROFILE_EVENT_LIMIT) {
+                $groupedEvents[$event->getProfileId()]['events'][$event->getId()] = $event;
+                $groupedEvents[$event->getProfileId()]['eventCount']++;
+            }
         }
         return $groupedEvents;
     }

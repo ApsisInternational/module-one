@@ -3,7 +3,6 @@
 namespace Apsis\One\Model;
 
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Magento\Framework\App\Config\ReinitableConfigInterface;
 use Apsis\One\Model\ResourceModel\ProfileBatch;
 use Apsis\One\Model\ResourceModel\Profile;
 use Apsis\One\Model\ResourceModel\Event;
@@ -13,11 +12,6 @@ use Exception;
 
 class Developer
 {
-    /**
-     * @var ReinitableConfigInterface
-     */
-    private $config;
-
     /**
      * @var ApsisLogHelper
      */
@@ -52,7 +46,6 @@ class Developer
      * Developer constructor.
      *
      * @param ApsisLogHelper $apsisLogHelper
-     * @param ReinitableConfigInterface $reinitableConfig
      * @param ProfileBatch $profileBatch
      * @param Profile $profile
      * @param Event $event
@@ -61,7 +54,6 @@ class Developer
      */
     public function __construct(
         ApsisLogHelper $apsisLogHelper,
-        ReinitableConfigInterface $reinitableConfig,
         ProfileBatch $profileBatch,
         Profile $profile,
         Event $event,
@@ -69,7 +61,6 @@ class Developer
         Abandoned $abandoned
     ) {
         $this->abandoned = $abandoned;
-        $this->config = $reinitableConfig;
         $this->apsisLogHelper = $apsisLogHelper;
         $this->profileBatch = $profileBatch;
         $this->profile = $profile;
@@ -103,7 +94,7 @@ class Developer
                 $this->configResource->getMainTable(),
                 "path like '%apsis_one%'"
             );
-            $this->config->reinit();
+            $this->apsisLogHelper->cleanCache();
             return true;
         } catch (Exception $e) {
             $this->apsisLogHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());

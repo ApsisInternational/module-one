@@ -39,14 +39,14 @@ class Collection extends AbstractCollection
 
     /**
      * @param int $storeId
-     * @param array $eventTypes
+     * @param int $eventType
      *
      * @return string
      */
-    public function getTimestampFromFirstEventEntryByStore(int $storeId, array $eventTypes)
+    public function getTimestampFromFirstEventEntryByStore(int $storeId, int $eventType)
     {
         $collection = $this->addFieldToFilter('store_id', $storeId)
-            ->addFieldToFilter('event_type', ['in' => $eventTypes])
+            ->addFieldToFilter('event_type', $eventType)
             ->setOrder('created_at', FrameworkDataCollection::SORT_ORDER_ASC)
             ->setPageSize(1);
         if ($collection->getSize()) {

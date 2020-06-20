@@ -6,10 +6,23 @@ use Magento\Config\Block\System\Config\Form\Field;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Magento\Backend\Block\Template\Context;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Data\Form\Element\AbstractElement;
+use Magento\Store\Model\ScopeInterface;
 
 class HistoricalData extends Field
 {
+    const TYPES = [
+        'apsis_one_events_events_order_historical_event_duration' =>
+            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_ORDER_HISTORY_DONE_FLAG,
+        'apsis_one_events_events_cart_historical_event_duration' =>
+            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_QUOTE_HISTORY_DONE_FLAG,
+        'apsis_one_events_events_review_historical_event_duration' =>
+            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_REVIEW_HISTORY_DONE_FLAG,
+        'apsis_one_events_events_wishlist_historical_event_duration' =>
+            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_WISHLIST_HISTORY_DONE_FLAG
+    ];
+
     /**
      * @var ApsisCoreHelper
      */
@@ -37,12 +50,56 @@ class HistoricalData extends Field
      */
     public function _getElementHtml(AbstractElement $element)
     {
-        $isDoneFlag = (boolean) $this->apsisCoreHelper->getMappedValueFromSelectedScope(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_HISTORICAL_EVENTS_DONE_FLAG
-        );
-        if ($element->getValue() && $isDoneFlag) {
+        if ($element->getValue() && $this->getHistoryDoneFlagForScope($element->getId())) {
             $element->setDisabled('disabled');
         }
         return parent::_getElementHtml($element);
+    }
+
+    /**
+     * @param string $elementId
+     *
+     * @return bool
+     */
+    private function getHistoryDoneFlagForScope(string $elementId)
+    {
+        $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
+
+        if ($scope['context_scope'] == ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {
+            return $this->isEventHistoryDoneFlagExistOnGivenStore(
+                self::TYPES[$elementId],
+                $this->apsisCoreHelper->getAllStoreIds()
+            );
+        }
+
+        if ($scope['context_scope'] == ScopeInterface::SCOPE_WEBSITES) {
+            return $this->isEventHistoryDoneFlagExistOnGivenStore(
+                self::TYPES[$elementId],
+                $this->apsisCoreHelper->getAllStoreIdsFromWebsite($scope['context_scope_id'])
+            );
+        }
+
+        if ($scope['context_scope'] == ScopeInterface::SCOPE_STORES) {
+            return (boolean) $this->apsisCoreHelper->getMappedValueFromSelectedScope(
+                self::TYPES[$elementId]
+            );
+        }
+
+        return false;
+    }
+
+    /**
+     * @param string $path
+     * @param array $storeIds
+     *
+     * @return bool
+     */
+    public function isEventHistoryDoneFlagExistOnGivenStore(string $path, array $storeIds)
+    {
+        $collection = $this->apsisCoreHelper->getConfigDataCollection()
+            ->addFieldToFilter('scope', ScopeInterface::SCOPE_STORES)
+            ->addFieldToFilter('scope_id', ['in' => $storeIds])
+            ->addFieldToFilter('path', $path);
+        return (boolean) $collection->getSize();
     }
 }

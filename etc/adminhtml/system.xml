@@ -427,38 +427,77 @@
                     <label>Customer Login</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
                 </field>
-                <field id="order" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1"
+                <field id="order_event_title" translate="label" sortOrder="50" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Sales Order</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                </field>
+                <field id="order" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Customer/Subscriber Places An Order</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
                 </field>
-                <field id="review" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1"
-                       showInStore="1">
-                    <label>Customer Leaves A Product Review</label>
-                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
-                </field>
-                <field id="wishlist" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1"
-                       showInStore="1">
-                    <label>Customer Adds Product To Wishlist</label>
-                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
-                </field>
-                <field id="product_carted" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1"
-                       showInStore="1">
-                    <label>Customer Adds A Product To Cart</label>
-                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
-                </field>
-                <field id="historical_event_title" translate="label" sortOrder="90" showInDefault="1" showInWebsite="1"
-                       showInStore="1">
-                    <label>Historical Data Sync</label>
-                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
-                </field>
-                <field id="historical_event_duration" translate="label" type="select" sortOrder="100" showInDefault="1"
+                <field id="order_historical_event_duration" translate="label" type="select" sortOrder="70" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Past Events</label>
                     <source_model>Apsis\One\Model\Config\Source\System\PastEvents</source_model>
                     <frontend_model>Apsis\One\Block\Adminhtml\Config\Event\HistoricalData</frontend_model>
                     <backend_model>Apsis\One\Model\Config\Backend\PastEvents</backend_model>
-                    <comment><![CDATA[This is a one time selection. After import this config will be disabled. Past events (Order, Cart, Wishlist and Review) will be fetched at midnight.]]></comment>
+                    <comment><![CDATA[This is a one time selection. After import this config will be disabled. Past events will be fetched at midnight.]]></comment>
+                </field>
+                <field id="cart_event_title" translate="label" sortOrder="80" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Sales Cart Product</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                </field>
+                <field id="product_carted" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Customer Adds A Product To Cart</label>
+                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
+                </field>
+                <field id="cart_historical_event_duration" translate="label" type="select" sortOrder="100" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Past Events</label>
+                    <source_model>Apsis\One\Model\Config\Source\System\PastEvents</source_model>
+                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Event\HistoricalData</frontend_model>
+                    <backend_model>Apsis\One\Model\Config\Backend\PastEvents</backend_model>
+                    <comment><![CDATA[This is a one time selection. After import this config will be disabled. Past events will be fetched at midnight.]]></comment>
+                </field>
+                <field id="review_event_title" translate="label" sortOrder="110" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Product Reviews</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                </field>
+                <field id="review" translate="label" type="select" sortOrder="120" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Customer Leaves A Product Review</label>
+                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
+                </field>
+                <field id="review_historical_event_duration" translate="label" type="select" sortOrder="130" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Past Events</label>
+                    <source_model>Apsis\One\Model\Config\Source\System\PastEvents</source_model>
+                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Event\HistoricalData</frontend_model>
+                    <backend_model>Apsis\One\Model\Config\Backend\PastEvents</backend_model>
+                    <comment><![CDATA[This is a one time selection. After import this config will be disabled. Past events will be fetched at midnight.]]></comment>
+                </field>
+                <field id="wishlist_event_title" translate="label" sortOrder="140" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Customer Wishlist</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                </field>
+                <field id="wishlist" translate="label" type="select" sortOrder="150" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Customer Adds Product To Wishlist</label>
+                    <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
+                </field>
+                <field id="wishlist_historical_event_duration" translate="label" type="select" sortOrder="160" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Past Events</label>
+                    <source_model>Apsis\One\Model\Config\Source\System\PastEvents</source_model>
+                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Event\HistoricalData</frontend_model>
+                    <backend_model>Apsis\One\Model\Config\Backend\PastEvents</backend_model>
+                    <comment><![CDATA[This is a one time selection. After import this config will be disabled. Past events will be fetched at midnight.]]></comment>
                 </field>
             </group>
         </section>

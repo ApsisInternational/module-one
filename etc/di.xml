@@ -47,8 +47,6 @@
                 type="Magento\Framework\App\Config\Storage\Writer" />
     <preference for="Magento\Framework\Stdlib\DateTime\TimezoneInterface"
                 type="Magento\Framework\Stdlib\DateTime\Timezone" />
-    <preference for="Magento\Framework\App\Config\ReinitableConfigInterface"
-                type="Magento\Framework\App\ReinitableConfig" />
     <preference for="Magento\Quote\Api\CartTotalRepositoryInterface"
                 type="Magento\Quote\Model\Cart\CartTotalRepository" />
     <preference for="Magento\Catalog\Api\ProductRepositoryInterface"

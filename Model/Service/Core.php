@@ -68,11 +68,6 @@ class Core extends ApsisLogHelper
     private $request;
 
     /**
-     * @var ScopeConfigInterface
-     */
-    private $scopeConfig;
-
-    /**
      * Core constructor.
      *
      * @param Logger $logger
@@ -96,7 +91,6 @@ class Core extends ApsisLogHelper
         RequestInterface $request,
         ScopeConfigInterface $scopeConfig
     ) {
-        $this->scopeConfig = $scopeConfig;
         $this->request = $request;
         $this->apsisDateHelper = $apsisDateHelper;
         $this->dataCollectionFactory = $dataCollectionFactory;
@@ -104,7 +98,7 @@ class Core extends ApsisLogHelper
         $this->writer = $writer;
         $this->encryptor = $encryptor;
         $this->storeManager = $storeManager;
-        parent::__construct($logger);
+        parent::__construct($logger, $scopeConfig);
     }
 
     /**
@@ -157,7 +151,7 @@ class Core extends ApsisLogHelper
         $storeId = $this->request->getParam('store');
         if ($storeId) {
             $scope['context_scope'] = ScopeInterface::SCOPE_STORES;
-            $scope['context_scope_id'] = $storeId;
+            $scope['context_scope_id'] = (int) $storeId;
             return $scope;
         }
 
@@ -165,7 +159,7 @@ class Core extends ApsisLogHelper
         $contextScope = ($websiteId) ? ScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
 
         $scope['context_scope'] = $contextScope;
-        $scope['context_scope_id'] = $websiteId;
+        $scope['context_scope_id'] = (int) $websiteId;
         return $scope;
     }
 
@@ -539,6 +533,44 @@ class Core extends ApsisLogHelper
             ->addFieldToFilter('path', $path);
         $collection->getSelect()->limit(1);
         return $collection;
+    }
+
+    /**
+     * @param bool $withDefault
+     *
+     * @return array
+     */
+    public function getAllStoreIds(bool $withDefault = false)
+    {
+        $storeIds = [];
+        $stores = $this->getStores($withDefault);
+        foreach ($stores as $store) {
+            $storeIds[] = $store->getId();
+        }
+        return $storeIds;
+    }
+
+    /**
+     * @param int $websiteId
+     *
+     * @return mixed
+     */
+    public function getAllStoreIdsFromWebsite(int $websiteId)
+    {
+        try {
+            return $this->storeManager->getWebsite($websiteId)->getStoreIds();
+        } catch (Exception $e) {
+            $this->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return [];
+        }
+    }
+
+    /**
+     * @return DataCollection
+     */
+    public function getConfigDataCollection()
+    {
+        return $this->dataCollectionFactory->create();
     }
 
     /**

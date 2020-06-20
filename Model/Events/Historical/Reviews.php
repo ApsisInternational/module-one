@@ -4,9 +4,11 @@ namespace Apsis\One\Model\Events\Historical;
 
 use Apsis\One\Model\Events\Historical\Event as HistoricalEvent;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
+use Apsis\One\Model\ResourceModel\Profile\Collection as ProfileCollection;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Exception;
+use Magento\Framework\Stdlib\DateTime;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Review\Model\ResourceModel\Review\CollectionFactory as ProductReviewCollectionFactory;
 use Magento\Review\Model\ResourceModel\Review\Collection as ProductReviewCollection;
@@ -19,11 +21,6 @@ use Apsis\One\Model\Event;
 class Reviews extends HistoricalEvent implements EventHistoryInterface
 {
     /**
-     * @var EventResource
-     */
-    private $eventResource;
-
-    /**
      * @var ProductReviewCollectionFactory
      */
     private $reviewProductCollectionFactory;
@@ -34,25 +31,23 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
     private $productCollectionFactory;
 
     /**
-     * @var ReviewEventData
-     */
-    private $reviewEventData;
-
-    /**
      * Reviews constructor.
      *
+     * @param DateTime $dateTime
      * @param ProductReviewCollectionFactory $reviewProductCollectionFactory
      * @param ProductCollectionFactory $productCollectionFactory
      * @param EventResource $eventResource
      * @param ReviewEventData $reviewEventData
      */
     public function __construct(
+        DateTime $dateTime,
         ProductReviewCollectionFactory $reviewProductCollectionFactory,
         ProductCollectionFactory $productCollectionFactory,
         EventResource $eventResource,
         ReviewEventData $reviewEventData
     ) {
-        $this->reviewEventData = $reviewEventData;
+        $this->dateTime = $dateTime;
+        $this->eventData = $reviewEventData;
         $this->eventResource = $eventResource;
         $this->productCollectionFactory = $productCollectionFactory;
         $this->reviewProductCollectionFactory = $reviewProductCollectionFactory;
@@ -61,13 +56,13 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
     /**
      * @param StoreInterface $store
      * @param ApsisCoreHelper $apsisCoreHelper
-     * @param array $profileCollectionArray
+     * @param ProfileCollection $profileCollection
      * @param array $duration
      */
     public function fetchForStore(
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper,
-        array $profileCollectionArray,
+        ProfileCollection $profileCollection,
         array $duration
     ) {
         if ((boolean) $apsisCoreHelper->getStoreConfig(
@@ -75,12 +70,13 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_REVIEW
         )) {
             try {
-                if (! empty($reviewCollection = $this->getReviewCollection(
-                    $apsisCoreHelper,
-                    $store,
-                    array_keys($profileCollectionArray),
-                    $duration
-                )) &&
+                if (! empty($profileCollectionArray = $this->getFormattedProfileCollection($profileCollection)) &&
+                    ! empty($reviewCollection = $this->getReviewCollection(
+                        $apsisCoreHelper,
+                        $store,
+                        array_keys($profileCollectionArray),
+                        $duration
+                    )) &&
                     ! empty($productCollectionArray = $this->getProductCollectionArray(
                         $store,
                         $apsisCoreHelper,
@@ -93,9 +89,12 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
                         $profileCollectionArray,
                         $productCollectionArray
                     );
-                    if (! empty($eventsToRegister)) {
-                        $this->eventResource->insertEvents($eventsToRegister, $apsisCoreHelper);
-                    }
+                    $this->registerEvents(
+                        $eventsToRegister,
+                        $apsisCoreHelper,
+                        $store,
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_REVIEW_HISTORY_DONE_FLAG
+                    );
                 }
             } catch (Exception $e) {
                 $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
@@ -129,7 +128,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
                         Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW,
                         $review->getCreatedAt(),
                         $apsisCoreHelper->serialize(
-                            $this->reviewEventData->getDataArr(
+                            $this->eventData->getDataArr(
                                 $review,
                                 $productCollectionArray[$review->getEntityPkValue()],
                                 $apsisCoreHelper

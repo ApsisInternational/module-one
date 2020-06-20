@@ -4,8 +4,10 @@ namespace Apsis\One\Model\Events\Historical;
 
 use Apsis\One\Model\Events\Historical\Event as HistoricalEvent;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
+use Apsis\One\Model\ResourceModel\Profile\Collection as ProfileCollection;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Magento\Framework\Stdlib\DateTime;
 use Magento\Store\Api\Data\StoreInterface;
 use Apsis\One\Model\Events\Historical\Orders\Data as OrderData;
 use Exception;
@@ -17,16 +19,6 @@ use Magento\Sales\Model\Order;
 class Orders extends HistoricalEvent implements EventHistoryInterface
 {
     /**
-     * @var EventResource
-     */
-    private $eventResource;
-
-    /**
-     * @var OrderData
-     */
-    private $orderData;
-
-    /**
      * @var OrderCollectionFactory
      */
     private $orderCollectionFactory;
@@ -34,30 +26,33 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
     /**
      * Orders constructor.
      *
+     * @param DateTime $dateTime
      * @param EventResource $eventResource
      * @param OrderData $orderData
      * @param OrderCollectionFactory $orderCollectionFactory
      */
     public function __construct(
+        DateTime $dateTime,
         EventResource $eventResource,
         OrderData $orderData,
         OrderCollectionFactory $orderCollectionFactory
     ) {
+        $this->dateTime = $dateTime;
         $this->eventResource = $eventResource;
         $this->orderCollectionFactory = $orderCollectionFactory;
-        $this->orderData = $orderData;
+        $this->eventData = $orderData;
     }
 
     /**
      * @param StoreInterface $store
      * @param ApsisCoreHelper $apsisCoreHelper
-     * @param array $profileCollectionArray
+     * @param ProfileCollection $profileCollection
      * @param array $duration
      */
     public function fetchForStore(
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper,
-        array $profileCollectionArray,
+        ProfileCollection $profileCollection,
         array $duration
     ) {
         if ((boolean) $apsisCoreHelper->getStoreConfig(
@@ -65,21 +60,25 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_ORDER
         )) {
             try {
-                $profileCollectionArray = $this->getFormattedProfileCollection($profileCollectionArray);
-                if (! empty($orderCollection = $this->getOrderCollection(
-                    $apsisCoreHelper,
-                    $store,
-                    array_keys($profileCollectionArray),
-                    $duration
-                ))) {
+                if (! empty($profileCollectionArray = $this->getFormattedProfileCollection($profileCollection)) &&
+                    ! empty($orderCollection = $this->getOrderCollection(
+                        $apsisCoreHelper,
+                        $store,
+                        array_keys($profileCollectionArray),
+                        $duration
+                    ))
+                ) {
                     $eventsToRegister = $this->getEventsToRegister(
                         $apsisCoreHelper,
                         $orderCollection,
                         $profileCollectionArray
                     );
-                    if (! empty($eventsToRegister)) {
-                        $this->eventResource->insertEvents($eventsToRegister, $apsisCoreHelper);
-                    }
+                    $this->registerEvents(
+                        $eventsToRegister,
+                        $apsisCoreHelper,
+                        $store,
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_ORDER_HISTORY_DONE_FLAG
+                    );
                 }
             } catch (Exception $e) {
                 $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
@@ -104,7 +103,7 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
         foreach ($orderCollection as $order) {
             try {
                 if (isset($profileCollectionArray[$order->getCustomerEmail()])) {
-                    $mainData = $this->orderData->getDataArr(
+                    $mainData = $this->eventData->getDataArr(
                         $order,
                         $apsisCoreHelper,
                         (int) $profileCollectionArray[$order->getCustomerEmail()]->getSubscriberId()
@@ -153,14 +152,14 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
     }
 
     /**
-     * @param array $profileCollectionArray
+     * @param ProfileCollection $profileCollection
      *
      * @return array
      */
-    private function getFormattedProfileCollection(array $profileCollectionArray)
+    protected function getFormattedProfileCollection(ProfileCollection $profileCollection)
     {
         $formattedProfileCollectionArray = [];
-        foreach ($profileCollectionArray as $profile) {
+        foreach ($profileCollection as $profile) {
             $formattedProfileCollectionArray[$profile->getEmail()] = $profile;
         }
         return $formattedProfileCollectionArray;

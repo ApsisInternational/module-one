@@ -4,7 +4,6 @@ namespace Apsis\One\Observer\Adminhtml;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Backend\App\Action\Context;
-use Magento\Framework\App\Config\ReinitableConfigInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Message\ManagerInterface;
@@ -29,23 +28,15 @@ class ValidateApi implements ObserverInterface
     private $messageManager;
 
     /**
-     * @var ReinitableConfigInterface
-     */
-    private $config;
-
-    /**
      * ApiValidate constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param Context $context
-     * @param ReinitableConfigInterface $reinitableConfig
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
-        Context $context,
-        ReinitableConfigInterface $reinitableConfig
+        Context $context
     ) {
-        $this->config = $reinitableConfig;
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->context = $context;
         $this->messageManager = $context->getMessageManager();
@@ -117,7 +108,7 @@ class ValidateApi implements ObserverInterface
                     $scope['context_scope_id']
                 );
                 //Clear config cache
-                $this->config->reinit();
+                $this->apsisCoreHelper->cleanCache();
             }
         }
 

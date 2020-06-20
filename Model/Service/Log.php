@@ -4,9 +4,15 @@ namespace Apsis\One\Model\Service;
 
 use Apsis\One\Logger\Logger;
 use Exception;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class Log
 {
+    /**
+     * @var ScopeConfigInterface
+     */
+    protected $scopeConfig;
+
     /**
      * @var Logger
      */
@@ -16,10 +22,12 @@ class Log
      * Log constructor.
      *
      * @param Logger $logger
+     * @param ScopeConfigInterface $scopeConfig
      */
-    public function __construct(Logger $logger)
+    public function __construct(Logger $logger, ScopeConfigInterface $scopeConfig)
     {
         $this->logger = $logger;
+        $this->scopeConfig = $scopeConfig;
     }
 
     /**
@@ -106,5 +114,16 @@ class Log
             $this->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return [];
         }
+    }
+
+    /**
+     * Invalidate cache by type
+     * Clean scopeCodeResolver
+     *
+     * @return void
+     */
+    public function cleanCache()
+    {
+        $this->scopeConfig->clean();
     }
 }

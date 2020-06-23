@@ -557,7 +557,11 @@
                     <label>Events Sync - Cron Schedule</label>
                     <source_model>Apsis\One\Model\Config\Source\System\CronSchedule</source_model>
                 </field>
-                <field id="reset" translate="label" sortOrder="40" showInDefault="1">
+                <field id="cron_schedule_historical_events" translate="label" sortOrder="40" type="select" showInDefault="1">
+                    <label>Fetching Historical Events - Cron Schedule</label>
+                    <source_model>Apsis\One\Model\Config\Source\System\HistoricalEventCronSchedule</source_model>
+                </field>
+                <field id="reset" translate="label" sortOrder="50" showInDefault="1">
                     <label>Reset Module</label>
                     <frontend_model>Apsis\One\Block\Adminhtml\Config\Developer\Reset</frontend_model>
                     <comment><![CDATA[NOTE: This will remove all saved configuration for the module, truncate all tables and re-populate Profile table. Not recommended on production]]></comment>

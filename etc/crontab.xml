@@ -11,7 +11,7 @@
             <config_path>apsis_one_configuration/developer_settings/cron_schedule_events_sync</config_path>
         </job>
         <job name="apsis_one_find_historical_events" instance="Apsis\One\Model\Cron" method="findHistoricalEvents">
-            <schedule>0 0 * * *</schedule>
+            <config_path>apsis_one_configuration/developer_settings/cron_schedule_historical_events</config_path>
         </job>
         <job name="apsis_one_cleanup" instance="Apsis\One\Model\Cron" method="cleanup">
             <schedule>0 0 * * *</schedule>

@@ -242,13 +242,6 @@ class Events implements SyncInterface
             try {
                 $profile = $profileEvents['profile'];
                 $events = $profileEvents['events'];
-                //** @ToDo remove log */
-                $this->apsisCoreHelper->log(
-                    'Store Id: ' . $store->getId() .
-                    ' - Profile Id: ' . $profile->getId() .
-                    ' - Profile Email: ' . $profile->getEmail() .
-                    ' - Event Count: ' . $profileEvents['eventCount']
-                );
                 if (empty($events)) {
                     continue;
                 }

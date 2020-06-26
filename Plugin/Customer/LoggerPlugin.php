@@ -148,6 +148,6 @@ class LoggerPlugin
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_LOGIN
         );
 
-        return ($account && $event) ? true : false;
+        return ($account && $event);
     }
 }

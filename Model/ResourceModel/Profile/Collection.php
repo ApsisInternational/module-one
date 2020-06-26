@@ -47,7 +47,7 @@ class Collection extends AbstractCollection
      *
      * @return bool|DataObject
      */
-    public function loadCustomerById(int $customerId)
+    public function loadByCustomerId(int $customerId)
     {
         $collection = $this->addFieldToFilter('customer_id', $customerId)
             ->setPageSize(1);
@@ -130,5 +130,22 @@ class Collection extends AbstractCollection
     {
         return $this->addFieldToFilter('store_id', $storeId)
             ->addFieldToFilter('email', ['notnull' => true]);
+    }
+
+    /**
+     * @param int $subscriberId
+     *
+     * @return bool|DataObject
+     */
+    public function loadBySubscriberId(int $subscriberId)
+    {
+        $collection = $this->addFieldToFilter('subscriber_id', $subscriberId)
+            ->setPageSize(1);
+
+        if ($collection->getSize()) {
+            return $collection->getFirstItem();
+        }
+
+        return false;
     }
 }

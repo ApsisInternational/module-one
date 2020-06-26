@@ -104,7 +104,7 @@ class SaveUpdate implements ObserverInterface
         $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $customer->getStoreId());
 
         if ($account) {
-            $found = $this->profileCollectionFactory->create()->loadCustomerById($customer->getEntityId());
+            $found = $this->profileCollectionFactory->create()->loadByCustomerId($customer->getEntityId());
             $profile = ($found) ? $found : $this->profileCollectionFactory->create()->loadByEmailAndStoreId(
                 $customer->getEmail(),
                 $customer->getStoreId()

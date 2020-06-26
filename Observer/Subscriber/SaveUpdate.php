@@ -6,6 +6,7 @@ use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Event;
 use Apsis\One\Model\EventFactory;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
+use Apsis\One\Model\Sql\ExpressionFactory;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Registry;
@@ -57,6 +58,11 @@ class SaveUpdate implements ObserverInterface
     private $registry;
 
     /**
+     * @var ExpressionFactory
+     */
+    private $expressionFactory;
+
+    /**
      * SaveUpdate constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -66,6 +72,7 @@ class SaveUpdate implements ObserverInterface
      * @param ProfileResource $profileResource
      * @param ProfileFactory $profileFactory
      * @param Registry $registry
+     * @param ExpressionFactory $expressionFactory
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -74,8 +81,10 @@ class SaveUpdate implements ObserverInterface
         ProfileCollectionFactory $profileCollectionFactory,
         ProfileResource $profileResource,
         ProfileFactory $profileFactory,
-        Registry $registry
+        Registry $registry,
+        ExpressionFactory $expressionFactory
     ) {
+        $this->expressionFactory = $expressionFactory;
         $this->registry = $registry;
         $this->profileResource = $profileResource;
         $this->profileCollectionFactory = $profileCollectionFactory;
@@ -126,6 +135,7 @@ class SaveUpdate implements ObserverInterface
                 $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED)
                     ->setSubscriberSyncStatus(Profile::SYNC_STATUS_PENDING)
                     ->setIsSubscriber(Profile::NO_FLAGGED)
+                    ->setTopicSubscription($this->expressionFactory->create(["expression" => "null"]))
                     ->setErrorMessage('');
                 $this->profileResource->save($profile);
             } elseif ($subscriber->getSubscriberStatus() == Subscriber::STATUS_SUBSCRIBED) {

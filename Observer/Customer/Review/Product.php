@@ -118,8 +118,9 @@ class Product implements ObserverInterface
                 ->loadByEmailAndStoreId($customer->getEmail(), $this->apsisCoreHelper->getStore()->getId());
 
             if ($customer && $product && $this->isOkToProceed() && $profile && $reviewObject->isApproved()) {
-                $eventModel = $this->eventFactory->create()
-                    ->setEventType(Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW)
+                /** @var Event $eventModel */
+                $eventModel = $this->eventFactory->create();
+                $eventModel->setEventType(Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW)
                     ->setEventData(
                         $this->apsisCoreHelper->serialize(
                             $this->reviewData->getDataArr($reviewObject, $product, $this->apsisCoreHelper)

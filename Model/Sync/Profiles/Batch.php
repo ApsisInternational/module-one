@@ -115,6 +115,7 @@ class Batch implements ProfileSyncInterface
         $collection = $this->profileBatchFactory->create()
             ->getPendingBatchItemsForStore($store->getId());
         if ($collection->getSize()) {
+            /** @var ProfileBatch $item */
             foreach ($collection as $item) {
                 if ($this->importCountInProcessingStatus >= ProfileBatch::PENDING_LIMIT) {
                     return;
@@ -185,6 +186,7 @@ class Batch implements ProfileSyncInterface
         $collection = $this->profileBatchFactory->create()
             ->getProcessingBatchItemsForStore($store->getId());
         if ($collection->getSize()) {
+            /** @var ProfileBatch $item */
             foreach ($collection as $item) {
                 try {
                     $result = $apiClient->getImportStatus($sectionDiscriminator, $item->getImportId());
@@ -284,8 +286,8 @@ class Batch implements ProfileSyncInterface
             $msg = 'Import failed with returned "error" status';
             $this->updateProfilesStatus($store, $item, Profile::SYNC_STATUS_FAILED, $msg);
             $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $msg);
-        } elseif ($result->result->status === 'waiting_for_file' && $item->getFileUploadExpireAt() &&
-            $this->apsisDateHelper->isExpired($item->getFileUploadExpireAt())
+        } elseif ($result->result->status === 'waiting_for_file' && $item->getFileUploadExpiresAt() &&
+            $this->apsisDateHelper->isExpired($item->getFileUploadExpiresAt())
         ) {
             $msg = 'File upload time expired';
             $this->updateProfilesStatus($store, $item, Profile::SYNC_STATUS_FAILED, $msg);

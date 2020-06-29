@@ -133,8 +133,9 @@ class SaveUpdate implements ObserverInterface
         );
 
         if ($event && $profile->getIsSubscriber() && ! $profile->getIsCustomer()) {
-            $eventModel = $this->eventFactory->create()
-                ->setEventType(Event::EVENT_TYPE_SUBSCRIBER_BECOMES_CUSTOMER)
+            /** @var Event $eventModel */
+            $eventModel = $this->eventFactory->create();
+            $eventModel->setEventType(Event::EVENT_TYPE_SUBSCRIBER_BECOMES_CUSTOMER)
                 ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($customer, $profile)))
                 ->setSubscriberId($profile->getSubscriberId())
                 ->setProfileId($profile->getId())
@@ -200,8 +201,9 @@ class SaveUpdate implements ObserverInterface
     private function createProfile(Customer $customer)
     {
         try {
-            $profile = $this->profileFactory->create()
-                ->setStoreId($customer->getStoreId())
+            /** @var Profile $profile */
+            $profile = $this->profileFactory->create();
+            $profile->setStoreId($customer->getStoreId())
                 ->setCustomerId($customer->getEntityId())
                 ->setEmail($customer->getEmail())
                 ->setIsCustomer(Profile::IS_FLAGGED);

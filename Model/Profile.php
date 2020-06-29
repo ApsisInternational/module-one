@@ -11,6 +11,34 @@ use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime;
 
+/**
+ * Class Profile
+ *
+ * @method string getIntegrationUid()
+ * @method $this setIntegrationUid(string $value)
+ * @method int getSubscriberStatus()
+ * @method $this setSubscriberStatus(int $value)
+ * @method int getStoreId()
+ * @method $this setStoreId(int $value)
+ * @method int getSubscriberId()
+ * @method $this setSubscriberId(int $value)
+ * @method int getCustomerId()
+ * @method $this setCustomerId(int $value)
+ * @method string getEmail()
+ * @method $this setEmail(string $value)
+ * @method int getSubscriberSyncStatus()
+ * @method $this setSubscriberSyncStatus(int $value)
+ * @method int getCustomerSyncStatus()
+ * @method $this setCustomerSyncStatus(int $value)
+ * @method int getIsSubscriber()
+ * @method $this setIsSubscriber(int $value)
+ * @method int getIsCustomer()
+ * @method $this setIsCustomer(int $value)
+ * @method string getErrorMessage()
+ * @method $this setErrorMessage(string $value)
+ * @method string getUpdatedAt()
+ * @method $this setUpdatedAt(string $value)
+ */
 class Profile extends AbstractModel
 {
     const SYNC_STATUS_PENDING = 0;

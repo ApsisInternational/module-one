@@ -12,6 +12,26 @@ use Magento\Framework\Stdlib\DateTime;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Data\Collection\AbstractDb;
 
+/**
+ * Class Abandoned
+ *
+ * @method int getQuoteId()
+ * @method $this setQuoteId(int $value)
+ * @method string getCartData()
+ * @method $this setCartData(string $value)
+ * @method int getStoreId()
+ * @method $this setStoreId(int $value)
+ * @method int getProfileId()
+ * @method $this setProfileId(int $value)
+ * @method int getCustomerId()
+ * @method $this setCustomerId(int $value)
+ * @method string getCustomerEmail()
+ * @method $this setCustomerEmail(string $value)
+ * @method string getToken()
+ * @method $this setToken(string $value)
+ * @method string getCreatedAt()
+ * @method $this setCreatedAt(string $value)
+ */
 class Abandoned extends AbstractModel
 {
     /**

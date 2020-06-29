@@ -115,8 +115,9 @@ class AddProduct implements ObserverInterface
                 );
 
             if ($this->isOkToProceed($cart->getStore()) && $profile && $item) {
-                $eventModel = $this->eventFactory->create()
-                    ->setEventType(Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART)
+                /** @var Event $eventModel */
+                $eventModel = $this->eventFactory->create();
+                $eventModel->setEventType(Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART)
                     ->setEventData(
                         $this->apsisCoreHelper->serialize(
                             $this->cartData->getDataArr($cart, $item, $this->apsisCoreHelper)

@@ -105,9 +105,9 @@ class AddProduct implements ObserverInterface
                 /** @var WishlistItem $item */
                 $item = $observer->getEvent()->getItem();
 
-                $eventModel = $this->eventFactory
-                    ->create()
-                    ->setEventType(Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST)
+                /** @var Event $eventModel */
+                $eventModel = $this->eventFactory->create();
+                $eventModel->setEventType(Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST)
                     ->setEventData(
                         $this->apsisCoreHelper->serialize(
                             $this->wishlistData->getDataArr($wishlist, $store, $item, $product, $this->apsisCoreHelper)

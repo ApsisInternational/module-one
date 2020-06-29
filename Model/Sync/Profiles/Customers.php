@@ -179,10 +179,10 @@ class Customers implements ProfileSyncInterface
                         if (isset($salesData[$customer->getId()])) {
                             $customer = $this->setSalesDataOnCustomer($salesData[$customer->getId()], $customer);
                         }
-                        $subscriberData = $this->customerDataFactory->create()
+                        $customerData = $this->customerDataFactory->create()
                             ->setModelData(array_keys($mappings), $customer, $this->apsisCoreHelper)
                             ->toCSVArray();
-                        $this->apsisFileHelper->outputCSV($file, $subscriberData);
+                        $this->apsisFileHelper->outputCSV($file, $customerData);
                         $customersToUpdate[] = $customer->getId();
                     } catch (Exception $e) {
                         $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());

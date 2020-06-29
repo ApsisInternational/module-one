@@ -119,8 +119,9 @@ class Placed implements ObserverInterface
             $mainData = $this->orderData->getDataArr($order, $this->apsisCoreHelper, (int) $profile->getSubscriberId());
             $subData = $mainData['items'];
             unset($mainData['items']);
-            $eventModel = $this->eventFactory->create()
-                ->setEventType(Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER)
+            /** @var Event $eventModel */
+            $eventModel = $this->eventFactory->create();
+            $eventModel->setEventType(Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER)
                 ->setEventData($this->apsisCoreHelper->serialize($mainData))
                 ->setSubEventData($this->apsisCoreHelper->serialize($subData))
                 ->setProfileId($profile->getId())
@@ -129,9 +130,7 @@ class Placed implements ObserverInterface
                 ->setStoreId($order->getStore()->getId())
                 ->setEmail($order->getCustomerEmail())
                 ->setStatus(Profile::SYNC_STATUS_PENDING);
-
-                $this->eventResource->save($eventModel);
-
+            $this->eventResource->save($eventModel);
             if ($profile->hasDataChanges()) {
                 $this->profileResource->save($profile);
             }

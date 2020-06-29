@@ -19,6 +19,7 @@ use Apsis\One\ApiClient\Client;
 use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as DataCollectionFactory;
 use Magento\Config\Model\ResourceModel\Config\Data\Collection as DataCollection;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use libphonenumber\PhoneNumberUtil;
 
 class Core extends ApsisLogHelper
 {
@@ -605,5 +606,32 @@ class Core extends ApsisLogHelper
             }
         }
         return $attributesArr;
+    }
+
+    /**
+     * @param string $countryCode
+     * @param string $phoneNumber
+     *
+     * @return int|null
+     */
+    public function validateAndFormatMobileNumber(string $countryCode, string $phoneNumber)
+    {
+        $formattedNumber = null;
+        try {
+            if (strlen($countryCode) === 2) {
+                $phoneUtil = PhoneNumberUtil::getInstance();
+                $numberProto = $phoneUtil->parse($phoneNumber, $countryCode);
+                if ($phoneUtil->isValidNumber($numberProto)) {
+                    $formattedNumber = (int) sprintf(
+                        "%d%d",
+                        (int) $numberProto->getCountryCode(),
+                        (int) $numberProto->getNationalNumber()
+                    );
+                }
+            }
+        } catch (Exception $e) {
+            $this->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
+        return $formattedNumber;
     }
 }

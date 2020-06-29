@@ -137,6 +137,7 @@ class AbandonedSub
         foreach ($quoteCollection as $quote) {
             $cartData = $this->cartContentFactory->create()
                 ->getCartData($quote, $apsisCoreHelper);
+            /** @var Profile $profile */
             $profile = $this->profileCollectionFactory->create()
                 ->loadByEmailAndStoreId($quote->getCustomerEmail(), $quote->getStoreId());
 

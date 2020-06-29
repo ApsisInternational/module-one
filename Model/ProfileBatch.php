@@ -13,6 +13,30 @@ use Magento\Framework\Stdlib\DateTime;
 use Apsis\One\Model\ResourceModel\ProfileBatch\CollectionFactory as ProfileBatchCollectionFactory;
 use Apsis\One\Model\ResourceModel\ProfileBatch\Collection as ProfileBatchCollection;
 
+/**
+ * Class ProfileBatch
+ *
+ * @method string getImportId()
+ * @method $this setImportId(string $value)
+ * @method string getFileUploadExpiresAt()
+ * @method $this setFileUploadExpiresAt(string $value)
+ * @method int getStoreId()
+ * @method $this setStoreId(int $value)
+ * @method string getFilePath()
+ * @method $this setFilePath(string $value)
+ * @method string getJsonMappings()
+ * @method $this setJsonMappings(string $value)
+ * @method int getBatchType()
+ * @method $this setBatchType(int $value)
+ * @method string getEntityIds()
+ * @method $this setEntityIds(string $value)
+ * @method int getSyncStatus()
+ * @method $this setSyncStatus(int $value)
+ * @method string getErrorMessage()
+ * @method $this setErrorMessage(string $value)
+ * @method string getUpdatedAt()
+ * @method $this setUpdatedAt(string $value)
+ */
 class ProfileBatch extends AbstractModel
 {
     const BATCH_TYPE_SUBSCRIBER = 1;

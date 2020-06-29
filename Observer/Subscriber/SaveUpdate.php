@@ -159,8 +159,9 @@ class SaveUpdate implements ObserverInterface
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_2_SUBSCRIBER
         );
         if ($event && $profile->getIsCustomer() && ! $profile->getIsSubscriber()) {
-            $eventModel = $this->eventFactory->create()
-                ->setEventType(Event::EVENT_TYPE_CUSTOMER_BECOMES_SUBSCRIBER)
+            /** @var Event $eventModel */
+            $eventModel = $this->eventFactory->create();
+            $eventModel->setEventType(Event::EVENT_TYPE_CUSTOMER_BECOMES_SUBSCRIBER)
                 ->setEventData($this->apsisCoreHelper->serialize(
                     $this->getDataArrForSubscriberEvent($subscriber, $profile)
                 ))
@@ -182,14 +183,12 @@ class SaveUpdate implements ObserverInterface
      * @param Subscriber $subscriber
      * @param Profile $profile
      * @param StoreInterface $store
-     *
-     * @return $this
      */
     private function registerSubscriberUnsubscribeEvent(Subscriber $subscriber, Profile $profile, StoreInterface $store)
     {
         $emailReg = $this->registry->registry($subscriber->getEmail() . '_subscriber_save_after');
         if ($emailReg) {
-            return $this;
+            return;
         }
         $this->registry->unregister($subscriber->getEmail() . '_subscriber_save_after');
         $this->registry->register($subscriber->getEmail() . '_subscriber_save_after', $subscriber->getEmail());
@@ -199,8 +198,9 @@ class SaveUpdate implements ObserverInterface
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_UNSUBSCRIBE
         );
         if ($event) {
-            $eventModel = $this->eventFactory->create()
-                ->setEventType(Event::EVENT_TYPE_SUBSCRIBER_UNSUBSCRIBE)
+            /** @var Event $eventModel */
+            $eventModel = $this->eventFactory->create();
+            $eventModel->setEventType(Event::EVENT_TYPE_SUBSCRIBER_UNSUBSCRIBE)
                 ->setEventData($this->apsisCoreHelper->serialize(
                     $this->getDataArrForUnsubscribeEvent($subscriber)
                 ))
@@ -258,8 +258,9 @@ class SaveUpdate implements ObserverInterface
     {
         if ($subscriber->getStatus() == Subscriber::STATUS_SUBSCRIBED) {
             try {
-                $profile = $this->profileFactory->create()
-                    ->setSubscriberId($subscriber->getSubscriberId())
+                /** @var Profile $profile */
+                $profile = $this->profileFactory->create();
+                $profile->setSubscriberId($subscriber->getSubscriberId())
                     ->setSubscriberStatus(Subscriber::STATUS_SUBSCRIBED)
                     ->setStoreId($subscriber->getStoreId())
                     ->setEmail($subscriber->getEmail())

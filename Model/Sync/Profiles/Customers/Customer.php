@@ -380,10 +380,12 @@ class Customer implements ProfileDataInterface
         if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
         ! $this->customer->getBillingTelephone()
         ) {
-            return (string) $this->customer->getShippingTelephone();
+            return (string) $this->apsisCoreHelper
+                ->validateAndFormatMobileNumber($this->getDeliveryCountry(), $this->customer->getShippingTelephone());
         }
 
-        return (string) $this->customer->getBillingTelephone();
+        return (string) $this->apsisCoreHelper
+            ->validateAndFormatMobileNumber($this->getBillingCountry(), $this->customer->getBillingTelephone());
     }
 
     /**
@@ -492,10 +494,12 @@ class Customer implements ProfileDataInterface
         if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
         ! $this->customer->getShippingTelephone()
         ) {
-            return (string) $this->customer->getBillingTelephone();
+            return (string) $this->apsisCoreHelper
+                ->validateAndFormatMobileNumber($this->getBillingCountry(), $this->customer->getBillingTelephone());
         }
 
-        return (string) $this->customer->getShippingTelephone();
+        return (string) $this->apsisCoreHelper
+            ->validateAndFormatMobileNumber($this->getDeliveryCountry(), $this->customer->getShippingTelephone());
     }
 
     /**

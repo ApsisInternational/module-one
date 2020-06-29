@@ -10,6 +10,35 @@ use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime;
 
+/**
+ * Class Event
+ *
+ * @method int getEventType()
+ * @method $this setEventType(int $value)
+ * @method string getEventData()
+ * @method $this setEventData(string $value)
+ * @method string getSubEventData()
+ * @method $this setSubEventData(string $value)
+ * @method int getProfileId()
+ * @method $this setProfileId(int $value)
+ * @method int getSubscriberId()
+ * @method $this setSubscriberId(int $value)
+ * @method int getCustomerId()
+ * @method $this setCustomerId(int $value)
+ * @method int getStoreId()
+ * @method $this setStoreId(int $value)
+ * @method string getEmail()
+ * @method $this setEmail(string $value)
+ * @method int getStatus()
+ * @method $this setStatus(int $value)
+ * @method string getErrorMessage()
+ * @method $this setErrorMessage(string $value)
+ * @method string getCreatedAt()
+ * @method $this setCreatedAt(string $value)
+ * @method string getUpdatedAt()
+ * @method $this setUpdatedAt(string $value)
+ *
+ */
 class Event extends AbstractModel
 {
     /**

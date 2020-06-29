@@ -99,8 +99,9 @@ class LoggerPlugin
             if ($this->isOkToProceed() && $customer && isset($data['last_login_at']) && $profile) {
                 /** @var CustomerLog $customerLog */
                 $customerLog = $this->customerLogger->get($customerId);
-                $eventModel = $this->eventFactory->create()
-                    ->setEventType(Event::EVENT_TYPE_CUSTOMER_LOGIN)
+                /** @var Event $eventModel */
+                $eventModel = $this->eventFactory->create();
+                $eventModel->setEventType(Event::EVENT_TYPE_CUSTOMER_LOGIN)
                     ->setEventData($this->apsisCoreHelper->serialize($this->getDataArr($customerLog)))
                     ->setProfileId($profile->getId())
                     ->setCustomerId($customerLog->getCustomerId())

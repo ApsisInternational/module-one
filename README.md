@@ -7,7 +7,7 @@ APSIS One integration for Magento 2
 
 - PHP 7.1+
 - Magento 2.2+
-- APSIS One Account
+- APSIS One [Account](https://www.apsis.com/about-us/request-tour)
 
 ## Support
 

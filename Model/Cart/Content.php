@@ -130,13 +130,13 @@ class Content
             ->formatDateForPlatformCompatibility($quoteModel->getUpdatedAt());
         $quoteData['store_name'] = (string) $quoteModel->getStore()->getName();
         $quoteData['website_name'] = (string) $quoteModel->getStore()->getWebsite()->getName();
-        $quoteData['subtotal_amount'] = (float) $this->apsisCoreHelper->round($totals->getSubtotal());
-        $quoteData['grand_total_amount'] = (float) $this->apsisCoreHelper->round($quoteModel->getGrandTotal());
-        $quoteData['tax_amount'] = (float) $this->apsisCoreHelper->round($totals->getTaxAmount());
-        $quoteData['shipping_amount'] = (float) $this->apsisCoreHelper->round($totals->getShippingAmount());
-        $quoteData['discount_amount'] = (float) $this->apsisCoreHelper->round($totals->getDiscountAmount());
-        $quoteData['items_quantity'] = (float) $this->apsisCoreHelper->round($totals->getItemsQty());
-        $quoteData['items_count'] = (float) $this->apsisCoreHelper->round($quoteModel->getItemsCount());
+        $quoteData['subtotal_amount'] = $this->apsisCoreHelper->round($totals->getSubtotal());
+        $quoteData['grand_total_amount'] = $this->apsisCoreHelper->round($quoteModel->getGrandTotal());
+        $quoteData['tax_amount'] = $this->apsisCoreHelper->round($totals->getTaxAmount());
+        $quoteData['shipping_amount'] = $this->apsisCoreHelper->round($totals->getShippingAmount());
+        $quoteData['discount_amount'] = $this->apsisCoreHelper->round($totals->getDiscountAmount());
+        $quoteData['items_quantity'] = $this->apsisCoreHelper->round($totals->getItemsQty());
+        $quoteData['items_count'] = $this->apsisCoreHelper->round($quoteModel->getItemsCount());
         $quoteData['payment_method_title'] = (string) $quoteModel->getPayment()->getMethod();
         $quoteData['shipping_method_title'] = (string) $quoteModel->getShippingAddress()->getShippingDescription();
         $quoteData['currency_code'] = (string) $totals->getQuoteCurrencyCode();
@@ -204,10 +204,10 @@ class Content
             'product_image_url' => (string) $this->productServiceProvider->getProductImageUrl($product),
             'qty_ordered' => (float) $quoteItem->getQty() ? $quoteItem->getQty() :
                 ($quoteItem->getQtyOrdered() ? $quoteItem->getQtyOrdered() : 1),
-            'price_amount' => (float) $this->apsisCoreHelper->round($quoteItem->getPrice()),
-            'row_total_amount' => (float) $this->apsisCoreHelper->round($quoteItem->getRowTotal()),
-            'tax_amount' => (float) $this->apsisCoreHelper->round($quoteItem->getTaxAmount()),
-            'discount_amount' => (float) $this->apsisCoreHelper->round($quoteItem->getTotalDiscountAmount()),
+            'price_amount' => $this->apsisCoreHelper->round($quoteItem->getPrice()),
+            'row_total_amount' => $this->apsisCoreHelper->round($quoteItem->getRowTotal()),
+            'tax_amount' => $this->apsisCoreHelper->round($quoteItem->getTaxAmount()),
+            'discount_amount' => $this->apsisCoreHelper->round($quoteItem->getTotalDiscountAmount()),
             'product_options' => $this->getProductOptions($quoteItem)
         ];
 
@@ -271,8 +271,8 @@ class Content
             foreach ($attribute['value'] as $value) {
                 $values['title'] = (string) $value['title'];
                 $values['value'] = '';
-                $values['qty'] = (float) $this->apsisCoreHelper->round($value['qty']);
-                $values['price'] = (float) $this->apsisCoreHelper->round($value['price']);
+                $values['qty'] = $this->apsisCoreHelper->round($value['qty']);
+                $values['price'] = $this->apsisCoreHelper->round($value['price']);
                 $option['option_value'] = $values;
             }
             $sortedOptions[] = $option;

@@ -73,7 +73,7 @@ class Data extends EventData implements EventDataInterface
             'productUrl' => (string) $this->product->getProductUrl(),
             'productReviewUrl' => (string) $reviewObject->getReviewUrl(),
             'productImageUrl' => (string) $this->productServiceProvider->getProductImageUrl($this->product),
-            'catalogPriceAmount' => (float) $apsisCoreHelper->round($this->product->getPrice()),
+            'catalogPriceAmount' => $apsisCoreHelper->round($this->product->getPrice()),
             'ratingStarValue' => ($voteCollection->getSize()) ? (int) $voteCollection->getFirstItem()->getValue() : 0
         ];
     }

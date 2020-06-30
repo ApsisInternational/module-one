@@ -48,9 +48,9 @@ class Data extends EventData implements EventDataInterface
                 'name' => (string) $item->getName(),
                 'productUrl' => (string) $product->getProductUrl(),
                 'productImageUrl' => (string) $this->productServiceProvider->getProductImageUrl($product),
-                'qtyOrdered' => (float) $apsisCoreHelper->round($item->getQtyOrdered()),
-                'priceAmount' => (float) $apsisCoreHelper->round($item->getPrice()),
-                'rowTotalAmount' => (float) $apsisCoreHelper->round($item->getRowTotal()),
+                'qtyOrdered' => $apsisCoreHelper->round($item->getQtyOrdered()),
+                'priceAmount' => $apsisCoreHelper->round($item->getPrice()),
+                'rowTotalAmount' => $apsisCoreHelper->round($item->getRowTotal()),
             ];
         }
 
@@ -62,9 +62,9 @@ class Data extends EventData implements EventDataInterface
             'isGuest' => (boolean) $order->getCustomerIsGuest(),
             'websiteName' => (string) $order->getStore()->getWebsite()->getName(),
             'storeName' => (string) $order->getStore()->getName(),
-            'grandTotalAmount' => (float) $apsisCoreHelper->round($order->getGrandTotal()),
-            'shippingAmount' => (float) $apsisCoreHelper->round($order->getShippingAmount()),
-            'discountAmount' => (float) $apsisCoreHelper->round($order->getDiscountAmount()),
+            'grandTotalAmount' => $apsisCoreHelper->round($order->getGrandTotal()),
+            'shippingAmount' => $apsisCoreHelper->round($order->getShippingAmount()),
+            'discountAmount' => $apsisCoreHelper->round($order->getDiscountAmount()),
             'shippingMethodName' => (string) $order->getShippingDescription(),
             'paymentMethodName' => (string) $order->getPayment()->getMethod(),
             'itemsCount' => (int) $order->getTotalItemCount(),

@@ -53,8 +53,8 @@ class Data extends EventData implements EventDataInterface
             'productImageUrl' => (string) $this->productServiceProvider->getProductImageUrl($product),
             'qtyOrdered' => (float) $this->cartItem->getQty() ? $this->cartItem->getQty() :
                 ($this->cartItem->getQtyOrdered() ? $this->cartItem->getQtyOrdered() : 1),
-            'priceAmount' => (float) $apsisCoreHelper->round($this->cartItem->getPrice()),
-            'rowTotalAmount' => (float) $apsisCoreHelper->round($this->cartItem->getRowTotal()),
+            'priceAmount' => $apsisCoreHelper->round($this->cartItem->getPrice()),
+            'rowTotalAmount' => $apsisCoreHelper->round($this->cartItem->getRowTotal()),
         ];
     }
 }

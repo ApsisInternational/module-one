@@ -381,11 +381,11 @@ class Customer implements ProfileDataInterface
         ! $this->customer->getBillingTelephone()
         ) {
             return (string) $this->apsisCoreHelper
-                ->validateAndFormatMobileNumber($this->getDeliveryCountry(), $this->customer->getShippingTelephone());
+                ->validateAndFormatMobileNumber($this->getDeliveryCountry(), (string) $this->customer->getShippingTelephone());
         }
 
         return (string) $this->apsisCoreHelper
-            ->validateAndFormatMobileNumber($this->getBillingCountry(), $this->customer->getBillingTelephone());
+            ->validateAndFormatMobileNumber($this->getBillingCountry(), (string) $this->customer->getBillingTelephone());
     }
 
     /**
@@ -495,11 +495,11 @@ class Customer implements ProfileDataInterface
         ! $this->customer->getShippingTelephone()
         ) {
             return (string) $this->apsisCoreHelper
-                ->validateAndFormatMobileNumber($this->getBillingCountry(), $this->customer->getBillingTelephone());
+                ->validateAndFormatMobileNumber($this->getBillingCountry(), (string) $this->customer->getBillingTelephone());
         }
 
         return (string) $this->apsisCoreHelper
-            ->validateAndFormatMobileNumber($this->getDeliveryCountry(), $this->customer->getShippingTelephone());
+            ->validateAndFormatMobileNumber($this->getDeliveryCountry(), (string) $this->customer->getShippingTelephone());
     }
 
     /**
@@ -555,7 +555,7 @@ class Customer implements ProfileDataInterface
     private function getAverageOrderValue()
     {
         return ($this->customer->getAverageOrderValue()) ?
-            (float) $this->apsisCoreHelper->round($this->customer->getAverageOrderValue()) : '';
+            $this->apsisCoreHelper->round($this->customer->getAverageOrderValue()) : '';
     }
 
     /**
@@ -564,6 +564,6 @@ class Customer implements ProfileDataInterface
     private function getTotalSpend()
     {
         return ($this->customer->getTotalSpend()) ?
-            (float) $this->apsisCoreHelper->round($this->customer->getTotalSpend()) : '';
+            $this->apsisCoreHelper->round($this->customer->getTotalSpend()) : '';
     }
 }

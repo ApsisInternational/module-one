@@ -169,7 +169,6 @@ class AbandonedSub
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
                 ];
-
             }
         }
 

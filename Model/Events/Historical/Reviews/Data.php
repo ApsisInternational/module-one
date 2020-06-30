@@ -26,12 +26,12 @@ class Data extends EventData implements EventDataInterface
     /**
      * Data constructor.
      *
-     * @param VoteCollectionFactory $voteCollectionFactory
      * @param ProductServiceProvider $productServiceProvider
+     * @param VoteCollectionFactory $voteCollectionFactory
      */
     public function __construct(
-        VoteCollectionFactory $voteCollectionFactory,
-        ProductServiceProvider $productServiceProvider
+        ProductServiceProvider $productServiceProvider,
+        VoteCollectionFactory $voteCollectionFactory
     ) {
         $this->voteCollectionFactory = $voteCollectionFactory;
         parent::__construct($productServiceProvider);

@@ -72,6 +72,7 @@ class Core extends ApsisLogHelper
      * Core constructor.
      *
      * @param Logger $logger
+     * @param ScopeConfigInterface $scopeConfig
      * @param StoreManagerInterface $storeManager
      * @param EncryptorInterface $encryptor
      * @param WriterInterface $writer
@@ -79,18 +80,17 @@ class Core extends ApsisLogHelper
      * @param DataCollectionFactory $dataCollectionFactory
      * @param ApsisDateHelper $apsisDateHelper
      * @param RequestInterface $request
-     * @param ScopeConfigInterface $scopeConfig
      */
     public function __construct(
         Logger $logger,
+        ScopeConfigInterface $scopeConfig,
         StoreManagerInterface $storeManager,
         EncryptorInterface $encryptor,
         WriterInterface $writer,
         ClientFactory $clientFactory,
         DataCollectionFactory $dataCollectionFactory,
         ApsisDateHelper $apsisDateHelper,
-        RequestInterface $request,
-        ScopeConfigInterface $scopeConfig
+        RequestInterface $request
     ) {
         $this->request = $request;
         $this->apsisDateHelper = $apsisDateHelper;

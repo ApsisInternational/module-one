@@ -204,7 +204,6 @@ class Historical implements SyncInterface
                     'date' => true,
                 ];
             }
-
         }
         return $period;
     }

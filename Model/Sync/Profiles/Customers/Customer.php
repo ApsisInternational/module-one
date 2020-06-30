@@ -380,12 +380,16 @@ class Customer implements ProfileDataInterface
         if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
         ! $this->customer->getBillingTelephone()
         ) {
-            return (string) $this->apsisCoreHelper
-                ->validateAndFormatMobileNumber($this->getDeliveryCountry(), (string) $this->customer->getShippingTelephone());
+            return (string) $this->apsisCoreHelper->validateAndFormatMobileNumber(
+                $this->getDeliveryCountry(),
+                (string) $this->customer->getShippingTelephone()
+            );
         }
 
-        return (string) $this->apsisCoreHelper
-            ->validateAndFormatMobileNumber($this->getBillingCountry(), (string) $this->customer->getBillingTelephone());
+        return (string) $this->apsisCoreHelper->validateAndFormatMobileNumber(
+            $this->getBillingCountry(),
+            (string) $this->customer->getBillingTelephone()
+        );
     }
 
     /**
@@ -494,12 +498,16 @@ class Customer implements ProfileDataInterface
         if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
         ! $this->customer->getShippingTelephone()
         ) {
-            return (string) $this->apsisCoreHelper
-                ->validateAndFormatMobileNumber($this->getBillingCountry(), (string) $this->customer->getBillingTelephone());
+            return (string) $this->apsisCoreHelper->validateAndFormatMobileNumber(
+                $this->getBillingCountry(),
+                (string) $this->customer->getBillingTelephone()
+            );
         }
 
-        return (string) $this->apsisCoreHelper
-            ->validateAndFormatMobileNumber($this->getDeliveryCountry(), (string) $this->customer->getShippingTelephone());
+        return (string) $this->apsisCoreHelper->validateAndFormatMobileNumber(
+            $this->getDeliveryCountry(),
+            (string) $this->customer->getShippingTelephone()
+        );
     }
 
     /**

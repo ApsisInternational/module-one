@@ -22,11 +22,6 @@ use Apsis\One\Model\Events\Historical\Orders\Data;
 class Placed implements ObserverInterface
 {
     /**
-     * @var ProfileCollectionFactory
-     */
-    private $profileCollectionFactory;
-
-    /**
      * @var ApsisCoreHelper
      */
     private $apsisCoreHelper;
@@ -65,7 +60,6 @@ class Placed implements ObserverInterface
      * @param ProfileResourceCollectionFactory $profileResourceCollectionFactory
      * @param ProfileResource $profileResource
      * @param Data $orderData
-     * @param ProfileCollectionFactory $profileCollectionFactory
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -73,10 +67,8 @@ class Placed implements ObserverInterface
         EventResource $eventResource,
         ProfileResourceCollectionFactory $profileResourceCollectionFactory,
         ProfileResource $profileResource,
-        Data $orderData,
-        ProfileCollectionFactory $profileCollectionFactory
+        Data $orderData
     ) {
-        $this->profileCollectionFactory = $profileCollectionFactory;
         $this->orderData = $orderData;
         $this->profileResource = $profileResource;
         $this->profileResourceCollectionFactory = $profileResourceCollectionFactory;
@@ -107,7 +99,7 @@ class Placed implements ObserverInterface
             }
         } else {
             /** @var Profile $profile */
-            $profile = $this->profileCollectionFactory->create()
+            $profile = $this->profileResourceCollectionFactory->create()
                 ->loadByEmailAndStoreId(
                     $order->getCustomerEmail(),
                     $order->getStore()->getId()

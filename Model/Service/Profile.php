@@ -15,6 +15,7 @@ use Apsis\One\Model\Profile as ProfileModel;
 use Exception;
 use Magento\Newsletter\Model\Subscriber;
 use Apsis\One\Model\ProfileFactory;
+use Zend_Date;
 
 class Profile
 {
@@ -98,7 +99,7 @@ class Profile
             if ($this->isProfileSynced($apiClient, $sectionDiscriminator, $mappedEmailAttribute, $profile)) {
                 if ($apiClient->mergeProfile($keySpacesToMerge) === Client::HTTP_CODE_CONFLICT) {
                     $keySpacesToMerge[1]['profile_key'] =
-                        strtolower(str_replace('-', '', $profile->getIntegrationUid()));
+                        md5($profile->getIntegrationUid() . date(Zend_Date::TIMESTAMP));
                     if ($apiClient->mergeProfile($keySpacesToMerge) === null) {
                         $this->setNewCookieValue($keySpacesToMerge, $store);
                     }

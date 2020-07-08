@@ -6,6 +6,7 @@ use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers;
 use Apsis\One\Model\Sync\Profiles\Customers;
 use Apsis\One\Model\Sync\Profiles\Batch;
+use Exception;
 use Magento\Store\Model\ScopeInterface;
 
 class Profiles implements SyncInterface
@@ -49,11 +50,17 @@ class Profiles implements SyncInterface
     {
         $stores = $apsisCoreHelper->getStores();
         foreach ($stores as $store) {
-            $account = $apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
-            if ($account) {
-                $this->subscribers->processForStore($store, $apsisCoreHelper);
-                $this->customers->processForStore($store, $apsisCoreHelper);
-                $this->batch->processForStore($store, $apsisCoreHelper);
+            try {
+                $account = $apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
+                if ($account) {
+                    $this->subscribers->processForStore($store, $apsisCoreHelper);
+                    $this->customers->processForStore($store, $apsisCoreHelper);
+                    $this->batch->processForStore($store, $apsisCoreHelper);
+                }
+            } catch (Exception $e) {
+                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
+                continue;
             }
         }
     }

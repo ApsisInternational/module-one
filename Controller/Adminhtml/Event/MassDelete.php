@@ -73,21 +73,17 @@ class MassDelete extends Action
     {
         /** @var Redirect $resultRedirect */
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
-
         try {
             $collection = $this->filter->getCollection($this->eventCollectionFactory->create());
             $collectionSize = $collection->getSize();
-
             foreach ($collection as $item) {
                 $this->eventResource->delete($item);
             }
-
             $this->messageManager->addSuccessMessage(__('A total of %1 record(s) have been deleted.', $collectionSize));
         } catch (Exception $e) {
-            $this->apsisLogHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             $this->messageManager->addErrorMessage(__('An error happen during execution. Please check logs'));
         }
-
         return $resultRedirect->setPath('*/*/');
     }
 }

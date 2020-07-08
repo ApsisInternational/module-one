@@ -100,13 +100,11 @@ class Abandoned extends AbstractModel
         if ($this->isObjectNew()) {
             $this->setCreatedAt($this->dateTime->formatDate(true));
         }
-
         $this->setToken(
             $this->expressionFactory->create(
                 ["expression" => "(SELECT UUID())"]
             )
         )->setCartData($this->apsisLogHelper->serialize($this->getCartData()));
-
         return $this;
     }
 }

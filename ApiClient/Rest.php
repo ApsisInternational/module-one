@@ -11,6 +11,8 @@ use stdClass;
  */
 class Rest
 {
+    const HTTP_CODE_CONFLICT = 409;
+
     /**
      * http verbs
      */
@@ -19,6 +21,11 @@ class Rest
     const VERB_PUT = 'PUT';
     const VERB_DELETE = 'DELETE';
     const VERB_PATCH = 'PATCH';
+
+    /**
+     * @var array
+     */
+    private $errorCodesToRetry = [500, 501, 503, 408, 429];
 
     /**
      * @var string
@@ -97,12 +104,12 @@ class Rest
                     $this->executeDelete($ch);
                     break;
                 default:
-                    $this->helper->log(__METHOD__ . ': Current verb (' . $this->verb . ') is an invalid REST verb.');
+                    $this->helper->debug(__METHOD__ . ' : Current verb (' . $this->verb . ') is an invalid REST verb.');
                     curl_close($ch);
             }
         } catch (Exception $e) {
             curl_close($ch);
-            $this->helper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->helper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $this->responseBody;
     }
@@ -285,5 +292,30 @@ class Rest
     {
         $this->verb = $verb;
         return $this;
+    }
+
+    /**
+     * @param null|stdClass $response
+     * @param string $method
+     *
+     * @return mixed
+     */
+    protected function processResponse($response, string $method)
+    {
+        if (strlen($this->curlError)) {
+            $this->helper->log(__METHOD__ . ': CURL ERROR: ' . $this->curlError);
+            return false;
+        }
+
+        if (isset($response->status) && (int) $response->status === self::HTTP_CODE_CONFLICT) {
+            return self::HTTP_CODE_CONFLICT;
+        }
+
+        if (isset($response->status) && isset($response->detail)) {
+            $this->helper->debug($method, (array) $response);
+            return (in_array($response->status, $this->errorCodesToRetry)) ? false : (string) $response->detail;
+        }
+
+        return $response;
     }
 }

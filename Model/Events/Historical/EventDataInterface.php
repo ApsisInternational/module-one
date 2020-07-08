@@ -3,7 +3,7 @@
 namespace Apsis\One\Model\Events\Historical;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use \Magento\Framework\Model\AbstractModel;
+use Magento\Framework\Model\AbstractModel;
 
 interface EventDataInterface
 {

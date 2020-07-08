@@ -6,7 +6,7 @@ use Apsis\One\ApiClient\Client;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
-use \Exception;
+use Exception;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use Apsis\One\Model\ResourceModel\Event\CollectionFactory as EventCollectionFactory;
@@ -161,32 +161,38 @@ class Events implements SyncInterface
         $this->apsisCoreHelper = $apsisCoreHelper;
         $stores = $this->apsisCoreHelper->getStores();
         foreach ($stores as $store) {
-            $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
-                $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
-            );
-            $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
-            $this->mappedEmailAttribute = $this->apsisCoreHelper->getStoreConfig(
-                $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
-            );
+            try {
+                $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
+                    $store,
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+                );
+                $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
+                $this->mappedEmailAttribute = $this->apsisCoreHelper->getStoreConfig(
+                    $store,
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
+                );
 
-            if ($this->sectionDiscriminator && $client && $this->mappedEmailAttribute) {
-                $this->attributesArrWithVersionId = $this->apsisCoreHelper
-                    ->getAttributesArrWithVersionId($client, $this->sectionDiscriminator);
-                $this->keySpaceDiscriminator = $this->apsisCoreHelper
-                    ->getKeySpaceDiscriminator($this->sectionDiscriminator);
-                $this->mapEventVersionIds($client);
-                $eventCollection = $this->eventCollectionFactory->create()
-                    ->getPendingEventsByStore($store->getId(), self::COLLECTION_LIMIT);
+                if ($this->sectionDiscriminator && $client && $this->mappedEmailAttribute) {
+                    $this->attributesArrWithVersionId = $this->apsisCoreHelper
+                        ->getAttributesArrWithVersionId($client, $this->sectionDiscriminator);
+                    $this->keySpaceDiscriminator = $this->apsisCoreHelper
+                        ->getKeySpaceDiscriminator($this->sectionDiscriminator);
+                    $this->mapEventVersionIds($client);
+                    $eventCollection = $this->eventCollectionFactory->create()
+                        ->getPendingEventsByStore($store->getId(), self::COLLECTION_LIMIT);
 
-                if ($eventCollection->getSize() &&
-                    $this->isMinimumEventsMapped() &&
-                    $this->mappedEmailAttribute &&
-                    isset($this->attributesArrWithVersionId[$this->mappedEmailAttribute])
-                ) {
-                    $this->processEventCollection($client, $eventCollection, $store);
+                    if ($eventCollection->getSize() &&
+                        $this->isMinimumEventsMapped() &&
+                        $this->mappedEmailAttribute &&
+                        isset($this->attributesArrWithVersionId[$this->mappedEmailAttribute])
+                    ) {
+                        $this->processEventCollection($client, $eventCollection, $store);
+                    }
                 }
+            } catch (Exception $e) {
+                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
+                continue;
             }
         }
     }
@@ -211,7 +217,7 @@ class Events implements SyncInterface
      */
     private function mapEventVersionIds(Client $client)
     {
-        $eventDefinition = $client->getEventsTypes($this->sectionDiscriminator);
+        $eventDefinition = $client->getEvents($this->sectionDiscriminator);
         if ($eventDefinition && isset($eventDefinition->items)) {
             foreach ($eventDefinition->items as $item) {
                 if (! array_key_exists($item->discriminator, $this->eventsVersionMapping)) {
@@ -274,7 +280,7 @@ class Events implements SyncInterface
                 }
 
                 if (! empty($groupedEventArray)) {
-                    $status = $client->postEventsToProfile(
+                    $status = $client->addEventsToProfile(
                         $this->keySpaceDiscriminator,
                         $profile->getIntegrationUid(),
                         $this->sectionDiscriminator,
@@ -305,7 +311,7 @@ class Events implements SyncInterface
                     );
                 }
             } catch (Exception $e) {
-                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
                 continue;
             }
         }
@@ -322,8 +328,8 @@ class Events implements SyncInterface
             $event->getCreatedAt(),
             Zend_Date::ISO_8601
         );
-        if ($event->getEventType() == Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART ||
-            $event->getEventType() == Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER) {
+        if ((int) $event->getEventType() === Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART ||
+            (int) $event->getEventType() === Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER) {
             $typeArray = $this->eventsDiscriminatorMapping[$event->getEventType()];
 
             if (empty($this->eventsVersionMapping[$typeArray['main']]) ||
@@ -404,14 +410,12 @@ class Events implements SyncInterface
         $latestAbandonedCart = $this->abandonedCollectionFactory->create()
             ->loadByProfileIdAndStoreId((int) $profile->getId(), (int) $store->getId());
         if ($mappedAcTokenAttribute &&
-            isset($this->attributesArrWithVersionId[$mappedAcTokenAttribute]) &&
-            $latestAbandonedCart
-        ) {
+            isset($this->attributesArrWithVersionId[$mappedAcTokenAttribute]) && $latestAbandonedCart) {
             $attributesToSync[$this->attributesArrWithVersionId[$mappedAcTokenAttribute]] =
                 $latestAbandonedCart->getToken();
         }
 
-        return $client->createProfile(
+        return $client->addAttributesToProfile(
             $this->keySpaceDiscriminator,
             $profile->getIntegrationUid(),
             $this->sectionDiscriminator,

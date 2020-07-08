@@ -112,15 +112,14 @@ class AbandonedSub
                 'date' => true,
             ];
 
-            $quoteCollection = $this->quoteCollectionFactory->create()
+            return $this->quoteCollectionFactory->create()
                 ->addFieldToFilter('is_active', 1)
                 ->addFieldToFilter('items_count', ['gt' => 0])
                 ->addFieldToFilter('customer_email', ['notnull' => true])
                 ->addFieldToFilter('main_table.store_id', $store->getId())
                 ->addFieldToFilter('main_table.updated_at', $updated);
-            return $quoteCollection;
         } catch (Exception $e) {
-            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return false;
         }
     }
@@ -135,40 +134,46 @@ class AbandonedSub
         $events = [];
         $createdAt = $this->dateTime->formatDate(true);
         foreach ($quoteCollection as $quote) {
-            $cartData = $this->cartContentFactory->create()
-                ->getCartData($quote, $apsisCoreHelper);
-            /** @var Profile $profile */
-            $profile = $this->profileCollectionFactory->create()
-                ->loadByEmailAndStoreId($quote->getCustomerEmail(), $quote->getStoreId());
-
-            if (! empty($cartData) && $profile) {
-                $abandonedCarts[] = [
-                    'quote_id' => $quote->getId(),
-                    'cart_data' => $apsisCoreHelper->serialize($cartData),
-                    'store_id' => $quote->getStoreId(),
-                    'profile_id' => $profile->getId(),
-                    'customer_id' => $quote->getCustomerId(),
-                    'customer_email' => $quote->getCustomerEmail(),
-                    'token' => $this->expressionFactory->create(
-                        ["expression" => "(SELECT UUID())"]
-                    ),
-                    'created_at' => $createdAt
-                ];
-                $mainData = $this->getDataForEventFromAcData($cartData);
-                $subData = $mainData['items'];
-                unset($mainData['items']);
-                $events[] = [
-                    'event_type' => Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART,
-                    'event_data' => $apsisCoreHelper->serialize($mainData),
-                    'sub_event_data' => $apsisCoreHelper->serialize($subData),
-                    'profile_id' => $profile->getId(),
-                    'customer_id' => $quote->getCustomerId(),
-                    'store_id' => $quote->getStoreId(),
-                    'email' => $quote->getCustomerEmail(),
-                    'status' => Profile::SYNC_STATUS_PENDING,
-                    'created_at' => $createdAt,
-                    'updated_at' => $createdAt,
-                ];
+            try {
+                $cartData = $this->cartContentFactory->create()
+                    ->getCartData($quote, $apsisCoreHelper);
+                /** @var Profile $profile */
+                $profile = $this->profileCollectionFactory->create()
+                    ->loadByEmailAndStoreId($quote->getCustomerEmail(), $quote->getStoreId());
+                if (! empty($cartData) && ! empty($cartData['items']) && $profile) {
+                    $abandonedCarts[] = [
+                        'quote_id' => $quote->getId(),
+                        'cart_data' => $apsisCoreHelper->serialize($cartData),
+                        'store_id' => $quote->getStoreId(),
+                        'profile_id' => $profile->getId(),
+                        'customer_id' => $quote->getCustomerId(),
+                        'customer_email' => $quote->getCustomerEmail(),
+                        'token' => $this->expressionFactory->create(
+                            ["expression" => "(SELECT UUID())"]
+                        ),
+                        'created_at' => $createdAt
+                    ];
+                    $mainData = $this->getDataForEventFromAcData($cartData, $apsisCoreHelper);
+                    if (! empty($mainData)) {
+                        $subData = $mainData['items'];
+                        unset($mainData['items']);
+                        $events[] = [
+                            'event_type' => Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART,
+                            'event_data' => $apsisCoreHelper->serialize($mainData),
+                            'sub_event_data' => $apsisCoreHelper->serialize($subData),
+                            'profile_id' => $profile->getId(),
+                            'customer_id' => $quote->getCustomerId(),
+                            'store_id' => $quote->getStoreId(),
+                            'email' => $quote->getCustomerEmail(),
+                            'status' => Profile::SYNC_STATUS_PENDING,
+                            'created_at' => $createdAt,
+                            'updated_at' => $createdAt,
+                        ];
+                    }
+                }
+            } catch (Exception $e) {
+                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                continue;
             }
         }
 
@@ -184,36 +189,40 @@ class AbandonedSub
     /**
      * @param array $acData
      *
+     * @param ApsisCoreHelper $apsisCoreHelper
      * @return array
      */
-    private function getDataForEventFromAcData(array $acData)
+    private function getDataForEventFromAcData(array $acData, ApsisCoreHelper $apsisCoreHelper)
     {
-        $items = [];
-        foreach ($acData['items'] as $item) {
-            $items [] = [
+        try {
+            $items = [];
+            foreach ($acData['items'] as $item) {
+                $items [] = [
+                    'cartId' => $acData['cart_id'],
+                    'productId' => $item['product_id'],
+                    'sku' => $item['sku'],
+                    'name' => $item['name'],
+                    'productUrl' => $item['product_url'],
+                    'productImageUrl' => $item['product_image_url'],
+                    'qtyOrdered' => $item['qty_ordered'],
+                    'priceAmount' => $item['price_amount'],
+                    'rowTotalAmount' => $item['row_total_amount'],
+                ];
+            }
+
+            return [
                 'cartId' => $acData['cart_id'],
-                'productId' => $item['product_id'],
-                'sku' => $item['sku'],
-                'name' => $item['name'],
-                'productUrl' => $item['product_url'],
-                'productImageUrl' => $item['product_image_url'],
-                'qtyOrdered' => $item['qty_ordered'],
-                'priceAmount' => $item['price_amount'],
-                'rowTotalAmount' => $item['row_total_amount'],
+                'customerId' => $acData['customer_info']['customer_id'],
+                'storeName' => $acData['store_name'],
+                'websiteName' => $acData['website_name'],
+                'grandTotalAmount' => $acData['grand_total_amount'],
+                'itemsCount' => $acData['items_count'],
+                'currencyCode' => $acData['currency_code'],
+                'items' => $items
             ];
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return [];
         }
-
-        $eventData = [
-            'cartId' => $acData['cart_id'],
-            'customerId' => $acData['customer_info']['customer_id'],
-            'storeName' => $acData['store_name'],
-            'websiteName' => $acData['website_name'],
-            'grandTotalAmount' => $acData['grand_total_amount'],
-            'itemsCount' => $acData['items_count'],
-            'currencyCode' => $acData['currency_code'],
-            'items' => $items
-        ];
-
-        return $eventData;
     }
 }

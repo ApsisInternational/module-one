@@ -60,7 +60,8 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_ORDER
         )) {
             try {
-                if (! empty($profileCollectionArray = $this->getFormattedProfileCollection($profileCollection)) &&
+                if (! empty($profileCollectionArray
+                        = $this->getFormattedProfileCollection($profileCollection, $apsisCoreHelper)) &&
                     ! empty($orderCollection = $this->getOrderCollection(
                         $apsisCoreHelper,
                         $store,
@@ -81,7 +82,7 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
                     );
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             }
         }
     }
@@ -108,18 +109,24 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
                         $apsisCoreHelper,
                         (int) $profileCollectionArray[$order->getCustomerEmail()]->getSubscriberId()
                     );
-                    $subData = $mainData['items'];
-                    unset($mainData['items']);
-                    $eventsToRegister[] = $this->getEventData(
-                        $profileCollectionArray[$order->getCustomerEmail()],
-                        Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER,
-                        $order->getCreatedAt(),
-                        $apsisCoreHelper->serialize($mainData),
-                        $apsisCoreHelper->serialize($subData)
-                    );
+                    if (! empty($mainData) && ! empty($mainData['items'])) {
+                        $subData = $mainData['items'];
+                        unset($mainData['items']);
+                        $eventDataForEvent = $this->getEventData(
+                            $profileCollectionArray[$order->getCustomerEmail()],
+                            Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER,
+                            $order->getCreatedAt(),
+                            $apsisCoreHelper->serialize($mainData),
+                            $apsisCoreHelper,
+                            $apsisCoreHelper->serialize($subData)
+                        );
+                        if (! empty($eventDataForEvent)) {
+                            $eventsToRegister[] = $eventDataForEvent;
+                        }
+                    }
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
                 continue;
             }
         }
@@ -146,21 +153,28 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
                 ->addFieldToFilter('main_table.customer_email', ['in' => $emails])
                 ->addFieldToFilter('main_table.created_at', $duration);
         } catch (Exception $e) {
-            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return [];
         }
     }
 
     /**
      * @param ProfileCollection $profileCollection
+     * @param ApsisCoreHelper $apsisCoreHelper
      *
      * @return array
      */
-    protected function getFormattedProfileCollection(ProfileCollection $profileCollection)
-    {
+    protected function getFormattedProfileCollection(
+        ProfileCollection $profileCollection,
+        ApsisCoreHelper $apsisCoreHelper
+    ) {
         $formattedProfileCollectionArray = [];
-        foreach ($profileCollection as $profile) {
-            $formattedProfileCollectionArray[$profile->getEmail()] = $profile;
+        try {
+            foreach ($profileCollection as $profile) {
+                $formattedProfileCollectionArray[$profile->getEmail()] = $profile;
+            }
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $formattedProfileCollectionArray;
     }

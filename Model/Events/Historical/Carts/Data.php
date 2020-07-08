@@ -9,6 +9,7 @@ use Magento\Catalog\Model\Product;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item;
+use Exception;
 
 class Data extends EventData implements EventDataInterface
 {
@@ -38,23 +39,28 @@ class Data extends EventData implements EventDataInterface
      */
     public function getProcessedDataArr(AbstractModel $cart, ApsisCoreHelper $apsisCoreHelper)
     {
-        /** @var Product $product */
-        $product = $this->cartItem->getProduct();
-        return [
-            'cartId' => (int) $cart->getId(),
-            'customerId' => (int) $cart->getCustomerId(),
-            'storeName' => (string) $cart->getStore()->getName(),
-            'websiteName' => (string) $cart->getStore()->getWebsite()->getName(),
-            'currencyCode' => (string) $cart->getQuoteCurrencyCode(),
-            'productId' => (int) $this->cartItem->getProductId(),
-            'sku' => (string) $this->cartItem->getSku(),
-            'name' => (string) $this->cartItem->getName(),
-            'productUrl' => (string) $product->getProductUrl(),
-            'productImageUrl' => (string) $this->productServiceProvider->getProductImageUrl($product),
-            'qtyOrdered' => (float) $this->cartItem->getQty() ? $this->cartItem->getQty() :
-                ($this->cartItem->getQtyOrdered() ? $this->cartItem->getQtyOrdered() : 1),
-            'priceAmount' => $apsisCoreHelper->round($this->cartItem->getPrice()),
-            'rowTotalAmount' => $apsisCoreHelper->round($this->cartItem->getRowTotal()),
-        ];
+        try {
+            /** @var Product $product */
+            $product = $this->cartItem->getProduct();
+            return [
+                'cartId' => (int) $cart->getId(),
+                'customerId' => (int) $cart->getCustomerId(),
+                'storeName' => (string) $cart->getStore()->getName(),
+                'websiteName' => (string) $cart->getStore()->getWebsite()->getName(),
+                'currencyCode' => (string) $cart->getQuoteCurrencyCode(),
+                'productId' => (int) $this->cartItem->getProductId(),
+                'sku' => (string) $this->cartItem->getSku(),
+                'name' => (string) $this->cartItem->getName(),
+                'productUrl' => (string) $product->getProductUrl(),
+                'productImageUrl' => (string) $this->productServiceProvider->getProductImageUrl($product),
+                'qtyOrdered' => (float) $this->cartItem->getQty() ? $this->cartItem->getQty() :
+                    ($this->cartItem->getQtyOrdered() ? $this->cartItem->getQtyOrdered() : 1),
+                'priceAmount' => $apsisCoreHelper->round($this->cartItem->getPrice()),
+                'rowTotalAmount' => $apsisCoreHelper->round($this->cartItem->getRowTotal()),
+            ];
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return [];
+        }
     }
 }

@@ -3,7 +3,7 @@
 namespace Apsis\One\Model\Sync\Profiles;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use \Magento\Framework\Model\AbstractModel;
+use Magento\Framework\Model\AbstractModel;
 
 interface ProfileDataInterface
 {

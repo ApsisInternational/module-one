@@ -29,7 +29,7 @@ class OrderStatus implements OptionSourceInterface
     {
         $statuses = $this->status->toOptionArray();
 
-        if (! empty($statuses) && $statuses[0]['value'] == '') {
+        if (! empty($statuses) && empty($statuses[0]['value'])) {
             array_shift($statuses);
         }
 

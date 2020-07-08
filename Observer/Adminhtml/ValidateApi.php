@@ -9,6 +9,7 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Message\ManagerInterface;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Magento\Store\Model\ScopeInterface;
+use Exception;
 
 class ValidateApi implements ObserverInterface
 {
@@ -49,67 +50,71 @@ class ValidateApi implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        $groups = $this->context->getRequest()->getPost('groups');
+        try {
+            $groups = $this->context->getRequest()->getPost('groups');
 
-        if (isset($groups['oauth']['fields']['id']['inherit'])
-            || isset($groups['oauth']['fields']['secret']['inherit'])
-        ) {
-            $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
-            if (in_array($scope['context_scope'], [ScopeInterface::SCOPE_STORES, ScopeInterface::SCOPE_WEBSITES])) {
-                $paths = [
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE
-                ];
-                foreach ($paths as $path) {
-                    $this->apsisCoreHelper->deleteConfigByScope(
-                        $path,
+            if (isset($groups['oauth']['fields']['id']['inherit'])
+                || isset($groups['oauth']['fields']['secret']['inherit'])
+            ) {
+                $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
+                if (in_array($scope['context_scope'], [ScopeInterface::SCOPE_STORES, ScopeInterface::SCOPE_WEBSITES])) {
+                    $paths = [
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE
+                    ];
+                    foreach ($paths as $path) {
+                        $this->apsisCoreHelper->deleteConfigByScope(
+                            $path,
+                            $scope['context_scope'],
+                            $scope['context_scope_id']
+                        );
+                    }
+                }
+                return $this;
+            }
+
+            $id = $groups['oauth']['fields']['id']['value'] ?? false;
+            $secret = $groups['oauth']['fields']['secret']['value'] ?? false;
+
+            if ($id && $secret) {
+                $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
+                if (!$this->isValid($id, $secret, $scope)) {
+                    $this->apsisCoreHelper->saveConfigValue(
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED,
+                        0,
                         $scope['context_scope'],
                         $scope['context_scope_id']
                     );
+                    $this->apsisCoreHelper->saveConfigValue(
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID,
+                        '',
+                        $scope['context_scope'],
+                        $scope['context_scope_id']
+                    );
+                    $this->apsisCoreHelper->saveConfigValue(
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET,
+                        '',
+                        $scope['context_scope'],
+                        $scope['context_scope_id']
+                    );
+                    $this->apsisCoreHelper->saveConfigValue(
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
+                        '',
+                        $scope['context_scope'],
+                        $scope['context_scope_id']
+                    );
+                    $this->apsisCoreHelper->saveConfigValue(
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE,
+                        '',
+                        $scope['context_scope'],
+                        $scope['context_scope_id']
+                    );
+                    //Clear config cache
+                    $this->apsisCoreHelper->cleanCache();
                 }
             }
-            return $this;
-        }
-
-        $id = $groups['oauth']['fields']['id']['value'] ?? false;
-        $secret = $groups['oauth']['fields']['secret']['value'] ?? false;
-
-        if ($id && $secret) {
-            $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
-            if (! $this->isValid($id, $secret, $scope)) {
-                $this->apsisCoreHelper->saveConfigValue(
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED,
-                    0,
-                    $scope['context_scope'],
-                    $scope['context_scope_id']
-                );
-                $this->apsisCoreHelper->saveConfigValue(
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID,
-                    '',
-                    $scope['context_scope'],
-                    $scope['context_scope_id']
-                );
-                $this->apsisCoreHelper->saveConfigValue(
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET,
-                    '',
-                    $scope['context_scope'],
-                    $scope['context_scope_id']
-                );
-                $this->apsisCoreHelper->saveConfigValue(
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
-                    '',
-                    $scope['context_scope'],
-                    $scope['context_scope_id']
-                );
-                $this->apsisCoreHelper->saveConfigValue(
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE,
-                    '',
-                    $scope['context_scope'],
-                    $scope['context_scope_id']
-                );
-                //Clear config cache
-                $this->apsisCoreHelper->cleanCache();
-            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
 
         return $this;
@@ -125,23 +130,27 @@ class ValidateApi implements ObserverInterface
     private function isValid(string $id, string $secret, array $scope)
     {
         $isValid = false;
-        $tokenFromApi = $this->apsisCoreHelper->getTokenFromApi(
-            $scope['context_scope'],
-            $scope['context_scope_id'],
-            $id,
-            $secret
-        );
-
-        if (strlen($tokenFromApi)) {
-            $isValid = $this->isMagentoKeySpaceExist($tokenFromApi, $scope);
-            ($isValid) ? $this->messageManager->addSuccessMessage(__('API credentials valid.')) :
-                $this->messageManager->addWarningMessage(__('API credentials invalid for integration.'));
-        } else {
-            $this->apsisCoreHelper->log(
-                __METHOD__ . ': Authorization has been denied for scope : ' . $scope['context_scope'] .
-                ' - id :' . $scope['context_scope_id']
+        try {
+            $tokenFromApi = $this->apsisCoreHelper->getTokenFromApi(
+                $scope['context_scope'],
+                $scope['context_scope_id'],
+                $id,
+                $secret
             );
-            $this->messageManager->addWarningMessage(__('Authorization has been denied for this request.'));
+
+            if (strlen($tokenFromApi)) {
+                $isValid = $this->isMagentoKeySpaceExist($tokenFromApi, $scope);
+                ($isValid) ? $this->messageManager->addSuccessMessage(__('API credentials valid.')) :
+                    $this->messageManager->addWarningMessage(__('API credentials invalid for integration.'));
+            } else {
+                $this->apsisCoreHelper->log(
+                    __METHOD__ . ': Authorization has been denied for scope : ' . $scope['context_scope'] .
+                    ' - id :' . $scope['context_scope_id']
+                );
+                $this->messageManager->addWarningMessage(__('Authorization has been denied for this request.'));
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $isValid;
     }

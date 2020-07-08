@@ -3,7 +3,6 @@
 namespace Apsis\One\ApiClient;
 
 use Exception;
-use stdClass;
 
 class Client extends Rest
 {
@@ -11,17 +10,16 @@ class Client extends Rest
     const HOST_NAME = 'https://api-stage.apsis.cloud';
 
     /**
-     * @var array
-     */
-    private $errorCodesToRetry = [500, 501, 503, 408, 429];
-
-    /**
-     * Get access token
+     * SECURITY: Get access token
+     *
+     * Use client ID and client secret obtained when creating an API key in your APSIS One account to request an
+     * OAuth 2.0 access token. Provide that token as Authorization: Bearer <access token> header when making calls to
+     * other endpoints of this API.
      *
      * @param string $clientId
      * @param string $clientSecret
      *
-     * @return bool|stdClass|string
+     * @return mixed
      */
     public function getAccessToken(string $clientId, string $clientSecret)
     {
@@ -36,9 +34,11 @@ class Client extends Rest
     }
 
     /**
-     * Get all registered key spaces
+     * DEFINITIONS: Get keyspaces
      *
-     * @return bool|stdClass|string
+     * Get all registered keyspaces.
+     *
+     * @return mixed
      */
     public function getKeySpaces()
     {
@@ -48,9 +48,11 @@ class Client extends Rest
     }
 
     /**
-     * Get all available communication channels
+     * DEFINITIONS: Get channels
      *
-     * @return bool|stdClass|string
+     * Get all available communication channels.
+     *
+     * @return mixed
      */
     public function getChannels()
     {
@@ -60,9 +62,11 @@ class Client extends Rest
     }
 
     /**
-     * Get all sections on the APSIS One account
+     * DEFINITIONS: Get sections
      *
-     * @return bool|stdClass|string
+     * Get all sections on the APSIS One account.
+     *
+     * @return mixed
      */
     public function getSections()
     {
@@ -72,11 +76,14 @@ class Client extends Rest
     }
 
     /**
-     * Get all attributes within a specific section
+     * DEFINITIONS: Get attributes
+     *
+     * Gets all attributes within a specific section. Includes default and custom attributes. When any ecommerce
+     * integration is connected to the specified section then also ecommerce attributes are returned.
      *
      * @param string $sectionDiscriminator
      *
-     * @return bool|stdClass|string
+     * @return mixed
      */
     public function getAttributes(string $sectionDiscriminator)
     {
@@ -86,11 +93,13 @@ class Client extends Rest
     }
 
     /**
-     * Get all Consent lists within a specific section
+     * DEFINITIONS: Get consent lists
+     *
+     * Get all Consent lists within a specific section.
      *
      * @param string $sectionDiscriminator
      *
-     * @return bool|stdClass|string
+     * @return mixed
      */
     public function getConsentLists(string $sectionDiscriminator)
     {
@@ -100,12 +109,14 @@ class Client extends Rest
     }
 
     /**
+     * DEFINITIONS: Get topics
+     *
      * Get all topics on a consent list
      *
      * @param string $sectionDiscriminator
      * @param string $consentListDiscriminator
      *
-     * @return bool|stdClass|string
+     * @return mixed
      */
     public function getTopics(string $sectionDiscriminator, string $consentListDiscriminator)
     {
@@ -117,16 +128,146 @@ class Client extends Rest
     }
 
     /**
-     * Store a set of attribute values on a profile
+     * DEFINITIONS: Get tags
+     *
+     * Get all tags defined within a specific section.
+     *
+     * @param string $sectionDiscriminator
+     *
+     * @return mixed
+     */
+    public function getTags(string $sectionDiscriminator)
+    {
+        $this->setUrl(self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/tags')
+            ->setVerb(Rest::VERB_GET);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * DEFINITIONS: Get events
+     *
+     * Get all events defined within a specific section.
+     *
+     * @param string $sectionDiscriminator
+     *
+     * @return mixed
+     */
+    public function getEvents(string $sectionDiscriminator)
+    {
+        $this->setUrl(self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/events')
+            ->setVerb(Rest::VERB_GET);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * DEFINITIONS: Get segments
+     *
+     * Get all segments.
+     *
+     * @return mixed
+     */
+    public function getSegments()
+    {
+        $this->setUrl(self::HOST_NAME . '/audience/segments/')
+            ->setVerb(Rest::VERB_GET);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * DEFINITIONS: Get segment
+     *
+     * Get a single segment.
+     *
+     * @param string $segmentDiscriminator
+     *
+     * @return mixed
+     */
+    public function getSegment(string $segmentDiscriminator)
+    {
+        $this->setUrl(self::HOST_NAME . '/audience/segments/' . $segmentDiscriminator)
+            ->setVerb(Rest::VERB_GET);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * DEFINITIONS: Get segment version
+     *
+     * Get specific segment version.
+     *
+     * @param string $segmentDiscriminator
+     * @param string $versionId
+     *
+     * @return mixed
+     */
+    public function getSegmentVersion(string $segmentDiscriminator, string $versionId)
+    {
+        $this->setUrl(self::HOST_NAME . '/audience/segments/' . $segmentDiscriminator . '/versions/' . $versionId)
+            ->setVerb(Rest::VERB_GET);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * PROFILES: Add tags to a profile
+     *
+     * Content must follow JSON Merge Patch specs.
+     * The maximum data payload size for requests to this endpoint is 100KB.
+     *
+     * @param string $keySpaceDiscriminator
+     * @param string $profileKey
+     * @param string $sectionDiscriminator
+     * @param array $tags
+     *
+     * @return mixed
+     */
+    public function addTagsToProfile(
+        string $keySpaceDiscriminator,
+        string $profileKey,
+        string $sectionDiscriminator,
+        array $tags
+    ) {
+        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+            '/sections/' . $sectionDiscriminator . '/tags';
+        $this->setUrl($url)
+            ->setVerb(Rest::VERB_PATCH)
+            ->buildBody($tags);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * PROFILES: Get all profile tags.
+     *
+     * @param string $keySpaceDiscriminator
+     * @param string $profileKey
+     * @param string $sectionDiscriminator
+     *
+     * @return mixed
+     */
+    public function getAllProfileTags(string $keySpaceDiscriminator, string $profileKey, string $sectionDiscriminator)
+    {
+        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+            '/sections/' . $sectionDiscriminator . '/tags';
+        $this->setUrl($url)
+            ->setVerb(Rest::VERB_GET);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * PROFILES: Set attributes for a profile
+     *
+     * Updates profile attribute values using their version IDs as keys. Permits changes to default and custom
+     * attributes. When any ecommerce integration is connected to the specified section then also ecommerce attributes
+     * can be modified.
+     * Content must follow JSON Merge Patch specs.
+     * The maximum data payload size for requests to this endpoint is 100KB.
      *
      * @param string $keySpaceDiscriminator
      * @param string $profileKey
      * @param string $sectionDiscriminator
      * @param array $attributes
      *
-     * @return bool|stdClass|string
+     * @return mixed
      */
-    public function createProfile(
+    public function addAttributesToProfile(
         string $keySpaceDiscriminator,
         string $profileKey,
         string $sectionDiscriminator,
@@ -141,15 +282,18 @@ class Client extends Rest
     }
 
     /**
-     *  Get all profile attributes
+     *  PROFILES: Get all profile attributes
+     *
+     * Gets profile attribute values with their version IDs as keys. Exposes default and custom attributes.
+     * When any ecommerce integration is connected to the specified section then also ecommerce attributes are returned.
      *
      * @param string $keySpaceDiscriminator
      * @param string $profileKey
      * @param string $sectionDiscriminator
      *
-     * @return bool|stdClass|string
+     * @return mixed
      */
-    public function getProfileAttributes(
+    public function getAllProfileAttributes(
         string $keySpaceDiscriminator,
         string $profileKey,
         string $sectionDiscriminator
@@ -162,35 +306,78 @@ class Client extends Rest
     }
 
     /**
-     * Get all profile events
+     *  PROFILES: Clear attribute value for a profile
      *
      * @param string $keySpaceDiscriminator
      * @param string $profileKey
      * @param string $sectionDiscriminator
-     * @param array $typeIds
+     * @param string $versionId
      *
-     * @return bool|stdClass|string
+     * @return mixed
+     */
+    public function clearProfileAttribute(
+        string $keySpaceDiscriminator,
+        string $profileKey,
+        string $sectionDiscriminator,
+        string $versionId
+    ) {
+        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+            '/sections/' . $sectionDiscriminator . '/attributes/' . $versionId;
+        $this->setUrl($url)
+            ->setVerb(Rest::VERB_DELETE);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * PROFILES: Get all profile events
+     *
+     * @param string $keySpaceDiscriminator
+     * @param string $profileKey
+     * @param string $sectionDiscriminator
+     *
+     * @return mixed
      */
     public function getProfileEvents(
         string $keySpaceDiscriminator,
         string $profileKey,
-        string $sectionDiscriminator,
-        array $typeIds = []
+        string $sectionDiscriminator
     ) {
         $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/events';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_GET);
 
-        if (! empty($typeIds)) {
-            $this->buildBody(['typeID' => $typeIds]);
-        }
-
         return $this->processResponse($this->execute(), __METHOD__);
     }
 
     /**
-     * Subscribe profile to topic
+     * PROFILES: Add events to a profile
+     *
+     * The maximum data payload size for requests to this endpoint is 100KB
+     *
+     * @param string $keySpaceDiscriminator
+     * @param string $profileKey
+     * @param string $sectionDiscriminator
+     * @param array $events
+     *
+     * @return mixed
+     */
+    public function addEventsToProfile(
+        string $keySpaceDiscriminator,
+        string $profileKey,
+        string $sectionDiscriminator,
+        array $events
+    ) {
+        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+            '/sections/' . $sectionDiscriminator . '/events';
+        $this->setUrl($url)
+            ->setVerb(Rest::VERB_POST)
+            ->buildBody(['items' => $events]);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * PROFILES: Subscribe profile to topic
      *
      * @param string $keySpaceDiscriminator
      * @param string $profileKey
@@ -198,7 +385,7 @@ class Client extends Rest
      * @param string $consentListDiscriminator
      * @param string $topicDiscriminator
      *
-     * @return bool|stdClass|string
+     * @return mixed
      */
     public function subscribeProfileToTopic(
         string $keySpaceDiscriminator,
@@ -221,7 +408,79 @@ class Client extends Rest
     }
 
     /**
-     * Create consent
+     * PROFILES: Get profile segments
+     *
+     * Returns a list of segments the defined profile belongs to.
+     *
+     * @param string $keySpaceDiscriminator
+     * @param string $profileKey
+     * @param array $segments
+     * @param string $timeZone
+     *
+     * @return mixed
+     */
+    public function getProfileSegments(
+        string $keySpaceDiscriminator,
+        string $profileKey,
+        array $segments,
+        string $timeZone
+    ) {
+        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+            '/evaluations';
+        $this->setUrl($url)
+            ->setVerb(Rest::VERB_POST)
+            ->buildBody(['segments' => $segments, 'time_zone' => $timeZone]);
+
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * PROFILES: Merge two profiles
+     *
+     * Merges two profiles designated in the body using keyspace discriminator and profile key. As a result of the
+     * merge, both profile keys in both keyspaces will point to the same physical profile. Merging profiles using
+     * profile keys from different keyspaces is supported. Merge is both associative and commutative so you can do
+     * (a + b) + c if you need to merge more than two profiles.
+     * If any of the merged profiles does not exist then it is created along the way. Also, if one of the merged
+     * profiles is locked then the other profile will be locked as well if the merge succeeds.
+     *
+     * @param array $keySpacesToMerge
+     *
+     * @return mixed
+     */
+    public function mergeProfile(array $keySpacesToMerge)
+    {
+        $this->setUrl(self::HOST_NAME . '/audience/profiles/merges')
+            ->setVerb(Rest::VERB_PUT)
+            ->buildBody(['profiles' => $keySpacesToMerge]);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * PROFILES: Lock a profile
+     *
+     * Profile will be locked and its data permanently deleted. Profile lock is permanent and irreversible.
+     * APSIS One will generate an encrypted, anonymous ID for the profile and block any future attempts of adding a
+     * profile matching this ID.
+     * It is not possible to import or create a locked profile nor for them to opt-in again. This applies to all
+     * keyspaces.
+     *
+     * @param string $keySpaceDiscriminator
+     * @param string $profileKey
+     *
+     * @return mixed
+     */
+    public function lockProfile(string $keySpaceDiscriminator, string $profileKey)
+    {
+        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+            '/locks';
+        $this->setUrl($url)
+            ->setVerb(Rest::VERB_PUT);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
+     * CONSENTS: Create consent
      *
      * @param string $channelDiscriminator
      * @param string $address
@@ -230,7 +489,7 @@ class Client extends Rest
      * @param string $topicDiscriminator
      * @param string $type
      *
-     * @return bool|stdClass|string
+     * @return mixed
      */
     public function createConsent(
         string $channelDiscriminator,
@@ -255,50 +514,14 @@ class Client extends Rest
     }
 
     /**
-     * Get all events types
+     * EXPORTS & IMPORTS: Import profiles - Initialize
      *
-     * @param string $sectionDiscriminator
-     *
-     * @return bool|stdClass|string
-     */
-    public function getEventsTypes(string $sectionDiscriminator)
-    {
-        $this->setUrl(self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/events')
-            ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
-    }
-
-    /**
-     * Posting Events to a Profile
-     *
-     * @param string $keySpaceDiscriminator
-     * @param string $profileKey
-     * @param string $sectionDiscriminator
-     * @param array $events
-     *
-     * @return bool|stdClass|string
-     */
-    public function postEventsToProfile(
-        string $keySpaceDiscriminator,
-        string $profileKey,
-        string $sectionDiscriminator,
-        array $events
-    ) {
-        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
-            '/sections/' . $sectionDiscriminator . '/events';
-        $this->setUrl($url)
-            ->setVerb(Rest::VERB_POST)
-            ->buildBody(['items' => $events]);
-        return $this->processResponse($this->execute(), __METHOD__);
-    }
-
-    /**
-     * Initialize a Profile Import
+     * Initialize importing profiles into APSIS One.
      *
      * @param string $sectionDiscriminator
      * @param array $data
      *
-     * @return bool|stdClass|string
+     * @return mixed
      */
     public function initializeProfileImport(string $sectionDiscriminator, array $data)
     {
@@ -309,11 +532,15 @@ class Client extends Rest
     }
 
     /**
+     * EXPORTS & IMPORTS: Import profiles - Upload file
+     *
+     * Upload CSV file after initializeProfileImport
+     *
      * @param string $url
      * @param array $fields
      * @param string $fileNameWithPath
      *
-     * @return bool|stdClass|string
+     * @return mixed
      */
     public function uploadFileForProfileImport(string $url, array $fields, string $fileNameWithPath)
     {
@@ -341,57 +568,25 @@ class Client extends Rest
             $this->curlError = curl_error($ch);
         } catch (Exception $e) {
             curl_close($ch);
-            $this->helper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->helper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $this->processResponse($this->responseBody, __METHOD__);
     }
 
     /**
-     * Get status of Import
+     * EXPORTS & IMPORTS: Get import status
+     *
+     * Gets a status of a profile import that has been previously requested
      *
      * @param string $sectionDiscriminator
      * @param string $importId
      *
-     * @return bool|stdClass|string
+     * @return mixed
      */
     public function getImportStatus(string $sectionDiscriminator, string $importId)
     {
         $this->setUrl(self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/imports/' . $importId)
             ->setVerb(Rest::VERB_GET);
         return $this->processResponse($this->execute(), __METHOD__);
-    }
-
-    /**
-     * @param null|stdClass $response
-     * @param string $method
-     *
-     * @return boolean|stdClass|string
-     */
-    private function processResponse($response, string $method)
-    {
-        if (strlen($this->curlError)) {
-            $this->helper->log(__METHOD__ . ': CURL ERROR: ' . $this->curlError);
-            return false;
-        }
-
-        if (isset($response->status) && isset($response->detail)) {
-            $this->helper->debug($method, $this->getErrorArray($response));
-            return (in_array($response->status, $this->errorCodesToRetry)) ? false : (string) $response->detail;
-        }
-
-        return $response;
-    }
-
-    /**
-     * @param stdClass $response
-     * @return array
-     */
-    private function getErrorArray($response)
-    {
-        return $data = [
-            'status' => $response->status,
-            'title' => $response->title,
-            'detail' => $response->detail
-        ];
     }
 }

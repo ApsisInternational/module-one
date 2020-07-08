@@ -70,7 +70,8 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_REVIEW
         )) {
             try {
-                if (! empty($profileCollectionArray = $this->getFormattedProfileCollection($profileCollection)) &&
+                if (! empty($profileCollectionArray =
+                        $this->getFormattedProfileCollection($profileCollection, $apsisCoreHelper)) &&
                     ! empty($reviewCollection = $this->getReviewCollection(
                         $apsisCoreHelper,
                         $store,
@@ -97,7 +98,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
                     );
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             }
         }
     }
@@ -123,21 +124,26 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
                 if (isset($profileCollectionArray[$review->getCustomerId()]) &&
                     isset($productCollectionArray[$review->getEntityPkValue()])
                 ) {
-                    $eventsToRegister[] = $this->getEventData(
-                        $profileCollectionArray[$review->getCustomerId()],
-                        Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW,
-                        $review->getCreatedAt(),
-                        $apsisCoreHelper->serialize(
-                            $this->eventData->getDataArr(
-                                $review,
-                                $productCollectionArray[$review->getEntityPkValue()],
-                                $apsisCoreHelper
-                            )
-                        )
+                    $eventData = $this->eventData->getDataArr(
+                        $review,
+                        $productCollectionArray[$review->getEntityPkValue()],
+                        $apsisCoreHelper
                     );
+                    if (! empty($eventData)) {
+                        $eventDataForEvent = $this->getEventData(
+                            $profileCollectionArray[$review->getCustomerId()],
+                            Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW,
+                            $review->getCreatedAt(),
+                            $apsisCoreHelper->serialize($eventData),
+                            $apsisCoreHelper
+                        );
+                        if (! empty($eventDataForEvent)) {
+                            $eventsToRegister[] = $eventDataForEvent;
+                        }
+                    }
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
                 continue;
             }
         }
@@ -169,7 +175,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
                 $productCollectionArray[$product->getId()] = $product;
             }
         } catch (Exception $e) {
-            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $productCollectionArray;
     }
@@ -196,7 +202,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
                 ->addFieldToFilter('main_table.created_at', $duration)
                 ->addFieldToFilter('customer_id', ['in' => $customerIds]);
         } catch (Exception $e) {
-            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return [];
         }
     }

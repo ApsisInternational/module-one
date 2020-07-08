@@ -11,7 +11,7 @@ class IsStatus implements OptionSourceInterface
      */
     public function toOptionArray()
     {
-        $options = [
+        return [
             [
                 'value' => '0',
                 'label' => 'No'
@@ -21,7 +21,5 @@ class IsStatus implements OptionSourceInterface
                 'label' => 'Yes',
             ]
         ];
-
-        return $options;
     }
 }

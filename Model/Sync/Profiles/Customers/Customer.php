@@ -4,15 +4,16 @@ namespace Apsis\One\Model\Sync\Profiles\Customers;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
+use libphonenumber\PhoneNumberUtil;
 use Magento\Customer\Model\Customer as MagentoCustomer;
 use Magento\Customer\Model\GroupFactory;
-use Magento\Customer\Model\Group;
 use Magento\Customer\Model\ResourceModel\Group as GroupResource;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Review\Model\ResourceModel\Review\CollectionFactory as ReviewCollectionFactory;
 use Magento\Review\Model\ResourceModel\Review\Collection as ReviewCollection;
 use Magento\Review\Model\Review;
 use Apsis\One\Model\Sync\Profiles\ProfileDataInterface;
+use Exception;
 
 class Customer implements ProfileDataInterface
 {
@@ -254,13 +255,11 @@ class Customer implements ProfileDataInterface
     private function getCustomerGroup()
     {
         $groupId = $this->customer->getGroupId();
-        /** @var Group $groupModel */
         $groupModel = $this->groupFactory->create();
         $this->groupResource->load($groupModel, $groupId);
         if ($groupModel) {
             return (string) $groupModel->getCode();
         }
-
         return '';
     }
 
@@ -293,9 +292,7 @@ class Customer implements ProfileDataInterface
      */
     private function getBillingAddress1()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-            ! $this->customer->getBillingStreet()
-        ) {
+        if (empty($this->customer->getBillingStreet())) {
             return (string) $this->getStreet($this->customer->getShippingStreet(), 1);
         }
 
@@ -307,9 +304,7 @@ class Customer implements ProfileDataInterface
      */
     private function getBillingAddress2()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-            ! $this->customer->getBillingStreet()
-        ) {
+        if (empty($this->customer->getBillingStreet())) {
             return (string) $this->getStreet($this->customer->getShippingStreet(), 2);
         }
 
@@ -321,9 +316,7 @@ class Customer implements ProfileDataInterface
      */
     private function getBillingCity()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-        ! $this->customer->getBillingCity()
-        ) {
+        if (empty($this->customer->getBillingCity())) {
             return (string) $this->customer->getShippingCity();
         }
 
@@ -335,9 +328,7 @@ class Customer implements ProfileDataInterface
      */
     private function getBillingCountry()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-        ! $this->customer->getBillingCountryCode()
-        ) {
+        if (empty($this->customer->getBillingCountryCode())) {
             return (string) $this->customer->getShippingCountryCode();
         }
 
@@ -349,9 +340,7 @@ class Customer implements ProfileDataInterface
      */
     private function getBillingState()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-        ! $this->customer->getBillingRegion()
-        ) {
+        if (empty($this->customer->getBillingRegion())) {
             return (string) $this->customer->getShippingRegion();
         }
 
@@ -363,9 +352,7 @@ class Customer implements ProfileDataInterface
      */
     private function getBillingPostcode()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-            $this->customer->getBillingPostcode()
-        ) {
+        if (empty($this->customer->getBillingPostcode())) {
             return (string) $this->customer->getShippingPostcode();
         }
 
@@ -373,20 +360,18 @@ class Customer implements ProfileDataInterface
     }
 
     /**
-     * @return string
+     * @return int|string
      */
     private function getBillingTelephone()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-        ! $this->customer->getBillingTelephone()
-        ) {
-            return (string) $this->apsisCoreHelper->validateAndFormatMobileNumber(
+        if (empty($this->customer->getBillingTelephone())) {
+            return $this->validateAndFormatMobileNumber(
                 $this->getDeliveryCountry(),
                 (string) $this->customer->getShippingTelephone()
             );
         }
 
-        return (string) $this->apsisCoreHelper->validateAndFormatMobileNumber(
+        return $this->validateAndFormatMobileNumber(
             $this->getBillingCountry(),
             (string) $this->customer->getBillingTelephone()
         );
@@ -397,9 +382,7 @@ class Customer implements ProfileDataInterface
      */
     private function getBillingCompany()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-        ! $this->customer->getBillingCompany()
-        ) {
+        if (empty($this->customer->getBillingCompany())) {
             return (string) $this->customer->getShippingCompany();
         }
 
@@ -411,9 +394,7 @@ class Customer implements ProfileDataInterface
      */
     private function getDeliveryAddress1()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-        ! $this->customer->getShippingStreet()
-        ) {
+        if (empty($this->customer->getShippingStreet())) {
             return (string) $this->getStreet($this->customer->getBillingStreet(), 1);
         }
 
@@ -425,9 +406,7 @@ class Customer implements ProfileDataInterface
      */
     private function getDeliveryAddress2()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-        ! $this->customer->getShippingStreet()
-        ) {
+        if (empty($this->customer->getShippingStreet())) {
             return (string) $this->getStreet($this->customer->getBillingStreet(), 2);
         }
 
@@ -439,9 +418,7 @@ class Customer implements ProfileDataInterface
      */
     private function getDeliveryCity()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-        ! $this->customer->getShippingCity()
-        ) {
+        if (empty($this->customer->getShippingCity())) {
             return (string) $this->customer->getBillingCity();
         }
 
@@ -453,9 +430,7 @@ class Customer implements ProfileDataInterface
      */
     private function getDeliveryCountry()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-        ! $this->customer->getShippingCountryCode()
-        ) {
+        if (empty($this->customer->getShippingCountryCode())) {
             return (string) $this->customer->getBillingCountryCode();
         }
 
@@ -467,10 +442,8 @@ class Customer implements ProfileDataInterface
      */
     private function getDeliveryState()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-        ! $this->customer->getShippingRegion()
-        ) {
-            return (string) $this->customer->getBillingState();
+        if (empty($this->customer->getShippingRegion())) {
+            return (string) $this->customer->getBillingRegion();
         }
 
         return (string) $this->customer->getShippingRegion();
@@ -481,9 +454,7 @@ class Customer implements ProfileDataInterface
      */
     private function getDeliveryPostcode()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-        ! $this->customer->getShippingPostcode()
-        ) {
+        if (empty($this->customer->getShippingPostcode())) {
             return (string) $this->customer->getBillingPostcode();
         }
 
@@ -491,20 +462,18 @@ class Customer implements ProfileDataInterface
     }
 
     /**
-     * @return string
+     * @return int|string
      */
     private function getDeliveryTelephone()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-        ! $this->customer->getShippingTelephone()
-        ) {
-            return (string) $this->apsisCoreHelper->validateAndFormatMobileNumber(
+        if (empty($this->customer->getShippingTelephone())) {
+            return $this->validateAndFormatMobileNumber(
                 $this->getBillingCountry(),
                 (string) $this->customer->getBillingTelephone()
             );
         }
 
-        return (string) $this->apsisCoreHelper->validateAndFormatMobileNumber(
+        return $this->validateAndFormatMobileNumber(
             $this->getDeliveryCountry(),
             (string) $this->customer->getShippingTelephone()
         );
@@ -515,9 +484,7 @@ class Customer implements ProfileDataInterface
      */
     private function getDeliveryCompany()
     {
-        if ($this->customer->getDefaultBilling() === $this->customer->getDefaultShipping() &&
-        ! $this->customer->getShippingCompany()
-        ) {
+        if (empty($this->customer->getShippingCompany())) {
             return (string) $this->customer->getBillingCompany();
         }
 
@@ -573,5 +540,32 @@ class Customer implements ProfileDataInterface
     {
         return ($this->customer->getTotalSpend()) ?
             $this->apsisCoreHelper->round($this->customer->getTotalSpend()) : '';
+    }
+
+    /**
+     * @param string $countryCode
+     * @param string $phoneNumber
+     *
+     * @return int|string
+     */
+    private function validateAndFormatMobileNumber(string $countryCode, string $phoneNumber)
+    {
+        $formattedNumber = '';
+        try {
+            if (strlen($countryCode) === 2) {
+                $phoneUtil = PhoneNumberUtil::getInstance();
+                $numberProto = $phoneUtil->parse($phoneNumber, $countryCode);
+                if ($phoneUtil->isValidNumber($numberProto)) {
+                    $formattedNumber = (int) sprintf(
+                        "%d%d",
+                        (int) $numberProto->getCountryCode(),
+                        (int) $numberProto->getNationalNumber()
+                    );
+                }
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
+        return $formattedNumber;
     }
 }

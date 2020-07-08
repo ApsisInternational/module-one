@@ -106,7 +106,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 ["subscriber_id IN (?)" => $subscriberIds, "store_id = ?" => $storeId]
             );
         } catch (Exception $e) {
-            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return 0;
         }
     }
@@ -144,7 +144,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 ["customer_id IN (?)" => $customerIds, "store_id = ?" => $storeId]
             );
         } catch (Exception $e) {
-            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return 0;
         }
     }
@@ -383,7 +383,7 @@ class Profile extends AbstractDb implements ResourceInterface
     private function buildColumnData($salesOrderGrid, $storeId, $statuses)
     {
         $statusText = $this->getConnection()->quoteInto('status in (?)', explode(",", $statuses));
-        $columnData = [
+        return [
             'last_order_date' => $this->expressionFactory->create(
                 ["expression" => "(
                     SELECT created_at
@@ -394,8 +394,6 @@ class Profile extends AbstractDb implements ResourceInterface
                 )"]
             ),
         ];
-
-        return $columnData;
     }
 
     /**
@@ -502,7 +500,7 @@ class Profile extends AbstractDb implements ResourceInterface
             $this->getConnection()->query('SET FOREIGN_KEY_CHECKS = 1');
             return true;
         } catch (Exception $e) {
-            $apsisLogHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return false;
         }
     }
@@ -533,7 +531,7 @@ class Profile extends AbstractDb implements ResourceInterface
             );
             return true;
         } catch (Exception $e) {
-            $apsisLogHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return false;
         }
     }
@@ -544,6 +542,6 @@ class Profile extends AbstractDb implements ResourceInterface
      */
     public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper)
     {
-        // TODO: Implement cleanupRecords() method.
+        // Not needed for profiles
     }
 }

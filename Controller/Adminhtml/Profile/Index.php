@@ -46,7 +46,6 @@ class Index extends AbstractAction
         $resultPage->addBreadcrumb(__('Profile'), __('Profile'));
         $resultPage->addBreadcrumb(__('Reports'), __('Reports'));
         $resultPage->getConfig()->getTitle()->prepend(__('Profile Status Report'));
-
         return $resultPage;
     }
 }

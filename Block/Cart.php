@@ -63,13 +63,17 @@ class Cart extends Template
      */
     public function getCartItems()
     {
-        $cart = $this->registry->registry('apsis_one_cart');
-        if ($cart instanceof DataObject) {
-            $this->cart = $cart;
-            $obj = $this->apsisLogHelper->unserialize($this->cart->getCartData());
-            if (isset($obj->items) && is_array($obj->items)) {
-                return $this->getItemsWithLimitApplied($obj->items);
+        try {
+            $cart = $this->registry->registry('apsis_one_cart');
+            if ($cart instanceof DataObject) {
+                $this->cart = $cart;
+                $obj = $this->apsisLogHelper->unserialize($this->cart->getCartData());
+                if (isset($obj->items) && is_array($obj->items)) {
+                    return $this->getItemsWithLimitApplied($obj->items);
+                }
             }
+        } catch (Exception $e) {
+            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return [];
     }
@@ -81,13 +85,17 @@ class Cart extends Template
      */
     private function getItemsWithLimitApplied(array $items)
     {
-        $limit = (int) $this->getRequest()->getParam('limit');
-        if (empty($limit)) {
-            return $items;
-        }
+        try {
+            $limit = (int) $this->getRequest()->getParam('limit');
+            if (empty($limit)) {
+                return $items;
+            }
 
-        if (count($items) > $limit) {
-            return array_splice($items, 0, $limit);
+            if (count($items) > $limit) {
+                return array_splice($items, 0, $limit);
+            }
+        } catch (Exception $e) {
+            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $items;
     }
@@ -99,8 +107,13 @@ class Cart extends Template
      */
     public function getCurrencyByStore($value)
     {
-        $storeId = $this->cart->getStoreId();
-        return $this->priceHelper->currencyByStore($value, $storeId, true, false);
+        try {
+            $storeId = $this->cart->getStoreId();
+            return $this->priceHelper->currencyByStore($value, $storeId, true, false);
+        } catch (Exception $e) {
+            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
+        return $value;
     }
 
     /**
@@ -115,10 +128,8 @@ class Cart extends Template
                 ['quote_id' => $this->cart->getQuoteId()]
             );
         } catch (Exception $e) {
-            return $this->getUrl(
-                'apsis/abandoned/checkout',
-                ['quote_id' => $this->cart->getQuoteId()]
-            );
+            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return $this->getUrl('apsis/abandoned/checkout', ['quote_id' => $this->cart->getQuoteId()]);
         }
     }
 }

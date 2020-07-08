@@ -13,7 +13,6 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
 use Magento\Quote\Model\ResourceModel\Quote\Collection as QuoteCollection;
 use Magento\Quote\Model\Quote;
-use Magento\Quote\Model\Quote\Item;
 use Apsis\One\Model\Events\Historical\Carts\Data as CartData;
 use Apsis\One\Model\Event;
 
@@ -61,7 +60,8 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
             ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_PRODUCT_CARTED
         )) {
             try {
-                if (! empty($profileCollectionArray = $this->getFormattedProfileCollection($profileCollection)) &&
+                if (! empty($profileCollectionArray =
+                        $this->getFormattedProfileCollection($profileCollection, $apsisCoreHelper)) &&
                     ! empty($quoteCollection = $this->getCartCollection(
                         $apsisCoreHelper,
                         $store,
@@ -82,7 +82,7 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
                     );
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             }
         }
     }
@@ -104,30 +104,29 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
         foreach ($quoteCollection as $quote) {
             try {
                 $items = $quote->getAllVisibleItems();
-                /** @var Item $item */
                 foreach ($items as $item) {
                     try {
-                        if (isset($profileCollectionArray[$quote->getCustomerId()])) {
-                            $eventsToRegister[] = $this->getEventData(
+                        if (isset($profileCollectionArray[$quote->getCustomerId()]) &&
+                            ! empty($eventData = $this->eventData->getDataArr($quote, $item, $apsisCoreHelper))
+                        ) {
+                            $eventDataForEvent = $this->getEventData(
                                 $profileCollectionArray[$quote->getCustomerId()],
                                 Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART,
                                 $item->getCreatedAt(),
-                                $apsisCoreHelper->serialize(
-                                    $this->eventData->getDataArr(
-                                        $quote,
-                                        $item,
-                                        $apsisCoreHelper
-                                    )
-                                )
+                                $apsisCoreHelper->serialize($eventData),
+                                $apsisCoreHelper
                             );
+                            if (! empty($eventDataForEvent)) {
+                                $eventsToRegister[] = $eventDataForEvent;
+                            }
                         }
                     } catch (Exception $e) {
-                        $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                        $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
                         continue;
                     }
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
                 continue;
             }
         }
@@ -154,7 +153,7 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
                 ->addFieldToFilter('main_table.customer_id', ['in' => $customerIds])
                 ->addFieldToFilter('main_table.created_at', $duration);
         } catch (Exception $e) {
-            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return [];
         }
     }

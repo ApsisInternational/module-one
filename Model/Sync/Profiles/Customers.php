@@ -5,7 +5,7 @@ namespace Apsis\One\Model\Sync\Profiles;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\ResourceModel\Profile\Collection;
-use \Exception;
+use Exception;
 use Magento\Customer\Model\Customer;
 use Magento\Store\Api\Data\StoreInterface;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
@@ -62,11 +62,6 @@ class Customers implements ProfileSyncInterface
     private $keySpaceDiscriminator;
 
     /**
-     * @var string
-     */
-    private $sectionDiscriminator;
-
-    /**
      * Customers constructor.
      *
      * @param ProfileCollectionFactory $profileCollectionFactory
@@ -98,33 +93,37 @@ class Customers implements ProfileSyncInterface
      */
     public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
     {
-        $this->apsisCoreHelper = $apsisCoreHelper;
-        $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
-        );
-        $sync = (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED
-        );
-        $mappings = $this->apsisConfigHelper->getCustomerAttributeMapping($store);
-        $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
-
-        if ($client && $this->sectionDiscriminator && $sync && ! empty($mappings) && isset($mappings['email'])) {
-            $attributesArrWithVersionId = $this->apsisCoreHelper
-                ->getAttributesArrWithVersionId($client, $this->sectionDiscriminator);
-            $this->keySpaceDiscriminator = $this->apsisCoreHelper
-                ->getKeySpaceDiscriminator($this->sectionDiscriminator);
-            $limit = $this->apsisCoreHelper->getStoreConfig(
+        try {
+            $this->apsisCoreHelper = $apsisCoreHelper;
+            $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
                 $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_CUSTOMER_BATCH_SIZE
+                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
             );
-            $collection = $this->profileCollectionFactory->create()
-                ->getCustomerToBatchByStore($store->getId(), ($limit) ? $limit : self::LIMIT);
+            $sync = (boolean) $this->apsisCoreHelper->getStoreConfig(
+                $store,
+                ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED
+            );
+            $mappings = $this->apsisConfigHelper->getCustomerAttributeMapping($store);
+            $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
 
-            if ($collection->getSize() && ! empty($attributesArrWithVersionId)) {
-                $this->batchCustomersForStore($store, $collection, $mappings, $attributesArrWithVersionId);
+            if ($client && $sectionDiscriminator && $sync && ! empty($mappings) && isset($mappings['email'])) {
+                $attributesArrWithVersionId = $this->apsisCoreHelper
+                    ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
+                $this->keySpaceDiscriminator = $this->apsisCoreHelper
+                    ->getKeySpaceDiscriminator($sectionDiscriminator);
+                $limit = $this->apsisCoreHelper->getStoreConfig(
+                    $store,
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_CUSTOMER_BATCH_SIZE
+                );
+                $collection = $this->profileCollectionFactory->create()
+                    ->getCustomerToBatchByStore($store->getId(), ($limit) ? $limit : self::LIMIT);
+
+                if ($collection->getSize() && ! empty($attributesArrWithVersionId)) {
+                    $this->batchCustomersForStore($store, $collection, $mappings, $attributesArrWithVersionId);
+                }
             }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
     }
 
@@ -134,10 +133,20 @@ class Customers implements ProfileSyncInterface
      *
      * @return Customer
      */
-    private function setSalesDataOnCustomer($salesData, $customer)
+    private function setSalesDataOnCustomer(array $salesData, Customer $customer)
     {
-        foreach ($salesData as $column => $value) {
-            $customer->setData($column, $value);
+        try {
+            foreach ($salesData as $column => $value) {
+                try {
+                    $customer->setData($column, $value);
+                } catch (Exception $e) {
+                    $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                    $this->apsisCoreHelper->log(__METHOD__ . ' Skipped for Customer id: ' . $customer->getId());
+                    continue;
+                }
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $customer;
     }
@@ -173,8 +182,8 @@ class Customers implements ProfileSyncInterface
 
             /** @var Customer $customer */
             foreach ($customerCollection as $customer) {
-                if (isset($integrationIdsArray[$customer->getId()])) {
-                    try {
+                try {
+                    if (isset($integrationIdsArray[$customer->getId()])) {
                         $customer->setIntegrationUid($integrationIdsArray[$customer->getId()]);
                         if (isset($salesData[$customer->getId()])) {
                             $customer = $this->setSalesDataOnCustomer($salesData[$customer->getId()], $customer);
@@ -184,14 +193,12 @@ class Customers implements ProfileSyncInterface
                             ->toCSVArray();
                         $this->apsisFileHelper->outputCSV($file, $customerData);
                         $customersToUpdate[] = $customer->getId();
-                    } catch (Exception $e) {
-                        $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-                        $this->apsisCoreHelper->log(__METHOD__ . ': Skipped customer with id :' . $customer->getId());
-                        continue;
                     }
+                } catch (Exception $e) {
+                    $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                    $this->apsisCoreHelper->log(__METHOD__ . ': Skipped customer with id :' . $customer->getId());
+                    continue;
                 }
-
-                //clear collection and free memory
                 $customer->clearInstance();
             }
 
@@ -213,7 +220,7 @@ class Customers implements ProfileSyncInterface
                 );
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             if (! empty($customersToUpdate)) {
                 $this->apsisCoreHelper->log(__METHOD__ . ': Skipped customers with id :' .
                     implode(',', $customersToUpdate));
@@ -229,8 +236,19 @@ class Customers implements ProfileSyncInterface
     private function getIntegrationIdsArray(Collection $collection)
     {
         $integrationIdsArray = [];
-        foreach ($collection as $item) {
-            $integrationIdsArray[$item->getCustomerId()] = $item->getIntegrationUid();
+        try {
+            /** @var Profile $item */
+            foreach ($collection as $item) {
+                try {
+                    $integrationIdsArray[$item->getCustomerId()] = $item->getIntegrationUid();
+                } catch (Exception $e) {
+                    $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                    $this->apsisCoreHelper->log(__METHOD__ . ' Skipped for Profile id: ' . $item->getId());
+                    continue;
+                }
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $integrationIdsArray;
     }

@@ -137,7 +137,9 @@ class Historical implements SyncInterface
                     }
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
+                continue;
             }
         }
         if ($clearCache) {
@@ -190,20 +192,24 @@ class Historical implements SyncInterface
     private function calculatePeriod(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper, int $eventType)
     {
         $period = [];
-        $pastEventsDuration = (int) $apsisCoreHelper->getStoreConfig(
-            $store,
-            self::EVENT_TYPE_HISTORY_DURATION_PATH_MAPPING[$eventType]
-        );
-        if ($pastEventsDuration) {
-            $to = $this->getToDatestamp($store, $apsisCoreHelper, $eventType);
-            $from = $this->getFromDatestamp($pastEventsDuration, $to, $apsisCoreHelper);
-            if (strlen($to) && strlen($from)) {
-                $period = [
-                    'from' => $from,
-                    'to' => $to,
-                    'date' => true,
-                ];
+        try {
+            $pastEventsDuration = (int) $apsisCoreHelper->getStoreConfig(
+                $store,
+                self::EVENT_TYPE_HISTORY_DURATION_PATH_MAPPING[$eventType]
+            );
+            if ($pastEventsDuration) {
+                $to = $this->getToDatestamp($store, $apsisCoreHelper, $eventType);
+                $from = $this->getFromDatestamp($pastEventsDuration, $to, $apsisCoreHelper);
+                if (strlen($to) && strlen($from)) {
+                    $period = [
+                        'from' => $from,
+                        'to' => $to,
+                        'date' => true,
+                    ];
+                }
             }
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $period;
     }
@@ -217,13 +223,18 @@ class Historical implements SyncInterface
      */
     private function getToDatestamp(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper, int $eventType)
     {
-        $timestamp = $this->eventCollectionFactory->create()
-            ->getTimestampFromFirstEventEntryByStore($store->getId(), $eventType);
-        return strlen($timestamp) ? $timestamp :
-            (string) $apsisCoreHelper->getStoreConfig(
-                $store,
-                self::EVENT_TYPE_HISTORY_DURATION_TIMESTAMP_PATH_MAPPING[$eventType]
-            );
+        try {
+            $timestamp = $this->eventCollectionFactory->create()
+                ->getTimestampFromFirstEventEntryByStore($store->getId(), $eventType);
+            return strlen($timestamp) ? $timestamp :
+                (string) $apsisCoreHelper->getStoreConfig(
+                    $store,
+                    self::EVENT_TYPE_HISTORY_DURATION_TIMESTAMP_PATH_MAPPING[$eventType]
+                );
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return '';
+        }
     }
 
     /**
@@ -241,7 +252,7 @@ class Historical implements SyncInterface
                 ->sub($this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('P%sM', $pastEventsDuration)))
                 ->format('Y-m-d H:i:s') : '';
         } catch (Exception $e) {
-            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return '';
         }
     }
@@ -295,11 +306,11 @@ class Historical implements SyncInterface
                             );
                             break;
                         default:
-                            $apsisCoreHelper->logMessage(__METHOD__, 'Unsupported type.');
+                            $apsisCoreHelper->log(__METHOD__, 'Unsupported type.');
                     }
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
                 continue;
             }
         }

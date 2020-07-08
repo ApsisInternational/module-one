@@ -6,7 +6,7 @@ use Apsis\One\Model\Service\File;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\Escaper;
-use Magento\Framework\Json\Helper\Data;
+use Magento\Framework\Serialize\Serializer\Json;
 
 class Ajaxlogcontent extends Action
 {
@@ -23,7 +23,7 @@ class Ajaxlogcontent extends Action
     private $file;
 
     /**
-     * @var Data
+     * @var Json
      */
     private $jsonHelper;
 
@@ -37,10 +37,10 @@ class Ajaxlogcontent extends Action
      *
      * @param Context $context
      * @param File $file
-     * @param Data $jsonHelper
+     * @param Json $jsonHelper
      * @param Escaper $escaper
      */
-    public function __construct(Context $context, File $file, Data $jsonHelper, Escaper $escaper)
+    public function __construct(Context $context, File $file, Json $jsonHelper, Escaper $escaper)
     {
         $this->file = $file;
         $this->jsonHelper = $jsonHelper;
@@ -75,6 +75,6 @@ class Ajaxlogcontent extends Action
             'content' => $content,
             'header' => $header
         ];
-        $this->getResponse()->representJson($this->jsonHelper->jsonEncode($response));
+        $this->getResponse()->representJson($this->jsonHelper->serialize($response));
     }
 }

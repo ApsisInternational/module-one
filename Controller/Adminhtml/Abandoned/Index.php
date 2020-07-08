@@ -46,7 +46,6 @@ class Index extends AbstractAction
         $resultPage->addBreadcrumb(__('Abandoned'), __('Abandoned'));
         $resultPage->addBreadcrumb(__('Reports'), __('Reports'));
         $resultPage->getConfig()->getTitle()->prepend(__('Abandoned Cart Report'));
-
         return $resultPage;
     }
 }

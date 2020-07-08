@@ -44,7 +44,6 @@ abstract class Logviewer extends Action
         $resultPage->addBreadcrumb(__('Log Viewer'), __('Log Viewer'));
         $resultPage->addBreadcrumb(__('Reports'), __('Reports'));
         $resultPage->getConfig()->getTitle()->prepend(__('Log Viewer'));
-
         return $resultPage;
     }
 }

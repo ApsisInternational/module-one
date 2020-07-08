@@ -12,7 +12,7 @@ class SubscriberStatus implements OptionSourceInterface
      */
     public function toOptionArray()
     {
-        $options = [
+        return [
             [
                 'value' => Subscriber::STATUS_SUBSCRIBED,
                 'label' => 'Subscribed'
@@ -30,7 +30,5 @@ class SubscriberStatus implements OptionSourceInterface
                 'label' => 'Unsubscribed',
             ]
         ];
-
-        return $options;
     }
 }

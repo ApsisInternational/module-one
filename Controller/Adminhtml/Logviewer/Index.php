@@ -44,7 +44,6 @@ class Index extends Action
         $resultPage->addBreadcrumb(__('Dashboard'), __('Log Viewer '));
         $resultPage->addBreadcrumb(__('Dashboard'), __('Log Viewer'));
         $resultPage->getConfig()->getTitle()->prepend(__('APSIS One Log Viewer'));
-
         return $resultPage;
     }
 }

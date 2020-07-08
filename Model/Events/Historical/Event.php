@@ -6,6 +6,7 @@ use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile\Collection as ProfileCollection;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Exception;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -34,6 +35,7 @@ class Event
      * @param int $eventType
      * @param string $createdAt
      * @param string $eventData
+     * @param ApsisCoreHelper $apsisCoreHelper,
      * @param string $eventSubData
      *
      * @return array
@@ -43,21 +45,27 @@ class Event
         int $eventType,
         string $createdAt,
         string $eventData,
+        ApsisCoreHelper $apsisCoreHelper,
         string $eventSubData = ''
     ) {
-        return [
-            'event_type' => $eventType,
-            'event_data' => $eventData,
-            'sub_event_data' => $eventSubData,
-            'profile_id' => (int) $profile->getId(),
-            'customer_id' => (int) $profile->getCustomerId(),
-            'subscriber_id' => (int) $profile->getSubscriberId(),
-            'store_id' => (int) $profile->getStoreId(),
-            'email' => (string) $profile->getEmail(),
-            'status' => Profile::SYNC_STATUS_PENDING,
-            'created_at' => $createdAt,
-            'updated_at' => $this->dateTime->formatDate(true)
-        ];
+        try {
+            return [
+                'event_type' => $eventType,
+                'event_data' => $eventData,
+                'sub_event_data' => $eventSubData,
+                'profile_id' => (int) $profile->getId(),
+                'customer_id' => (int) $profile->getCustomerId(),
+                'subscriber_id' => (int) $profile->getSubscriberId(),
+                'store_id' => (int) $profile->getStoreId(),
+                'email' => (string) $profile->getEmail(),
+                'status' => Profile::SYNC_STATUS_PENDING,
+                'created_at' => $createdAt,
+                'updated_at' => $this->dateTime->formatDate(true)
+            ];
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
+        return [];
     }
 
     /**
@@ -86,17 +94,23 @@ class Event
 
     /**
      * @param ProfileCollection $profileCollection
+     * @param ApsisCoreHelper $apsisCoreHelper
      *
      * @return array
      */
-    protected function getFormattedProfileCollection(ProfileCollection $profileCollection)
-    {
-        $profileCollection->addFieldToFilter('is_customer', 1)
-            ->addFieldToFilter('customer_id', ['notnull' => true]);
-
+    protected function getFormattedProfileCollection(
+        ProfileCollection $profileCollection,
+        ApsisCoreHelper $apsisCoreHelper
+    ) {
         $formattedProfileCollectionArray = [];
-        foreach ($profileCollection as $profile) {
-            $formattedProfileCollectionArray[$profile->getCustomerId()] = $profile;
+        try {
+            $profileCollection->addFieldToFilter('is_customer', 1)
+                ->addFieldToFilter('customer_id', ['notnull' => true]);
+            foreach ($profileCollection as $profile) {
+                $formattedProfileCollectionArray[$profile->getCustomerId()] = $profile;
+            }
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $formattedProfileCollectionArray;
     }

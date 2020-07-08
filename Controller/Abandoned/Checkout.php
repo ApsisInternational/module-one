@@ -7,8 +7,6 @@ use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultInterface;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Api\Data\CartInterfaceFactory as QuoteFactory;
 use Magento\Quote\Model\ResourceModel\Quote as QuoteResource;
@@ -52,9 +50,6 @@ class Checkout extends Action
 
     /**
      * @return ResponseInterface|ResultInterface
-     *
-     * @throws LocalizedException
-     * @throws NoSuchEntityException
      */
     public function execute()
     {
@@ -77,7 +72,6 @@ class Checkout extends Action
      * @param Quote $quoteModel
      *
      * @return ResponseInterface
-     * @throws NoSuchEntityException
      */
     private function handleRequest(Quote $quoteModel)
     {

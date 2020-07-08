@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Model\Config\Source\Datamapping;
 
+use Exception;
 use Magento\Framework\Data\OptionSourceInterface;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
@@ -38,36 +39,39 @@ class Attributes implements OptionSourceInterface
      */
     public function toOptionArray()
     {
-        $section = $this->apsisCoreHelper->getMappedValueFromSelectedScope(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
-        );
-        $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
-        $apiClient = $this->apsisCoreHelper->getApiClient(
-            $scope['context_scope'],
-            $scope['context_scope_id']
-        );
-        if (! $apiClient || ! $section) {
-            return [];
-        }
-
-        $savedAttributes = $this->registry->registry('apsis_attributes');
-        if ($savedAttributes) {
-            $attributes = $savedAttributes;
-        } else {
-            $attributes = $apiClient->getAttributes($section);
-            $this->registry->unregister('apsis_attributes');
-            $this->registry->register('apsis_attributes', $attributes);
-        }
-
-        if (! $attributes || ! isset($attributes->items)) {
-            return [];
-        }
-
         $fields[] = ['value' => '', 'label' => __('-- Please Select --')];
-        foreach ($attributes->items as $attribute) {
-            $fields[] = ['value' => $attribute->discriminator, 'label' => $attribute->name];
-        }
+        try {
+            $section = $this->apsisCoreHelper->getMappedValueFromSelectedScope(
+                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+            );
+            $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
+            $apiClient = $this->apsisCoreHelper->getApiClient(
+                $scope['context_scope'],
+                $scope['context_scope_id']
+            );
+            if (! $apiClient || ! $section) {
+                return [];
+            }
 
+            $savedAttributes = $this->registry->registry('apsis_attributes');
+            if ($savedAttributes) {
+                $attributes = $savedAttributes;
+            } else {
+                $attributes = $apiClient->getAttributes($section);
+                $this->registry->unregister('apsis_attributes');
+                $this->registry->register('apsis_attributes', $attributes);
+            }
+
+            if (! $attributes || ! isset($attributes->items)) {
+                return [];
+            }
+
+            foreach ($attributes->items as $attribute) {
+                $fields[] = ['value' => $attribute->discriminator, 'label' => $attribute->name];
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
         return $fields;
     }
 }

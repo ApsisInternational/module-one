@@ -97,7 +97,7 @@ class Developer
             $this->apsisLogHelper->cleanCache();
             return true;
         } catch (Exception $e) {
-            $this->apsisLogHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return false;
         }
     }

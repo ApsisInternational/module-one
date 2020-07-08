@@ -10,6 +10,7 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Wishlist\Model\Item as WishlistItem;
 use Magento\Wishlist\Model\Wishlist;
 use Apsis\One\Model\Events\Historical\EventData;
+use Exception;
 
 class Data extends EventData implements EventDataInterface
 {
@@ -58,21 +59,26 @@ class Data extends EventData implements EventDataInterface
      */
     public function getProcessedDataArr(AbstractModel $wishlist, ApsisCoreHelper $apsisCoreHelper)
     {
-        return [
-            'wishlistId' => (int) $wishlist->getId(),
-            'wishlistItemId' => (int) $this->wishlistItem->getId(),
-            'wishlistName' => (string) $wishlist->getName(),
-            'customerId' => (int) $wishlist->getCustomerId(),
-            'websiteName' => (string) $apsisCoreHelper->getWebsiteNameFromStoreId($this->store->getId()),
-            'storeName' => (string) $apsisCoreHelper->getStoreNameFromId($this->store->getId()),
-            'productId' => (int) $this->product->getId(),
-            'sku' => (string) $this->product->getSku(),
-            'name' => (string) $this->product->getName(),
-            'productUrl' => (string) $this->product->getProductUrl(),
-            'productImageUrl' => (string) $this->productServiceProvider->getProductImageUrl($this->product),
-            'catalogPriceAmount' => $apsisCoreHelper->round($this->product->getPrice()),
-            'qty' => (float) $this->wishlistItem->getQty(),
-            'currencyCode' => (string) $this->store->getCurrentCurrencyCode(),
-        ];
+        try {
+            return [
+                'wishlistId' => (int)$wishlist->getId(),
+                'wishlistItemId' => (int)$this->wishlistItem->getId(),
+                'wishlistName' => (string)$wishlist->getName(),
+                'customerId' => (int)$wishlist->getCustomerId(),
+                'websiteName' => (string)$apsisCoreHelper->getWebsiteNameFromStoreId($this->store->getId()),
+                'storeName' => (string)$apsisCoreHelper->getStoreNameFromId($this->store->getId()),
+                'productId' => (int)$this->product->getId(),
+                'sku' => (string)$this->product->getSku(),
+                'name' => (string)$this->product->getName(),
+                'productUrl' => (string)$this->product->getProductUrl(),
+                'productImageUrl' => (string)$this->productServiceProvider->getProductImageUrl($this->product),
+                'catalogPriceAmount' => $apsisCoreHelper->round($this->product->getPrice()),
+                'qty' => (float)$this->wishlistItem->getQty(),
+                'currencyCode' => (string)$this->store->getCurrentCurrencyCode(),
+            ];
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return [];
+        }
     }
 }

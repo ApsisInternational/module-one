@@ -2,22 +2,18 @@
 
 namespace Apsis\One\Observer\Sales\Order;
 
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Event;
-use Apsis\One\Model\EventFactory;
 use Apsis\One\Model\Profile;
-use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
+use Apsis\One\Model\Service\Event;
 use Exception;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileResourceCollectionFactory;
-use Apsis\One\Model\Events\Historical\Orders\Data;
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 
 class Placed implements ObserverInterface
 {
@@ -27,19 +23,9 @@ class Placed implements ObserverInterface
     private $apsisCoreHelper;
 
     /**
-     * @var EventFactory
+     * @var ProfileCollectionFactory
      */
-    private $eventFactory;
-
-    /**
-     * @var EventResource
-     */
-    private $eventResource;
-
-    /**
-     * @var ProfileResourceCollectionFactory
-     */
-    private $profileResourceCollectionFactory;
+    private $profileCollectionFactory;
 
     /**
      * @var ProfileResource
@@ -47,34 +33,28 @@ class Placed implements ObserverInterface
     private $profileResource;
 
     /**
-     * @var Data
+     * @var Event
      */
-    private $orderData;
+    private $eventService;
 
     /**
      * Placed constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
-     * @param EventFactory $eventFactory
-     * @param EventResource $eventResource
-     * @param ProfileResourceCollectionFactory $profileResourceCollectionFactory
+     * @param ProfileCollectionFactory $profileCollectionFactory
      * @param ProfileResource $profileResource
-     * @param Data $orderData
+     * @param Event $eventService
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
-        EventFactory $eventFactory,
-        EventResource $eventResource,
-        ProfileResourceCollectionFactory $profileResourceCollectionFactory,
+        ProfileCollectionFactory $profileCollectionFactory,
         ProfileResource $profileResource,
-        Data $orderData
+        Event $eventService
     ) {
-        $this->orderData = $orderData;
+        $this->eventService = $eventService;
         $this->profileResource = $profileResource;
-        $this->profileResourceCollectionFactory = $profileResourceCollectionFactory;
-        $this->eventFactory = $eventFactory;
+        $this->profileCollectionFactory = $profileCollectionFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
-        $this->eventResource = $eventResource;
     }
 
     /**
@@ -86,48 +66,30 @@ class Placed implements ObserverInterface
     {
         /** @var Order $order */
         $order = $observer->getEvent()->getOrder();
-
         if (! $this->isOkToProceed($order->getStore())) {
             return $this;
         }
 
-        if ($order->getCustomerIsGuest()) {
-            $profile = $this->profileResourceCollectionFactory->create()
-                ->loadSubscriberByEmailAndStoreId($order->getCustomerEmail(), $order->getStoreId());
-            if (! $profile) {
-                return $this;
-            }
-        } else {
-            /** @var Profile $profile */
-            $profile = $this->profileResourceCollectionFactory->create()
-                ->loadByEmailAndStoreId(
-                    $order->getCustomerEmail(),
-                    $order->getStore()->getId()
-                );
-            $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
-        }
-
         try {
-            $mainData = $this->orderData->getDataArr($order, $this->apsisCoreHelper, (int) $profile->getSubscriberId());
-            $subData = $mainData['items'];
-            unset($mainData['items']);
-            /** @var Event $eventModel */
-            $eventModel = $this->eventFactory->create();
-            $eventModel->setEventType(Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER)
-                ->setEventData($this->apsisCoreHelper->serialize($mainData))
-                ->setSubEventData($this->apsisCoreHelper->serialize($subData))
-                ->setProfileId($profile->getId())
-                ->setCustomerId($order->getCustomerId())
-                ->setSubscriberId($profile->getSubscriberId())
-                ->setStoreId($order->getStore()->getId())
-                ->setEmail($order->getCustomerEmail())
-                ->setStatus(Profile::SYNC_STATUS_PENDING);
-            $this->eventResource->save($eventModel);
-            if ($profile->hasDataChanges()) {
-                $this->profileResource->save($profile);
+            if ($order->getCustomerIsGuest()) {
+                $profile = $this->profileCollectionFactory->create()
+                    ->loadSubscriberByEmailAndStoreId($order->getCustomerEmail(), $order->getStoreId());
+                if (! $profile) {
+                    return $this;
+                }
+            } else {
+                /** @var Profile $profile */
+                $profile = $this->profileCollectionFactory->create()
+                    ->loadByEmailAndStoreId(
+                        $order->getCustomerEmail(),
+                        $order->getStore()->getId()
+                    );
+                $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
             }
+            $this->eventService->registerOrderPlacedEvent($order, $profile);
+            $this->profileResource->save($profile);
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
 
         return $this;

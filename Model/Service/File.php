@@ -39,8 +39,6 @@ class File
 
     /**
      * @return string
-     *
-     * @throws FileSystemException
      */
     private function getOutputFolder()
     {
@@ -65,7 +63,6 @@ class File
      * @return bool
      *
      * @throws FileSystemException
-     * @throws ValidatorException
      */
     public function deleteFile(string $filePath)
     {
@@ -77,7 +74,6 @@ class File
      * @param array $data
      *
      * @throws FileSystemException
-     * @throws ValidatorException
      */
     public function outputCSV($file, $data)
     {

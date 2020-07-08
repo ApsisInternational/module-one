@@ -6,7 +6,7 @@ use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\ProfileBatchFactory;
 use Apsis\One\Model\ResourceModel\Profile\Collection;
-use \Exception;
+use Exception;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
 use Magento\Newsletter\Model\Subscriber;
@@ -70,11 +70,6 @@ class Subscribers implements ProfileSyncInterface
     private $keySpaceDiscriminator;
 
     /**
-     * @var string
-     */
-    private $sectionDiscriminator;
-
-    /**
      * Subscribers constructor.
      *
      * @param ProfileCollectionFactory $profileCollectionFactory
@@ -109,61 +104,65 @@ class Subscribers implements ProfileSyncInterface
      */
     public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
     {
-        $this->apsisCoreHelper = $apsisCoreHelper;
-        $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
-        );
-        $sync = (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED
-        );
-        $topics = $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC
-        );
-        $mappings = $this->apsisConfigHelper->getSubscriberAttributeMapping($store);
-        $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
+        try {
+            $this->apsisCoreHelper = $apsisCoreHelper;
+            $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
+                $store,
+                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+            );
+            $sync = (boolean) $this->apsisCoreHelper->getStoreConfig(
+                $store,
+                ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED
+            );
+            $topics = $this->apsisCoreHelper->getStoreConfig(
+                $store,
+                ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC
+            );
+            $mappings = $this->apsisConfigHelper->getSubscriberAttributeMapping($store);
+            $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
 
-        if ($client && $sync && $this->sectionDiscriminator && strlen($topics) && ! empty($mappings) &&
-            isset($mappings['email'])
-        ) {
-            $attributesArrWithVersionId = $this->apsisCoreHelper
-                ->getAttributesArrWithVersionId($client, $this->sectionDiscriminator);
-            $this->keySpaceDiscriminator = $this->apsisCoreHelper
-                ->getKeySpaceDiscriminator($this->sectionDiscriminator);
-            $topics = explode(',', $topics);
+            if ($client && $sync && $sectionDiscriminator && strlen($topics) && ! empty($mappings) &&
+                isset($mappings['email'])
+            ) {
+                $attributesArrWithVersionId = $this->apsisCoreHelper
+                    ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
+                $this->keySpaceDiscriminator = $this->apsisCoreHelper
+                    ->getKeySpaceDiscriminator($sectionDiscriminator);
+                $topics = explode(',', $topics);
 
-            if (empty($topics) || empty($attributesArrWithVersionId)) {
-                return;
+                if (empty($topics) || empty($attributesArrWithVersionId)) {
+                    return;
+                }
+
+                $limit = $this->apsisCoreHelper->getStoreConfig(
+                    $store,
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_SUBSCRIBER_BATCH_SIZE
+                );
+
+                //Subscribers : opt-in
+                $this->batchSubscribersForStore(
+                    $store,
+                    ($limit) ? $limit : self::LIMIT,
+                    $mappings,
+                    $topics,
+                    $attributesArrWithVersionId,
+                    Subscriber::STATUS_SUBSCRIBED,
+                    'opt-in'
+                );
+
+                //Subscribers : opt-out
+                $this->batchSubscribersForStore(
+                    $store,
+                    ($limit) ? $limit : self::LIMIT,
+                    $mappings,
+                    $topics,
+                    $attributesArrWithVersionId,
+                    Subscriber::STATUS_UNSUBSCRIBED,
+                    'opt-out'
+                );
             }
-
-            $limit = $this->apsisCoreHelper->getStoreConfig(
-                $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_SUBSCRIBER_BATCH_SIZE
-            );
-
-            //Subscribers : opt-in
-            $this->batchSubscribersForStore(
-                $store,
-                ($limit) ? $limit : self::LIMIT,
-                $mappings,
-                $topics,
-                $attributesArrWithVersionId,
-                Subscriber::STATUS_SUBSCRIBED,
-                'opt-in'
-            );
-
-            //Subscribers : opt-out
-            $this->batchSubscribersForStore(
-                $store,
-                ($limit) ? $limit : self::LIMIT,
-                $mappings,
-                $topics,
-                $attributesArrWithVersionId,
-                Subscriber::STATUS_UNSUBSCRIBED,
-                'opt-out'
-            );
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
     }
 
@@ -185,22 +184,26 @@ class Subscribers implements ProfileSyncInterface
         int $subscriberStatus,
         string $consentType
     ) {
-        $collection = $this->profileCollectionFactory->create()
-            ->getSubscribersToBatchByStore(
-                $store->getId(),
-                $limit,
-                $subscriberStatus
-            );
+        try {
+            $collection = $this->profileCollectionFactory->create()
+                ->getSubscribersToBatchByStore(
+                    $store->getId(),
+                    $limit,
+                    $subscriberStatus
+                );
 
-        if ($collection->getSize()) {
-            $this->createCsvForStore(
-                $store,
-                $collection,
-                $mappings,
-                $topics,
-                $attributesArrWithVersionId,
-                $consentType
-            );
+            if ($collection->getSize()) {
+                $this->createCsvForStore(
+                    $store,
+                    $collection,
+                    $mappings,
+                    $topics,
+                    $attributesArrWithVersionId,
+                    $consentType
+                );
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
     }
 
@@ -259,7 +262,7 @@ class Subscribers implements ProfileSyncInterface
                         $this->apsisFileHelper->outputCSV($file, $subscriberData);
                         $subscribersToUpdate[] = $subscriber->getSubscriberId();
                     } catch (Exception $e) {
-                        $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                        $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
                         $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscriber with id :' .
                             $subscriber->getSubscriberId());
                         continue;
@@ -288,7 +291,7 @@ class Subscribers implements ProfileSyncInterface
                 );
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             if (! empty($subscribersToUpdate)) {
                 $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscribers with id :' .
                     implode(',', $subscribersToUpdate));
@@ -304,8 +307,15 @@ class Subscribers implements ProfileSyncInterface
     private function getIntegrationIdsArray(Collection $collection)
     {
         $integrationIdsArray = [];
+        /** @var Profile $item */
         foreach ($collection as $item) {
-            $integrationIdsArray[$item->getSubscriberId()] = $item->getIntegrationUid();
+            try {
+                $integrationIdsArray[$item->getSubscriberId()] = $item->getIntegrationUid();
+            } catch (Exception $e) {
+                $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $this->apsisCoreHelper->log(__METHOD__ . ' Skipped for Profile id: ' . $item->getId());
+                continue;
+            }
         }
         return $integrationIdsArray;
     }
@@ -314,25 +324,30 @@ class Subscribers implements ProfileSyncInterface
      * @param StoreInterface $store
      * @param $subscriberIds
      *
-     * @return SubscriberCollection
+     * @return array|SubscriberCollection
      */
     private function getSubscribersFromIdsByStore(StoreInterface $store, $subscriberIds)
     {
-        $collection = $this->subscriberCollectionFactory->create()
-            ->addFieldToFilter('main_table.subscriber_id', ['in' => $subscriberIds])
-            ->addStoreFilter($store->getId());
+        try {
+            $collection = $this->subscriberCollectionFactory->create()
+                ->addFieldToFilter('main_table.subscriber_id', ['in' => $subscriberIds])
+                ->addStoreFilter($store->getId());
 
-        $collection->getSelect()
-            ->joinLeft(
-                ['store' => $collection->getTable('store')],
-                "main_table.store_id = store.store_id",
-                ['store_name' => 'name', 'website_id']
-            )->joinLeft(
-                ['website' => $collection->getTable('store_website')],
-                "website.website_id = store.website_id",
-                ['website_name' => 'name']
-            );
+            $collection->getSelect()
+                ->joinLeft(
+                    ['store' => $collection->getTable('store')],
+                    "main_table.store_id = store.store_id",
+                    ['store_name' => 'name', 'website_id']
+                )->joinLeft(
+                    ['website' => $collection->getTable('store_website')],
+                    "website.website_id = store.website_id",
+                    ['website_name' => 'name']
+                );
 
-        return $collection;
+            return $collection;
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return [];
+        }
     }
 }

@@ -19,7 +19,6 @@ use Apsis\One\ApiClient\Client;
 use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as DataCollectionFactory;
 use Magento\Config\Model\ResourceModel\Config\Data\Collection as DataCollection;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use libphonenumber\PhoneNumberUtil;
 
 class Core extends ApsisLogHelper
 {
@@ -111,7 +110,7 @@ class Core extends ApsisLogHelper
         try {
             return $this->storeManager->getStore($storeId);
         } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return false;
         }
     }
@@ -136,7 +135,7 @@ class Core extends ApsisLogHelper
             $store = $this->getStore($storeId);
             return ($store) ? $this->storeManager->getWebsite($store->getWebsiteId())->getName() : '';
         } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return '';
         }
     }
@@ -175,7 +174,12 @@ class Core extends ApsisLogHelper
      */
     public function getConfigValue(string $path, string $contextScope, int $contextScopeId)
     {
-        return $this->scopeConfig->getValue($path, $contextScope, $contextScopeId);
+        try {
+            return $this->scopeConfig->getValue($path, $contextScope, $contextScopeId);
+        } catch (Exception $e) {
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return null;
+        }
     }
 
     /**
@@ -192,7 +196,11 @@ class Core extends ApsisLogHelper
         string $contextScope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
         $contextScopeId = 0
     ) {
-        $this->writer->save($path, $value, $contextScope, $contextScopeId);
+        try {
+            $this->writer->save($path, $value, $contextScope, $contextScopeId);
+        } catch (Exception $e) {
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
     }
 
     /**
@@ -207,7 +215,11 @@ class Core extends ApsisLogHelper
         string $contextScope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
         $contextScopeId = 0
     ) {
-        $this->writer->delete($path, $contextScope, $contextScopeId);
+        try {
+            $this->writer->delete($path, $contextScope, $contextScopeId);
+        } catch (Exception $e) {
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
     }
 
     /**
@@ -229,11 +241,16 @@ class Core extends ApsisLogHelper
      *
      * @param bool $withDefault
      *
-     * @return StoreInterface[]
+     * @return StoreInterface[]|array
      */
     public function getStores(bool $withDefault = false)
     {
-        return $this->storeManager->getStores($withDefault);
+        try {
+            return $this->storeManager->getStores($withDefault);
+        } catch (Exception $e) {
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return [];
+        }
     }
 
     /**
@@ -244,7 +261,12 @@ class Core extends ApsisLogHelper
      */
     public function getStoreConfig(StoreInterface $store, string $path)
     {
-        return $store->getConfig($path);
+        try {
+            return $store->getConfig($path);
+        } catch (Exception $e) {
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return null;
+        }
     }
 
     /**
@@ -255,7 +277,12 @@ class Core extends ApsisLogHelper
      */
     public function round($price, int $precision = 2)
     {
-        return (float) round($price, $precision);
+        try {
+            return (float) round($price, $precision);
+        } catch (Exception $e) {
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return 0.00;
+        }
     }
 
     /**
@@ -312,13 +339,17 @@ class Core extends ApsisLogHelper
      */
     private function getTokenFromDb(string $contextScope, int $scopeId)
     {
-        $collection = $this->getDataCollectionByContextAndPath(
-            $contextScope,
-            $scopeId,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN
-        );
-        $token = $this->encryptor->decrypt($collection->getFirstItem()->getValue());
-        return $token;
+        try {
+            $collection = $this->getDataCollectionByContextAndPath(
+                $contextScope,
+                $scopeId,
+                ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN
+            );
+            return $this->encryptor->decrypt($collection->getFirstItem()->getValue());
+        } catch (Exception $e) {
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return '';
+        }
     }
 
     /**
@@ -335,10 +366,8 @@ class Core extends ApsisLogHelper
             $clientId = ($id) ? $id : $this->getClientId($contextScope, $scopeId);
             $clientSecret = ($secret) ? $secret : $this->getClientSecret($contextScope, $scopeId);
             if (! empty($clientId) && ! empty($clientSecret)) {
-                /** @var Client $apiClient */
                 $apiClient = $this->apiClientFactory->create();
                 $request = $apiClient->getAccessToken($clientId, $clientSecret);
-
                 if ($request && isset($request->access_token)) {
                     $scopeArray = $this->resolveContext($contextScope, $scopeId);
                     $contextScope = $scopeArray['scope'];
@@ -348,7 +377,7 @@ class Core extends ApsisLogHelper
                 }
             }
         } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return '';
     }
@@ -420,7 +449,6 @@ class Core extends ApsisLogHelper
      */
     public function getApiClientFromToken(string $token)
     {
-        /** @var Client $apiClient */
         $apiClient = $this->apiClientFactory->create();
         return $apiClient->setToken($token);
     }
@@ -561,7 +589,7 @@ class Core extends ApsisLogHelper
         try {
             return $this->storeManager->getWebsite($websiteId)->getStoreIds();
         } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return [];
         }
     }
@@ -581,8 +609,13 @@ class Core extends ApsisLogHelper
      */
     public function getKeySpaceDiscriminator(string $sectionDiscriminator)
     {
-        $hash = substr(md5($sectionDiscriminator), 0, 8);
-        return "com.apsis1.integrations.keyspaces.$hash.magento";
+        try {
+            $hash = substr(md5($sectionDiscriminator), 0, 8);
+            return "com.apsis1.integrations.keyspaces.$hash.magento";
+        } catch (Exception $e) {
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return '';
+        }
     }
 
     /**
@@ -606,32 +639,5 @@ class Core extends ApsisLogHelper
             }
         }
         return $attributesArr;
-    }
-
-    /**
-     * @param string $countryCode
-     * @param string $phoneNumber
-     *
-     * @return int|null
-     */
-    public function validateAndFormatMobileNumber(string $countryCode, string $phoneNumber)
-    {
-        $formattedNumber = null;
-        try {
-            if (strlen($countryCode) === 2) {
-                $phoneUtil = PhoneNumberUtil::getInstance();
-                $numberProto = $phoneUtil->parse($phoneNumber, $countryCode);
-                if ($phoneUtil->isValidNumber($numberProto)) {
-                    $formattedNumber = (int) sprintf(
-                        "%d%d",
-                        (int) $numberProto->getCountryCode(),
-                        (int) $numberProto->getNationalNumber()
-                    );
-                }
-            }
-        } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-        }
-        return $formattedNumber;
     }
 }

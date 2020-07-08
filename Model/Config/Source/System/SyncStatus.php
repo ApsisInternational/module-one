@@ -12,7 +12,7 @@ class SyncStatus implements OptionSourceInterface
      */
     public function toOptionArray()
     {
-        $options = [
+        return [
             [
                 'value' => Profile::SYNC_STATUS_PENDING,
                 'label' => 'Pending'
@@ -30,7 +30,5 @@ class SyncStatus implements OptionSourceInterface
                 'label' => 'Failed',
             ]
         ];
-
-        return $options;
     }
 }

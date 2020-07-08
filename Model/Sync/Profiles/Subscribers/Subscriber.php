@@ -21,14 +21,14 @@ class Subscriber implements ProfileDataInterface
     private $subscriber;
 
     /**
-     * @var ApsisCoreHelper
-     */
-    private $apsisCoreHelper;
-
-    /**
      * @var ApsisDateHelper
      */
     private $apsisDateHelper;
+
+    /**
+     * @var ApsisCoreHelper
+     */
+    private $apsisCoreHelper;
 
     /**
      * Subscriber constructor.
@@ -149,7 +149,7 @@ class Subscriber implements ProfileDataInterface
      */
     private function getSubscriberStatus()
     {
-        if ($this->subscriber->getSubscriberStatus() == MagentoSubscriber::STATUS_SUBSCRIBED) {
+        if ((int) $this->subscriber->getSubscriberStatus() === MagentoSubscriber::STATUS_SUBSCRIBED) {
             $status = 'subscribed';
         } else {
             $status = 'unsubscribed';

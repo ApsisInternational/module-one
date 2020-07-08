@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Block\Adminhtml\Config\Event;
 
+use Exception;
 use Magento\Config\Block\System\Config\Form\Field;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
@@ -63,28 +64,28 @@ class HistoricalData extends Field
      */
     private function getHistoryDoneFlagForScope(string $elementId)
     {
-        $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
-
-        if ($scope['context_scope'] == ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {
-            return $this->isEventHistoryDoneFlagExistOnGivenStore(
-                self::TYPES[$elementId],
-                $this->apsisCoreHelper->getAllStoreIds()
-            );
+        try {
+            $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
+            if ($scope['context_scope'] === ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {
+                return $this->isEventHistoryDoneFlagExistOnGivenStore(
+                    self::TYPES[$elementId],
+                    $this->apsisCoreHelper->getAllStoreIds()
+                );
+            }
+            if ($scope['context_scope'] === ScopeInterface::SCOPE_WEBSITES) {
+                return $this->isEventHistoryDoneFlagExistOnGivenStore(
+                    self::TYPES[$elementId],
+                    $this->apsisCoreHelper->getAllStoreIdsFromWebsite($scope['context_scope_id'])
+                );
+            }
+            if ($scope['context_scope'] === ScopeInterface::SCOPE_STORES) {
+                return (boolean) $this->apsisCoreHelper->getMappedValueFromSelectedScope(
+                    self::TYPES[$elementId]
+                );
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
-
-        if ($scope['context_scope'] == ScopeInterface::SCOPE_WEBSITES) {
-            return $this->isEventHistoryDoneFlagExistOnGivenStore(
-                self::TYPES[$elementId],
-                $this->apsisCoreHelper->getAllStoreIdsFromWebsite($scope['context_scope_id'])
-            );
-        }
-
-        if ($scope['context_scope'] == ScopeInterface::SCOPE_STORES) {
-            return (boolean) $this->apsisCoreHelper->getMappedValueFromSelectedScope(
-                self::TYPES[$elementId]
-            );
-        }
-
         return false;
     }
 
@@ -96,10 +97,15 @@ class HistoricalData extends Field
      */
     public function isEventHistoryDoneFlagExistOnGivenStore(string $path, array $storeIds)
     {
-        $collection = $this->apsisCoreHelper->getConfigDataCollection()
-            ->addFieldToFilter('scope', ScopeInterface::SCOPE_STORES)
-            ->addFieldToFilter('scope_id', ['in' => $storeIds])
-            ->addFieldToFilter('path', $path);
-        return (boolean) $collection->getSize();
+        try {
+            $collection = $this->apsisCoreHelper->getConfigDataCollection()
+                ->addFieldToFilter('scope', ScopeInterface::SCOPE_STORES)
+                ->addFieldToFilter('scope_id', ['in' => $storeIds])
+                ->addFieldToFilter('path', $path);
+            return (boolean) $collection->getSize();
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return false;
+        }
     }
 }

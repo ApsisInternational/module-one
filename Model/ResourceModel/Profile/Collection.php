@@ -26,7 +26,7 @@ class Collection extends AbstractCollection
      * @param string $email
      * @param int $storeId
      *
-     * @return bool|DataObject
+     * @return bool|DataObject|Profile
      */
     public function loadSubscriberByEmailAndStoreId(string $email, int $storeId)
     {
@@ -45,7 +45,7 @@ class Collection extends AbstractCollection
     /**
      * @param int $customerId
      *
-     * @return bool|DataObject
+     * @return bool|DataObject|Profile
      */
     public function loadCustomerById(int $customerId)
     {
@@ -63,7 +63,7 @@ class Collection extends AbstractCollection
      * @param string $email
      * @param int $storeId
      *
-     * @return bool|DataObject
+     * @return bool|DataObject|Profile
      */
     public function loadByEmailAndStoreId(string $email, int $storeId)
     {

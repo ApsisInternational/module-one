@@ -36,9 +36,9 @@ class Log
      * @param string $trace
      * @param array $extra
      */
-    public function logMessage(string $classMethodName, string $text, string $trace = '', array $extra = [])
+    public function logError(string $classMethodName, string $text, string $trace = '', array $extra = [])
     {
-        $this->log($this->getStringForLog($classMethodName, $text, $trace), $extra);
+        $this->error($this->getStringForLog($classMethodName, $text, $trace), $extra);
     }
 
     /**
@@ -96,7 +96,7 @@ class Log
         try {
             return json_encode($data);
         } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return '{}';
         }
     }
@@ -111,7 +111,7 @@ class Log
         try {
             return json_decode($string);
         } catch (Exception $e) {
-            $this->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return [];
         }
     }

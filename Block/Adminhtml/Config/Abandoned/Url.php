@@ -66,7 +66,7 @@ class Url extends Field
             $store =  (! $defaultGroup) ? null : $defaultGroup->getDefaultStore();
             return $this->storeManager->getStore($store)->getBaseUrl(UrlInterface::URL_TYPE_LINK);
         } catch (Exception $e) {
-            $this->apsisLogHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return '';
         }
     }

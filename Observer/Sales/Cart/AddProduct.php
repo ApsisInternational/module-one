@@ -5,21 +5,17 @@ namespace Apsis\One\Observer\Sales\Cart;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Event;
-use Apsis\One\Model\EventFactory;
 use Apsis\One\Model\Profile;
-use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
+use Apsis\One\Model\Service\Event;
 use Exception;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Catalog\Model\Product;
-use Apsis\One\Model\Events\Historical\Carts\Data;
 
 class AddProduct implements ObserverInterface
 {
@@ -39,52 +35,36 @@ class AddProduct implements ObserverInterface
     private $apsisCoreHelper;
 
     /**
-     * @var EventFactory
-     */
-    private $eventFactory;
-
-    /**
-     * @var EventResource
-     */
-    private $eventResource;
-
-    /**
      * @var ProfileResource
      */
     private $profileResource;
 
     /**
-     * @var Data
+     * @var Event
      */
-    private $cartData;
+    private $eventService;
 
     /**
      * AddProduct constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
-     * @param EventFactory $eventFactory
-     * @param EventResource $eventResource
      * @param ProfileResource $profileResource
      * @param CheckoutSession $checkoutSession
-     * @param Data $cartData
      * @param ProfileCollectionFactory $profileCollectionFactory
+     * @param Event $eventService
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
-        EventFactory $eventFactory,
-        EventResource $eventResource,
         ProfileResource $profileResource,
         CheckoutSession $checkoutSession,
-        Data $cartData,
-        ProfileCollectionFactory $profileCollectionFactory
+        ProfileCollectionFactory $profileCollectionFactory,
+        Event $eventService
     ) {
+        $this->eventService = $eventService;
         $this->profileCollectionFactory = $profileCollectionFactory;
-        $this->cartData = $cartData;
         $this->checkoutSession = $checkoutSession;
         $this->profileResource = $profileResource;
-        $this->eventFactory = $eventFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
-        $this->eventResource = $eventResource;
     }
 
     /**
@@ -95,7 +75,6 @@ class AddProduct implements ObserverInterface
     public function execute(Observer $observer)
     {
         try {
-            /** @var Quote $cart */
             $cart = $this->checkoutSession->getQuote();
             if ($cart->getCustomerIsGuest() || empty($cart->getCustomerId())) {
                 return $this;
@@ -115,26 +94,12 @@ class AddProduct implements ObserverInterface
                 );
 
             if ($this->isOkToProceed($cart->getStore()) && $profile && $item) {
-                /** @var Event $eventModel */
-                $eventModel = $this->eventFactory->create();
-                $eventModel->setEventType(Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART)
-                    ->setEventData(
-                        $this->apsisCoreHelper->serialize(
-                            $this->cartData->getDataArr($cart, $item, $this->apsisCoreHelper)
-                        )
-                    )
-                    ->setProfileId($profile->getId())
-                    ->setCustomerId($cart->getCustomerId())
-                    ->setStoreId($cart->getStore()->getId())
-                    ->setEmail($cart->getCustomerEmail())
-                    ->setStatus(Profile::SYNC_STATUS_PENDING);
-                $this->eventResource->save($eventModel);
-
+                $this->eventService->registerProductCartedEvent($cart, $item, $profile);
                 $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
                 $this->profileResource->save($profile);
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
 
         return $this;

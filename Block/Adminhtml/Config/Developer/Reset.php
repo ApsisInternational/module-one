@@ -64,7 +64,7 @@ class Reset extends Field
                 ->setLabel($this->buttonLabel)
                 ->toHtml();
         } catch (Exception $e) {
-            $this->apsisLogHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return parent::_getElementHtml($element);
         }
     }

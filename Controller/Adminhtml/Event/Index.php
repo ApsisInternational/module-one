@@ -46,7 +46,6 @@ class Index extends AbstractAction
         $resultPage->addBreadcrumb(__('Event'), __('Event'));
         $resultPage->addBreadcrumb(__('Reports'), __('Reports'));
         $resultPage->getConfig()->getTitle()->prepend(__('Registered Event Report'));
-
         return $resultPage;
     }
 }

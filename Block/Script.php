@@ -55,14 +55,12 @@ class Script extends Template
             $isTrackingEnabled = (boolean) $store->getConfig(
                 ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_ENABLED
             );
-
             if ($isAccountEnabled && $isTrackingEnabled) {
                 return (string) $store->getConfig(ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_SCRIPT);
             }
-            return '';
         } catch (Exception $e) {
-            $this->apsisLogHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-            return '';
+            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
+        return '';
     }
 }

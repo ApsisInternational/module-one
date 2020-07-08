@@ -3,6 +3,7 @@
 namespace Apsis\One\Model\Config\Source\Datamapping;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Exception;
 use Magento\Framework\Data\OptionSourceInterface;
 
 class Section implements OptionSourceInterface
@@ -29,26 +30,29 @@ class Section implements OptionSourceInterface
      */
     public function toOptionArray()
     {
-        $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
-        $apiClient = $this->apsisCoreHelper->getApiClient(
-            $scope['context_scope'],
-            $scope['context_scope_id']
-        );
-        if (! $apiClient) {
-            return [];
-        }
-
-        $request = $apiClient->getSections();
-        if (! $request || ! isset($request->items)) {
-            $this->apsisCoreHelper->log(__METHOD__ . ': No section found on account');
-            return [];
-        }
-
         $fields[] = ['value' => '', 'label' => __('-- Please Select --')];
-        foreach ($request->items as $section) {
-            $fields[] = ['value' => $section->discriminator, 'label' => $section->name];
-        }
+        try {
+            $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
+            $apiClient = $this->apsisCoreHelper->getApiClient(
+                $scope['context_scope'],
+                $scope['context_scope_id']
+            );
+            if (! $apiClient) {
+                return [];
+            }
 
+            $request = $apiClient->getSections();
+            if (! $request || ! isset($request->items)) {
+                $this->apsisCoreHelper->log(__METHOD__ . ': No section found on account');
+                return [];
+            }
+
+            foreach ($request->items as $section) {
+                $fields[] = ['value' => $section->discriminator, 'label' => $section->name];
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
         return $fields;
     }
 }

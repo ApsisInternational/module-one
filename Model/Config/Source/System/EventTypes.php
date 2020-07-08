@@ -12,7 +12,7 @@ class EventTypes implements OptionSourceInterface
      */
     public function toOptionArray()
     {
-        $options = [
+        return [
             [
                 'value' => Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART,
                 'label' => 'Customer Abandoned Cart'
@@ -50,7 +50,5 @@ class EventTypes implements OptionSourceInterface
                 'label' => 'Customer Added Product To Cart'
             ]
         ];
-
-        return $options;
     }
 }

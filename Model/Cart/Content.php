@@ -9,7 +9,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Pricing\Helper\Data;
 use Magento\Quote\Model\Quote\Item;
 use Magento\Store\Model\App\EmulationFactory;
-use Magento\Store\Model\App\Emulation;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Api\CartTotalRepositoryInterface;
 use Magento\Quote\Model\Quote\Address;
@@ -80,21 +79,17 @@ class Content
     public function getCartData(Quote $quoteModel, ApsisCoreHelper $apsisCoreHelper)
     {
         $this->apsisCoreHelper = $apsisCoreHelper;
-        /** @var Emulation $appEmulation */
         $appEmulation = $this->emulationFactory->create();
-
+        $cartData = [];
         try {
             $appEmulation->startEnvironmentEmulation($quoteModel->getStoreId(), Area::AREA_FRONTEND, true);
-            $cartData = (array) $this->getMainCartData($quoteModel);
-            $cartData['items'] = (array) $this->getItemData($quoteModel->getAllVisibleItems());
+            $cartData = $this->getMainCartData($quoteModel);
+            $cartData['items'] = $this->getItemData($quoteModel->getAllVisibleItems());
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-            $appEmulation->stopEnvironmentEmulation();
-            return [];
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
-
         $appEmulation->stopEnvironmentEmulation();
-        return (array) $cartData;
+        return $cartData;
     }
 
     /**
@@ -104,47 +99,54 @@ class Content
      */
     private function getItemData(array $quoteItems)
     {
-        $itemsData = [];
-
-        /** @var Item $quoteItem */
-        foreach ($quoteItems as $quoteItem) {
-            $itemsData[] = $this->getItemsData($quoteItem);
+        try {
+            $itemsData = [];
+            /** @var Item $quoteItem */
+            foreach ($quoteItems as $quoteItem) {
+                $itemsData[] = $this->getItemsData($quoteItem);
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
-
         return $itemsData;
     }
 
     /**
      * @param Quote $quoteModel
-     * @return mixed
      *
-     * @throws NoSuchEntityException
+     * @return array
      */
     private function getMainCartData(Quote $quoteModel)
     {
-        $totals = $this->cartTotalRepository->get($quoteModel->getId());
-        $quoteData['cart_id'] = (int) $quoteModel->getId();
-        $quoteData['created_at'] = (int) $this->apsisDateHelper
-            ->formatDateForPlatformCompatibility($quoteModel->getCreatedAt());
-        $quoteData['updated_at'] = (int) $this->apsisDateHelper
-            ->formatDateForPlatformCompatibility($quoteModel->getUpdatedAt());
-        $quoteData['store_name'] = (string) $quoteModel->getStore()->getName();
-        $quoteData['website_name'] = (string) $quoteModel->getStore()->getWebsite()->getName();
-        $quoteData['subtotal_amount'] = $this->apsisCoreHelper->round($totals->getSubtotal());
-        $quoteData['grand_total_amount'] = $this->apsisCoreHelper->round($quoteModel->getGrandTotal());
-        $quoteData['tax_amount'] = $this->apsisCoreHelper->round($totals->getTaxAmount());
-        $quoteData['shipping_amount'] = $this->apsisCoreHelper->round($totals->getShippingAmount());
-        $quoteData['discount_amount'] = $this->apsisCoreHelper->round($totals->getDiscountAmount());
-        $quoteData['items_quantity'] = $this->apsisCoreHelper->round($totals->getItemsQty());
-        $quoteData['items_count'] = $this->apsisCoreHelper->round($quoteModel->getItemsCount());
-        $quoteData['payment_method_title'] = (string) $quoteModel->getPayment()->getMethod();
-        $quoteData['shipping_method_title'] = (string) $quoteModel->getShippingAddress()->getShippingDescription();
-        $quoteData['currency_code'] = (string) $totals->getQuoteCurrencyCode();
-        $quoteData['customer_info'] = (array) $this->getCustomerInformation($quoteModel);
-        $quoteData['shipping_billing_same'] = (boolean) $quoteModel->getShippingAddress()->getSameAsBilling();
-        $quoteData['shipping_address'] = (array) $this->getAddress($quoteModel->getShippingAddress());
-        $quoteData['billing_address'] = (array) $this->getAddress($quoteModel->getBillingAddress());
-        return $quoteData;
+        try {
+            $totals = $this->cartTotalRepository->get($quoteModel->getId());
+            return [
+                'cart_id' => (int) $quoteModel->getId(),
+                'created_at' => (int) $this->apsisDateHelper
+                    ->formatDateForPlatformCompatibility($quoteModel->getCreatedAt()),
+                'updated_at' => (int) $this->apsisDateHelper
+                    ->formatDateForPlatformCompatibility($quoteModel->getUpdatedAt()),
+                'store_name' => (string) $quoteModel->getStore()->getName(),
+                'website_name' => (string) $quoteModel->getStore()->getWebsite()->getName(),
+                'subtotal_amount' => $this->apsisCoreHelper->round($totals->getSubtotal()),
+                'grand_total_amount' => $this->apsisCoreHelper->round($quoteModel->getGrandTotal()),
+                'tax_amount' => $this->apsisCoreHelper->round($totals->getTaxAmount()),
+                'shipping_amount' => $this->apsisCoreHelper->round($totals->getShippingAmount()),
+                'discount_amount' => $this->apsisCoreHelper->round($totals->getDiscountAmount()),
+                'items_quantity' => $this->apsisCoreHelper->round($totals->getItemsQty()),
+                'items_count' => $this->apsisCoreHelper->round($quoteModel->getItemsCount()),
+                'payment_method_title' => (string) $quoteModel->getPayment()->getMethod(),
+                'shipping_method_title' => (string) $quoteModel->getShippingAddress()->getShippingDescription(),
+                'currency_code' => (string) $totals->getQuoteCurrencyCode(),
+                'customer_info' => $this->getCustomerInformation($quoteModel),
+                'shipping_billing_same' => (boolean) $quoteModel->getShippingAddress()->getSameAsBilling(),
+                'shipping_address' => $this->getAddress($quoteModel->getShippingAddress()),
+                'billing_address' => $this->getAddress($quoteModel->getBillingAddress()),
+            ];
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
+        return [];
     }
 
     /**
@@ -154,20 +156,26 @@ class Content
      */
     private function getAddress(Address $address)
     {
-        $addressInfo['prefix'] = (string) $address->getPrefix();
-        $addressInfo['suffix'] = (string) $address->getSuffix();
-        $addressInfo['first_name'] = (string) $address->getFirstname();
-        $addressInfo['middle_name'] = (string) $address->getMiddlename();
-        $addressInfo['last_name'] = (string) $address->getLastname();
-        $addressInfo['company'] = (string) $address->getCompany();
-        $addressInfo['street_line_1'] = (string) $address->getStreetLine(1);
-        $addressInfo['street_line_2'] = (string) $address->getStreetLine(2);
-        $addressInfo['city'] = (string) $address->getCity();
-        $addressInfo['region'] = (string) $address->getRegion();
-        $addressInfo['postcode'] = (string) $address->getPostcode();
-        $addressInfo['country'] = (string) $address->getCountry();
-        $addressInfo['telephone'] = (string) $address->getTelephone();
-        return $addressInfo;
+        try {
+            return [
+                'prefix' => (string) $address->getPrefix(),
+                'suffix' => (string) $address->getSuffix(),
+                'first_name' => (string) $address->getFirstname(),
+                'middle_name' => (string) $address->getMiddlename(),
+                'last_name' => (string) $address->getLastname(),
+                'company' => (string) $address->getCompany(),
+                'street_line_1' => (string) $address->getStreetLine(1),
+                'street_line_2' => (string) $address->getStreetLine(2),
+                'city' => (string) $address->getCity(),
+                'region' => (string) $address->getRegion(),
+                'postcode' => (string) $address->getPostcode(),
+                'country' => (string) $address->getCountry(),
+                'telephone' => (string) $address->getTelephone()
+            ];
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
+        return [];
     }
 
     /**
@@ -177,15 +185,21 @@ class Content
      */
     private function getCustomerInformation(Quote $quoteModel)
     {
-        $customer['customer_id'] = (int) $quoteModel->getCustomerId();
-        $customer['is_guest'] = (boolean) $quoteModel->getCustomerIsGuest();
-        $customer['email'] = (string) $quoteModel->getCustomerEmail();
-        $customer['prefix'] = (string) $quoteModel->getCustomerPrefix();
-        $customer['suffix'] = (string) $quoteModel->getCustomerSuffix();
-        $customer['first_name'] = (string) $quoteModel->getCustomerFirstname();
-        $customer['middle_name'] = (string) $quoteModel->getCustomerMiddlename();
-        $customer['last_name'] = (string) $quoteModel->getCustomerLastname();
-        return $customer;
+        try {
+            return [
+                'customer_id' => (int) $quoteModel->getCustomerId(),
+                'is_guest' => (boolean) $quoteModel->getCustomerIsGuest(),
+                'email' => (string) $quoteModel->getCustomerEmail(),
+                'prefix' => (string) $quoteModel->getCustomerPrefix(),
+                'suffix' => (string) $quoteModel->getCustomerSuffix(),
+                'first_name' => (string) $quoteModel->getCustomerFirstname(),
+                'middle_name' => (string) $quoteModel->getCustomerMiddlename(),
+                'last_name' => (string) $quoteModel->getCustomerLastname()
+            ];
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
+        return [];
     }
 
     /**
@@ -196,7 +210,7 @@ class Content
     private function getItemsData(Item $quoteItem)
     {
         $product = $quoteItem->getProduct();
-        $itemsData = [
+        return [
             'product_id' => (int) $quoteItem->getProductId(),
             'sku' => (string) $quoteItem->getSku(),
             'name' => (string) $quoteItem->getName(),
@@ -210,8 +224,6 @@ class Content
             'discount_amount' => $this->apsisCoreHelper->round($quoteItem->getTotalDiscountAmount()),
             'product_options' => $this->getProductOptions($quoteItem)
         ];
-
-        return $itemsData;
     }
 
     /**
@@ -221,61 +233,72 @@ class Content
      */
     private function getProductOptions(Item $item)
     {
-        $options = $item->getProduct()->getTypeInstance()->getOrderOptions($item->getProduct());
         $sortedOptions = [];
-        if (isset($options['attributes_info']) || isset($options['options'])) {
-            $optionAttributes = [];
-            if (isset($options['attributes_info'])) {
-                $optionAttributes = $options['attributes_info'];
-            } elseif (isset($options['options'])) {
-                $optionAttributes = $options['options'];
+        try {
+            $options = $item->getProduct()->getTypeInstance()->getOrderOptions($item->getProduct());
+            if (isset($options['attributes_info']) || isset($options['options'])) {
+                $optionAttributes = [];
+                if (isset($options['attributes_info'])) {
+                    $optionAttributes = $options['attributes_info'];
+                } elseif (isset($options['options'])) {
+                    $optionAttributes = $options['options'];
+                }
+                $sortedOptions = $this->getConfigurableOptions($optionAttributes);
+            } elseif (isset($options['bundle_options'])) {
+                $sortedOptions = $this->getBundleOptions($options);
             }
-            $sortedOptions = $this->getConfigurableOptions($optionAttributes, $sortedOptions);
-        } elseif (isset($options['bundle_options'])) {
-            $sortedOptions = $this->getBundleOptions($options, $sortedOptions);
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
-
         return $sortedOptions;
     }
 
     /**
      * @param array $optionAttributes
-     * @param array $sortedOptions
      *
      * @return array
      */
-    private function getConfigurableOptions(array $optionAttributes, array $sortedOptions)
+    private function getConfigurableOptions(array $optionAttributes)
     {
-        foreach ($optionAttributes as $attribute) {
-            $option['option_label'] = (string) $attribute['label'];
-            $values['title'] = (string) $attribute['label'];
-            $values['value'] = (string) $attribute['value'];
-            $values['qty'] = 1;
-            $values['price'] = 0;
-            $option['option_value'] = $values;
-            $sortedOptions[] = $option;
+        $sortedOptions = [];
+        try {
+            foreach ($optionAttributes as $attribute) {
+                $option['option_label'] = (string) $attribute['label'];
+                $values['title'] = (string) $attribute['label'];
+                $values['value'] = (string) $attribute['value'];
+                $values['qty'] = 1;
+                $values['price'] = 0;
+                $option['option_value'] = $values;
+                $sortedOptions[] = $option;
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $sortedOptions;
     }
 
     /**
      * @param array $options
-     * @param array $sortedOptions
      *
      * @return array
      */
-    private function getBundleOptions(array $options, array $sortedOptions)
+    private function getBundleOptions(array $options)
     {
-        foreach ($options['bundle_options'] as $attribute) {
-            $option['option_label'] = (string) $attribute['label'];
-            foreach ($attribute['value'] as $value) {
-                $values['title'] = (string) $value['title'];
-                $values['value'] = '';
-                $values['qty'] = $this->apsisCoreHelper->round($value['qty']);
-                $values['price'] = $this->apsisCoreHelper->round($value['price']);
-                $option['option_value'] = $values;
+        $sortedOptions = [];
+        try {
+            foreach ($options['bundle_options'] as $attribute) {
+                $option['option_label'] = (string) $attribute['label'];
+                foreach ($attribute['value'] as $value) {
+                    $values['title'] = (string) $value['title'];
+                    $values['value'] = '';
+                    $values['qty'] = $this->apsisCoreHelper->round($value['qty']);
+                    $values['price'] = $this->apsisCoreHelper->round($value['price']);
+                    $option['option_value'] = $values;
+                }
+                $sortedOptions[] = $option;
             }
-            $sortedOptions[] = $option;
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $sortedOptions;
     }

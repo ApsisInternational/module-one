@@ -6,6 +6,7 @@ use Apsis\One\ApiClient\Client;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Stdlib\Cookie\PhpCookieManagerFactory;
 use Magento\Framework\Stdlib\Cookie\PublicCookieMetadataFactory;
@@ -81,9 +82,13 @@ class Profile
     /**
      * @param ProfileModel $profile
      * @param StoreInterface $store
+     * @param CustomerInterface $customer
      */
-    public function mergeMagentoProfileWithWebProfile(ProfileModel $profile, StoreInterface $store)
-    {
+    public function mergeMagentoProfileWithWebProfile(
+        ProfileModel $profile,
+        StoreInterface $store,
+        CustomerInterface $customer
+    ) {
         $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
             $store,
             ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
@@ -96,7 +101,7 @@ class Profile
         if (! empty($apiClient) && ! empty($sectionDiscriminator) && ! empty($mappedEmailAttribute) &&
             ! empty($keySpacesToMerge = $this->getKeySpacesToMerge($profile, $sectionDiscriminator))
         ) {
-            if ($this->isProfileSynced($apiClient, $sectionDiscriminator, $mappedEmailAttribute, $profile)) {
+            if ($this->isProfileSynced($apiClient, $sectionDiscriminator, $mappedEmailAttribute, $profile, $customer)) {
                 if ($apiClient->mergeProfile($keySpacesToMerge) === Client::HTTP_CODE_CONFLICT) {
                     $keySpacesToMerge[1]['profile_key'] =
                         md5($profile->getIntegrationUid() . date(Zend_Date::TIMESTAMP));
@@ -143,6 +148,7 @@ class Profile
      * @param string $sectionDiscriminator
      * @param string $mappedEmailAttribute
      * @param ProfileModel $profile
+     * @param CustomerInterface $customer
      *
      * @return bool
      */
@@ -150,24 +156,58 @@ class Profile
         Client $apiClient,
         string $sectionDiscriminator,
         string $mappedEmailAttribute,
-        ProfileModel $profile
+        ProfileModel $profile,
+        CustomerInterface $customer
     ) {
-        if ((int) $profile->getCustomerSyncStatus() === ProfileModel::SYNC_STATUS_SYNCED ||
-            (int) $profile->getSubscriberSyncStatus() === ProfileModel::SYNC_STATUS_SYNCED
-        ) {
-            return true;
-        }
+        try {
+            //If already synced, return true
+            if ((int) $profile->getCustomerSyncStatus() === ProfileModel::SYNC_STATUS_SYNCED ||
+                (int) $profile->getSubscriberSyncStatus() === ProfileModel::SYNC_STATUS_SYNCED
+            ) {
+                return true;
+            }
 
-        $attributesArrWithVersionId = $this->apsisCoreHelper
-            ->getAttributesArrWithVersionId($apiClient, $sectionDiscriminator);
-        if (! empty($attributesArrWithVersionId[$mappedEmailAttribute])) {
-            $attributesToSync[$attributesArrWithVersionId[$mappedEmailAttribute]] = $profile->getEmail();
-            return ($apiClient->addAttributesToProfile(
-                $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator),
-                $profile->getIntegrationUid(),
-                $sectionDiscriminator,
-                $attributesToSync
-            ) === null);
+            //If attribute version id array is empty, return false
+            if (empty($attributesArrWithVersionId =
+                $this->apsisCoreHelper->getAttributesArrWithVersionId($apiClient, $sectionDiscriminator))
+            ) {
+                return false;
+            }
+
+            //Minimum, Email is needed
+            if (! empty($attributesArrWithVersionId[$mappedEmailAttribute])) {
+                //Add email
+                $attributesToSync[$attributesArrWithVersionId[$mappedEmailAttribute]] = $customer->getEmail();
+
+                //Add first name
+                if (! empty($mappedFNameAttribute = $this->apsisCoreHelper->getConfigValue(
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_FIRST_NAME,
+                    ScopeInterface::SCOPE_STORES,
+                    $profile->getStoreId()
+                )) && ! empty($attributesArrWithVersionId[$mappedFNameAttribute])
+                ) {
+                    $attributesToSync[$attributesArrWithVersionId[$mappedFNameAttribute]] = $customer->getFirstname();
+                }
+
+                //Add last name
+                if (! empty($mappedLNameAttribute = $this->apsisCoreHelper->getConfigValue(
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_NAME,
+                    ScopeInterface::SCOPE_STORES,
+                    $profile->getStoreId()
+                )) && ! empty($attributesArrWithVersionId[$mappedLNameAttribute])
+                ) {
+                    $attributesToSync[$attributesArrWithVersionId[$mappedLNameAttribute]] = $customer->getLastname();
+                }
+
+                return ($apiClient->addAttributesToProfile(
+                    $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator),
+                    $profile->getIntegrationUid(),
+                    $sectionDiscriminator,
+                    $attributesToSync
+                ) === null);
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return false;
     }

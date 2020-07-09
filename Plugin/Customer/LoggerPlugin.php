@@ -93,7 +93,7 @@ class LoggerPlugin
             }
 
             if (isset($data['last_login_at'])) {
-                $this->profileService->mergeMagentoProfileWithWebProfile($profile, $store);
+                $this->profileService->mergeMagentoProfileWithWebProfile($profile, $store, $customer);
                 if ($this->isEventEnabled($store)) {
                     $this->eventService->registerCustomerLoginEvent($logger, $customerId, $profile, $customer);
                 }

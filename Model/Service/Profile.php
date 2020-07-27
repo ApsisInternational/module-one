@@ -248,10 +248,10 @@ class Profile
     {
         $domain = '';
         try {
-            $components = parse_url($store->getBaseUrl(), PHP_URL_HOST);
-            if (! empty($components) && ! empty($hostArr = explode('.', $components))) {
+            $host = parse_url($store->getBaseUrl(), PHP_URL_HOST);
+            if (! empty($host) && ! empty($hostArr = explode('.', $host))) {
                 if (count($hostArr) > 3) {
-                    $domain = sprintf('.%s', $components);
+                    $domain = sprintf('.%s', $host);
                 } else {
                     $TLD = array_pop($hostArr);
                     $SLD = array_pop($hostArr);

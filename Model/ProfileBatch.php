@@ -49,7 +49,7 @@ class ProfileBatch extends AbstractModel
     const SYNC_STATUS_ERROR = 4;
 
     const PROCESSING_LIMIT = 20;
-    const PENDING_LIMIT = 2;
+    const PENDING_LIMIT = 3;
 
     /**
      * @var DateTime

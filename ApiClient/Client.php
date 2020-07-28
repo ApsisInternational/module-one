@@ -6,8 +6,7 @@ use Exception;
 
 class Client extends Rest
 {
-    //const HOST_NAME = 'https://api.apsis.one';
-    const HOST_NAME = 'https://api-stage.apsis.cloud';
+    const HOST_NAME = 'https://api.apsis.one';
 
     /**
      * SECURITY: Get access token

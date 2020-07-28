@@ -189,6 +189,7 @@ class Batch implements ProfileSyncInterface
         $collection = $this->profileBatchFactory->create()
             ->getProcessingBatchItemsForStore($store->getId());
         if ($collection->getSize()) {
+            $this->importCountInProcessingStatus = $collection->getSize();
             /** @var ProfileBatch $item */
             foreach ($collection as $item) {
                 try {
@@ -290,24 +291,27 @@ class Batch implements ProfileSyncInterface
             if ($result->result->status === 'completed') {
                 $this->updateProfilesStatus($store, $item, Profile::SYNC_STATUS_SYNCED);
                 $this->updateItem($item, ProfileBatch::SYNC_STATUS_COMPLETED);
+                $this->importCountInProcessingStatus -= 1;
             } elseif ($result->result->status === 'error') {
                 $msg = 'Import failed with returned "error" status';
                 $this->updateProfilesStatus($store, $item, Profile::SYNC_STATUS_FAILED, $msg);
                 $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $msg);
+                $this->importCountInProcessingStatus -= 1;
             } elseif ($result->result->status === 'waiting_for_file' && $item->getFileUploadExpiresAt() &&
                 $this->apsisDateHelper->isExpired($item->getFileUploadExpiresAt())
             ) {
                 $msg = 'File upload time expired';
                 $this->updateProfilesStatus($store, $item, Profile::SYNC_STATUS_FAILED, $msg);
                 $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $msg);
+                $this->importCountInProcessingStatus -= 1;
             } elseif (in_array($result->result->status, $this->statusToCheckIfExpired)) {
                 $inputDateTime = $this->apsisDateHelper->getFormattedDateTimeWithAddedInterval($item->getUpdatedAt());
                 if ($inputDateTime && $this->apsisDateHelper->isExpired($inputDateTime)) {
                     $msg = 'Expired. Stuck in processing state for 1 day';
                     $this->updateItem($item, ProfileBatch::SYNC_STATUS_ERROR, $msg);
                     $this->updateProfilesStatus($store, $item, Profile::SYNC_STATUS_PENDING);
+                    $this->importCountInProcessingStatus -= 1;
                 }
-                $this->importCountInProcessingStatus += 1;
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());

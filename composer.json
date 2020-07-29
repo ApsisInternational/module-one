@@ -27,7 +27,7 @@
         "magento/module-catalog": ">=102.0.0",
         "magento/module-quote": ">=101.0.0",
         "magento/magento-composer-installer": "*",
-        "giggsey/libphonenumber-for-php": ">=8.12.6"
+        "giggsey/libphonenumber-for-php": ">=8.12.4"
     },
     "repositories": [
         {

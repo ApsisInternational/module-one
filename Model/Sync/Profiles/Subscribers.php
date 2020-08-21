@@ -7,6 +7,9 @@ use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\ProfileBatchFactory;
 use Apsis\One\Model\ResourceModel\Profile\Collection;
 use Exception;
+use Magento\Framework\Exception\AlreadyExistsException;
+use Magento\Framework\Exception\FileSystemException;
+use Magento\Framework\Exception\ValidatorException;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
 use Magento\Newsletter\Model\Subscriber;
@@ -23,6 +26,8 @@ use Magento\Store\Model\ScopeInterface;
 class Subscribers implements ProfileSyncInterface
 {
     const LIMIT = 5000;
+    const CONSENT_TYPE_OPT_IN = 'opt-in';
+    const CONSENT_TYPE_OPT_OUT = 'opt-out';
 
     /**
      * @var ProfileCollectionFactory
@@ -114,7 +119,7 @@ class Subscribers implements ProfileSyncInterface
                 $store,
                 ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED
             );
-            $topics = $this->apsisCoreHelper->getStoreConfig(
+            $topics = (string) $this->apsisCoreHelper->getStoreConfig(
                 $store,
                 ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC
             );
@@ -128,9 +133,9 @@ class Subscribers implements ProfileSyncInterface
                     ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
                 $this->keySpaceDiscriminator = $this->apsisCoreHelper
                     ->getKeySpaceDiscriminator($sectionDiscriminator);
-                $topics = explode(',', $topics);
 
-                if (empty($topics) || empty($attributesArrWithVersionId)) {
+
+                if (empty($attributesArrWithVersionId)) {
                     return;
                 }
 
@@ -147,7 +152,7 @@ class Subscribers implements ProfileSyncInterface
                     $topics,
                     $attributesArrWithVersionId,
                     Subscriber::STATUS_SUBSCRIBED,
-                    'opt-in'
+                    self::CONSENT_TYPE_OPT_IN
                 );
 
                 //Subscribers : opt-out
@@ -158,7 +163,7 @@ class Subscribers implements ProfileSyncInterface
                     $topics,
                     $attributesArrWithVersionId,
                     Subscriber::STATUS_UNSUBSCRIBED,
-                    'opt-out'
+                    self::CONSENT_TYPE_OPT_OUT
                 );
             }
         } catch (Exception $e) {
@@ -170,7 +175,7 @@ class Subscribers implements ProfileSyncInterface
      * @param StoreInterface $store
      * @param int $limit
      * @param array $mappings
-     * @param array $topics
+     * @param string $topics
      * @param array $attributesArrWithVersionId
      * @param int $subscriberStatus
      * @param string $consentType
@@ -179,7 +184,7 @@ class Subscribers implements ProfileSyncInterface
         StoreInterface $store,
         int $limit,
         array $mappings,
-        array $topics,
+        string $topics,
         array $attributesArrWithVersionId,
         int $subscriberStatus,
         string $consentType
@@ -211,7 +216,7 @@ class Subscribers implements ProfileSyncInterface
      * @param StoreInterface $store
      * @param Collection $collection
      * @param array $mappings
-     * @param array $topics
+     * @param string $topics
      * @param array $attributesArrWithVersionId
      * @param string $consentType
      */
@@ -219,81 +224,118 @@ class Subscribers implements ProfileSyncInterface
         StoreInterface $store,
         Collection $collection,
         array $mappings,
-        array $topics,
+        string $topics,
         array $attributesArrWithVersionId,
         string $consentType
     ) {
         try {
-            $integrationIdsArray = $this->getIntegrationIdsArray($collection);
-            $file = strtolower($store->getCode() . '_subscriber_'. $consentType . '_' . date('d_m_Y_His') . '.csv');
+            $topicsMapping = $this->getTopicArrFromString($topics);
+            $profileDataArr = $this->getProfileDataArr($collection, $topicsMapping, $consentType);
+            if (! empty($topicsMapping) && ! empty($profileDataArr)) {
+                $jsonMappings = $this->createMapping(
+                    [],
+                    $mappings,
+                    $attributesArrWithVersionId,
+                    $topicsMapping,
+                    $consentType
+                );
 
-            $topicsMapping = [];
-            foreach ($topics as $topic) {
-                $topic = explode('|', $topic);
-                $topicsMapping[$topic[2]] = [$topic[0], $topic[1]];
-            }
+                $mappings = array_merge([Profile::INTEGRATION_KEYSPACE => Profile::INTEGRATION_KEYSPACE], $mappings);
+                $file = $this->createFileWithHeaders(
+                    $store,
+                    '',
+                    $consentType,
+                    array_merge(array_keys($mappings), array_keys($topicsMapping))
+                );
 
-            $jsonMappings = $this->apsisConfigHelper->getJsonMappingData(
-                $this->keySpaceDiscriminator,
-                $mappings,
-                $attributesArrWithVersionId,
-                $topicsMapping,
-                $consentType
-            );
+                $subscriberCollection = $this->getSubscribersFromIdsByStore(
+                    $store,
+                    $collection->getColumnValues('subscriber_id')
+                );
+                $subscribersToUpdate = [];
+                $subscribersToUpdateForSecondaryOperation = [];
+                $secondaryFile = '';
+                $secondaryMapping = [];
+                $fileHeadersForSecondaryOperation = array_merge(
+                    [Profile::INTEGRATION_KEYSPACE, Profile::EMAIL_FIELD],
+                    array_keys($topicsMapping)
+                );
 
-            $mappings = array_merge([Profile::INTEGRATION_KEYSPACE => Profile::INTEGRATION_KEYSPACE], $mappings);
-            $this->apsisFileHelper->outputCSV($file, array_merge(array_keys($mappings), array_keys($topicsMapping)));
+                /** @var MagentoSubscriber $subscriber */
+                foreach ($subscriberCollection as $subscriber) {
+                    if (! empty($profileDataArr[$subscriber->getSubscriberId()])) {
+                        try {
+                            $profileData = $profileDataArr[$subscriber->getSubscriberId()];
+                            $subscriber->setIntegrationUid($profileData['integration_uid']);
 
-            $subscriberCollection = $this->getSubscribersFromIdsByStore(
-                $store,
-                $collection->getColumnValues('subscriber_id')
-            );
-            $subscribersToUpdate = [];
+                            //Main operation for both opt-in and opt-out consents
+                            if (! empty($profileData['consent_topics']['main_function'])) {
+                                $subscriberData = $this->getSubscriberDataForCsvRow(
+                                    array_keys($mappings),
+                                    $subscriber,
+                                    $profileData['consent_topics']['main_function']
+                                );
+                                $this->apsisFileHelper->outputCSV($file, $subscriberData);
+                                $subscribersToUpdate[] = $subscriber->getSubscriberId();
+                            }
 
-            /** @var MagentoSubscriber $subscriber */
-            foreach ($subscriberCollection as $subscriber) {
-                if (isset($integrationIdsArray[$subscriber->getSubscriberId()])) {
-                    try {
-                        $subscriber->setIntegrationUid($integrationIdsArray[$subscriber->getSubscriberId()]);
-                        $subscriberData = $this->subscriberDataFactory->create()
-                            ->setModelData(array_keys($mappings), $subscriber, $this->apsisCoreHelper)
-                            ->setConsentListData(array_keys($topicsMapping))
-                            ->toCSVArray();
-                        $this->apsisFileHelper->outputCSV($file, $subscriberData);
-                        $subscribersToUpdate[] = $subscriber->getSubscriberId();
-                    } catch (Exception $e) {
-                        $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-                        $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscriber with id :' .
-                            $subscriber->getSubscriberId());
-                        continue;
+                            //Secondary operation out of opt-in op where profile's has opt-out of certain topics
+                            if ($consentType == self::CONSENT_TYPE_OPT_IN &&
+                                ! empty($profileData['consent_topics']['secondary_function'])) {
+                                $secondaryFile = $this->createFileWithHeaders(
+                                    $store,
+                                    $secondaryFile,
+                                    $consentType . '_' . self::CONSENT_TYPE_OPT_OUT,
+                                    $fileHeadersForSecondaryOperation
+                                );
+                                $secondaryMapping = $this->createMapping(
+                                    $secondaryMapping,
+                                    [Profile::EMAIL_FIELD => $mappings[Profile::EMAIL_FIELD]],
+                                    $attributesArrWithVersionId,
+                                    $topicsMapping,
+                                    self::CONSENT_TYPE_OPT_OUT
+                                );
+                                $secondarySubscriberData = $this->getSubscriberDataForCsvRow(
+                                    [Profile::INTEGRATION_KEYSPACE, Profile::EMAIL_FIELD],
+                                    $subscriber,
+                                    $profileData['consent_topics']['secondary_function']
+                                );
+                                $this->apsisFileHelper->outputCSV($secondaryFile, $secondarySubscriberData);
+                                $subscribersToUpdateForSecondaryOperation[] = $subscriber->getSubscriberId();
+                            }
+                        } catch (Exception $e) {
+                            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                            $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscriber with id :' .
+                                $subscriber->getSubscriberId());
+                            continue;
+                        }
                     }
+
+                    //clear collection and free memory
+                    $subscriber->clearInstance();
                 }
 
-                //clear collection and free memory
-                $subscriber->clearInstance();
-            }
+                if (empty($subscribersToUpdate)) {
+                    $this->apsisFileHelper->deleteFile($file);
+                } else {
+                    $this->registerBatchItem($file, $store, $subscribersToUpdate, $jsonMappings, $consentType, $topics);
+                }
 
-            if (! empty($subscribersToUpdate)) {
-                $filePath = $this->apsisFileHelper->getFilePath($file);
-                $this->profileBatchFactory->create()
-                    ->registerBatchItem(
-                        $store->getId(),
-                        $filePath,
-                        ProfileBatch::BATCH_TYPE_SUBSCRIBER,
-                        implode(',', $subscribersToUpdate),
-                        $this->apsisCoreHelper->serialize($jsonMappings)
+                if (empty($subscribersToUpdateForSecondaryOperation)) {
+                    $this->apsisFileHelper->deleteFile($secondaryFile);
+                } else {
+                    $this->registerBatchItem(
+                        $secondaryFile,
+                        $store,
+                        $subscribersToUpdateForSecondaryOperation,
+                        $secondaryMapping
                     );
-                $this->profileResource->updateSubscribersSyncStatus(
-                    $subscribersToUpdate,
-                    $store->getId(),
-                    Profile::SYNC_STATUS_BATCHED,
-                    $this->apsisCoreHelper
-                );
+                }
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             if (! empty($subscribersToUpdate)) {
-                $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscribers with id :' .
+                $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscribers with ids :' .
                     implode(',', $subscribersToUpdate));
             }
         }
@@ -348,6 +390,202 @@ class Subscribers implements ProfileSyncInterface
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return [];
+        }
+    }
+
+    /**
+     * @param string $topics
+     *
+     * @return array
+     */
+    private function getTopicArrFromString(string $topics)
+    {
+        $topicsArr = explode(',', $topics);
+        $topicsMapping = [];
+        foreach ($topicsArr as $topicMapping) {
+            $topicMapping = explode('|', $topicMapping);
+            $topicsMapping[$topicMapping[1]] = $topicMapping[0];
+        }
+        return $topicsMapping;
+    }
+
+    /**
+     * @param Collection $collection
+     * @param array $topicsMapping
+     * @param string $consentType
+     *
+     * @return array
+     */
+    private function getProfileDataArr(Collection $collection, array $topicsMapping, string $consentType)
+    {
+        $profileDataArr = [];
+        if (! empty($topicsMapping)) {
+            /** @var Profile $item */
+            foreach ($collection as $item) {
+                $profileDataArr[$item->getSubscriberId()] = [
+                    'integration_uid' => $item->getIntegrationUid(),
+                    'consent_topics' => $this->getConsentTopicsForProfile($item, $topicsMapping, $consentType)
+                ];
+            }
+        }
+        return $profileDataArr;
+    }
+
+    /**
+     * @param Profile $item
+     * @param array $topicsMapping
+     * @param string $consentType
+     *
+     * @return array
+     */
+    private function getConsentTopicsForProfile(Profile $item, array $topicsMapping, string $consentType)
+    {
+        $profileConsentArr = ['main_function' => [], 'secondary_function' => []];
+        if ($consentType == self::CONSENT_TYPE_OPT_IN) { // Possible scenario's for opt-in
+            if (strlen($item->getTopicSubscription()) > 1) { //Existing topic subscription exist on profile
+                $profileTopicArr = $this->getTopicArrFromString($item->getTopicSubscription());
+                $profileConsentArr = [
+                    'main_function' => $this->formatConsentListArrayForCsv($topicsMapping, $profileTopicArr),
+                    'secondary_function' => $this->formatConsentListArrayForCsv($topicsMapping, $profileTopicArr, true)
+                ];
+            } elseif ($item->getTopicSubscription() === null) { //First time, should be subscribed to all in selection
+                $profileConsentArr['main_function'] = $this->formatConsentListArrayForCsv($topicsMapping, [], true);
+            } elseif ($item->getTopicSubscription() === '-') { //Profile opt-out from all topics but still a subscriber
+                $profileConsentArr['secondary_function'] =
+                    $this->formatConsentListArrayForCsv($topicsMapping, [], true);
+            }
+        } elseif ($consentType == self::CONSENT_TYPE_OPT_OUT) { //Should opt-out from all in selection
+            $profileConsentArr['main_function'] =
+                $this->formatConsentListArrayForCsv($topicsMapping, [], true);
+        }
+        return $profileConsentArr;
+    }
+
+    /**
+     * @param array $topicsMapping
+     * @param array $profileTopicArr
+     * @param bool $reverse
+     *
+     * @return array
+     */
+    public function formatConsentListArrayForCsv(array $topicsMapping, array $profileTopicArr, $reverse = false)
+    {
+        $formattedConsentArr = [];
+        foreach ($topicsMapping as $topicDisc => $listDis) {
+            if (isset($profileTopicArr[$topicDisc])) {
+                $formattedConsentArr[$topicDisc] = ($reverse) ? '' : 1;
+            } else {
+                $formattedConsentArr[$topicDisc] = ($reverse) ? 1 : '';
+            }
+        }
+        return $formattedConsentArr;
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param string $file
+     * @param string $consentType
+     * @param array $headers
+     *
+     * @return string
+     *
+     * @throws FileSystemException
+     * @throws ValidatorException
+     */
+    private function createFileWithHeaders(StoreInterface $store, string $file, string $consentType, array $headers)
+    {
+        if (empty($file)) {
+            $file = strtolower($store->getCode() . '_subscriber_' .
+                $consentType . '_' . date('d_m_Y_His') . '.csv');
+            $this->apsisFileHelper->outputCSV($file, $headers);
+        }
+        return $file;
+    }
+
+    /**
+     * @param array $mappings
+     * @param MagentoSubscriber $subscriber
+     * @param array $consentLisArr
+     *
+     * @return array
+     */
+    private function getSubscriberDataForCsvRow(array $mappings, MagentoSubscriber $subscriber, array $consentLisArr)
+    {
+        return $this->subscriberDataFactory->create()
+            ->setModelData($mappings, $subscriber, $this->apsisCoreHelper)
+            ->setConsentListData($consentLisArr)
+            ->toCSVArray();
+    }
+
+    /**
+     * @param array $jsonMappings
+     * @param array $mappings
+     * @param array $attributesArrWithVersionId
+     * @param array $topicsMapping
+     * @param string $consentType
+     *
+     * @return array
+     */
+    private function createMapping(
+        array $jsonMappings,
+        array $mappings,
+        array $attributesArrWithVersionId,
+        array $topicsMapping,
+        string $consentType
+    ) {
+        if (empty($jsonMappings)) {
+            $jsonMappings = $this->apsisConfigHelper->getJsonMappingData(
+                $this->keySpaceDiscriminator,
+                $mappings,
+                $attributesArrWithVersionId,
+                $topicsMapping,
+                $consentType
+            );
+        }
+        return $jsonMappings;
+    }
+
+    /**
+     * @param string $file
+     * @param StoreInterface $store
+     * @param array $subscribersToUpdate
+     * @param array $jsonMappings
+     * @param string $consentType
+     * @param string $topics
+     *
+     * @throws FileSystemException|AlreadyExistsException
+     */
+    private function registerBatchItem(
+        string $file,
+        StoreInterface $store,
+        array $subscribersToUpdate,
+        array $jsonMappings,
+        string $consentType = '',
+        string $topics = ''
+    ) {
+        $filePath = $this->apsisFileHelper->getFilePath($file);
+        $this->profileBatchFactory->create()
+            ->registerBatchItem(
+                $store->getId(),
+                $filePath,
+                ProfileBatch::BATCH_TYPE_SUBSCRIBER,
+                implode(',', $subscribersToUpdate),
+                $this->apsisCoreHelper->serialize($jsonMappings)
+            );
+        $this->profileResource->updateSubscribersSyncStatus(
+            $subscribersToUpdate,
+            $store->getId(),
+            Profile::SYNC_STATUS_BATCHED,
+            $this->apsisCoreHelper
+        );
+
+        if ($consentType == self::CONSENT_TYPE_OPT_IN) {
+            $this->profileResource->updateSubscribersSubscription(
+                $subscribersToUpdate,
+                $store->getId(),
+                $this->apsisCoreHelper,
+                $topics
+            );
         }
     }
 }

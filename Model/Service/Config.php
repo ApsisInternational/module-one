@@ -247,7 +247,7 @@ class Config
         array $mappings,
         array $attributesArrWithVersionId,
         array $topicsMapping = [],
-        string $consentType = 'opt-in'
+        string $consentType = ''
     ) {
         $attributeMappings = [];
         foreach ($mappings as $key => $mapping) {
@@ -274,15 +274,15 @@ class Config
             'attribute_mappings' => $attributeMappings
         ];
 
-        if (! empty($topicsMapping)) {
+        if (! empty($topicsMapping) && strlen($consentType)) {
             $consents = [];
-            foreach ($topicsMapping as $field => $topicMapping) {
+            foreach ($topicsMapping as $topicDiscriminator => $consentListDiscriminator) {
                 $consents[] = [
                     'resubscribe_if_opted_out' => true,
-                    'field_selector' => $field,
+                    'field_selector' => $topicDiscriminator,
                     'channel_discriminator' => 'com.apsis1.channels.email',
-                    'consent_list_discriminator' => $topicMapping[0],
-                    'topic_discriminator' => $topicMapping[1],
+                    'consent_list_discriminator' => $consentListDiscriminator,
+                    'topic_discriminator' => $topicDiscriminator,
                     'type' => $consentType
                 ];
             }

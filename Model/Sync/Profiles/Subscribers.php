@@ -454,7 +454,7 @@ class Subscribers implements ProfileSyncInterface
                 $formattedConsentArr[$topicDisc] = ($reverse) ? 1 : '';
             }
         }
-        return $formattedConsentArr;
+        return (strlen(implode($formattedConsentArr)) == 0) ? [] : $formattedConsentArr;
     }
 
     /**

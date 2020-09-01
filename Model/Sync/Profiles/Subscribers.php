@@ -7,9 +7,7 @@ use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\ProfileBatchFactory;
 use Apsis\One\Model\ResourceModel\Profile\Collection;
 use Exception;
-use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Exception\FileSystemException;
-use Magento\Framework\Exception\ValidatorException;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
 use Magento\Newsletter\Model\Subscriber;
@@ -133,7 +131,6 @@ class Subscribers implements ProfileSyncInterface
                     ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
                 $this->keySpaceDiscriminator = $this->apsisCoreHelper
                     ->getKeySpaceDiscriminator($sectionDiscriminator);
-
 
                 if (empty($attributesArrWithVersionId)) {
                     return;
@@ -304,7 +301,7 @@ class Subscribers implements ProfileSyncInterface
                                 $subscribersToUpdateForSecondaryOperation[] = $subscriber->getSubscriberId();
                             }
                         } catch (Exception $e) {
-                            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
                             $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscriber with id :' .
                                 $subscriber->getSubscriberId());
                             continue;
@@ -315,15 +312,15 @@ class Subscribers implements ProfileSyncInterface
                     $subscriber->clearInstance();
                 }
 
-                if (empty($subscribersToUpdate)) {
+                if (empty($subscribersToUpdate) && strlen($file)) {
                     $this->apsisFileHelper->deleteFile($file);
-                } else {
+                } elseif (! empty($subscribersToUpdate)) {
                     $this->registerBatchItem($file, $store, $subscribersToUpdate, $jsonMappings, $consentType, $topics);
                 }
 
-                if (empty($subscribersToUpdateForSecondaryOperation)) {
+                if (empty($subscribersToUpdateForSecondaryOperation) && strlen($secondaryFile)) {
                     $this->apsisFileHelper->deleteFile($secondaryFile);
-                } else {
+                } elseif (! empty($subscribersToUpdateForSecondaryOperation)) {
                     $this->registerBatchItem(
                         $secondaryFile,
                         $store,
@@ -339,27 +336,6 @@ class Subscribers implements ProfileSyncInterface
                     implode(',', $subscribersToUpdate));
             }
         }
-    }
-
-    /**
-     * @param Collection $collection
-     *
-     * @return array
-     */
-    private function getIntegrationIdsArray(Collection $collection)
-    {
-        $integrationIdsArray = [];
-        /** @var Profile $item */
-        foreach ($collection as $item) {
-            try {
-                $integrationIdsArray[$item->getSubscriberId()] = $item->getIntegrationUid();
-            } catch (Exception $e) {
-                $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-                $this->apsisCoreHelper->log(__METHOD__ . ' Skipped for Profile id: ' . $item->getId());
-                continue;
-            }
-        }
-        return $integrationIdsArray;
     }
 
     /**
@@ -490,7 +466,6 @@ class Subscribers implements ProfileSyncInterface
      * @return string
      *
      * @throws FileSystemException
-     * @throws ValidatorException
      */
     private function createFileWithHeaders(StoreInterface $store, string $file, string $consentType, array $headers)
     {
@@ -553,7 +528,6 @@ class Subscribers implements ProfileSyncInterface
      * @param string $consentType
      * @param string $topics
      *
-     * @throws FileSystemException|AlreadyExistsException
      */
     private function registerBatchItem(
         string $file,
@@ -563,29 +537,33 @@ class Subscribers implements ProfileSyncInterface
         string $consentType = '',
         string $topics = ''
     ) {
-        $filePath = $this->apsisFileHelper->getFilePath($file);
-        $this->profileBatchFactory->create()
-            ->registerBatchItem(
-                $store->getId(),
-                $filePath,
-                ProfileBatch::BATCH_TYPE_SUBSCRIBER,
-                implode(',', $subscribersToUpdate),
-                $this->apsisCoreHelper->serialize($jsonMappings)
-            );
-        $this->profileResource->updateSubscribersSyncStatus(
-            $subscribersToUpdate,
-            $store->getId(),
-            Profile::SYNC_STATUS_BATCHED,
-            $this->apsisCoreHelper
-        );
-
-        if ($consentType == self::CONSENT_TYPE_OPT_IN) {
-            $this->profileResource->updateSubscribersSubscription(
+        try {
+            $filePath = $this->apsisFileHelper->getFilePath($file);
+            $this->profileBatchFactory->create()
+                ->registerBatchItem(
+                    $store->getId(),
+                    $filePath,
+                    ProfileBatch::BATCH_TYPE_SUBSCRIBER,
+                    implode(',', $subscribersToUpdate),
+                    $this->apsisCoreHelper->serialize($jsonMappings)
+                );
+            $this->profileResource->updateSubscribersSyncStatus(
                 $subscribersToUpdate,
                 $store->getId(),
-                $this->apsisCoreHelper,
-                $topics
+                Profile::SYNC_STATUS_BATCHED,
+                $this->apsisCoreHelper
             );
+
+            if ($consentType == self::CONSENT_TYPE_OPT_IN) {
+                $this->profileResource->updateSubscribersSubscription(
+                    $subscribersToUpdate,
+                    $store->getId(),
+                    $this->apsisCoreHelper,
+                    $topics
+                );
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
     }
 }

@@ -137,7 +137,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 ]
             );
         } catch (Exception $e) {
-            $apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return 0;
         }
     }

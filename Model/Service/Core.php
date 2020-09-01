@@ -369,7 +369,11 @@ class Core extends ApsisLogHelper
                 $apiClient = $this->apiClientFactory->create();
                 $request = $apiClient->getAccessToken($clientId, $clientSecret);
                 if ($request && isset($request->access_token)) {
-                    $scopeArray = $this->resolveContext($contextScope, $scopeId);
+                    $scopeArray = $this->resolveContext(
+                        $contextScope,
+                        $scopeId,
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID
+                    );
                     $contextScope = $scopeArray['scope'];
                     $scopeId = $scopeArray['id'];
                     $this->saveTokenAndExpiry($contextScope, $scopeId, $request);
@@ -390,7 +394,11 @@ class Core extends ApsisLogHelper
      */
     private function getToken(string $contextScope, int $scopeId)
     {
-        $scopeArray = $this->resolveContext($contextScope, $scopeId);
+        $scopeArray = $this->resolveContext(
+            $contextScope,
+            $scopeId,
+            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID
+        );
         $contextScope = $scopeArray['scope'];
         $scopeId = $scopeArray['id'];
         if ($this->isTokenExpired($contextScope, $scopeId)) {
@@ -481,16 +489,17 @@ class Core extends ApsisLogHelper
     /**
      * @param string $contextScope
      * @param int $scopeId
+     * @param string $path
      *
      * @return array
      */
-    private function resolveContext(string $contextScope, int $scopeId)
+    public function resolveContext(string $contextScope, int $scopeId, string $path)
     {
         switch ($contextScope) {
             case ScopeInterface::SCOPE_STORES:
-                return $this->resolveContextForStore($scopeId);
+                return $this->resolveContextForStore($scopeId, $path);
             case ScopeInterface::SCOPE_WEBSITES:
-                return $this->resolveContextForWebsite($scopeId);
+                return $this->resolveContextForWebsite($scopeId, $path);
             default:
                 return ['scope' => $contextScope, 'id' => $scopeId];
         }
@@ -498,12 +507,12 @@ class Core extends ApsisLogHelper
 
     /**
      * @param int $scopeId
+     * @param string $path
      *
      * @return array
      */
-    private function resolveContextForStore(int $scopeId)
+    private function resolveContextForStore(int $scopeId, string $path)
     {
-        $path = 'apsis_one_accounts/oauth/id';
         $contextScope = ScopeInterface::SCOPE_STORES;
         if (! $this->isExistInDataCollection($contextScope, $scopeId, $path)) {
             $websiteId = (int) $this->getStore($scopeId)->getWebsiteId();
@@ -520,12 +529,12 @@ class Core extends ApsisLogHelper
 
     /**
      * @param int $scopeId
+     * @param string $path
      *
      * @return array
      */
-    private function resolveContextForWebsite(int $scopeId)
+    private function resolveContextForWebsite(int $scopeId, string $path)
     {
-        $path = 'apsis_one_accounts/oauth/id';
         $contextScope = ScopeInterface::SCOPE_WEBSITES;
         if (! $this->isExistInDataCollection($contextScope, $scopeId, $path)) {
             $contextScope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT;

@@ -39,6 +39,8 @@ use Magento\Newsletter\Model\Subscriber;
  * @method $this setErrorMessage(string $value)
  * @method string getUpdatedAt()
  * @method $this setUpdatedAt(string $value)
+ * @method string getTopicSubscription()
+ * @method $this setTopicSubscription(string $value)
  */
 class Profile extends AbstractModel
 {

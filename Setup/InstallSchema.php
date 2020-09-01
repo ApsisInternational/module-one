@@ -600,13 +600,6 @@ class InstallSchema implements InstallSchemaInterface
                 'Subscriber status'
             )
             ->addColumn(
-                'topic_subscription',
-                Table::TYPE_TEXT,
-                null,
-                ['unsigned' => true, 'nullable' => true, 'default' => null],
-                'Subscription to topics'
-            )
-            ->addColumn(
                 'store_id',
                 Table::TYPE_SMALLINT,
                 5,

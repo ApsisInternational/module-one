@@ -14,9 +14,6 @@ use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Data\Form\FormKey\Validator;
-use Magento\Framework\Exception\InputException;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\State\InputMismatchException;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
@@ -123,7 +120,7 @@ class Subscription extends Action
             }
             return $this->_redirect(self::MAGENTO_NEWSLETTER_MANAGE_URL);
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             $this->messageManager->addErrorMessage(__('An error occurred while saving your subscription topics.'));
             return $this->_redirect(self::MAGENTO_NEWSLETTER_MANAGE_URL);
         }
@@ -142,15 +139,18 @@ class Subscription extends Action
                 $customer = $this->customerRepository->getById($customerId);
                 $storeId = $this->apsisCoreHelper->getStore()->getId();
                 $customer->setStoreId($storeId);
-                $isSubscribedState = $customer->getExtensionAttributes()->getIsSubscribed();
                 $isSubscribedParam = (boolean) $this->getRequest()->getParam('is_subscribed', false);
-                if ($isSubscribedParam !== $isSubscribedState) {
-                    $this->updateForCustomer($customer, $isSubscribedParam, $customerId);
+                if (! empty($customer->getExtensionAttributes())) {
+                    if ($isSubscribedParam !== $customer->getExtensionAttributes()->getIsSubscribed()) {
+                        $this->updateForCustomerWithExtensionAttributes($customer, $isSubscribedParam, $customerId);
+                    } else {
+                        $this->messageManager->addSuccess(__('We have updated your subscription.'));
+                    }
                 } else {
-                    $this->messageManager->addSuccess(__('We have updated your subscription.'));
+                    $this->updateForCustomerWithoutExtensionAttributes($isSubscribedParam, $customer);
                 }
             } catch (Exception $e) {
-                $this->apsisCoreHelper->logMessage(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
                 $this->messageManager->addError(__('Something went wrong while saving your subscription.'));
             }
         }
@@ -161,24 +161,50 @@ class Subscription extends Action
      * @param bool $isSubscribedParam
      * @param int $customerId
      *
-     * @throws InputException
-     * @throws LocalizedException
-     * @throws InputMismatchException
      */
-    private function updateForCustomer(CustomerInterface $customer, bool $isSubscribedParam, int $customerId)
-    {
-        $customer->setData('ignore_validation_flag', true);
-        $this->customerRepository->save($customer);
-        if ($isSubscribedParam) {
-            $subscribeModel = $this->subscriberFactory->create()->subscribeCustomerById($customerId);
-            if ($subscribeModel->getStatus() == Subscriber::STATUS_SUBSCRIBED) {
-                $this->messageManager->addSuccess(__('We have saved your subscription.'));
+    private function updateForCustomerWithExtensionAttributes(
+        CustomerInterface $customer,
+        bool $isSubscribedParam,
+        int $customerId
+    ) {
+        try {
+            $customer->setData('ignore_validation_flag', true);
+            $this->customerRepository->save($customer);
+            if ($isSubscribedParam) {
+                $subscribeModel = $this->subscriberFactory->create()->subscribeCustomerById($customerId);
+                if ($subscribeModel->getStatus() == Subscriber::STATUS_SUBSCRIBED) {
+                    $this->messageManager->addSuccess(__('We have saved your subscription.'));
+                } else {
+                    $this->messageManager->addSuccess(__('A confirmation request has been sent.'));
+                }
             } else {
-                $this->messageManager->addSuccess(__('A confirmation request has been sent.'));
+                $this->subscriberFactory->create()->unsubscribeCustomerById($customerId);
+                $this->messageManager->addSuccess(__('We have removed your newsletter subscription.'));
             }
-        } else {
-            $this->subscriberFactory->create()->unsubscribeCustomerById($customerId);
-            $this->messageManager->addSuccess(__('We have removed your newsletter subscription.'));
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->messageManager->addError(__('Something went wrong while saving your subscription.'));
+        }
+    }
+
+    /**
+     * @param bool $isSubscribedParam
+     * @param CustomerInterface $customer
+     */
+    private function updateForCustomerWithoutExtensionAttributes(bool $isSubscribedParam, CustomerInterface $customer)
+    {
+        try {
+            $this->customerRepository->save($customer);
+            if ($isSubscribedParam) {
+                $this->subscriberFactory->create()->subscribeCustomerById($customer->getId());
+                $this->messageManager->addSuccess(__('We saved the subscription.'));
+            } else {
+                $this->subscriberFactory->create()->unsubscribeCustomerById($customer->getId());
+                $this->messageManager->addSuccess(__('We removed the subscription.'));
+            };
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->messageManager->addError(__('Something went wrong while saving your subscription.'));
         }
     }
 }

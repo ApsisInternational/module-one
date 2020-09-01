@@ -148,4 +148,21 @@ class Collection extends AbstractCollection
 
         return false;
     }
+
+    /**
+     * @param string $integrationId
+     *
+     * @return bool|DataObject
+     */
+    public function loadByIntegrationId(string $integrationId)
+    {
+        $collection = $this->addFieldToFilter('integration_uid', $integrationId)
+            ->setPageSize(1);
+
+        if ($collection->getSize()) {
+            return $collection->getFirstItem();
+        }
+
+        return false;
+    }
 }

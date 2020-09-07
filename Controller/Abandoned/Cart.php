@@ -108,7 +108,7 @@ class Cart extends Action
     private function renderJson(string $body)
     {
         $resultJson = $this->resultJsonFactory->create();
-        return $resultJson->setJsonData($body);
+        return $resultJson->setJsonData('[' . $body . ']');
     }
 
     /**

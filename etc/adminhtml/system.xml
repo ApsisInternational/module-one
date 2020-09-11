@@ -365,40 +365,7 @@
                 </field>
             </group>
         </section>
-        <section id="apsis_one_abandoned" translate="label" sortOrder="40" showInDefault="1" showInWebsite="1"
-                 showInStore="1">
-            <class>separator-top</class>
-            <label>Abandoned Carts</label>
-            <tab>apsis_one</tab>
-            <resource>Apsis_One::config</resource>
-            <group id="customers" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Customer Abandoned Cart</label>
-                <attribute type="expanded">1</attribute>
-                <field id="ac_heading" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1"
-                       showInStore="1">
-                    <label>Abandoned Cart</label>
-                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
-                </field>
-                <field id="send_after" translate="label" sortOrder="20" type="select" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>After</label>
-                    <source_model>Apsis\One\Model\Config\Source\Abandoned\Intervalminute</source_model>
-                    <comment><![CDATA[Customer profile sync need to be enabled as well.]]></comment>
-                </field>
-                <field id="cart_content_heading" translate="label" sortOrder="50" showInDefault="1" showInWebsite="1"
-                       showInStore="1">
-                    <label>Cart Content</label>
-                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
-                </field>
-                <field id="url" translate="label" sortOrder="60" type="label" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>Cart Content URL</label>
-                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Abandoned\Url</frontend_model>
-                    <comment><![CDATA[Replace TOKEN with mapped attribute from One. Replace OUTPUT_TYPE with desired data type json or html. Replace NUMBER_LIMIT with a number to limit number of products to show for output type html.]]></comment>
-                </field>
-            </group>
-        </section>
-        <section id="apsis_one_events" translate="label" sortOrder="50" showInDefault="1" showInWebsite="1"
+        <section id="apsis_one_events" translate="label" sortOrder="40" showInDefault="1" showInWebsite="1"
                  showInStore="1">
             <class>separator-top</class>
             <label>Events</label>
@@ -499,9 +466,26 @@
                     <backend_model>Apsis\One\Model\Config\Backend\PastEvents</backend_model>
                     <comment><![CDATA[This is a one time selection. After import this config will be disabled. Past events will be fetched at midnight.]]></comment>
                 </field>
+                <field id="abandoned_cart_event_title" translate="label" sortOrder="170" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Abandoned Cart</label>
+                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
+                </field>
+                <field id="abandoned_cart_duration_after" translate="label" type="select" sortOrder="180"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Register After</label>
+                    <source_model>Apsis\One\Model\Config\Source\Abandoned\Intervalminute</source_model>
+                    <comment><![CDATA[Register cart as abandoned after it has been inactive for above selected amount of time.]]></comment>
+                </field>
+                <field id="abandoned_cart_fetch_url" translate="label" sortOrder="190" type="label" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Cart Content Fetch URL</label>
+                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Abandoned\Url</frontend_model>
+                    <comment><![CDATA[Replace TOKEN with mapped attribute from One. Replace OUTPUT_TYPE with desired data type json or html. Replace NUMBER_LIMIT with a number to limit number of products to show for output type html.]]></comment>
+                </field>
             </group>
         </section>
-        <section id="apsis_one_configuration" translate="label" sortOrder="60" showInDefault="1" showInWebsite="1"
+        <section id="apsis_one_configuration" translate="label" sortOrder="50" showInDefault="1" showInWebsite="1"
                  showInStore="1">
             <class>separator-top</class>
             <label>Configuration</label>

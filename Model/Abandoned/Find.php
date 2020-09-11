@@ -4,9 +4,9 @@ namespace Apsis\One\Model\Abandoned;
 
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Sync\SyncInterface;
 use Exception;
 use Magento\Store\Model\ScopeInterface;
-use Apsis\One\Model\Sync\SyncInterface;
 
 class Find implements SyncInterface
 {
@@ -35,8 +35,10 @@ class Find implements SyncInterface
             foreach ($stores as $store) {
                 try {
                     $isEnabled = $apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
-                    $acDelayPeriod = $apsisCoreHelper
-                        ->getStoreConfig($store, ApsisConfigHelper::CONFIG_APSIS_ONE_ABANDONED_CARTS_SEND_AFTER);
+                    $acDelayPeriod = $apsisCoreHelper->getStoreConfig(
+                        $store,
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_REGISTER_ABANDONED_CART_AFTER_DURATION
+                    );
                     if ($isEnabled && $acDelayPeriod) {
                         $quoteCollection = $this->abandonedSub
                             ->getQuoteCollectionByStore($store, $acDelayPeriod, $apsisCoreHelper);
@@ -47,7 +49,7 @@ class Find implements SyncInterface
                     }
                 } catch (Exception $e) {
                     $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-                    $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: '. $store->getId());
+                    $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
                     continue;
                 }
             }

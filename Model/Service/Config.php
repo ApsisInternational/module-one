@@ -104,13 +104,6 @@ class Config
     const CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED = 'apsis_one_sync/sync/customer_enabled';
 
     /**
-     * Abandoned carts section
-     */
-    const CONFIG_APSIS_ONE_ABANDONED_CARTS_GROUP = 'apsis_one_abandoned/customers';
-    const CONFIG_APSIS_ONE_ABANDONED_CARTS_URL = 'apsis_one_abandoned/customers/url';
-    const CONFIG_APSIS_ONE_ABANDONED_CARTS_SEND_AFTER = 'apsis_one_abandoned/customers/send_after';
-
-    /**
      * Events section
      */
     const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_GROUP = 'apsis_one_events/events';
@@ -142,6 +135,8 @@ class Config
         'apsis_one_events/events/review_event_duration_timestamp';
     const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_WISHLIST_DURATION_TIMESTAMP =
         'apsis_one_events/events/wishlist_event_duration_timestamp';
+    const CONFIG_APSIS_ONE_EVENTS_REGISTER_ABANDONED_CART_AFTER_DURATION =
+        'apsis_one_events/events/abandoned_cart_duration_after';
 
     /**
      * Configuration section

@@ -15,11 +15,6 @@
                 <customer_enabled>1</customer_enabled>
             </sync>
         </apsis_one_sync>
-        <apsis_one_abandoned>
-            <customers>
-                <send_after>15</send_after>
-            </customers>
-        </apsis_one_abandoned>
         <apsis_one_events>
             <events>
                 <login>1</login>
@@ -34,6 +29,7 @@
                 <cart_historical_event_duration>0</cart_historical_event_duration>
                 <review_historical_event_duration>0</review_historical_event_duration>
                 <wishlist_historical_event_duration>0</wishlist_historical_event_duration>
+                <abandoned_cart_duration_after>15</abandoned_cart_duration_after>
             </events>
         </apsis_one_events>
         <apsis_one_mappings>

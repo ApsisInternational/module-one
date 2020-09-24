@@ -75,10 +75,11 @@ class ValidateApi implements ObserverInterface
 
             $id = $groups['oauth']['fields']['id']['value'] ?? false;
             $secret = $groups['oauth']['fields']['secret']['value'] ?? false;
+            $region = $groups['oauth']['fields']['region']['value'] ?? false;
 
-            if ($id && $secret) {
+            if ($id && $secret && $region) {
                 $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
-                if (!$this->isValid($id, $secret, $scope)) {
+                if (! $this->isValid($id, $secret, $region, $scope)) {
                     $this->apsisCoreHelper->saveConfigValue(
                         ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED,
                         0,
@@ -93,6 +94,12 @@ class ValidateApi implements ObserverInterface
                     );
                     $this->apsisCoreHelper->saveConfigValue(
                         ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET,
+                        '',
+                        $scope['context_scope'],
+                        $scope['context_scope_id']
+                    );
+                    $this->apsisCoreHelper->saveConfigValue(
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_REGION,
                         '',
                         $scope['context_scope'],
                         $scope['context_scope_id']
@@ -123,23 +130,25 @@ class ValidateApi implements ObserverInterface
     /**
      * @param string $id
      * @param string $secret
+     * @param string $region
      * @param array $scope
      *
      * @return bool
      */
-    private function isValid(string $id, string $secret, array $scope)
+    private function isValid(string $id, string $secret, string $region, array $scope)
     {
         $isValid = false;
         try {
             $tokenFromApi = $this->apsisCoreHelper->getTokenFromApi(
                 $scope['context_scope'],
                 $scope['context_scope_id'],
+                $region,
                 $id,
                 $secret
             );
 
             if (strlen($tokenFromApi)) {
-                $isValid = $this->isMagentoKeySpaceExist($tokenFromApi, $scope);
+                $isValid = $this->isMagentoKeySpaceExist($tokenFromApi, $region, $scope);
                 ($isValid) ? $this->messageManager->addSuccessMessage(__('API credentials valid.')) :
                     $this->messageManager->addWarningMessage(__('API credentials invalid for integration.'));
             } else {
@@ -157,13 +166,14 @@ class ValidateApi implements ObserverInterface
 
     /**
      * @param string $token
+     * @param string $region
      * @param array $scope
      *
      * @return bool
      */
-    private function isMagentoKeySpaceExist(string $token, array $scope)
+    private function isMagentoKeySpaceExist(string $token, string $region, array $scope)
     {
-        $client = $this->apsisCoreHelper->getApiClientFromToken($token);
+        $client = $this->apsisCoreHelper->getApiClientFromToken($token, $region);
         $keySpaces = $client->getKeySpaces();
 
         if (! is_object($keySpaces)) {

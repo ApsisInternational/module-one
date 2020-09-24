@@ -4,13 +4,16 @@ namespace Apsis\One\Controller\Profile;
 
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
-use Magento\Framework\App\Action\Context;
-use Magento\Framework\App\Action\Action;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
-use Magento\Framework\App\ResponseInterface;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Exception;
-use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Escaper;
 use Magento\Newsletter\Model\SubscriberFactory;
 
 class Subscription extends Action
@@ -31,9 +34,14 @@ class Subscription extends Action
     private $subscriberFactory;
 
     /**
-     * @var ApsisLogHelper
+     * @var ApsisCoreHelper
      */
-    private $apsisLogHelper;
+    private $apsisCoreHelper;
+
+    /**
+     * @var Escaper
+     */
+    private $escaper;
 
     /**
      * Subscription constructor.
@@ -42,16 +50,19 @@ class Subscription extends Action
      * @param ProfileCollectionFactory $profileCollectionFactory
      * @param ProfileResource $profileResource
      * @param SubscriberFactory $subscriberFactory
-     * @param ApsisLogHelper $apsisLogHelper
+     * @param ApsisCoreHelper $apsisLogHelper
+     * @param Escaper $escaper
      */
     public function __construct(
         Context $context,
         ProfileCollectionFactory $profileCollectionFactory,
         ProfileResource $profileResource,
         SubscriberFactory $subscriberFactory,
-        ApsisLogHelper $apsisLogHelper
+        ApsisCoreHelper $apsisLogHelper,
+        Escaper $escaper
     ) {
-        $this->apsisLogHelper = $apsisLogHelper;
+        $this->escaper = $escaper;
+        $this->apsisCoreHelper = $apsisLogHelper;
         $this->subscriberFactory = $subscriberFactory;
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->profileResource = $profileResource;
@@ -65,33 +76,40 @@ class Subscription extends Action
     {
         try {
             $params = $this->getRequest()->getParams();
-            if (! empty($params['KS_ID']) && $this->isClean($params['KS_ID']) &&
-                ! empty($profile = $this->profileCollectionFactory->create()->loadByIntegrationId($params['KS_ID'])) &&
-                ! empty($params['EMAIL']) && $params['EMAIL'] === $profile->getEmail() && ! empty($params['CLD'])
-            ) {
-                if ($params['CLD'] === 'all') {
-                    $subscriber = $this->subscriberFactory->create()
-                        ->setStoreId($profile->getStoreId())
-                        ->loadByEmail($params['EMAIL']);
-                    if ($subscriber->getId()) {
-                        $subscriber->unsubscribe();
-                    }
-                } elseif (! empty($params['TD']) &&
-                    ! empty($profileConsent = explode(',', $profile->getTopicSubscription()))
-                ) {
-                    $consent = $this->processConsent($profileConsent, $params['TD']);
-                    $profile->setTopicSubscription(empty($consent) ? '-' : $consent)
-                        ->setSubscriberSyncStatus(Profile::SYNC_STATUS_PENDING);
-                    $this->profileResource->save($profile);
-                } else {
-                    return $this->sendResponse(401, '401 Unauthorized');
-                }
-            } else {
-                return $this->sendResponse(401, '401 Unauthorized');
+            if (! $this->authenticateKey($params)) {
+                return $this->sendResponse(401);
             }
-            return $this->sendResponse(204);
+
+            if (! $this->validateParams($params)) {
+                return $this->sendResponse(400);
+            }
+
+            if (! $profile = $this->validateId($params)) {
+                return $this->sendResponse(404);
+            }
+
+            if (! $this->validateEmail($params, $profile)) {
+                return $this->sendResponse(400);
+            }
+
+            if ($params['CLD'] === 'all') {
+                $subscriber = $this->subscriberFactory->create()
+                        ->setStoreId($profile->getStoreId())
+                        ->loadByEmail($this->escaper->escapeHtml($params['EMAIL']));
+                if ($subscriber->getId()) {
+                    $subscriber->unsubscribe();
+                    return $this->sendResponse(204);
+                }
+            } elseif (! empty($profileConsent = explode(',', $profile->getTopicSubscription()))) {
+                $consent = $this->processConsent($profileConsent, $params);
+                $profile->setTopicSubscription(empty($consent) ? '-' : $consent)
+                        ->setSubscriberSyncStatus(Profile::SYNC_STATUS_PENDING);
+                $this->profileResource->save($profile);
+                return $this->sendResponse(204);
+            }
+            return $this->sendResponse(200, 'No change made to profile subscription.');
         } catch (Exception $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return $this->sendResponse(500, $e->getMessage());
         }
     }
@@ -116,35 +134,80 @@ class Subscription extends Action
     }
 
     /**
-     * @param string $string
-     *
-     * @return bool
-     */
-    private function isClean(string $string)
-    {
-        return ! preg_match("/[^a-zA-Z\d-]/i", $string);
-    }
-
-    /**
      * @param array $profileConsent
-     * @param string $TD
+     * @param array $params
      *
      * @return string
      */
-    private function processConsent(array $profileConsent, string $TD)
+    private function processConsent(array $profileConsent, array $params)
     {
         try {
             $original = $profileConsent;
             foreach ($profileConsent as $index => $value) {
                 if (! empty($consent = explode('|', $value)) && is_array($consent) && count($consent) === 4 &&
-                    $TD === $consent[1]) {
+                    $params['CLD'] === $consent[0] && $params['TD'] === $consent[1]) {
                     unset($profileConsent[$index]);
                 }
             }
             return empty($profileConsent) ? '' : implode(',', $profileConsent);
         } catch (Exception $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return implode(',', $original);
         }
+    }
+
+    /**
+     * @param array $params
+     *
+     * @return bool
+     */
+    private function authenticateKey(array $params)
+    {
+        if (empty($params['KEY'])) {
+            return false;
+        }
+
+        return $this->apsisCoreHelper->getConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
+            ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+            0
+        ) === (string) $params['KEY'];
+    }
+
+    /**
+     * @param array $params
+     *
+     * @return Profile|bool
+     */
+    private function validateParams(array $params)
+    {
+        if (empty($params['KS_ID']) || empty($params['EMAIL']) || empty($params['CLD']) ||
+            ($params['CLD'] !== 'all' && empty($params['TD']))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param array $params
+     *
+     * @return Profile|bool
+     */
+    private function validateId(array $params)
+    {
+        return $this->profileCollectionFactory->create()
+            ->loadByIntegrationId($this->escaper->escapeHtml($params['KS_ID']));
+    }
+
+    /**
+     * @param array $params
+     * @param Profile $profile
+     *
+     * @return bool
+     */
+    private function validateEmail(array $params, Profile $profile)
+    {
+        return $params['EMAIL'] === $profile->getEmail();
     }
 }

@@ -30,6 +30,11 @@ class Rest
     /**
      * @var string
      */
+    protected $hostName = 'https://%s.apsis.one';
+
+    /**
+     * @var string
+     */
     private $url;
 
     /**
@@ -262,9 +267,20 @@ class Rest
      *
      * @return $this
      */
-    public function setToken($token)
+    public function setToken(string $token)
     {
         $this->token = $token;
+        return $this;
+    }
+
+    /**
+     * @param string $region
+     *
+     * @return $this
+     */
+    public function setRegion(string $region)
+    {
+        $this->hostName = sprintf($this->hostName, $region);
         return $this;
     }
 

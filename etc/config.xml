@@ -6,12 +6,14 @@
                 <enabled>0</enabled>
                 <id></id>
                 <secret></secret>
+                <region></region>
             </oauth>
         </apsis_one_accounts>
         <apsis_one_sync>
             <sync>
                 <subscriber_enabled>0</subscriber_enabled>
                 <subscriber_consent_topic></subscriber_consent_topic>
+                <endpoint_key></endpoint_key>
                 <customer_enabled>1</customer_enabled>
             </sync>
         </apsis_one_sync>

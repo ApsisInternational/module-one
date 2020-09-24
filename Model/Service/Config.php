@@ -17,6 +17,7 @@ class Config
     const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED = 'apsis_one_accounts/oauth/enabled';
     const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID = 'apsis_one_accounts/oauth/id';
     const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET = 'apsis_one_accounts/oauth/secret';
+    const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_REGION = 'apsis_one_accounts/oauth/region';
     const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN = 'apsis_one_accounts/oauth/token';
     const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE = 'apsis_one_accounts/oauth/token_expire';
 
@@ -101,6 +102,7 @@ class Config
     const CONFIG_APSIS_ONE_SYNC_SETTING_GROUP = 'apsis_one_sync/sync';
     const CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED = 'apsis_one_sync/sync/subscriber_enabled';
     const CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC = 'apsis_one_sync/sync/subscriber_consent_topic';
+    const CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY = 'apsis_one_sync/sync/endpoint_key';
     const CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED = 'apsis_one_sync/sync/customer_enabled';
 
     /**

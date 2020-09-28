@@ -77,6 +77,11 @@ class UpgradeData implements UpgradeDataInterface
 
             $store->resetConfig();
         }
+        //Remove AC token mapping
+        $setup->getConnection()->delete(
+            'core_config_data',
+            "path='apsis_one_mappings/customer_attribute/ac_token'"
+        );
     }
 
     /**

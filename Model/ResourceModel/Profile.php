@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Model\ResourceModel;
 
+use Apsis\One\Model\Profile as ApsisProfile;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Apsis\One\Model\Sql\ExpressionFactory;
@@ -71,6 +72,33 @@ class Profile extends AbstractDb implements ResourceInterface
         $this->expressionFactory = $expressionFactory;
         $this->orderCollectionFactory = $orderCollectionFactory;
         parent::__construct($context, $connectionName);
+    }
+
+    /**
+     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param array $storeIds
+     *
+     * @return int
+     */
+    public function resetProfiles(ApsisCoreHelper $apsisCoreHelper, array $storeIds)
+    {
+        try {
+            $bind = [
+                'subscriber_sync_status' => ApsisProfile::SYNC_STATUS_PENDING,
+                'customer_sync_status' => ApsisProfile::SYNC_STATUS_PENDING,
+                'error_message' => '',
+                'updated_at' => $this->dateTime->formatDate(true),
+                'topic_subscription' => ''
+            ];
+            return $this->getConnection()->update(
+                $this->getMainTable(),
+                $bind,
+                empty($storeIds) ? '' : ["store_id IN (?)" => $storeIds]
+            );
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return 0;
+        }
     }
 
     /**

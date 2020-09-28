@@ -606,7 +606,7 @@ class Core extends ApsisLogHelper
     /**
      * @param int $websiteId
      *
-     * @return mixed
+     * @return array
      */
     public function getAllStoreIdsFromWebsite(int $websiteId)
     {

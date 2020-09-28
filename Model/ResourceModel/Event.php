@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Model\ResourceModel;
 
+use Apsis\One\Model\Profile as ApsisProfile;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Apsis\One\Model\Profile;
@@ -142,6 +143,31 @@ class Event extends AbstractDb implements ResourceInterface
         } catch (Exception $e) {
             $apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return false;
+        }
+    }
+
+    /**
+     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param array $storeIds
+     *
+     * @return int
+     */
+    public function resetEvents(ApsisCoreHelper $apsisCoreHelper, array $storeIds)
+    {
+        try {
+            $bind = [
+                'status' => ApsisProfile::SYNC_STATUS_PENDING,
+                'error_message' => '',
+                'updated_at' => $this->dateTime->formatDate(true)
+            ];
+            return $this->getConnection()->update(
+                $this->getMainTable(),
+                $bind,
+                empty($storeIds) ? '' : ["store_id IN (?)" => $storeIds]
+            );
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return 0;
         }
     }
 }

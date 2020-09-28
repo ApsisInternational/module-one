@@ -509,7 +509,6 @@
                        showInWebsite="1" showInStore="1">
                     <label>Cart Content Fetch URL</label>
                     <frontend_model>Apsis\One\Block\Adminhtml\Config\Abandoned\Url</frontend_model>
-                    <comment><![CDATA[Replace TOKEN with mapped attribute from One. Replace OUTPUT_TYPE with desired data type json or html. Replace NUMBER_LIMIT with a number to limit number of products to show for output type html.]]></comment>
                 </field>
             </group>
         </section>

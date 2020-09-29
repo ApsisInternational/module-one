@@ -404,21 +404,15 @@
                         <field id="subscriber_enabled">1</field>
                     </depends>
                 </field>
-                <field id="subscription_endpoint" translate="label" sortOrder="40" type="label" showInDefault="1"
+                <field id="subscription_endpoint" translate="label" sortOrder="40" type="text" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Subscription Update Endpoint</label>
                     <frontend_model>Apsis\One\Block\Adminhtml\Config\Profile\SubscriptionEndpoint</frontend_model>
-                    <depends>
-                        <field id="subscriber_enabled">1</field>
-                    </depends>
                 </field>
                 <field id="endpoint_key" translate="label" sortOrder="50" type="text" showInDefault="1" showInWebsite="0"
                        showInStore="0">
                     <label>Key</label>
-                    <validate>validate-no-empty</validate>
-                    <depends>
-                        <field id="subscriber_enabled">1</field>
-                    </depends>
+                    <frontend_model>Apsis\One\Block\Adminhtml\Config\FieldBase</frontend_model>
                 </field>
                 <field id="customer_heading" translate="label" sortOrder="60" showInDefault="1" showInWebsite="1"
                        showInStore="1">
@@ -545,7 +539,7 @@
                     <source_model>Apsis\One\Model\Config\Source\Abandoned\Intervalminute</source_model>
                     <comment><![CDATA[Register cart as abandoned after it has been inactive for above selected amount of time.]]></comment>
                 </field>
-                <field id="abandoned_cart_fetch_url" translate="label" sortOrder="190" type="label" showInDefault="1"
+                <field id="abandoned_cart_fetch_url" translate="label" sortOrder="190" type="text" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Cart Content Fetch URL</label>
                     <frontend_model>Apsis\One\Block\Adminhtml\Config\Abandoned\Url</frontend_model>

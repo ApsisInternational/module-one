@@ -3,11 +3,11 @@
 namespace Apsis\One\Block\Adminhtml\Config\Profile;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Magento\Config\Block\System\Config\Form\Field;
+use Apsis\One\Block\Adminhtml\Config\FieldBase;
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 
-class SubscriptionEndpoint extends Field
+class SubscriptionEndpoint extends FieldBase
 {
     const SUBSCRIPTION_UPDATE_ENDPOINT = 'apsis/profile/subscription';
 

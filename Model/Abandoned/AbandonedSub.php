@@ -2,20 +2,20 @@
 
 namespace Apsis\One\Model\Abandoned;
 
+use Apsis\One\Model\Cart\ContentFactory;
+use Apsis\One\Model\Event;
+use Apsis\One\Model\Profile;
+use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;
+use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
-use Apsis\One\Model\Cart\ContentFactory;
-use Apsis\One\Model\Event;
-use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;
-use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\Sql\ExpressionFactory;
 use Exception;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Quote\Model\ResourceModel\Quote\Collection;
 use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
 use Magento\Store\Api\Data\StoreInterface;
-use Apsis\One\Model\Profile;
 
 class AbandonedSub
 {
@@ -146,7 +146,7 @@ class AbandonedSub
                         'cart_data' => $apsisCoreHelper->serialize($cartData),
                         'store_id' => $quote->getStoreId(),
                         'profile_id' => $profile->getId(),
-                        'customer_id' => $quote->getCustomerId(),
+                        'customer_id' => (int) $quote->getCustomerId(),
                         'customer_email' => $quote->getCustomerEmail(),
                         'token' => $this->expressionFactory->create(
                             ["expression" => "(SELECT UUID())"]
@@ -162,7 +162,7 @@ class AbandonedSub
                             'event_data' => $apsisCoreHelper->serialize($mainData),
                             'sub_event_data' => $apsisCoreHelper->serialize($subData),
                             'profile_id' => $profile->getId(),
-                            'customer_id' => $quote->getCustomerId(),
+                            'customer_id' => (int) $quote->getCustomerId(),
                             'store_id' => $quote->getStoreId(),
                             'email' => $quote->getCustomerEmail(),
                             'status' => Profile::SYNC_STATUS_PENDING,

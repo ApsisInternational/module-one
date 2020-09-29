@@ -1,0 +1,8 @@
+<?php  /** @var \Apsis\One\Block\Helper\Cart $block */ ?>
+<?php if ($block->isOkToProceed()): ?>
+    <script type="text/x-magento-init">
+    {
+        "*" : {"Apsis_One/js/helper" : {"endpoint" : "<?= $block->escapeUrl($block->getUpdaterUrl()); ?>"}}
+    }
+    </script>
+<?php endif; ?>

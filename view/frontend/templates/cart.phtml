@@ -88,7 +88,7 @@
                             </th>
                             <th align="right" style="padding-left:15px; font:14px/1.2 Arial, Helvetica, sans-serif; color: #333333; white-space:nowrap;">
                                 <div style="font-weight:normal; white-space:nowrap;">
-                                    <?= $block->escapeHtml($block->getCurrencyByStore($item->price_amount)) ?>
+                                    <?= $block->escapeHtml($block->getCurrencyByStore((float) $item->price_amount)) ?>
                                 </div>
                                 <div> &nbsp; </div>
                             </th>

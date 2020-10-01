@@ -9,7 +9,7 @@ use Magento\Framework\Data\Form\Element\AbstractElement;
 
 class Url extends FieldBase
 {
-    const SUBSCRIPTION_UPDATE_ENDPOINT = 'apsis/abandoned/cart';
+    const APSIS_CART_EXPOSE_ENDPOINT = 'apsis/abandoned/cart';
 
     /**
      * @var ApsisCoreHelper
@@ -41,7 +41,7 @@ class Url extends FieldBase
         $text = sprintf(
             '%s%s',
             $this->apsisCoreHelper->generateBaseUrlForDynamicContent(),
-            self::SUBSCRIPTION_UPDATE_ENDPOINT
+            self::APSIS_CART_EXPOSE_ENDPOINT
         );
         $element->setData('value', $text);
         return parent::_getElementHtml($element);

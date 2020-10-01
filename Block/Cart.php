@@ -17,6 +17,8 @@ use Apsis\One\Controller\Abandoned\Cart as AbandonedCartController;
  */
 class Cart extends Template
 {
+    const APSIS_CART_HANDLE_ENDPOINT = 'apsis/abandoned/checkout';
+
     /**
      * @var ApsisLogHelper
      */
@@ -106,7 +108,7 @@ class Cart extends Template
      *
      * @return float|string
      */
-    public function getCurrencyByStore($value)
+    public function getCurrencyByStore(float $value)
     {
         try {
             $storeId = $this->cart->getStoreId();
@@ -122,15 +124,13 @@ class Cart extends Template
      */
     public function getUrlForCheckoutLink()
     {
+        $params = ['quote_id' => $this->cart->getQuoteId(), 'token' => $this->cart->getToken()];
         try {
             $storeId = $this->cart->getStoreId();
-            return $this->_storeManager->getStore($storeId)->getUrl(
-                'apsis/abandoned/checkout',
-                ['quote_id' => $this->cart->getQuoteId()]
-            );
+            return $this->_storeManager->getStore($storeId)->getUrl(self::APSIS_CART_HANDLE_ENDPOINT, $params);
         } catch (Exception $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-            return $this->getUrl('apsis/abandoned/checkout', ['quote_id' => $this->cart->getQuoteId()]);
+            return $this->getUrl(self::APSIS_CART_HANDLE_ENDPOINT, $params);
         }
     }
 }

@@ -14,6 +14,8 @@ use Magento\Store\Model\ScopeInterface;
 
 class SaveUpdate implements ObserverInterface
 {
+    const REGISTRY_NAME = '_customer_save_after';
+
     /**
      * @var ApsisCoreHelper
      */
@@ -65,12 +67,12 @@ class SaveUpdate implements ObserverInterface
             /** @var Customer $customer */
             $customer = $observer->getEvent()->getCustomer();
 
-            $emailReg = $this->registry->registry($customer->getEmail() . '_customer_save_after');
+            $emailReg = $this->registry->registry($customer->getEmail() . self::REGISTRY_NAME);
             if ($emailReg) {
                 return $this;
             }
-            $this->registry->unregister($customer->getEmail() . '_customer_save_after');
-            $this->registry->register($customer->getEmail() . '_customer_save_after', $customer->getEmail());
+            $this->registry->unregister($customer->getEmail() . self::REGISTRY_NAME);
+            $this->registry->register($customer->getEmail() . self::REGISTRY_NAME, $customer->getEmail(), true);
 
             $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $customer->getStoreId());
 

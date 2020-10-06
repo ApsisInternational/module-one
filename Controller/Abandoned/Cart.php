@@ -14,6 +14,7 @@ use Magento\Framework\Registry;
 
 class Cart extends Action
 {
+    const REGISTRY_NAME = 'apsis_one_cart';
     /**
      * @var JsonFactory
      */
@@ -83,7 +84,8 @@ class Cart extends Action
             case 'json':
                 return $this->renderJson((string) $cart->getCartData());
             case 'html':
-                $this->registry->register('apsis_one_cart', $cart, true);
+                $this->registry->unregister(self::REGISTRY_NAME);
+                $this->registry->register(self::REGISTRY_NAME, $cart, true);
                 return $this->renderHtml();
             default:
                 return $this->sendResponse(204);

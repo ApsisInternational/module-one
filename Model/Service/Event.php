@@ -31,6 +31,8 @@ use Magento\Customer\Model\Customer;
 
 class Event
 {
+    const REGISTRY_NAME_SUBSCRIBER_UNSUBSCRIBE = '_subscriber_save_after';
+
     /**
      * @var EventResource
      */
@@ -182,12 +184,16 @@ class Event
      */
     public function registerSubscriberUnsubscribeEvent(Subscriber $subscriber, Profile $profile, StoreInterface $store)
     {
-        $emailReg = $this->registry->registry($subscriber->getEmail() . '_subscriber_save_after');
+        $emailReg = $this->registry->registry($subscriber->getEmail() . self::REGISTRY_NAME_SUBSCRIBER_UNSUBSCRIBE);
         if ($emailReg) {
             return;
         }
-        $this->registry->unregister($subscriber->getEmail() . '_subscriber_save_after');
-        $this->registry->register($subscriber->getEmail() . '_subscriber_save_after', $subscriber->getEmail());
+        $this->registry->unregister($subscriber->getEmail() . self::REGISTRY_NAME_SUBSCRIBER_UNSUBSCRIBE);
+        $this->registry->register(
+            $subscriber->getEmail() . self::REGISTRY_NAME_SUBSCRIBER_UNSUBSCRIBE,
+            $subscriber->getEmail(),
+            true
+        );
 
         if ((boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,

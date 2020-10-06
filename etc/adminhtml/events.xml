@@ -4,7 +4,4 @@
     <event name="admin_system_config_changed_section_apsis_one_accounts">
         <observer name="admin_apsis_one_accounts" instance="Apsis\One\Observer\Adminhtml\ValidateApi"/>
     </event>
-    <event name="admin_system_config_changed_section_apsis_one_mappings">
-        <observer name="admin_apsis_one_mappings" instance="Apsis\One\Observer\Adminhtml\SectionChange"/>
-    </event>
 </config>

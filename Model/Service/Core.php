@@ -619,6 +619,22 @@ class Core extends ApsisLogHelper
     }
 
     /**
+     * @return array
+     */
+    public function getStoreIdsBasedOnScope()
+    {
+        if ($storeId = $this->request->getParam('store')) {
+            return [$storeId];
+        }
+
+        if ($websiteId = $this->request->getParam('website')) {
+            return $this->getAllStoreIdsFromWebsite($websiteId);
+        }
+
+        return [];
+    }
+
+    /**
      * @return DataCollection
      */
     public function getConfigDataCollection()

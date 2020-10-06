@@ -1,27 +1,27 @@
 <?php
 
-namespace Apsis\One\Observer\Adminhtml;
+namespace Apsis\One\Model\Config\Backend;
 
 use Apsis\One\Model\ResourceModel\Event;
 use Apsis\One\Model\ResourceModel\Profile;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
-use Exception;
-use Magento\Backend\App\Action\Context;
-use Magento\Framework\Event\Observer;
-use Magento\Framework\Event\ObserverInterface;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Magento\Framework\App\Cache\TypeListInterface;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Config\Value;
+use Magento\Framework\Data\Collection\AbstractDb;
+use Magento\Framework\Model\Context;
+use Magento\Framework\Model\ResourceModel\AbstractResource;
+use Magento\Framework\Registry;
 
-class SectionChange implements ObserverInterface
+class Section extends Value
 {
+    const REGISTRY_NAME = 'section_change';
+
     /**
      * @var ApsisCoreHelper
      */
     private $apsisCoreHelper;
-
-    /**
-     * @var Context
-     */
-    private $context;
 
     /**
      * @var Event
@@ -34,60 +34,54 @@ class SectionChange implements ObserverInterface
     private $profileResource;
 
     /**
-     * SectionChange constructor.
+     * PastEvents constructor.
      *
-     * @param ApsisCoreHelper $apsisCoreHelper
      * @param Context $context
+     * @param Registry $registry
+     * @param ScopeConfigInterface $config
+     * @param TypeListInterface $cacheTypeList
+     * @param ApsisCoreHelper $apsisCoreHelper
      * @param Profile $profileResource
      * @param Event $eventResource
+     * @param AbstractResource|null $resource
+     * @param AbstractDb|null $resourceCollection
      */
     public function __construct(
-        ApsisCoreHelper $apsisCoreHelper,
         Context $context,
+        Registry $registry,
+        ScopeConfigInterface $config,
+        TypeListInterface $cacheTypeList,
+        ApsisCoreHelper $apsisCoreHelper,
         Profile $profileResource,
-        Event $eventResource
+        Event $eventResource,
+        AbstractResource $resource = null,
+        AbstractDb $resourceCollection = null
     ) {
         $this->profileResource = $profileResource;
         $this->eventResource = $eventResource;
         $this->apsisCoreHelper = $apsisCoreHelper;
-        $this->context = $context;
+        parent::__construct(
+            $context,
+            $registry,
+            $config,
+            $cacheTypeList,
+            $resource,
+            $resourceCollection
+        );
     }
 
     /**
-     * @param Observer $observer
-     *
-     * @return $this
+     * @return Value
      */
-    public function execute(Observer $observer)
+    public function afterSave()
     {
-        try {
-            if (! empty($paths = $observer->getEvent()->getChangedPaths()) && is_array($paths) &&
-                in_array("apsis_one_mappings/section_mapping/section", $paths)
-            ) {
-                $this->resetProfileAndEvents();
-                $this->removeMappings();
-            }
-        } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        if ($this->isValueChanged()) {
+            $this->resetProfileAndEvents();
+            $this->removeMappings();
+            $this->_registry->unregister(self::REGISTRY_NAME);
+            $this->_registry->register(self::REGISTRY_NAME, true, true);
         }
-
-        return $this;
-    }
-
-    /**
-     * @return array
-     */
-    private function getStoreIds()
-    {
-        if ($storeId = $this->context->getRequest()->getParam('store')) {
-            return [$storeId];
-        }
-
-        if ($websiteId = $this->context->getRequest()->getParam('website')) {
-            return $this->apsisCoreHelper->getAllStoreIdsFromWebsite($websiteId);
-        }
-
-        return [];
+        return parent::afterSave();
     }
 
     /**
@@ -95,7 +89,7 @@ class SectionChange implements ObserverInterface
      */
     private function resetProfileAndEvents()
     {
-        $storeIds = $this->getStoreIds();
+        $storeIds = $this->apsisCoreHelper->getStoreIdsBasedOnScope();
         $this->profileResource->resetProfiles($this->apsisCoreHelper, $storeIds);
         $this->eventResource->resetEvents($this->apsisCoreHelper, $storeIds);
     }

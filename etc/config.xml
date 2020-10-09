@@ -5,8 +5,7 @@
             <oauth>
                 <enabled>0</enabled>
                 <id></id>
-                <secret backend_model="Magento\Config\Model\Config\Backend\Encrypted"/>
-                <region></region>
+                <secret></secret>
             </oauth>
         </apsis_one_accounts>
         <apsis_one_sync>

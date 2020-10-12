@@ -75,11 +75,11 @@ class Subscription extends Action
     public function execute()
     {
         try {
-            $params = $this->getRequest()->getParams();
-            if (! $this->authenticateKey($params)) {
+            if (empty($key = (string) $this->getRequest()->getHeader('KEY')) || ! $this->authenticateKey($key)) {
                 return $this->sendResponse(401);
             }
 
+            $params = $this->getRequest()->getParams();
             if (! $this->validateParams($params)) {
                 return $this->sendResponse(400);
             }
@@ -157,21 +157,17 @@ class Subscription extends Action
     }
 
     /**
-     * @param array $params
+     * @param string $key
      *
      * @return bool
      */
-    private function authenticateKey(array $params)
+    private function authenticateKey(string $key)
     {
-        if (empty($params['KEY'])) {
-            return false;
-        }
-
         return $this->apsisCoreHelper->getConfigValue(
             ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
             ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
             0
-        ) === (string) $params['KEY'];
+        ) === $key;
     }
 
     /**

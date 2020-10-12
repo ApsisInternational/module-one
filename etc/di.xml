@@ -26,6 +26,9 @@
             </argument>
         </arguments>
     </type>
+    <type name="Magento\Newsletter\Controller\Manage\Index">
+        <plugin name="apsis_newsletter_index_plugin" type="Apsis\One\Plugin\Customer\NewsletterManageIndexPlugin" />
+    </type>
     <type name="Magento\Customer\Model\Logger">
         <plugin name="apsis_logger_log_plugin" type="Apsis\One\Plugin\Customer\LoggerPlugin" />
     </type>

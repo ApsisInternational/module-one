@@ -15,4 +15,9 @@ interface ProfileDataInterface
      * @return mixed
      */
     public function setModelData(array $mappingHash, AbstractModel $model, ApsisCoreHelper $apsisCoreHelper);
+
+    /**
+     * @return array
+     */
+    public function toCSVArray();
 }

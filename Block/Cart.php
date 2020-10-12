@@ -8,6 +8,7 @@ use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Magento\Framework\Registry;
 use Magento\Framework\View\Element\Template;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Apsis\One\Controller\Abandoned\Cart as AbandonedCartController;
 
 /**
  * Cart block
@@ -64,7 +65,7 @@ class Cart extends Template
     public function getCartItems()
     {
         try {
-            $cart = $this->registry->registry('apsis_one_cart');
+            $cart = $this->registry->registry(AbandonedCartController::REGISTRY_NAME);
             if ($cart instanceof DataObject) {
                 $this->cart = $cart;
                 $obj = $this->apsisLogHelper->unserialize($this->cart->getCartData());

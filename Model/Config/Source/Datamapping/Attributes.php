@@ -10,6 +10,8 @@ use Magento\Framework\Registry;
 
 class Attributes implements OptionSourceInterface
 {
+    const REGISTRY_NAME = 'apsis_attributes';
+
     /**
      * @var ApsisCoreHelper
      */
@@ -53,13 +55,13 @@ class Attributes implements OptionSourceInterface
                 return [];
             }
 
-            $savedAttributes = $this->registry->registry('apsis_attributes');
+            $savedAttributes = $this->registry->registry(self::REGISTRY_NAME);
             if ($savedAttributes) {
                 $attributes = $savedAttributes;
             } else {
                 $attributes = $apiClient->getAttributes($section);
-                $this->registry->unregister('apsis_attributes');
-                $this->registry->register('apsis_attributes', $attributes);
+                $this->registry->unregister(self::REGISTRY_NAME);
+                $this->registry->register(self::REGISTRY_NAME, $attributes, true);
             }
 
             if (! $attributes || ! isset($attributes->items)) {

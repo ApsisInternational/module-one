@@ -2,23 +2,24 @@
 
 namespace Apsis\One\Model\Service;
 
+use Apsis\One\ApiClient\Client;
+use Apsis\One\ApiClient\ClientFactory;
+use Apsis\One\Logger\Logger;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Exception;
+use Magento\Config\Model\ResourceModel\Config\Data\Collection as DataCollection;
+use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as DataCollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
-use Exception;
+use Magento\Framework\UrlInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use stdClass;
-use Apsis\One\Logger\Logger;
-use Apsis\One\ApiClient\ClientFactory;
-use Apsis\One\ApiClient\Client;
-use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as DataCollectionFactory;
-use Magento\Config\Model\ResourceModel\Config\Data\Collection as DataCollection;
-use Apsis\One\Model\Service\Log as ApsisLogHelper;
 
 class Core extends ApsisLogHelper
 {
@@ -355,25 +356,31 @@ class Core extends ApsisLogHelper
     /**
      * @param string $contextScope
      * @param int $scopeId
+     * @param string $region
      * @param string $id
      * @param string $secret
      *
      * @return string
      */
-    public function getTokenFromApi(string $contextScope, int $scopeId, $id = '', $secret = '')
+    public function getTokenFromApi(string $contextScope, int $scopeId, string $region, $id = '', $secret = '')
     {
         try {
             $clientId = ($id) ? $id : $this->getClientId($contextScope, $scopeId);
             $clientSecret = ($secret) ? $secret : $this->getClientSecret($contextScope, $scopeId);
             if (! empty($clientId) && ! empty($clientSecret)) {
-                $apiClient = $this->apiClientFactory->create();
+                $apiClient = $this->apiClientFactory->create()
+                    ->setRegion($region);
                 $request = $apiClient->getAccessToken($clientId, $clientSecret);
                 if ($request && isset($request->access_token)) {
-                    $scopeArray = $this->resolveContext($contextScope, $scopeId);
+                    $scopeArray = $this->resolveContext(
+                        $contextScope,
+                        $scopeId,
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID
+                    );
                     $contextScope = $scopeArray['scope'];
                     $scopeId = $scopeArray['id'];
                     $this->saveTokenAndExpiry($contextScope, $scopeId, $request);
-                    return $request->access_token;
+                    return (string) $request->access_token;
                 }
             }
         } catch (Exception $e) {
@@ -385,19 +392,24 @@ class Core extends ApsisLogHelper
     /**
      * @param string $contextScope
      * @param int $scopeId
+     * @param string $region
      *
      * @return string
      */
-    private function getToken(string $contextScope, int $scopeId)
+    private function getToken(string $contextScope, int $scopeId, string $region)
     {
-        $scopeArray = $this->resolveContext($contextScope, $scopeId);
+        $scopeArray = $this->resolveContext(
+            $contextScope,
+            $scopeId,
+            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID
+        );
         $contextScope = $scopeArray['scope'];
         $scopeId = $scopeArray['id'];
         if ($this->isTokenExpired($contextScope, $scopeId)) {
-            return $this->getTokenFromApi($contextScope, $scopeId);
+            return $this->getTokenFromApi($contextScope, $scopeId, $region);
         } else {
             $token = $this->getTokenFromDb($contextScope, $scopeId);
-            return ($token) ? $token : $this->getTokenFromApi($contextScope, $scopeId);
+            return ($token) ? $token : $this->getTokenFromApi($contextScope, $scopeId, $region);
         }
     }
 
@@ -434,22 +446,33 @@ class Core extends ApsisLogHelper
             return false;
         }
 
-        $token = $this->getToken($contextScope, $scopeId);
+        $region = (string) $this->getConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_REGION,
+            $contextScope,
+            $scopeId
+        );
+        if (! strlen($region)) {
+            return false;
+        }
+
+        $token = $this->getToken($contextScope, $scopeId, $region);
         if (empty($token)) {
             return false;
         }
 
-        return $this->getApiClientFromToken($token);
+        return $this->getApiClientFromToken($token, $region);
     }
 
     /**
      * @param string $token
      *
+     * @param string $region
      * @return Client
      */
-    public function getApiClientFromToken(string $token)
+    public function getApiClientFromToken(string $token, string $region)
     {
-        $apiClient = $this->apiClientFactory->create();
+        $apiClient = $this->apiClientFactory->create()
+            ->setRegion($region);
         return $apiClient->setToken($token);
     }
 
@@ -481,16 +504,17 @@ class Core extends ApsisLogHelper
     /**
      * @param string $contextScope
      * @param int $scopeId
+     * @param string $path
      *
      * @return array
      */
-    private function resolveContext(string $contextScope, int $scopeId)
+    public function resolveContext(string $contextScope, int $scopeId, string $path)
     {
         switch ($contextScope) {
             case ScopeInterface::SCOPE_STORES:
-                return $this->resolveContextForStore($scopeId);
+                return $this->resolveContextForStore($scopeId, $path);
             case ScopeInterface::SCOPE_WEBSITES:
-                return $this->resolveContextForWebsite($scopeId);
+                return $this->resolveContextForWebsite($scopeId, $path);
             default:
                 return ['scope' => $contextScope, 'id' => $scopeId];
         }
@@ -498,12 +522,12 @@ class Core extends ApsisLogHelper
 
     /**
      * @param int $scopeId
+     * @param string $path
      *
      * @return array
      */
-    private function resolveContextForStore(int $scopeId)
+    private function resolveContextForStore(int $scopeId, string $path)
     {
-        $path = 'apsis_one_accounts/oauth/id';
         $contextScope = ScopeInterface::SCOPE_STORES;
         if (! $this->isExistInDataCollection($contextScope, $scopeId, $path)) {
             $websiteId = (int) $this->getStore($scopeId)->getWebsiteId();
@@ -520,12 +544,12 @@ class Core extends ApsisLogHelper
 
     /**
      * @param int $scopeId
+     * @param string $path
      *
      * @return array
      */
-    private function resolveContextForWebsite(int $scopeId)
+    private function resolveContextForWebsite(int $scopeId, string $path)
     {
-        $path = 'apsis_one_accounts/oauth/id';
         $contextScope = ScopeInterface::SCOPE_WEBSITES;
         if (! $this->isExistInDataCollection($contextScope, $scopeId, $path)) {
             $contextScope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
@@ -582,7 +606,7 @@ class Core extends ApsisLogHelper
     /**
      * @param int $websiteId
      *
-     * @return mixed
+     * @return array
      */
     public function getAllStoreIdsFromWebsite(int $websiteId)
     {
@@ -592,6 +616,22 @@ class Core extends ApsisLogHelper
             $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return [];
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function getStoreIdsBasedOnScope()
+    {
+        if ($storeId = $this->request->getParam('store')) {
+            return [$storeId];
+        }
+
+        if ($websiteId = $this->request->getParam('website')) {
+            return $this->getAllStoreIdsFromWebsite($websiteId);
+        }
+
+        return [];
     }
 
     /**
@@ -639,5 +679,21 @@ class Core extends ApsisLogHelper
             }
         }
         return $attributesArr;
+    }
+
+    /**
+     * @return string
+     */
+    public function generateBaseUrlForDynamicContent()
+    {
+        try {
+            $website = $this->storeManager->getWebsite($this->request->getParam('website', 0));
+            $defaultGroup = $website->getDefaultGroup();
+            $store =  (! $defaultGroup) ? null : $defaultGroup->getDefaultStore();
+            return $this->storeManager->getStore($store)->getBaseUrl(UrlInterface::URL_TYPE_LINK);
+        } catch (Exception $e) {
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return '';
+        }
     }
 }

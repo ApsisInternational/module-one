@@ -1,15 +1,15 @@
 <?php
 
-namespace Apsis\One\Block\Adminhtml\Config\Abandoned;
+namespace Apsis\One\Block\Adminhtml\Config\Profile;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Block\Adminhtml\Config\FieldBase;
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 
-class Url extends FieldBase
+class SubscriptionEndpoint extends FieldBase
 {
-    const SUBSCRIPTION_UPDATE_ENDPOINT = 'apsis/abandoned/cart';
+    const SUBSCRIPTION_UPDATE_ENDPOINT = 'apsis/profile/subscription';
 
     /**
      * @var ApsisCoreHelper

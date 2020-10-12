@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Model\ResourceModel;
 
+use Apsis\One\Model\Profile as ApsisProfile;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Apsis\One\Model\Sql\ExpressionFactory;
@@ -74,6 +75,33 @@ class Profile extends AbstractDb implements ResourceInterface
     }
 
     /**
+     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param array $storeIds
+     *
+     * @return int
+     */
+    public function resetProfiles(ApsisCoreHelper $apsisCoreHelper, array $storeIds)
+    {
+        try {
+            $bind = [
+                'subscriber_sync_status' => ApsisProfile::SYNC_STATUS_PENDING,
+                'customer_sync_status' => ApsisProfile::SYNC_STATUS_PENDING,
+                'error_message' => '',
+                'updated_at' => $this->dateTime->formatDate(true),
+                'topic_subscription' => ''
+            ];
+            return $this->getConnection()->update(
+                $this->getMainTable(),
+                $bind,
+                empty($storeIds) ? '' : ["store_id IN (?)" => $storeIds]
+            );
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return 0;
+        }
+    }
+
+    /**
      * @param array $subscriberIds
      * @param int $storeId
      * @param int $status
@@ -104,6 +132,37 @@ class Profile extends AbstractDb implements ResourceInterface
                 $this->getMainTable(),
                 $bind,
                 ["subscriber_id IN (?)" => $subscriberIds, "store_id = ?" => $storeId]
+            );
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return 0;
+        }
+    }
+
+    /**
+     * @param array $subscriberIds
+     * @param int $storeId
+     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param string $topics
+     *
+     * @return int
+     */
+    public function updateSubscribersSubscription(
+        array $subscriberIds,
+        int $storeId,
+        ApsisCoreHelper $apsisCoreHelper,
+        string $topics
+    ) {
+        try {
+            $write = $this->getConnection();
+            return $write->update(
+                $this->getMainTable(),
+                ['topic_subscription' => $topics, 'updated_at' => $this->dateTime->formatDate(true)],
+                [
+                    "subscriber_id IN (?)" => $subscriberIds,
+                    "store_id = ?" => $storeId,
+                    "topic_subscription is ?" => $this->expressionFactory->create(["expression" => ('null')])
+                ]
             );
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());

@@ -6,8 +6,6 @@ use Exception;
 
 class Client extends Rest
 {
-    const HOST_NAME = 'https://api.apsis.one';
-
     /**
      * SECURITY: Get access token
      *
@@ -22,7 +20,7 @@ class Client extends Rest
      */
     public function getAccessToken(string $clientId, string $clientSecret)
     {
-        $this->setUrl(self::HOST_NAME . '/oauth/token')
+        $this->setUrl($this->hostName . '/oauth/token')
             ->setVerb(Rest::VERB_POST)
             ->buildBody([
                 'grant_type' => 'client_credentials',
@@ -41,7 +39,7 @@ class Client extends Rest
      */
     public function getKeySpaces()
     {
-        $this->setUrl(self::HOST_NAME . '/audience/keyspaces')
+        $this->setUrl($this->hostName . '/audience/keyspaces')
             ->setVerb(Rest::VERB_GET);
         return $this->processResponse($this->execute(), __METHOD__);
     }
@@ -55,7 +53,7 @@ class Client extends Rest
      */
     public function getChannels()
     {
-        $this->setUrl(self::HOST_NAME . '/audience/channels')
+        $this->setUrl($this->hostName . '/audience/channels')
             ->setVerb(Rest::VERB_GET);
         return $this->processResponse($this->execute(), __METHOD__);
     }
@@ -69,7 +67,7 @@ class Client extends Rest
      */
     public function getSections()
     {
-        $this->setUrl(self::HOST_NAME . '/audience/sections')
+        $this->setUrl($this->hostName . '/audience/sections')
             ->setVerb(Rest::VERB_GET);
         return $this->processResponse($this->execute(), __METHOD__);
     }
@@ -86,7 +84,7 @@ class Client extends Rest
      */
     public function getAttributes(string $sectionDiscriminator)
     {
-        $this->setUrl(self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/attributes')
+        $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/attributes')
             ->setVerb(Rest::VERB_GET);
         return $this->processResponse($this->execute(), __METHOD__);
     }
@@ -102,7 +100,7 @@ class Client extends Rest
      */
     public function getConsentLists(string $sectionDiscriminator)
     {
-        $this->setUrl(self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/consent-lists')
+        $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/consent-lists')
             ->setVerb(Rest::VERB_GET);
         return $this->processResponse($this->execute(), __METHOD__);
     }
@@ -120,7 +118,7 @@ class Client extends Rest
     public function getTopics(string $sectionDiscriminator, string $consentListDiscriminator)
     {
         $this->setUrl(
-            self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/consent-lists/' .
+            $this->hostName . '/audience/sections/' . $sectionDiscriminator . '/consent-lists/' .
             $consentListDiscriminator . '/topics'
         )->setVerb(Rest::VERB_GET);
         return $this->processResponse($this->execute(), __METHOD__);
@@ -137,7 +135,7 @@ class Client extends Rest
      */
     public function getTags(string $sectionDiscriminator)
     {
-        $this->setUrl(self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/tags')
+        $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/tags')
             ->setVerb(Rest::VERB_GET);
         return $this->processResponse($this->execute(), __METHOD__);
     }
@@ -153,7 +151,7 @@ class Client extends Rest
      */
     public function getEvents(string $sectionDiscriminator)
     {
-        $this->setUrl(self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/events')
+        $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/events')
             ->setVerb(Rest::VERB_GET);
         return $this->processResponse($this->execute(), __METHOD__);
     }
@@ -167,7 +165,7 @@ class Client extends Rest
      */
     public function getSegments()
     {
-        $this->setUrl(self::HOST_NAME . '/audience/segments/')
+        $this->setUrl($this->hostName . '/audience/segments/')
             ->setVerb(Rest::VERB_GET);
         return $this->processResponse($this->execute(), __METHOD__);
     }
@@ -183,7 +181,7 @@ class Client extends Rest
      */
     public function getSegment(string $segmentDiscriminator)
     {
-        $this->setUrl(self::HOST_NAME . '/audience/segments/' . $segmentDiscriminator)
+        $this->setUrl($this->hostName . '/audience/segments/' . $segmentDiscriminator)
             ->setVerb(Rest::VERB_GET);
         return $this->processResponse($this->execute(), __METHOD__);
     }
@@ -200,7 +198,7 @@ class Client extends Rest
      */
     public function getSegmentVersion(string $segmentDiscriminator, string $versionId)
     {
-        $this->setUrl(self::HOST_NAME . '/audience/segments/' . $segmentDiscriminator . '/versions/' . $versionId)
+        $this->setUrl($this->hostName . '/audience/segments/' . $segmentDiscriminator . '/versions/' . $versionId)
             ->setVerb(Rest::VERB_GET);
         return $this->processResponse($this->execute(), __METHOD__);
     }
@@ -224,7 +222,7 @@ class Client extends Rest
         string $sectionDiscriminator,
         array $tags
     ) {
-        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/tags';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_PATCH)
@@ -243,7 +241,7 @@ class Client extends Rest
      */
     public function getAllProfileTags(string $keySpaceDiscriminator, string $profileKey, string $sectionDiscriminator)
     {
-        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/tags';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_GET);
@@ -272,7 +270,7 @@ class Client extends Rest
         string $sectionDiscriminator,
         array $attributes
     ) {
-        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/attributes';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_PATCH)
@@ -297,7 +295,7 @@ class Client extends Rest
         string $profileKey,
         string $sectionDiscriminator
     ) {
-        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/attributes';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_GET);
@@ -320,7 +318,7 @@ class Client extends Rest
         string $sectionDiscriminator,
         string $versionId
     ) {
-        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/attributes/' . $versionId;
         $this->setUrl($url)
             ->setVerb(Rest::VERB_DELETE);
@@ -341,7 +339,7 @@ class Client extends Rest
         string $profileKey,
         string $sectionDiscriminator
     ) {
-        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/events';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_GET);
@@ -367,7 +365,7 @@ class Client extends Rest
         string $sectionDiscriminator,
         array $events
     ) {
-        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/events';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_POST)
@@ -393,7 +391,7 @@ class Client extends Rest
         string $consentListDiscriminator,
         string $topicDiscriminator
     ) {
-        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/subscriptions';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_POST)
@@ -424,7 +422,7 @@ class Client extends Rest
         array $segments,
         string $timeZone
     ) {
-        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/evaluations';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_POST)
@@ -449,7 +447,7 @@ class Client extends Rest
      */
     public function mergeProfile(array $keySpacesToMerge)
     {
-        $this->setUrl(self::HOST_NAME . '/audience/profiles/merges')
+        $this->setUrl($this->hostName . '/audience/profiles/merges')
             ->setVerb(Rest::VERB_PUT)
             ->buildBody(['profiles' => $keySpacesToMerge]);
         return $this->processResponse($this->execute(), __METHOD__);
@@ -471,7 +469,7 @@ class Client extends Rest
      */
     public function lockProfile(string $keySpaceDiscriminator, string $profileKey)
     {
-        $url = self::HOST_NAME . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/locks';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_PUT);
@@ -498,7 +496,7 @@ class Client extends Rest
         string $topicDiscriminator,
         string $type
     ) {
-        $url = self::HOST_NAME . '/audience/channels/' . $channelDiscriminator . '/addresses/' . $address . '/consents';
+        $url = $this->hostName . '/audience/channels/' . $channelDiscriminator . '/addresses/' . $address . '/consents';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_POST)
             ->buildBody(
@@ -524,7 +522,7 @@ class Client extends Rest
      */
     public function initializeProfileImport(string $sectionDiscriminator, array $data)
     {
-        $this->setUrl(self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/imports')
+        $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/imports')
             ->setVerb(Rest::VERB_POST)
             ->buildBody($data);
         return $this->processResponse($this->execute(), __METHOD__);
@@ -584,7 +582,7 @@ class Client extends Rest
      */
     public function getImportStatus(string $sectionDiscriminator, string $importId)
     {
-        $this->setUrl(self::HOST_NAME . '/audience/sections/' . $sectionDiscriminator . '/imports/' . $importId)
+        $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/imports/' . $importId)
             ->setVerb(Rest::VERB_GET);
         return $this->processResponse($this->execute(), __METHOD__);
     }

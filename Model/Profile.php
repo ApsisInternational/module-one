@@ -10,6 +10,7 @@ use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime;
+use Magento\Newsletter\Model\Subscriber;
 
 /**
  * Class Profile
@@ -38,6 +39,8 @@ use Magento\Framework\Stdlib\DateTime;
  * @method $this setErrorMessage(string $value)
  * @method string getUpdatedAt()
  * @method $this setUpdatedAt(string $value)
+ * @method string getTopicSubscription()
+ * @method $this setTopicSubscription(string $value)
  */
 class Profile extends AbstractModel
 {
@@ -117,6 +120,11 @@ class Profile extends AbstractModel
                 )
             );
         }
+
+        if ($this->getSubscriberStatus() == Subscriber::STATUS_UNSUBSCRIBED) {
+            $this->setTopicSubscription($this->expressionFactory->create(["expression" => "null"]));
+        }
+
         return $this;
     }
 }

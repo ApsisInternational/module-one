@@ -75,7 +75,9 @@ class Subscription extends Action
     public function execute()
     {
         try {
-            if (empty($key = (string) $this->getRequest()->getHeader('KEY')) || ! $this->authenticateKey($key)) {
+            if (empty($key = (string) $this->getRequest()->getHeader('authorization')) ||
+                ! $this->authenticateKey($key)
+            ) {
                 return $this->sendResponse(401);
             }
 

@@ -3,21 +3,20 @@
 namespace Apsis\One\Model\Sync;
 
 use Apsis\One\ApiClient\Client;
+use Apsis\One\Model\Event;
+use Apsis\One\Model\Profile;
+use Apsis\One\Model\ResourceModel\Event as EventResourceModel;
+use Apsis\One\Model\ResourceModel\Event\Collection as EventCollection;
+use Apsis\One\Model\ResourceModel\Event\CollectionFactory as EventCollectionFactory;
+use Apsis\One\Model\ResourceModel\Profile as ProfileResourceModel;
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Exception;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
-use Apsis\One\Model\ResourceModel\Event\CollectionFactory as EventCollectionFactory;
-use Apsis\One\Model\ResourceModel\Event\Collection as EventCollection;
-use Apsis\One\Model\Event;
-use Apsis\One\Model\Profile;
-use Apsis\One\Model\ResourceModel\Profile as ProfileResourceModel;
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use stdClass;
-use Apsis\One\Model\ResourceModel\Event as EventResourceModel;
-use Apsis\One\Model\ResourceModel\Abandoned\CollectionFactory as AbandonedCollectionFactory;
 use Zend_Date;
 
 class Events implements SyncInterface
@@ -30,6 +29,23 @@ class Events implements SyncInterface
      * Maximum event limit per profile
      */
     const PROFILE_EVENT_LIMIT = 100;
+
+    /**
+     * Event discriminators
+     */
+    const UNSUBSCRIBED_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.subscriber-unsubscribe';
+    const SUBSCRIBER_2_CUSTOMER_EVENT_DISCRIMINATOR =
+        'com.apsis1.integrations.magento.events.subscriber-register-as-customer';
+    const CUSTOMER_LOGIN_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.login';
+    const WISHLIST_PRODUCT_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.wishlist-product';
+    const PRODUCT_REVIEW_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.product-review';
+    const AC_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.abandoned-cart';
+    const AC_PRODUCT_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.abandoned-product';
+    const CUSTOMER_2_SUBSCRIBER_EVENT_DISCRIMINATOR =
+        'com.apsis1.integrations.magento.events.customer-becomes-subscriber';
+    const ORDER_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.order';
+    const ORDER_PRODUCT_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.order-product';
+    const PRODUCT_CARTED_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.product-carted';
 
     /**
      * @var ApsisCoreHelper
@@ -52,11 +68,6 @@ class Events implements SyncInterface
     private $eventResourceModel;
 
     /**
-     * @var AbandonedCollectionFactory
-     */
-    private $abandonedCollectionFactory;
-
-    /**
      * @var ProfileResourceModel
      */
     private $profileResourceModel;
@@ -70,41 +81,38 @@ class Events implements SyncInterface
      * @var array
      */
     private $eventsDiscriminatorMapping = [
-        Event::EVENT_TYPE_SUBSCRIBER_UNSUBSCRIBE => 'com.apsis1.integrations.magento.events.subscriber-unsubscribe',
-        Event::EVENT_TYPE_SUBSCRIBER_BECOMES_CUSTOMER =>
-            'com.apsis1.integrations.magento.events.subscriber-register-as-customer',
-        Event::EVENT_TYPE_CUSTOMER_LOGIN => 'com.apsis1.integrations.magento.events.login',
-        Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST =>
-            'com.apsis1.integrations.magento.events.wishlist-product',
-        Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW => 'com.apsis1.integrations.magento.events.product-review',
+        Event::EVENT_TYPE_SUBSCRIBER_UNSUBSCRIBE => self::UNSUBSCRIBED_EVENT_DISCRIMINATOR,
+        Event::EVENT_TYPE_SUBSCRIBER_BECOMES_CUSTOMER => self::SUBSCRIBER_2_CUSTOMER_EVENT_DISCRIMINATOR,
+        Event::EVENT_TYPE_CUSTOMER_LOGIN => self::CUSTOMER_LOGIN_EVENT_DISCRIMINATOR,
+        Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST => self::WISHLIST_PRODUCT_EVENT_DISCRIMINATOR,
+        Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW => self::PRODUCT_REVIEW_EVENT_DISCRIMINATOR,
         Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART => [
-            'main' => 'com.apsis1.integrations.magento.events.abandoned-cart',
-            'sub' => 'com.apsis1.integrations.magento.events.abandoned-product'
+            'main' => self::AC_EVENT_DISCRIMINATOR,
+            'sub' => self::AC_PRODUCT_EVENT_DISCRIMINATOR
         ],
-        Event::EVENT_TYPE_CUSTOMER_BECOMES_SUBSCRIBER =>
-            'com.apsis1.integrations.magento.events.customer-becomes-subscriber',
+        Event::EVENT_TYPE_CUSTOMER_BECOMES_SUBSCRIBER => self::CUSTOMER_2_SUBSCRIBER_EVENT_DISCRIMINATOR,
         Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER => [
-            'main' => 'com.apsis1.integrations.magento.events.order',
-            'sub' => 'com.apsis1.integrations.magento.events.order-product'
+            'main' => self::ORDER_EVENT_DISCRIMINATOR,
+            'sub' => self::ORDER_PRODUCT_EVENT_DISCRIMINATOR
         ],
-        Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART => 'com.apsis1.integrations.magento.events.product-carted',
+        Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART => self::PRODUCT_CARTED_EVENT_DISCRIMINATOR,
     ];
 
     /**
      * @var array
      */
     private $eventsVersionMapping = [
-        'com.apsis1.integrations.magento.events.subscriber-unsubscribe' => false,
-        'com.apsis1.integrations.magento.events.subscriber-register-as-customer' => false,
-        'com.apsis1.integrations.magento.events.login' => false,
-        'com.apsis1.integrations.magento.events.wishlist-product' => false,
-        'com.apsis1.integrations.magento.events.product-review' => false,
-        'com.apsis1.integrations.magento.events.abandoned-cart' => false,
-        'com.apsis1.integrations.magento.events.abandoned-product' => false,
-        'com.apsis1.integrations.magento.events.customer-becomes-subscriber' => false,
-        'com.apsis1.integrations.magento.events.order' => false,
-        'com.apsis1.integrations.magento.events.order-product' => false,
-        'com.apsis1.integrations.magento.events.product-carted' => false
+        self::UNSUBSCRIBED_EVENT_DISCRIMINATOR => false,
+        self::SUBSCRIBER_2_CUSTOMER_EVENT_DISCRIMINATOR => false,
+        self::CUSTOMER_LOGIN_EVENT_DISCRIMINATOR => false,
+        self::WISHLIST_PRODUCT_EVENT_DISCRIMINATOR => false,
+        self::PRODUCT_REVIEW_EVENT_DISCRIMINATOR => false,
+        self::AC_EVENT_DISCRIMINATOR => false,
+        self::AC_PRODUCT_EVENT_DISCRIMINATOR => false,
+        self::CUSTOMER_2_SUBSCRIBER_EVENT_DISCRIMINATOR => false,
+        self::ORDER_EVENT_DISCRIMINATOR => false,
+        self::ORDER_PRODUCT_EVENT_DISCRIMINATOR => false,
+        self::PRODUCT_CARTED_EVENT_DISCRIMINATOR => false
     ];
 
     /**
@@ -133,7 +141,6 @@ class Events implements SyncInterface
      * @param EventCollectionFactory $eventCollectionFactory
      * @param ProfileCollectionFactory $profileCollectionFactory
      * @param EventResourceModel $eventResourceModel
-     * @param AbandonedCollectionFactory $abandonedCollectionFactory
      * @param ProfileResourceModel $profileResourceModel
      * @param ApsisDateHelper $apsisDateHelper
      */
@@ -141,7 +148,6 @@ class Events implements SyncInterface
         EventCollectionFactory $eventCollectionFactory,
         ProfileCollectionFactory $profileCollectionFactory,
         EventResourceModel $eventResourceModel,
-        AbandonedCollectionFactory $abandonedCollectionFactory,
         ProfileResourceModel $profileResourceModel,
         ApsisDateHelper $apsisDateHelper
     ) {
@@ -150,7 +156,6 @@ class Events implements SyncInterface
         $this->eventResourceModel = $eventResourceModel;
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->eventCollectionFactory = $eventCollectionFactory;
-        $this->abandonedCollectionFactory = $abandonedCollectionFactory;
     }
 
     /**
@@ -252,7 +257,7 @@ class Events implements SyncInterface
                     continue;
                 }
 
-                $status = $this->syncProfileForEvent($client, $profile, $store);
+                $status = $this->syncProfileForEvent($client, $profile);
                 if ($status === false) {
                     $this->apsisCoreHelper->log(
                         __METHOD__ . ': Unable to sync profile for events for Store: ' . $store->getCode() .
@@ -396,25 +401,12 @@ class Events implements SyncInterface
     /**
      * @param Client $client
      * @param Profile $profile
-     * @param StoreInterface $store
      *
      * @return bool|stdClass|string
      */
-    private function syncProfileForEvent(Client $client, Profile $profile, StoreInterface $store)
+    private function syncProfileForEvent(Client $client, Profile $profile)
     {
         $attributesToSync[$this->attributesArrWithVersionId[$this->mappedEmailAttribute]] = $profile->getEmail();
-        $mappedAcTokenAttribute = $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_AC_TOKEN
-        );
-        $latestAbandonedCart = $this->abandonedCollectionFactory->create()
-            ->loadByProfileIdAndStoreId((int) $profile->getId(), (int) $store->getId());
-        if ($mappedAcTokenAttribute &&
-            isset($this->attributesArrWithVersionId[$mappedAcTokenAttribute]) && $latestAbandonedCart) {
-            $attributesToSync[$this->attributesArrWithVersionId[$mappedAcTokenAttribute]] =
-                $latestAbandonedCart->getToken();
-        }
-
         return $client->addAttributesToProfile(
             $this->keySpaceDiscriminator,
             $profile->getIntegrationUid(),

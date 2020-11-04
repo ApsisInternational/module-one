@@ -80,7 +80,6 @@
                 <last_order_date>com.apsis1.integrations.magento.attributes.last-purchase-date</last_order_date>
                 <number_of_orders>com.apsis1.integrations.magento.attributes.total-number-of-orders</number_of_orders>
                 <average_order_value>com.apsis1.integrations.magento.attributes.average-order-value</average_order_value>
-                <ac_token>com.apsis1.integrations.magento.attributes.abandoned-cart-token</ac_token>
                 <total_spend>com.apsis1.integrations.magento.attributes.total-spent</total_spend>
             </customer_attribute>
         </apsis_one_mappings>

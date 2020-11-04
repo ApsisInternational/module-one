@@ -2,20 +2,19 @@
 
 namespace Apsis\One\Model\Abandoned;
 
+use Apsis\One\Model\Cart\ContentFactory;
+use Apsis\One\Model\Event;
+use Apsis\One\Model\Profile;
+use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;
+use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
-use Apsis\One\Model\Cart\ContentFactory;
-use Apsis\One\Model\Event;
-use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;
-use Apsis\One\Model\ResourceModel\Event as EventResource;
-use Apsis\One\Model\Sql\ExpressionFactory;
 use Exception;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Quote\Model\ResourceModel\Quote\Collection;
 use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
 use Magento\Store\Api\Data\StoreInterface;
-use Apsis\One\Model\Profile;
 
 class AbandonedSub
 {
@@ -50,11 +49,6 @@ class AbandonedSub
     private $dateTime;
 
     /**
-     * @var ExpressionFactory
-     */
-    private $expressionFactory;
-
-    /**
      * @var ApsisDateHelper
      */
     private $apsisDateHelper;
@@ -67,7 +61,6 @@ class AbandonedSub
      * @param AbandonedResource $abandonedResource
      * @param EventResource $eventResource
      * @param DateTime $dateTime
-     * @param ExpressionFactory $expressionFactory
      * @param ApsisDateHelper $apsisDateHelper
      * @param ProfileCollectionFactory $profileCollectionFactory
      */
@@ -77,13 +70,11 @@ class AbandonedSub
         AbandonedResource $abandonedResource,
         EventResource $eventResource,
         DateTime $dateTime,
-        ExpressionFactory $expressionFactory,
         ApsisDateHelper $apsisDateHelper,
         ProfileCollectionFactory $profileCollectionFactory
     ) {
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->apsisDateHelper = $apsisDateHelper;
-        $this->expressionFactory = $expressionFactory;
         $this->dateTime = $dateTime;
         $this->eventResource = $eventResource;
         $this->abandonedResource = $abandonedResource;
@@ -141,19 +132,18 @@ class AbandonedSub
                 $profile = $this->profileCollectionFactory->create()
                     ->loadByEmailAndStoreId($quote->getCustomerEmail(), $quote->getStoreId());
                 if (! empty($cartData) && ! empty($cartData['items']) && $profile) {
+                    $uuid = ApsisCoreHelper::generateUniversallyUniqueIdentifier();
                     $abandonedCarts[] = [
                         'quote_id' => $quote->getId(),
                         'cart_data' => $apsisCoreHelper->serialize($cartData),
                         'store_id' => $quote->getStoreId(),
                         'profile_id' => $profile->getId(),
-                        'customer_id' => $quote->getCustomerId(),
+                        'customer_id' => (int) $quote->getCustomerId(),
                         'customer_email' => $quote->getCustomerEmail(),
-                        'token' => $this->expressionFactory->create(
-                            ["expression" => "(SELECT UUID())"]
-                        ),
+                        'token' => $uuid,
                         'created_at' => $createdAt
                     ];
-                    $mainData = $this->getDataForEventFromAcData($cartData, $apsisCoreHelper);
+                    $mainData = $this->getDataForEventFromAcData($cartData, $uuid, $apsisCoreHelper);
                     if (! empty($mainData)) {
                         $subData = $mainData['items'];
                         unset($mainData['items']);
@@ -162,7 +152,7 @@ class AbandonedSub
                             'event_data' => $apsisCoreHelper->serialize($mainData),
                             'sub_event_data' => $apsisCoreHelper->serialize($subData),
                             'profile_id' => $profile->getId(),
-                            'customer_id' => $quote->getCustomerId(),
+                            'customer_id' => (int) $quote->getCustomerId(),
                             'store_id' => $quote->getStoreId(),
                             'email' => $quote->getCustomerEmail(),
                             'status' => Profile::SYNC_STATUS_PENDING,
@@ -188,11 +178,12 @@ class AbandonedSub
 
     /**
      * @param array $acData
-     *
+     * @param string $uuid
      * @param ApsisCoreHelper $apsisCoreHelper
+     *
      * @return array
      */
-    private function getDataForEventFromAcData(array $acData, ApsisCoreHelper $apsisCoreHelper)
+    private function getDataForEventFromAcData(array $acData, string $uuid, ApsisCoreHelper $apsisCoreHelper)
     {
         try {
             $items = [];
@@ -218,6 +209,7 @@ class AbandonedSub
                 'grandTotalAmount' => $acData['grand_total_amount'],
                 'itemsCount' => $acData['items_count'],
                 'currencyCode' => $acData['currency_code'],
+                'token' => $uuid,
                 'items' => $items
             ];
         } catch (Exception $e) {

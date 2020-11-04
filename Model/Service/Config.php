@@ -94,7 +94,6 @@ class Config
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_AVERAGE_ORDER_VALUE
         = 'apsis_one_mappings/customer_attribute/average_order_value';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_TOTAL_SPEND = 'apsis_one_mappings/customer_attribute/total_spend';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_AC_TOKEN = 'apsis_one_mappings/customer_attribute/ac_token';
 
     /**
      * Sync settings
@@ -239,7 +238,6 @@ class Config
     public function getCustomerAttributeMapping(StoreInterface $store)
     {
         $customerMapping = $this->getConfigMappingsByPath($store, self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_GROUP);
-        unset($customerMapping['ac_token']);
         $commonMapping = $this->getCommonAttributeMapping($store);
         return array_merge($customerMapping, $commonMapping);
     }

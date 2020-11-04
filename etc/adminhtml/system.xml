@@ -363,16 +363,6 @@
                     <backend_model>Apsis\One\Model\Config\Backend\Attributes</backend_model>
                     <comment><![CDATA[Attribute Type: Number w/decimals]]></comment>
                 </field>
-                <field id="abandoned_cart" translate="label" sortOrder="360" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Abandoned Cart</label>
-                    <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
-                </field>
-                <field id="ac_token" type="select" translate="label" sortOrder="370" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>Token</label>
-                    <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
-                    <comment><![CDATA[Attribute Type: Text]]></comment>
-                </field>
             </group>
         </section>
         <section id="apsis_one_sync" translate="label" sortOrder="30" showInDefault="1" showInWebsite="1"

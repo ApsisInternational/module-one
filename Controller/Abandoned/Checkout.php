@@ -91,17 +91,16 @@ class Checkout extends Action
     public function execute()
     {
         try {
-            $quoteId = $this->getRequest()->getParam('quote_id');
             $token = $this->getRequest()->getParam('token');
-            if (empty($quoteId) || empty($token) || ! $this->apsisCartHelper->isClean($token) ||
-                empty($ac = $this->apsisCartHelper->getCart($token)) || $ac->getQuoteId() != $quoteId
+            if (empty($token) || ! $this->apsisCartHelper->isClean($token) ||
+                empty($ac = $this->apsisCartHelper->getCart($token))
             ) {
                 return $this->_redirect('');
             }
 
             /** @var Quote $quoteModel */
             $quoteModel = $this->quoteFactory->create();
-            $this->quoteResource->load($quoteModel, $quoteId);
+            $this->quoteResource->load($quoteModel, $ac->getQuoteId());
 
             if (! $quoteModel->getId() || ! $quoteModel->hasItems()) {
                 return $this->_redirect('');

@@ -124,7 +124,7 @@ class Cart extends Template
      */
     public function getUrlForCheckoutLink()
     {
-        $params = ['quote_id' => $this->cart->getQuoteId(), 'token' => $this->cart->getToken()];
+        $params = ['token' => $this->cart->getToken()];
         try {
             $storeId = $this->cart->getStoreId();
             return $this->_storeManager->getStore($storeId)->getUrl(self::APSIS_CART_HANDLE_ENDPOINT, $params);

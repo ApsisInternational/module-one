@@ -398,11 +398,13 @@
                        showInWebsite="1" showInStore="1">
                     <label>Subscription Update Endpoint</label>
                     <frontend_model>Apsis\One\Block\Adminhtml\Config\Profile\SubscriptionEndpoint</frontend_model>
+                    <backend_model>Apsis\One\Model\Config\Backend\InvalidateDataSave</backend_model>
                 </field>
                 <field id="endpoint_key" translate="label" sortOrder="50" type="text" showInDefault="1" showInWebsite="0"
                        showInStore="0">
                     <label>Key</label>
                     <frontend_model>Apsis\One\Block\Adminhtml\Config\FieldBase</frontend_model>
+                    <backend_model>Apsis\One\Model\Config\Backend\InvalidateDataSaveEncrypted</backend_model>
                 </field>
                 <field id="customer_heading" translate="label" sortOrder="60" showInDefault="1" showInWebsite="1"
                        showInStore="1">

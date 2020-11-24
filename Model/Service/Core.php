@@ -318,6 +318,19 @@ class Core extends ApsisLogHelper
     }
 
     /**
+     * @return string
+     */
+    public function getSubscriptionEndpointKey()
+    {
+        $value = $this->getConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
+            ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+            0
+        );
+        return $this->encryptor->decrypt($value);
+    }
+
+    /**
      * @param string $contextScope
      * @param int $scopeId
      *

@@ -8,6 +8,7 @@ use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Exception;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Math\Random;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
@@ -28,15 +29,22 @@ class UpgradeData implements UpgradeDataInterface
     private $random;
 
     /**
+     * @var EncryptorInterface
+     */
+    private $encryptor;
+
+    /**
      * UpgradeData constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param Random $random
+     * @param EncryptorInterface $encryptor
      */
-    public function __construct(ApsisCoreHelper $apsisCoreHelper, Random $random)
+    public function __construct(ApsisCoreHelper $apsisCoreHelper, Random $random, EncryptorInterface $encryptor)
     {
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->random = $random;
+        $this->encryptor = $encryptor;
     }
 
     /**
@@ -49,7 +57,32 @@ class UpgradeData implements UpgradeDataInterface
         if (version_compare($context->getVersion(), '1.2.0', '<')) {
             $this->updateOneTwoZero($setup);
         }
+        if (version_compare($context->getVersion(), '1.5.0', '<')) {
+            $this->updateOneFiveZero($setup);
+        }
         $setup->endSetup();
+    }
+
+    /**
+     * @param ModuleDataSetupInterface $setup
+     */
+    private function updateOneFiveZero(ModuleDataSetupInterface $setup)
+    {
+        try {
+            $value = $this->apsisCoreHelper->getConfigValue(
+                ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
+                ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                0
+            );
+            $this->apsisCoreHelper->saveConfigValue(
+                ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
+                $this->encryptor->encrypt($value),
+                ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                0
+            );
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
     }
 
     /**

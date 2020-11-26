@@ -381,19 +381,35 @@ class Core extends ApsisLogHelper
             $clientId = ($id) ? $id : $this->getClientId($contextScope, $scopeId);
             $clientSecret = ($secret) ? $secret : $this->getClientSecret($contextScope, $scopeId);
             if (! empty($clientId) && ! empty($clientSecret)) {
-                $apiClient = $this->apiClientFactory->create()
-                    ->setRegion($region);
-                $request = $apiClient->getAccessToken($clientId, $clientSecret);
-                if ($request && isset($request->access_token)) {
-                    $scopeArray = $this->resolveContext(
-                        $contextScope,
-                        $scopeId,
-                        ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID
+                $apiClient = $this->apiClientFactory->create()->setRegion($region);
+                $response = $apiClient->getAccessToken($clientId, $clientSecret);
+                $scopeArray = $this->resolveContext(
+                    $contextScope,
+                    $scopeId,
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID
+                );
+                if ($response && isset($response->access_token)) {
+                    $this->saveTokenAndExpiry($scopeArray['scope'], $scopeArray['id'], $response);
+                    return (string) $response->access_token;
+                }
+                if ($response && isset($response->status) && in_array($response->status, [400, 401, 403])) {
+                    $this->saveConfigValue(
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED,
+                        0,
+                        $scopeArray['scope'],
+                        $scopeArray['id']
                     );
-                    $contextScope = $scopeArray['scope'];
-                    $scopeId = $scopeArray['id'];
-                    $this->saveTokenAndExpiry($contextScope, $scopeId, $request);
-                    return (string) $request->access_token;
+                    $this->deleteConfigByScope(
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
+                        $scopeArray['scope'],
+                        $scopeArray['id']
+                    );
+                    $this->deleteConfigByScope(
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE,
+                        $scopeArray['scope'],
+                        $scopeArray['id']
+                    );
+                    $this->cleanCache();
                 }
             }
         } catch (Exception $e) {

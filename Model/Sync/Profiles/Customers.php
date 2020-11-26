@@ -176,7 +176,7 @@ class Customers implements ProfileSyncInterface
             $mappings = array_merge([Profile::INTEGRATION_KEYSPACE => Profile::INTEGRATION_KEYSPACE], $mappings);
             $this->apsisFileHelper->outputCSV($file, array_keys($mappings));
             $customerIds = $collection->getColumnValues('customer_id');
-            $customerCollection = $this->profileResource->buildCustomerCollection($store->getId(), $customerIds);
+            $customerCollection = $this->profileResource->buildCustomerCollection((int) $store->getId(), $customerIds);
             $salesData = $this->profileResource->getSalesDataForCustomers($store, $customerIds, $this->apsisCoreHelper);
             $customersToUpdate = [];
 

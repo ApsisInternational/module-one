@@ -2,11 +2,12 @@
 
 namespace Apsis\One\Setup;
 
+use Apsis\One\Model\Developer;
+use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Framework\Setup\InstallDataInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
-use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 
 class InstallData implements InstallDataInterface
 {
@@ -16,12 +17,19 @@ class InstallData implements InstallDataInterface
     private $profileResource;
 
     /**
+     * @var Developer
+     */
+    private $developer;
+
+    /**
      * InstallData constructor.
      *
+     * @param Developer $developer
      * @param ProfileResource $profileResource
      */
-    public function __construct(ProfileResource $profileResource)
+    public function __construct(Developer $developer, ProfileResource $profileResource)
     {
+        $this->developer = $developer;
         $this->profileResource = $profileResource;
     }
 
@@ -33,6 +41,9 @@ class InstallData implements InstallDataInterface
     {
         $installer = $setup;
         $installer->startSetup();
+
+        /** Remove old config */
+        $this->developer->deleteAllModuleConfig();
 
         /** Populate apsis profile table */
         $this->populateApsisProfileTable($installer);

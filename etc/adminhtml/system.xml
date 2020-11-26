@@ -535,6 +535,7 @@
                        showInWebsite="1" showInStore="1">
                     <label>Cart Content Fetch URL</label>
                     <frontend_model>Apsis\One\Block\Adminhtml\Config\Abandoned\Url</frontend_model>
+                    <backend_model>Apsis\One\Model\Config\Backend\InvalidateDataSave</backend_model>
                 </field>
             </group>
         </section>

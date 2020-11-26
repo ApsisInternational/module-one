@@ -91,7 +91,7 @@ class Developer
      *
      * @return bool
      */
-    private function deleteAllModuleConfig(string $andCondition = '')
+    public function deleteAllModuleConfig(string $andCondition = '')
     {
         try {
             $connection = $this->configResource->getConnection();

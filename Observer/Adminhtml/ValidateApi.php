@@ -86,33 +86,28 @@ class ValidateApi implements ObserverInterface
                         $scope['context_scope'],
                         $scope['context_scope_id']
                     );
-                    $this->apsisCoreHelper->saveConfigValue(
+                    $this->apsisCoreHelper->deleteConfigByScope(
                         ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID,
-                        '',
                         $scope['context_scope'],
                         $scope['context_scope_id']
                     );
-                    $this->apsisCoreHelper->saveConfigValue(
+                    $this->apsisCoreHelper->deleteConfigByScope(
                         ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET,
-                        '',
                         $scope['context_scope'],
                         $scope['context_scope_id']
                     );
-                    $this->apsisCoreHelper->saveConfigValue(
+                    $this->apsisCoreHelper->deleteConfigByScope(
                         ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_REGION,
-                        '',
                         $scope['context_scope'],
                         $scope['context_scope_id']
                     );
-                    $this->apsisCoreHelper->saveConfigValue(
+                    $this->apsisCoreHelper->deleteConfigByScope(
                         ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
-                        '',
                         $scope['context_scope'],
                         $scope['context_scope_id']
                     );
-                    $this->apsisCoreHelper->saveConfigValue(
+                    $this->apsisCoreHelper->deleteConfigByScope(
                         ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE,
-                        '',
                         $scope['context_scope'],
                         $scope['context_scope_id']
                     );

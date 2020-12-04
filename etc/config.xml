@@ -8,11 +8,13 @@
                 <secret></secret>
             </oauth>
         </apsis_one_accounts>
+        <subscription>
+            <key></key>
+        </subscription>
         <apsis_one_sync>
             <sync>
                 <subscriber_enabled>0</subscriber_enabled>
                 <subscriber_consent_topic></subscriber_consent_topic>
-                <endpoint_key></endpoint_key>
                 <customer_enabled>1</customer_enabled>
             </sync>
         </apsis_one_sync>

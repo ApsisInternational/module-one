@@ -69,14 +69,23 @@ class UpgradeData implements UpgradeDataInterface
     private function updateOneFiveZero(ModuleDataSetupInterface $setup)
     {
         try {
+            //Take value from older path
+            $oldConfigPath = 'apsis_one_sync/sync/endpoint_key';
             $value = $this->apsisCoreHelper->getConfigValue(
-                ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
+                $oldConfigPath,
                 ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                 0
             );
+            //Encrypt and save in new path
             $this->apsisCoreHelper->saveConfigValue(
                 ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
                 $this->encryptor->encrypt($value),
+                ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                0
+            );
+            //Remove old path
+            $this->apsisCoreHelper->deleteConfigByScope(
+                $oldConfigPath,
                 ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                 0
             );

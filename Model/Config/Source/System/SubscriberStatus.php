@@ -14,20 +14,24 @@ class SubscriberStatus implements OptionSourceInterface
     {
         return [
             [
+                'value' => null,
+                'label' => __('N/A')
+            ],
+            [
                 'value' => Subscriber::STATUS_SUBSCRIBED,
-                'label' => 'Subscribed'
+                'label' => __('Subscribed')
             ],
             [
                 'value' => Subscriber::STATUS_NOT_ACTIVE,
-                'label' => 'Not Active',
+                'label' => __('Not Active')
             ],
             [
                 'value' => Subscriber::STATUS_UNCONFIRMED,
-                'label' => 'Unconfirmed',
+                'label' => __('Unconfirmed')
             ],
             [
                 'value' => Subscriber::STATUS_UNSUBSCRIBED,
-                'label' => 'Unsubscribed',
+                'label' => __('Unsubscribed')
             ]
         ];
     }

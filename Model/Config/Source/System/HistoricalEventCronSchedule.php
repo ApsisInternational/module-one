@@ -16,10 +16,10 @@ class HistoricalEventCronSchedule extends CronSchedule implements OptionSourceIn
         if ($this->state->getMode() !== State::MODE_PRODUCTION) {
             $options[] = [
                 'value' => '*/15 * * * *',
-                'label' => 'Every 15 Minutes. Not recommended, strictly for testing'
+                'label' => __('Every 15 Minutes. Not recommended, strictly for testing')
             ];
         }
-        $options[] = ['value' => '0 0 * * *', 'label' => 'Everyday 12AM'];
+        $options[] = ['value' => '0 0 * * *', 'label' => __('Everyday 12AM')];
         return $options;
     }
 }

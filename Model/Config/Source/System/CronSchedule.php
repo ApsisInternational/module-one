@@ -31,12 +31,12 @@ class CronSchedule implements OptionSourceInterface
         if ($this->state->getMode() !== State::MODE_PRODUCTION) {
             $options[] = [
                 'value' => '*/1 * * * *',
-                'label' => 'Every 1 Minutes. Not recommended, strictly for testing'
+                'label' => __('Every 1 Minutes. Not recommended, strictly for testing')
             ];
         }
-        $options[] = ['value' => '*/5 * * * *', 'label' => 'Every 5 Minutes'];
-        $options[] = ['value' => '*/10 * * * *', 'label' => 'Every 10 Minutes'];
-        $options[] = ['value' => '*/15 * * * *', 'label' => 'Every 15 Minutes'];
+        $options[] = ['value' => '*/5 * * * *', 'label' => __('Every 5 Minutes')];
+        $options[] = ['value' => '*/10 * * * *', 'label' => __('Every 10 Minutes')];
+        $options[] = ['value' => '*/15 * * * *', 'label' => __('Every 15 Minutes')];
         return $options;
     }
 }

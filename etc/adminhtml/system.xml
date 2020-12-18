@@ -11,7 +11,23 @@
             <label>Accounts</label>
             <tab>apsis_one</tab>
             <resource>Apsis_One::config</resource>
-            <group id="oauth" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="subscription" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Subscription Update</label>
+                <attribute type="expanded">1</attribute>
+                <field id="endpoint" translate="label" sortOrder="10" type="text" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Endpoint</label>
+                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Profile\SubscriptionEndpoint</frontend_model>
+                    <backend_model>Apsis\One\Model\Config\Backend\InvalidateDataSave</backend_model>
+                </field>
+                <field id="key" translate="label" sortOrder="20" type="text" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Key</label>
+                    <frontend_model>Apsis\One\Block\Adminhtml\Config\FieldBase</frontend_model>
+                    <backend_model>Apsis\One\Model\Config\Backend\InvalidateDataSaveEncrypted</backend_model>
+                </field>
+            </group>
+            <group id="oauth" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>OAUTH Credentials</label>
                 <attribute type="expanded">1</attribute>
                 <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1"
@@ -394,22 +410,12 @@
                         <field id="subscriber_enabled">1</field>
                     </depends>
                 </field>
-                <field id="subscription_endpoint" translate="label" sortOrder="40" type="text" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>Subscription Update Endpoint</label>
-                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Profile\SubscriptionEndpoint</frontend_model>
-                </field>
-                <field id="endpoint_key" translate="label" sortOrder="50" type="text" showInDefault="1" showInWebsite="0"
-                       showInStore="0">
-                    <label>Key</label>
-                    <frontend_model>Apsis\One\Block\Adminhtml\Config\FieldBase</frontend_model>
-                </field>
-                <field id="customer_heading" translate="label" sortOrder="60" showInDefault="1" showInWebsite="1"
+                <field id="customer_heading" translate="label" sortOrder="40" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Customer</label>
                     <frontend_model>Magento\Config\Block\System\Config\Form\Field\Heading</frontend_model>
                 </field>
-                <field id="customer_enabled" translate="label" type="select" sortOrder="70" showInDefault="1"
+                <field id="customer_enabled" translate="label" type="select" sortOrder="50" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Enabled</label>
                     <source_model>Magento\Config\Model\Config\Source\Enabledisable</source_model>
@@ -533,6 +539,7 @@
                        showInWebsite="1" showInStore="1">
                     <label>Cart Content Fetch URL</label>
                     <frontend_model>Apsis\One\Block\Adminhtml\Config\Abandoned\Url</frontend_model>
+                    <backend_model>Apsis\One\Model\Config\Backend\InvalidateDataSave</backend_model>
                 </field>
             </group>
         </section>

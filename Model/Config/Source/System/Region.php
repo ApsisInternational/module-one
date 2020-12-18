@@ -34,7 +34,7 @@ class Region implements OptionSourceInterface
      */
     public function toOptionArray()
     {
-        $options[] = ['value' => '', 'label' => 'Please select region'];
+        $options[] = ['value' => '', 'label' => __('Please select region')];
         if ($this->state->getMode() !== State::MODE_PRODUCTION) {
             $options[] = ['value' => self::REGION_STAGE, 'label' => 'Stage'];
         }

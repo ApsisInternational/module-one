@@ -165,11 +165,7 @@ class Subscription extends Action
      */
     private function authenticateKey(string $key)
     {
-        return $this->apsisCoreHelper->getConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
-            ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            0
-        ) === $key;
+        return $this->apsisCoreHelper->getSubscriptionEndpointKey() === $key;
     }
 
     /**

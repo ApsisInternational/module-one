@@ -88,7 +88,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 'customer_sync_status' => ApsisProfile::SYNC_STATUS_PENDING,
                 'error_message' => '',
                 'updated_at' => $this->dateTime->formatDate(true),
-                'topic_subscription' => ''
+                'topic_subscription' => $this->expressionFactory->create(["expression" => ('null')])
             ];
             return $this->getConnection()->update(
                 $this->getMainTable(),
@@ -216,7 +216,7 @@ class Profile extends AbstractDb implements ResourceInterface
      *
      * @throws LocalizedException
      */
-    public function buildCustomerCollection($storeId, array $customerIds)
+    public function buildCustomerCollection(int $storeId, array $customerIds)
     {
         $customerLog = $this->getTable('customer_log');
         $customerCollection = $this->customerCollectionFactory->create()
@@ -254,7 +254,7 @@ class Profile extends AbstractDb implements ResourceInterface
      *
      * @throws LocalizedException
      */
-    private function addShippingJoinAttributesToCustomerCollection(Collection $customerCollection, $storeId)
+    private function addShippingJoinAttributesToCustomerCollection(Collection $customerCollection, int $storeId)
     {
         $customerCollection = $customerCollection->joinAttribute(
             'shipping_street',
@@ -324,7 +324,7 @@ class Profile extends AbstractDb implements ResourceInterface
      *
      * @throws LocalizedException
      */
-    private function addBillingJoinAttributesToCustomerCollection(Collection $customerCollection, $storeId)
+    private function addBillingJoinAttributesToCustomerCollection(Collection $customerCollection, int $storeId)
     {
         $customerCollection = $customerCollection->joinAttribute(
             'billing_street',
@@ -413,7 +413,7 @@ class Profile extends AbstractDb implements ResourceInterface
             ->addFieldToFilter('store_id', $store->getId())
             ->addFieldToFilter('status', ['in' => $statuses]);
 
-        $columnData = $this->buildColumnData($salesOrderGrid, $store->getId(), $statuses);
+        $columnData = $this->buildColumnData($salesOrderGrid, (int) $store->getId(), $statuses);
         $orderCollection->getSelect()
             ->columns($columnData)
             ->group('customer_id');
@@ -439,7 +439,7 @@ class Profile extends AbstractDb implements ResourceInterface
      *
      * @return array
      */
-    private function buildColumnData($salesOrderGrid, $storeId, $statuses)
+    private function buildColumnData(string $salesOrderGrid, int $storeId, string $statuses)
     {
         $statusText = $this->getConnection()->quoteInto('status in (?)', explode(",", $statuses));
         return [

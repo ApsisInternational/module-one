@@ -46,12 +46,7 @@ class Attributes implements OptionSourceInterface
             $section = $this->apsisCoreHelper->getMappedValueFromSelectedScope(
                 ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
             );
-            $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
-            $apiClient = $this->apsisCoreHelper->getApiClient(
-                $scope['context_scope'],
-                $scope['context_scope_id']
-            );
-            if (! $apiClient || ! $section) {
+            if (! $section) {
                 return [];
             }
 
@@ -59,6 +54,14 @@ class Attributes implements OptionSourceInterface
             if ($savedAttributes) {
                 $attributes = $savedAttributes;
             } else {
+                $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
+                $apiClient = $this->apsisCoreHelper->getApiClient(
+                    $scope['context_scope'],
+                    $scope['context_scope_id']
+                );
+                if (! $apiClient) {
+                    return [];
+                }
                 $attributes = $apiClient->getAttributes($section);
                 $this->registry->unregister(self::REGISTRY_NAME);
                 $this->registry->register(self::REGISTRY_NAME, $attributes, true);

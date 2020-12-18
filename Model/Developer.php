@@ -2,13 +2,14 @@
 
 namespace Apsis\One\Model;
 
-use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Apsis\One\Model\ResourceModel\ProfileBatch;
-use Apsis\One\Model\ResourceModel\Profile;
-use Apsis\One\Model\ResourceModel\Event;
 use Apsis\One\Model\ResourceModel\Abandoned;
-use Magento\Config\Model\ResourceModel\Config as configResource;
+use Apsis\One\Model\ResourceModel\Event;
+use Apsis\One\Model\ResourceModel\Profile;
+use Apsis\One\Model\ResourceModel\ProfileBatch;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Exception;
+use Magento\Config\Model\ResourceModel\Config as configResource;
 
 class Developer
 {
@@ -79,21 +80,22 @@ class Developer
             $this->abandoned->truncateTable($this->apsisLogHelper) &&
             $this->profile->truncateTable($this->apsisLogHelper) &&
             $this->profile->populateProfilesTable($this->apsisLogHelper) &&
-            $this->deleteAllModuleConfig()
+            $this->deleteAllModuleConfig(
+                sprintf("and path != '%s'", ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY)
+            )
         );
     }
 
     /**
+     * @param string $andCondition
+     *
      * @return bool
      */
-    private function deleteAllModuleConfig()
+    public function deleteAllModuleConfig(string $andCondition = '')
     {
         try {
             $connection = $this->configResource->getConnection();
-            $connection->delete(
-                $this->configResource->getMainTable(),
-                "path like '%apsis_one%'"
-            );
+            $connection->delete($this->configResource->getMainTable(), "path like 'apsis_one%' $andCondition");
             $this->apsisLogHelper->cleanCache();
             return true;
         } catch (Exception $e) {

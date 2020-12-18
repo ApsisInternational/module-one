@@ -14,20 +14,24 @@ class SyncStatus implements OptionSourceInterface
     {
         return [
             [
+                'value' => 'NA',
+                'label' => __('N/A')
+            ],
+            [
                 'value' => Profile::SYNC_STATUS_PENDING,
-                'label' => 'Pending'
+                'label' => __('Pending')
             ],
             [
                 'value' => Profile::SYNC_STATUS_BATCHED,
-                'label' => 'Batched',
+                'label' => __('Batched')
             ],
             [
                 'value' => Profile::SYNC_STATUS_SYNCED,
-                'label' => 'Synced',
+                'label' => __('Synced')
             ],
             [
                 'value' => Profile::SYNC_STATUS_FAILED,
-                'label' => 'Failed',
+                'label' => __('Failed')
             ]
         ];
     }

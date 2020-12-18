@@ -117,6 +117,10 @@ class Section extends Value
             $scope['context_scope'],
             $scope['context_scope_id']
         );
+
+        //Clean cache
+        $this->apsisCoreHelper->cleanCache();
+
         $format = 'User changed section for SCOPE: %s with ID: %s';
         $string = sprintf($format, $scope['context_scope'], $scope['context_scope_id']);
         $this->apsisCoreHelper->log($string);

@@ -311,7 +311,7 @@ class Rest
     }
 
     /**
-     * @param null|stdClass $response
+     * @param mixed $response
      * @param string $method
      *
      * @return mixed
@@ -323,12 +323,21 @@ class Rest
             return false;
         }
 
-        if (isset($response->status) && (int) $response->status === self::HTTP_CODE_CONFLICT) {
-            return self::HTTP_CODE_CONFLICT;
-        }
-
         if (isset($response->status) && isset($response->detail)) {
+            //For Profile merge request
+            if ($response->status === self::HTTP_CODE_CONFLICT) {
+                return self::HTTP_CODE_CONFLICT;
+            }
+
+            //Log error
             $this->helper->debug($method, (array) $response);
+
+            //For getAccessToken api call
+            if (strpos($method, '::getAccessToken') !== false) {
+                return $response;
+            }
+
+            //All other error response handling
             return (in_array($response->status, $this->errorCodesToRetry)) ? false : (string) $response->detail;
         }
 

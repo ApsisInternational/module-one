@@ -6,6 +6,7 @@ use Apsis\One\Model\Service\Cart as ApsisCartHelper;
 use Apsis\One\Model\Service\Log;
 use Exception;
 use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Customer\Api\Data\GroupInterface;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
@@ -106,11 +107,7 @@ class Checkout extends Action
                 return $this->_redirect('');
             }
 
-            if ($quoteModel->getCustomerId()) {
-                return $this->handleRequestForRegisteredCustomer($quoteModel);
-            } else {
-                return $this->handleRequestForGuestCustomer($quoteModel);
-            }
+            return $this->handleCartRebuildRequest($quoteModel);
         } catch (Exception $e) {
             $this->log->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return $this->_redirect('');
@@ -122,27 +119,7 @@ class Checkout extends Action
      *
      * @return ResponseInterface
      */
-    private function handleRequestForRegisteredCustomer(Quote $quoteModel)
-    {
-        try {
-            if ($this->customerSession->isLoggedIn()) {
-                return $this->_redirect($quoteModel->getStore()->getUrl('checkout/cart'));
-            } else {
-                $this->customerSession->setBeforeAuthUrl($quoteModel->getStore()->getUrl('checkout/cart'));
-                return $this->_redirect($quoteModel->getStore()->getUrl('customer/account/login'));
-            }
-        } catch (Exception $e) {
-            $this->log->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-            return $this->_redirect('');
-        }
-    }
-
-    /**
-     * @param Quote $quoteModel
-     *
-     * @return ResponseInterface
-     */
-    private function handleRequestForGuestCustomer(Quote $quoteModel)
+    private function handleCartRebuildRequest(Quote $quoteModel)
     {
         try {
             $quoteModel->setIsActive(1)->setReservedOrderId(null)->removePayment();

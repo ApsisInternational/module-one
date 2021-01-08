@@ -71,24 +71,35 @@ class UpgradeData implements UpgradeDataInterface
         try {
             //Take value from older path
             $oldConfigPath = 'apsis_one_sync/sync/endpoint_key';
-            $value = $this->apsisCoreHelper->getConfigValue(
+            $oldValue = $this->apsisCoreHelper->getConfigValue(
                 $oldConfigPath,
                 ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                 0
             );
-            //Encrypt and save in new path
-            $this->apsisCoreHelper->saveConfigValue(
-                ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
-                $this->encryptor->encrypt($value),
-                ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-                0
-            );
-            //Remove old path
-            $this->apsisCoreHelper->deleteConfigByScope(
-                $oldConfigPath,
-                ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-                0
-            );
+            if (strlen($oldValue)) {
+                $value = $oldValue;
+                //Remove old path
+                $this->apsisCoreHelper->deleteConfigByScope(
+                    $oldConfigPath,
+                    ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                    0
+                );
+            } else {
+                $value = $this->apsisCoreHelper->getConfigValue(
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
+                    ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                    0
+                );
+            }
+            if (strlen($value)) {
+                //Encrypt and save in new path
+                $this->apsisCoreHelper->saveConfigValue(
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
+                    $this->encryptor->encrypt($value),
+                    ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                    0
+                );
+            }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }

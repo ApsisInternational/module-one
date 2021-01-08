@@ -57,6 +57,7 @@ class InstallData implements InstallDataInterface
     private function populateApsisProfileTable(ModuleDataSetupInterface $installer)
     {
         $apsisProfileTable = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
+        $installer->getConnection()->truncateTable($apsisProfileTable);
         $magentoSubscriberTable = $installer->getTable('newsletter_subscriber');
         $this->profileResource->fetchAndPopulateCustomers(
             $installer->getConnection(),

@@ -113,7 +113,7 @@ class Checkout extends Action
         try {
             $quoteModel->setIsActive(1)->setReservedOrderId(null);
             $this->cartRepository->save($quoteModel);
-            $this->checkoutSession->clearQuote()->replaceQuote($quoteModel);
+            $this->checkoutSession->replaceQuote($quoteModel)->unsLastRealOrderId();
             return $this->_redirect($quoteModel->getStore()->getUrl('checkout/cart'));
         } catch (Exception $e) {
             $this->log->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());

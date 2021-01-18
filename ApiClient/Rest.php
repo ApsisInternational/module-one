@@ -3,6 +3,7 @@
 namespace Apsis\One\ApiClient;
 
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Apsis\One\Model\Config\Source\System\Region;
 use Exception;
 use stdClass;
 
@@ -22,6 +23,9 @@ class Rest
     const VERB_DELETE = 'DELETE';
     const VERB_PATCH = 'PATCH';
 
+    const PRODUCTION_TLD = 'one';
+    const STAGE_TLD = 'cloud';
+
     /**
      * @var array
      */
@@ -30,7 +34,7 @@ class Rest
     /**
      * @var string
      */
-    protected $hostName = 'https://%s.apsis.one';
+    protected $hostName = 'https://%s.apsis.%s';
 
     /**
      * @var string
@@ -280,7 +284,11 @@ class Rest
      */
     public function setRegion(string $region)
     {
-        $this->hostName = sprintf($this->hostName, $region);
+        $tld = self::PRODUCTION_TLD;
+        if ($region === Region::REGION_STAGE) {
+            $tld = self::STAGE_TLD;
+        }
+        $this->hostName = sprintf($this->hostName, $region, $tld);
         return $this;
     }
 

@@ -149,12 +149,20 @@ class Event extends AbstractDb implements ResourceInterface
     /**
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param array $storeIds
+     * @param array $ids
      *
      * @return int
      */
-    public function resetEvents(ApsisCoreHelper $apsisCoreHelper, array $storeIds)
+    public function resetEvents(ApsisCoreHelper $apsisCoreHelper, array $storeIds = [], array $ids = [])
     {
         try {
+            $where = [];
+            if (! empty($storeIds)) {
+                $where["store_id IN (?)"] = $storeIds;
+            }
+            if (! empty($ids)) {
+                $where["id IN (?)"] = $ids;
+            }
             $bind = [
                 'status' => ApsisProfile::SYNC_STATUS_PENDING,
                 'error_message' => '',
@@ -163,7 +171,7 @@ class Event extends AbstractDb implements ResourceInterface
             return $this->getConnection()->update(
                 $this->getMainTable(),
                 $bind,
-                empty($storeIds) ? '' : ["store_id IN (?)" => $storeIds]
+                $where
             );
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());

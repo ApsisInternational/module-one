@@ -14,15 +14,9 @@ use Magento\Framework\Controller\ResultInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Api\Data\CartInterfaceFactory as QuoteFactory;
 use Magento\Quote\Model\Quote;
-use Magento\Quote\Model\ResourceModel\Quote as QuoteResource;
 
 class Checkout extends Action
 {
-    /**
-     * @var QuoteResource
-     */
-    private $quoteResource;
-
     /**
      * @var QuoteFactory
      */
@@ -57,7 +51,6 @@ class Checkout extends Action
      * Checkout constructor.
      *
      * @param Context $context
-     * @param QuoteResource $quoteResource
      * @param QuoteFactory $quoteFactory
      * @param CustomerSession $customerSession
      * @param CheckoutSession $checkoutSession
@@ -67,7 +60,6 @@ class Checkout extends Action
      */
     public function __construct(
         Context $context,
-        QuoteResource $quoteResource,
         QuoteFactory $quoteFactory,
         CustomerSession $customerSession,
         CheckoutSession $checkoutSession,
@@ -80,7 +72,6 @@ class Checkout extends Action
         $this->cartRepository = $cartRepository;
         $this->checkoutSession = $checkoutSession;
         $this->quoteFactory = $quoteFactory;
-        $this->quoteResource = $quoteResource;
         $this->customerSession = $customerSession;
         parent::__construct($context);
     }
@@ -99,18 +90,13 @@ class Checkout extends Action
             }
 
             /** @var Quote $quoteModel */
-            $quoteModel = $this->quoteFactory->create();
-            $this->quoteResource->load($quoteModel, $ac->getQuoteId());
+            $quoteModel = $this->cartRepository->get($ac->getQuoteId());
 
             if (! $quoteModel->getId() || ! $quoteModel->hasItems()) {
                 return $this->_redirect('');
             }
 
-            if ($quoteModel->getCustomerId()) {
-                return $this->handleRequestForRegisteredCustomer($quoteModel);
-            } else {
-                return $this->handleRequestForGuestCustomer($quoteModel);
-            }
+            return $this->handleCartRebuildRequest($quoteModel);
         } catch (Exception $e) {
             $this->log->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return $this->_redirect('');
@@ -122,30 +108,10 @@ class Checkout extends Action
      *
      * @return ResponseInterface
      */
-    private function handleRequestForRegisteredCustomer(Quote $quoteModel)
+    private function handleCartRebuildRequest(Quote $quoteModel)
     {
         try {
-            if ($this->customerSession->isLoggedIn()) {
-                return $this->_redirect($quoteModel->getStore()->getUrl('checkout/cart'));
-            } else {
-                $this->customerSession->setBeforeAuthUrl($quoteModel->getStore()->getUrl('checkout/cart'));
-                return $this->_redirect($quoteModel->getStore()->getUrl('customer/account/login'));
-            }
-        } catch (Exception $e) {
-            $this->log->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-            return $this->_redirect('');
-        }
-    }
-
-    /**
-     * @param Quote $quoteModel
-     *
-     * @return ResponseInterface
-     */
-    private function handleRequestForGuestCustomer(Quote $quoteModel)
-    {
-        try {
-            $quoteModel->setIsActive(1)->setReservedOrderId(null)->removePayment();
+            $quoteModel->setIsActive(1)->setReservedOrderId(null);
             $this->cartRepository->save($quoteModel);
             $this->checkoutSession->replaceQuote($quoteModel)->unsLastRealOrderId();
             return $this->_redirect($quoteModel->getStore()->getUrl('checkout/cart'));

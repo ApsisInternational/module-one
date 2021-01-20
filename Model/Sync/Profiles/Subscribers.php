@@ -264,6 +264,7 @@ class Subscribers implements ProfileSyncInterface
                         try {
                             $profileData = $profileDataArr[$subscriber->getSubscriberId()];
                             $subscriber->setIntegrationUid($profileData['integration_uid']);
+                            $subscriber->setProfileKey($profileData['integration_uid']);
 
                             //Main operation for both opt-in and opt-out consents
                             if (! empty($profileData['consent_topics']['main_function'])) {

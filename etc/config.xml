@@ -40,6 +40,7 @@
                 <section></section>
             </section_topic_mapping>
             <customer_subscriber_common_attribute>
+                <profile_key>com.apsis1.integrations.magento.attributes.profile-key</profile_key>
                 <website_id>com.apsis1.integrations.magento.attributes.website-id</website_id>
                 <store_id>com.apsis1.integrations.magento.attributes.store-id</store_id>
                 <website_name>com.apsis1.integrations.magento.attributes.website-name</website_name>

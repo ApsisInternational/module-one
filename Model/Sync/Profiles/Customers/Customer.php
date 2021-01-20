@@ -128,6 +128,14 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
+    private function getProfileKey()
+    {
+        return (string) $this->customer->getProfileKey();
+    }
+
+    /**
+     * @return string
+     */
     private function getIntegrationUid()
     {
         return (string) $this->customer->getIntegrationUid();

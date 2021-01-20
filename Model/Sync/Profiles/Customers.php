@@ -185,6 +185,7 @@ class Customers implements ProfileSyncInterface
                 try {
                     if (isset($integrationIdsArray[$customer->getId()])) {
                         $customer->setIntegrationUid($integrationIdsArray[$customer->getId()]);
+                        $customer->setProfileKey($integrationIdsArray[$customer->getId()]);
                         if (isset($salesData[$customer->getId()])) {
                             $customer = $this->setSalesDataOnCustomer($salesData[$customer->getId()], $customer);
                         }

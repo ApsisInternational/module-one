@@ -84,6 +84,13 @@
             <group id="customer_subscriber_common_attribute" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1"
                    showInStore="1">
                 <label>Common Attribute Mapping</label>
+                <field id="profile_key" type="select" translate="label" sortOrder="5" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Profile Key</label>
+                    <source_model>Apsis\One\Model\Config\Source\Datamapping\Attributes</source_model>
+                    <backend_model>Apsis\One\Model\Config\Backend\Attributes</backend_model>
+                    <comment><![CDATA[Attribute Type: Text]]></comment>
+                </field>
                 <field id="website_id" type="select" translate="label" sortOrder="10" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Website Id</label>

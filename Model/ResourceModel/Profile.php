@@ -111,7 +111,6 @@ class Profile extends AbstractDb implements ResourceInterface
 
     /**
      * @param array $subscriberIds
-     * @param int $storeId
      * @param int $status
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param string $msg
@@ -120,7 +119,6 @@ class Profile extends AbstractDb implements ResourceInterface
      */
     public function updateSubscribersSyncStatus(
         array $subscriberIds,
-        int $storeId,
         int $status,
         ApsisCoreHelper $apsisCoreHelper,
         string $msg = ''
@@ -139,7 +137,7 @@ class Profile extends AbstractDb implements ResourceInterface
             return $write->update(
                 $this->getMainTable(),
                 $bind,
-                ["subscriber_id IN (?)" => $subscriberIds, "store_id = ?" => $storeId]
+                ["subscriber_id IN (?)" => $subscriberIds]
             );
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
@@ -180,7 +178,6 @@ class Profile extends AbstractDb implements ResourceInterface
 
     /**
      * @param array $customerIds
-     * @param int $storeId
      * @param int $status
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param string $msg
@@ -189,7 +186,6 @@ class Profile extends AbstractDb implements ResourceInterface
      */
     public function updateCustomerSyncStatus(
         array $customerIds,
-        int $storeId,
         int $status,
         ApsisCoreHelper $apsisCoreHelper,
         string $msg = ''
@@ -208,7 +204,7 @@ class Profile extends AbstractDb implements ResourceInterface
             return $write->update(
                 $this->getMainTable(),
                 $bind,
-                ["customer_id IN (?)" => $customerIds, "store_id = ?" => $storeId]
+                ["customer_id IN (?)" => $customerIds]
             );
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());

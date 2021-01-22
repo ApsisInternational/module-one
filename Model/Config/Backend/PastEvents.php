@@ -80,7 +80,7 @@ class PastEvents extends Value
                 self::TYPE_DURATION_TO_TIMESTAMP_MAPPING[$this->getPath()],
                 $this->dateTime->formatDate(true),
                 $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-                $this->getScopeCode()
+                $this->getScopeId()
             );
         } elseif (! (boolean) $this->getValue()) {
             $this->deleteDependantConfig();
@@ -105,7 +105,7 @@ class PastEvents extends Value
         $this->writer->delete(
             self::TYPE_DURATION_TO_TIMESTAMP_MAPPING[$this->getPath()],
             $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            $this->getScopeCode()
+            $this->getScopeId()
         );
     }
 }

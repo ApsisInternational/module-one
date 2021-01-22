@@ -324,6 +324,7 @@ class Profile
     {
         $this->createProfile(
             (int) $customer->getStoreId(),
+            (int) $customer->getWebsiteId(),
             (string) $customer->getEmail(),
             0,
             (int) $customer->getId()
@@ -338,6 +339,7 @@ class Profile
         if ((int) $subscriber->getStatus() === Subscriber::STATUS_SUBSCRIBED) {
             $this->createProfile(
                 (int) $subscriber->getStoreId(),
+                (int) $this->apsisCoreHelper->getStore($subscriber->getStoreId())->getWebsiteId(),
                 (string) $subscriber->getEmail(),
                 (int) $subscriber->getSubscriberId()
             );
@@ -346,12 +348,14 @@ class Profile
 
     /**
      * @param int $storeId
+     * @param int $websiteId
      * @param string $email
      * @param int $subscriberId
      * @param int $customerId
      */
     private function createProfile(
         int $storeId,
+        int $websiteId,
         string $email,
         int $subscriberId,
         int $customerId = 0
@@ -359,6 +363,7 @@ class Profile
         try {
             $profile = $this->profileFactory->create();
             $profile->setStoreId($storeId)
+                ->setWebsiteId($websiteId)
                 ->setEmail($email);
             if ($customerId) {
                 $profile->setCustomerId($customerId)

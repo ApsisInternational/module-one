@@ -51,6 +51,9 @@ class Profiles implements SyncInterface
         $stores = $apsisCoreHelper->getStores();
         foreach ($stores as $store) {
             try {
+                if (! $store->getWebsite()) {
+                    continue;
+                }
                 $account = $apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
                 if ($account) {
                     $this->subscribers->processForStore($store, $apsisCoreHelper);

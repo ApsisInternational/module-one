@@ -156,12 +156,14 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
         ApsisCoreHelper $apsisCoreHelper
     ) {
         try {
-            return $this->wishlistItemCollectionFactory->create()
+            $collection = $this->wishlistItemCollectionFactory->create()
                 ->addStoreFilter([$storeId])
                 ->addFieldToFilter('wishlist_id', ['in' => $wishlistIds])
                 ->addFieldToFilter('added_at', $period)
                 ->setVisibilityFilter()
                 ->setSalableFilter();
+            $collection->getSelect()->group('wishlist_item_id');
+            return $collection;
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return [];
@@ -201,6 +203,7 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
                     );
                     if (! empty($eventData)) {
                         $eventDataForEvent = $this->getEventData(
+                            $wishlistItem->getStoreId(),
                             $profileCollectionArray[$wishlistArrayCollection[$wishlistItem->getWishlistId()]
                                 ->getCustomerId()],
                             Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST,

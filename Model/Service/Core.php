@@ -17,6 +17,7 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Store\Api\Data\StoreInterface;
+use Magento\Store\Api\Data\WebsiteInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use stdClass;
@@ -630,6 +631,20 @@ class Core extends ApsisLogHelper
             $storeIds[] = $store->getId();
         }
         return $storeIds;
+    }
+
+    /**
+     * @param false $withDefault
+     * @return array|WebsiteInterface[]
+     */
+    public function getAllWebsites($withDefault = false)
+    {
+        try {
+            return $this->storeManager->getWebsites($withDefault);
+        } catch (Exception $e) {
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return [];
+        }
     }
 
     /**

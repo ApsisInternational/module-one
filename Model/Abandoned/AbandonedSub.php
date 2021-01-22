@@ -12,6 +12,7 @@ use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Exception;
 use Magento\Framework\Stdlib\DateTime;
+use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\ResourceModel\Quote\Collection;
 use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
 use Magento\Store\Api\Data\StoreInterface;
@@ -124,13 +125,22 @@ class AbandonedSub
         $abandonedCarts = [];
         $events = [];
         $createdAt = $this->dateTime->formatDate(true);
+        /** @var Quote $quote */
         foreach ($quoteCollection as $quote) {
             try {
+                if ($quote->getCustomerId()) {
+                    $profile = $this->profileCollectionFactory->create()
+                        ->loadByCustomerId($quote->getCustomerId());
+                } else {
+                    if (! $quote->getStore()->getWebsite()) {
+                        continue;
+                    }
+                    $storeIds = $quote->getStore()->getWebsite()->getStoreIds();
+                    $profile = $this->profileCollectionFactory->create()
+                        ->loadByEmailAndStoreId($quote->getCustomerEmail(), $storeIds);
+                }
                 $cartData = $this->cartContentFactory->create()
                     ->getCartData($quote, $apsisCoreHelper);
-                /** @var Profile $profile */
-                $profile = $this->profileCollectionFactory->create()
-                    ->loadByEmailAndStoreId($quote->getCustomerEmail(), $quote->getStoreId());
                 if (! empty($cartData) && ! empty($cartData['items']) && $profile) {
                     $uuid = ApsisCoreHelper::generateUniversallyUniqueIdentifier();
                     $abandonedCarts[] = [

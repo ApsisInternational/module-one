@@ -71,19 +71,20 @@ class Placed implements ObserverInterface
         }
 
         try {
-            if ($order->getCustomerIsGuest()) {
+            if ($order->getCustomerIsGuest() || empty($order->getCustomerId())) {
+                if (! $order->getStore()->getWebsite()) {
+                    return $this;
+                }
+                $storeIds = $order->getStore()->getWebsite()->getStoreIds();
                 $profile = $this->profileCollectionFactory->create()
-                    ->loadSubscriberByEmailAndStoreId($order->getCustomerEmail(), $order->getStoreId());
+                    ->loadByEmailAndStoreId($order->getCustomerEmail(), $storeIds);
                 if (! $profile) {
                     return $this;
                 }
             } else {
                 /** @var Profile $profile */
                 $profile = $this->profileCollectionFactory->create()
-                    ->loadByEmailAndStoreId(
-                        $order->getCustomerEmail(),
-                        $order->getStore()->getId()
-                    );
+                    ->loadByCustomerId($order->getCustomerId());
                 $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
             }
             $this->eventService->registerOrderPlacedEvent($order, $profile);

@@ -88,10 +88,7 @@ class AddProduct implements ObserverInterface
 
             /** @var Profile $profile */
             $profile = $this->profileCollectionFactory->create()
-                ->loadByEmailAndStoreId(
-                    $cart->getCustomerEmail(),
-                    $cart->getStore()->getId()
-                );
+                ->loadByCustomerId($cart->getCustomerId());
 
             if ($this->isOkToProceed($cart->getStore()) && $profile && $item) {
                 $this->eventService->registerProductCartedEvent($cart, $item, $profile);

@@ -3,16 +3,16 @@
 namespace Apsis\One\Observer\Customer\Wishlist;
 
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Event;
 use Exception;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Wishlist\Model\Wishlist;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 
 class AddProduct implements ObserverInterface
 {
@@ -67,10 +67,14 @@ class AddProduct implements ObserverInterface
             $wishlist = $observer->getEvent()->getWishlist();
             $store = $wishlist->getStore();
             $customer = $this->customerRepository->getById($wishlist->getCustomerId());
-            $profile = $this->profileCollectionFactory->create()
-                ->loadByEmailAndStoreId($customer->getEmail(), $store->getId());
+            if (empty($customer->getId())) {
+                return $this;
+            }
 
-            if ($customer && $this->isOkToProceed($store) && $profile) {
+            $profile = $this->profileCollectionFactory->create()
+                ->loadByCustomerId($customer->getId());
+
+            if ($this->isOkToProceed($store) && $profile) {
                 $this->eventService->registerWishlistEvent($observer, $wishlist, $store, $profile, $customer);
             }
         } catch (Exception $e) {

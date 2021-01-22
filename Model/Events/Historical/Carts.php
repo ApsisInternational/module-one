@@ -110,6 +110,7 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
                             ! empty($eventData = $this->eventData->getDataArr($quote, $item, $apsisCoreHelper))
                         ) {
                             $eventDataForEvent = $this->getEventData(
+                                $quote->getStoreId(),
                                 $profileCollectionArray[$quote->getCustomerId()],
                                 Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART,
                                 $item->getCreatedAt(),

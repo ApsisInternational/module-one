@@ -189,7 +189,7 @@ class Subscribers implements ProfileSyncInterface
         try {
             $collection = $this->profileCollectionFactory->create()
                 ->getSubscribersToBatchByStore(
-                    $store->getId(),
+                    $store->getWebsite()->getStoreIds(),
                     $limit,
                     $subscriberStatus
                 );
@@ -550,7 +550,6 @@ class Subscribers implements ProfileSyncInterface
                 );
             $this->profileResource->updateSubscribersSyncStatus(
                 $subscribersToUpdate,
-                $store->getId(),
                 Profile::SYNC_STATUS_BATCHED,
                 $this->apsisCoreHelper
             );

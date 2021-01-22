@@ -116,7 +116,7 @@ class Customers implements ProfileSyncInterface
                     ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_CUSTOMER_BATCH_SIZE
                 );
                 $collection = $this->profileCollectionFactory->create()
-                    ->getCustomerToBatchByStore($store->getId(), ($limit) ? $limit : self::LIMIT);
+                    ->getCustomerToBatchByStore($store->getWebsite()->getStoreIds(), ($limit) ? $limit : self::LIMIT);
 
                 if ($collection->getSize() && ! empty($attributesArrWithVersionId)) {
                     $this->batchCustomersForStore($store, $collection, $mappings, $attributesArrWithVersionId);
@@ -215,7 +215,6 @@ class Customers implements ProfileSyncInterface
                     );
                 $this->profileResource->updateCustomerSyncStatus(
                     $customersToUpdate,
-                    $store->getId(),
                     Profile::SYNC_STATUS_BATCHED,
                     $this->apsisCoreHelper
                 );

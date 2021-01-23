@@ -414,10 +414,9 @@ class Profile extends AbstractDb implements ResourceInterface
             ->addExpressionFieldToSelect('number_of_orders', 'COUNT({{*}})', '*')
             ->addExpressionFieldToSelect('average_order_value', 'AVG({{grand_total}})', 'grand_total')
             ->addFieldToFilter('customer_id', ['in' => $customerIds])
-            ->addFieldToFilter('store_id', $store->getId())
             ->addFieldToFilter('status', ['in' => $statuses]);
 
-        $columnData = $this->buildColumnData($salesOrderGrid, (int) $store->getId(), $statuses);
+        $columnData = $this->buildColumnData($salesOrderGrid, $statuses);
         $orderCollection->getSelect()
             ->columns($columnData)
             ->group('customer_id');
@@ -438,12 +437,11 @@ class Profile extends AbstractDb implements ResourceInterface
 
     /**
      * @param string $salesOrderGrid
-     * @param int $storeId
      * @param string $statuses
      *
      * @return array
      */
-    private function buildColumnData(string $salesOrderGrid, int $storeId, string $statuses)
+    private function buildColumnData(string $salesOrderGrid, string $statuses)
     {
         $statusText = $this->getConnection()->quoteInto('status in (?)', explode(",", $statuses));
         return [
@@ -451,7 +449,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 ["expression" => "(
                     SELECT created_at
                     FROM $salesOrderGrid
-                    WHERE customer_id = main_table.customer_id AND $salesOrderGrid.store_id = $storeId AND $statusText
+                    WHERE customer_id = main_table.customer_id AND $statusText
                     ORDER BY created_at DESC
                     LIMIT 1
                 )"]

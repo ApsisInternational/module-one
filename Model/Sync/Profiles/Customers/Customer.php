@@ -109,7 +109,6 @@ class Customer implements ProfileDataInterface
     {
         $this->reviewCollection = $this->reviewCollectionFactory->create()
             ->addCustomerFilter($this->customer->getId())
-            ->addStoreFilter($this->customer->getStoreId())
             ->addStatusFilter(Review::STATUS_APPROVED)
             ->setOrder('review_id', 'DESC');
         return $this;

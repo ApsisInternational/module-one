@@ -189,7 +189,7 @@ class Subscribers implements ProfileSyncInterface
         try {
             $collection = $this->profileCollectionFactory->create()
                 ->getSubscribersToBatchByStore(
-                    $store->getWebsite()->getStoreIds(),
+                    $store->getId(),
                     $limit,
                     $subscriberStatus
                 );

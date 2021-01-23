@@ -14,6 +14,7 @@ use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
+use Magento\Newsletter\Model\SubscriberFactory;
 
 class Placed implements ObserverInterface
 {
@@ -38,19 +39,27 @@ class Placed implements ObserverInterface
     private $eventService;
 
     /**
+     * @var SubscriberFactory
+     */
+    private $subscriberFactory;
+
+    /**
      * Placed constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param ProfileCollectionFactory $profileCollectionFactory
      * @param ProfileResource $profileResource
      * @param Event $eventService
+     * @param SubscriberFactory $subscriberFactory
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
         ProfileCollectionFactory $profileCollectionFactory,
         ProfileResource $profileResource,
-        Event $eventService
+        Event $eventService,
+        SubscriberFactory $subscriberFactory
     ) {
+        $this->subscriberFactory = $subscriberFactory;
         $this->eventService = $eventService;
         $this->profileResource = $profileResource;
         $this->profileCollectionFactory = $profileCollectionFactory;
@@ -71,29 +80,46 @@ class Placed implements ObserverInterface
         }
 
         try {
-            if ($order->getCustomerIsGuest() || empty($order->getCustomerId())) {
-                if (! $order->getStore()->getWebsite()) {
-                    return $this;
-                }
-                $storeIds = $order->getStore()->getWebsite()->getStoreIds();
-                $profile = $this->profileCollectionFactory->create()
-                    ->loadByEmailAndStoreId($order->getCustomerEmail(), $storeIds);
-                if (! $profile) {
-                    return $this;
-                }
-            } else {
-                /** @var Profile $profile */
-                $profile = $this->profileCollectionFactory->create()
-                    ->loadByCustomerId($order->getCustomerId());
-                $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
+            $profile = $this->findProfile($order);
+            if ($profile) {
+                $this->eventService->registerOrderPlacedEvent($order, $profile);
             }
-            $this->eventService->registerOrderPlacedEvent($order, $profile);
-            $this->profileResource->save($profile);
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
 
         return $this;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool|Profile
+     */
+    private function findProfile(Order $order)
+    {
+        try {
+            if ($order->getCustomerId()) {
+                $profile = $this->profileCollectionFactory->create()->loadByCustomerId($order->getCustomerId());
+                if ($profile) {
+                    $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
+                    $this->profileResource->save($profile);
+                    return $profile;
+                }
+            }
+            $subscriber = $this->subscriberFactory->create()->loadByEmail($order->getCustomerEmail());
+            if ($subscriber->getId()) {
+                $found = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
+                if ($found) {
+                    return $found;
+                }
+            }
+            return $this->profileCollectionFactory->create()
+                ->loadByEmailAndStoreId($order->getCustomerEmail(), $order->getStore()->getWebsite()->getStoreIds());
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return false;
+        }
     }
 
     /**

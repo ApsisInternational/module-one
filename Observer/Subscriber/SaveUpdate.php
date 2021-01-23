@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Observer\Subscriber;
 
+use Apsis\One\Model\Profile as ProfileModel;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Profile;
 use Magento\Framework\Event\Observer;
@@ -58,16 +59,7 @@ class SaveUpdate implements ObserverInterface
             $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
 
             if ($account) {
-                if (! $store->getWebSite()) {
-                    return $this;
-                }
-                $storeIds = $store->getWebSite()->getStoreIds();
-                $found = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
-                $profile = ($found) ? $found : $this->profileCollectionFactory->create()->loadByEmailAndStoreId(
-                    $subscriber->getEmail(),
-                    $storeIds
-                );
-
+                $profile = $this->findProfile($subscriber, $store->getWebSite()->getStoreIds());
                 if (! $profile) {
                     $this->profileService->createProfileForSubscriber($subscriber);
                 } else {
@@ -79,5 +71,27 @@ class SaveUpdate implements ObserverInterface
         }
 
         return $this;
+    }
+
+    /**
+     * @param Subscriber $subscriber
+     * @param array $storeIds
+     *
+     * @return bool|ProfileModel
+     */
+    private function findProfile(Subscriber $subscriber, array $storeIds)
+    {
+        $found = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
+        if ($found) {
+            return $found;
+        }
+        if ($subscriber->getCustomerId()) {
+            $found = $this->profileCollectionFactory->create()->loadByCustomerId($subscriber->getCustomerId());
+            if ($found) {
+                return $found;
+            }
+        }
+        return $this->profileCollectionFactory->create()
+            ->loadByEmailAndStoreId($subscriber->getEmail(), $storeIds);
     }
 }

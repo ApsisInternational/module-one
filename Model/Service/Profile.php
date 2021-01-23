@@ -284,6 +284,7 @@ class Profile
                     $this->eventService->registerCustomerBecomesSubscriberEvent($subscriber, $profile, $store);
                 }
                 $profile->setSubscriberId($subscriber->getSubscriberId())
+                    ->setSubscriberStoreId($subscriber->getStoreId())
                     ->setSubscriberStatus(Subscriber::STATUS_SUBSCRIBED)
                     ->setIsSubscriber(ProfileModel::IS_FLAGGED)
                     ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
@@ -307,7 +308,8 @@ class Profile
                 $this->eventService->updateEmailInEventsForCustomer($profile, $customer);
                 $profile->setEmail($customer->getEmail());
             }
-            $profile->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
+            $profile->setStoreId($customer->getStoreId())
+                ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
                 ->setCustomerId($customer->getEntityId())
                 ->setIsCustomer(ProfileModel::IS_FLAGGED)
                 ->setErrorMessage('');
@@ -324,7 +326,6 @@ class Profile
     {
         $this->createProfile(
             (int) $customer->getStoreId(),
-            (int) $customer->getWebsiteId(),
             (string) $customer->getEmail(),
             0,
             (int) $customer->getId()
@@ -339,7 +340,6 @@ class Profile
         if ((int) $subscriber->getStatus() === Subscriber::STATUS_SUBSCRIBED) {
             $this->createProfile(
                 (int) $subscriber->getStoreId(),
-                (int) $this->apsisCoreHelper->getStore($subscriber->getStoreId())->getWebsiteId(),
                 (string) $subscriber->getEmail(),
                 (int) $subscriber->getSubscriberId()
             );
@@ -348,29 +348,28 @@ class Profile
 
     /**
      * @param int $storeId
-     * @param int $websiteId
      * @param string $email
      * @param int $subscriberId
      * @param int $customerId
      */
     private function createProfile(
         int $storeId,
-        int $websiteId,
         string $email,
         int $subscriberId,
         int $customerId = 0
     ) {
         try {
+            /** @var ProfileModel $profile */
             $profile = $this->profileFactory->create();
-            $profile->setStoreId($storeId)
-                ->setWebsiteId($websiteId)
-                ->setEmail($email);
+            $profile->setEmail($email);
             if ($customerId) {
                 $profile->setCustomerId($customerId)
+                    ->setStoreId($storeId)
                     ->setIsCustomer(ProfileModel::IS_FLAGGED);
             }
             if ($subscriberId) {
                 $profile->setSubscriberId($subscriberId)
+                    ->setSubscriberStoreId($storeId)
                     ->setSubscriberStatus(Subscriber::STATUS_SUBSCRIBED)
                     ->setIsSubscriber(ProfileModel::IS_FLAGGED);
             }

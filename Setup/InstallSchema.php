@@ -558,7 +558,6 @@ class InstallSchema implements InstallSchemaInterface
         $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
         $table = $this->addColumnsToApsisProfileTable($table);
         $table = $this->addIndexesToApsisProfileTable($installer, $table);
-        $table = $this->addForeignKeysToProfileTable($installer, $table);
 
         $table->setComment('Apsis Profiles');
         $installer->getConnection()->createTable($table);
@@ -600,10 +599,17 @@ class InstallSchema implements InstallSchemaInterface
                 'Subscriber status'
             )
             ->addColumn(
+                'customer_id',
+                Table::TYPE_INTEGER,
+                11,
+                ['unsigned' => true, 'nullable' => true, 'default' => null],
+                'Customer Id'
+            )
+            ->addColumn(
                 'store_id',
                 Table::TYPE_SMALLINT,
                 5,
-                ['unsigned' => true, 'nullable' => false],
+                ['unsigned' => true, 'nullable' => true, 'default' => null],
                 'Store ID'
             )
             ->addColumn(
@@ -614,11 +620,11 @@ class InstallSchema implements InstallSchemaInterface
                 'Subscriber Id'
             )
             ->addColumn(
-                'customer_id',
-                Table::TYPE_INTEGER,
-                11,
+                'subscriber_store_id',
+                Table::TYPE_SMALLINT,
+                10,
                 ['unsigned' => true, 'nullable' => true, 'default' => null],
-                'Customer Id'
+                'Subscriber Store Id'
             )
             ->addColumn(
                 'email',
@@ -686,6 +692,7 @@ class InstallSchema implements InstallSchemaInterface
             ->addIndex($installer->getIdxName($tableName, ['subscriber_status']), ['subscriber_status'])
             ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
             ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
+            ->addIndex($installer->getIdxName($tableName, ['subscriber_store_id']), ['subscriber_store_id'])
             ->addIndex($installer->getIdxName($tableName, ['subscriber_id']), ['subscriber_id'])
             ->addIndex($installer->getIdxName($tableName, ['subscriber_sync_status']), ['subscriber_sync_status'])
             ->addIndex($installer->getIdxName($tableName, ['customer_sync_status']), ['customer_sync_status'])
@@ -694,30 +701,6 @@ class InstallSchema implements InstallSchemaInterface
             ->addIndex($installer->getIdxName($tableName, ['email']), ['email'])
             ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
         return $table;
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     * @param Table $table
-     *
-     * @return Table
-     *
-     * @throws Zend_Db_Exception
-     */
-    private function addForeignKeysToProfileTable(SchemaSetupInterface $installer, Table $table)
-    {
-        return $table->addForeignKey(
-            $installer->getFkName(
-                ApsisCoreHelper::APSIS_PROFILE_TABLE,
-                'store_id',
-                $installer->getTable('store'),
-                'store_id'
-            ),
-            'store_id',
-            $installer->getTable('store'),
-            'store_id',
-            Table::ACTION_CASCADE
-        );
     }
 
     /**

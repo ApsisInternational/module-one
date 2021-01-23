@@ -498,7 +498,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 [
                     'integration_uid' => $this->expressionFactory->create(["expression" => ('UUID()')]),
                     'subscriber_id',
-                    'store_id',
+                    'subscriber_store_id' => 'store_id',
                     'email' => 'subscriber_email',
                     'subscriber_status',
                     'is_subscriber' => $this->expressionFactory->create(["expression" => ('1')]),
@@ -514,7 +514,7 @@ class Profile extends AbstractDb implements ResourceInterface
             [
                 'integration_uid',
                 'subscriber_id',
-                'store_id',
+                'subscriber_store_id',
                 'email',
                 'subscriber_status',
                 'is_subscriber',
@@ -538,6 +538,7 @@ class Profile extends AbstractDb implements ResourceInterface
             [
                 'subscriber_id',
                 'subscriber_status',
+                'subscriber_store_id' => 'store_id',
                 'is_subscriber' => $this->expressionFactory->create(["expression" => ('1')]),
             ]
         )

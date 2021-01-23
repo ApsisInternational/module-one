@@ -60,31 +60,7 @@ class UpgradeData implements UpgradeDataInterface
         if (version_compare($context->getVersion(), '1.5.0', '<')) {
             $this->updateOneFiveZero($setup);
         }
-        if (version_compare($context->getVersion(), '1.7.0', '<')) {
-            $this->upgradeOneSevenZero($setup);
-        }
         $setup->endSetup();
-    }
-
-    /**
-     * @param ModuleDataSetupInterface $setup
-     */
-    private function upgradeOneSevenZero(ModuleDataSetupInterface $setup)
-    {
-        try {
-            foreach ($this->apsisCoreHelper->getAllWebsites() as $website) {
-                $storeIds = $website->getStoreIds();
-                if (! empty($storeIds)) {
-                    $setup->getConnection()->update(
-                        $setup->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
-                        ['website_id' => $website->getId()],
-                        ["store_id IN (?)" => $storeIds]
-                    );
-                }
-            }
-        } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-        }
     }
 
     /**

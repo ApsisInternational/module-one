@@ -557,7 +557,6 @@ class Subscribers implements ProfileSyncInterface
             if ($consentType == self::CONSENT_TYPE_OPT_IN) {
                 $this->profileResource->updateSubscribersSubscription(
                     $subscribersToUpdate,
-                    $store->getId(),
                     $this->apsisCoreHelper,
                     $topics
                 );

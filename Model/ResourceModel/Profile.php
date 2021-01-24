@@ -147,7 +147,6 @@ class Profile extends AbstractDb implements ResourceInterface
 
     /**
      * @param array $subscriberIds
-     * @param int $storeId
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param string $topics
      *
@@ -155,7 +154,6 @@ class Profile extends AbstractDb implements ResourceInterface
      */
     public function updateSubscribersSubscription(
         array $subscriberIds,
-        int $storeId,
         ApsisCoreHelper $apsisCoreHelper,
         string $topics
     ) {
@@ -166,7 +164,6 @@ class Profile extends AbstractDb implements ResourceInterface
                 ['topic_subscription' => $topics, 'updated_at' => $this->dateTime->formatDate(true)],
                 [
                     "subscriber_id IN (?)" => $subscriberIds,
-                    "store_id = ?" => $storeId,
                     "topic_subscription is ?" => $this->expressionFactory->create(["expression" => ('null')])
                 ]
             );

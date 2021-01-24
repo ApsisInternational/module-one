@@ -275,6 +275,7 @@ class Profile
             if ($profile->getIsSubscriber() && (int) $subscriber->getStatus() === Subscriber::STATUS_UNSUBSCRIBED) {
                 $this->eventService->registerSubscriberUnsubscribeEvent($subscriber, $profile, $store);
                 $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED)
+                    ->setSubscriberStoreId($subscriber->getStoreId())
                     ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
                     ->setIsSubscriber(ProfileModel::NO_FLAGGED)
                     ->setErrorMessage('');

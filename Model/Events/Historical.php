@@ -126,14 +126,11 @@ class Historical implements SyncInterface
         $clearCache = false;
         foreach ($stores as $store) {
             try {
-                if (! $store->getWebsite()) {
-                    continue;
-                }
                 $account = $apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
                 $types = $this->getEventTypesToFetchHistoryFor($apsisCoreHelper, $store);
                 if ($account && ! empty($types)) {
                     $profileCollection = $this->profileCollectionFactory->create()
-                        ->getProfileCollectionForStore($store->getWebsite()->getStoreIds());
+                        ->getProfileCollectionForStore($store->getStoreId());
                     if ($profileCollection->getSize()) {
                         $this->runByType($types, $store, $apsisCoreHelper, $profileCollection);
                         $clearCache = true;

@@ -172,9 +172,6 @@ class Events implements SyncInterface
         $stores = $this->apsisCoreHelper->getStores();
         foreach ($stores as $store) {
             try {
-                if (! $store->getWebsite()) {
-                    continue;
-                }
                 $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
                     $store,
                     ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION

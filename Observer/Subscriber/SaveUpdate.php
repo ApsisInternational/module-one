@@ -59,7 +59,7 @@ class SaveUpdate implements ObserverInterface
             $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
 
             if ($account) {
-                $profile = $this->findProfile($subscriber, $store->getWebSite()->getStoreIds());
+                $profile = $this->findProfile($subscriber);
                 if (! $profile) {
                     $this->profileService->createProfileForSubscriber($subscriber);
                 } else {
@@ -75,11 +75,10 @@ class SaveUpdate implements ObserverInterface
 
     /**
      * @param Subscriber $subscriber
-     * @param array $storeIds
      *
      * @return bool|ProfileModel
      */
-    private function findProfile(Subscriber $subscriber, array $storeIds)
+    private function findProfile(Subscriber $subscriber)
     {
         $found = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
         if ($found) {

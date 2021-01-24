@@ -117,13 +117,18 @@ class Collection extends AbstractCollection
     }
 
     /**
-     * @param array $storeIds
+     * @param int $storeId
      *
      * @return Collection
      */
-    public function getProfileCollectionForStore(array $storeIds)
+    public function getProfileCollectionForStore(int $storeId)
     {
-        return $this->addFieldToFilter('store_id', ['in' => $storeIds])
-            ->addFieldToFilter('email', ['notnull' => true]);
+        return $this->addFieldToFilter(
+            ['store_id', 'subscriber_store_id'],
+            [
+                ['eq' => $storeId],
+                ['eq' => $storeId]
+            ]
+        )->addFieldToFilter('email', ['notnull' => true]);
     }
 }

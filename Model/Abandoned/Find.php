@@ -34,10 +34,6 @@ class Find implements SyncInterface
             $stores = $apsisCoreHelper->getStores();
             foreach ($stores as $store) {
                 try {
-                    if (! $store->getWebsite()) {
-                        continue;
-                    }
-
                     $isEnabled = $apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
                     $acDelayPeriod = $apsisCoreHelper->getStoreConfig(
                         $store,

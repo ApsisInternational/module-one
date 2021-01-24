@@ -91,7 +91,6 @@ class SaveUpdate implements ObserverInterface
                 return $found;
             }
         }
-        return $this->profileCollectionFactory->create()
-            ->loadByEmailAndStoreId($subscriber->getEmail(), $storeIds);
+        return false;
     }
 }

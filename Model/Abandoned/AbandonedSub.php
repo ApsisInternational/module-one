@@ -11,13 +11,14 @@ use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollection
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Exception;
-use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\App\Area;
 use Magento\Framework\Stdlib\DateTime;
+use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\ResourceModel\Quote\Collection;
 use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
 use Magento\Store\Api\Data\StoreInterface;
-use Magento\Newsletter\Model\SubscriberFactory;
+use Magento\Store\Model\App\EmulationFactory;
 
 class AbandonedSub
 {
@@ -62,8 +63,14 @@ class AbandonedSub
     private $subscriberFactory;
 
     /**
+     * @var EmulationFactory
+     */
+    private $emulationFactory;
+
+    /**
      * AbandonedSub constructor.
      *
+     * @param EmulationFactory $emulationFactory
      * @param ContentFactory $cartContentFactory
      * @param QuoteCollectionFactory $quoteCollectionFactory
      * @param AbandonedResource $abandonedResource
@@ -74,6 +81,7 @@ class AbandonedSub
      * @param SubscriberFactory $subscriberFactory
      */
     public function __construct(
+        EmulationFactory $emulationFactory,
         ContentFactory $cartContentFactory,
         QuoteCollectionFactory $quoteCollectionFactory,
         AbandonedResource $abandonedResource,
@@ -91,6 +99,7 @@ class AbandonedSub
         $this->abandonedResource = $abandonedResource;
         $this->quoteCollectionFactory = $quoteCollectionFactory;
         $this->cartContentFactory = $cartContentFactory;
+        $this->emulationFactory = $emulationFactory;
     }
 
     /**
@@ -138,7 +147,7 @@ class AbandonedSub
         /** @var Quote $quote */
         foreach ($quoteCollection as $quote) {
             try {
-                $profile = $this->findProfile($quote);
+                $profile = $this->findProfile($quote, $apsisCoreHelper);
                 $cartData = $this->cartContentFactory->create()
                     ->getCartData($quote, $apsisCoreHelper);
                 if (! empty($cartData) && ! empty($cartData['items']) && $profile) {
@@ -188,12 +197,11 @@ class AbandonedSub
 
     /**
      * @param Quote $quote
+     * @param ApsisCoreHelper $apsisCoreHelper
      *
      * @return bool|Profile
-     *
-     * @throws NoSuchEntityException
      */
-    private function findProfile(Quote $quote)
+    private function findProfile(Quote $quote, ApsisCoreHelper $apsisCoreHelper)
     {
         if ($quote->getCustomerId()) {
             $profile = $this->profileCollectionFactory->create()->loadByCustomerId($quote->getCustomerId());
@@ -201,15 +209,23 @@ class AbandonedSub
                 return $profile;
             }
         }
-        $subscriber = $this->subscriberFactory->create()->loadByEmail($quote->getCustomerEmail());
+        $appEmulation = $this->emulationFactory->create();
+        try {
+            $appEmulation->startEnvironmentEmulation($quote->getStoreId(), Area::AREA_FRONTEND, true);
+            $subscriber = $this->subscriberFactory->create()->loadByEmail($quote->getCustomerEmail());
+            $appEmulation->stopEnvironmentEmulation();
+        } catch (Exception $e) {
+            $appEmulation->stopEnvironmentEmulation();
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return false;
+        }
         if ($subscriber->getId()) {
             $found = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
             if ($found) {
                 return $found;
             }
         }
-        return $this->profileCollectionFactory->create()
-            ->loadByEmailAndStoreId($quote->getCustomerEmail(), $quote->getStore()->getWebsite()->getStoreIds());
+        return false;
     }
 
     /**

@@ -2,18 +2,17 @@
 
 namespace Apsis\One\Observer\Customer;
 
+use Apsis\One\Model\Profile as ProfileModel;
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Profile;
+use Exception;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
-use Exception;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Registry;
-use Magento\Store\Model\ScopeInterface;
 use Magento\Newsletter\Model\SubscriberFactory;
-use Apsis\One\Model\Profile as ProfileModel;
+use Magento\Store\Model\ScopeInterface;
 
 class SaveUpdate implements ObserverInterface
 {
@@ -109,8 +108,6 @@ class SaveUpdate implements ObserverInterface
      * @param Customer $customer
      *
      * @return bool|ProfileModel
-     *
-     * @throws NoSuchEntityException
      */
     private function findProfile(Customer $customer)
     {
@@ -125,7 +122,6 @@ class SaveUpdate implements ObserverInterface
                 return $found;
             }
         }
-        return $this->profileCollectionFactory->create()
-            ->loadByEmailAndStoreId($customer->getEmail(), $customer->getStore()->getWebsite()->getStoreIds());
+        return false;
     }
 }

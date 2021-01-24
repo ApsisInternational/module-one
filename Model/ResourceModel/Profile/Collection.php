@@ -74,31 +74,6 @@ class Collection extends AbstractCollection
     }
 
     /**
-     * @param string $email
-     * @param array $storeIds
-     *
-     * @return bool|DataObject|Profile
-     */
-    public function loadByEmailAndStoreId(string $email, array $storeIds)
-    {
-        $collection = $this->addFieldToFilter('email', $email)
-            ->addFieldToFilter(
-                ['store_id', 'subscriber_store_id'],
-                [
-                    ['in' => $storeIds],
-                    ['in' => $storeIds]
-                ]
-            )
-            ->setPageSize(1);
-
-        if ($collection->getSize()) {
-            return $collection->getFirstItem();
-        }
-
-        return false;
-    }
-
-    /**
      * @param int $storeId
      * @param int $syncLimit
      * @param int $subscriberStatus

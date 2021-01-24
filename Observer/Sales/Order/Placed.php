@@ -2,19 +2,19 @@
 
 namespace Apsis\One\Observer\Sales\Order;
 
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Event;
 use Exception;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
-use Magento\Newsletter\Model\SubscriberFactory;
 
 class Placed implements ObserverInterface
 {
@@ -114,8 +114,7 @@ class Placed implements ObserverInterface
                     return $found;
                 }
             }
-            return $this->profileCollectionFactory->create()
-                ->loadByEmailAndStoreId($order->getCustomerEmail(), $order->getStore()->getWebsite()->getStoreIds());
+            return false;
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return false;

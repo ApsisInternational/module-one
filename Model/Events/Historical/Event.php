@@ -36,7 +36,7 @@ class Event
      * @param int $eventType
      * @param string $createdAt
      * @param string $eventData
-     * @param ApsisCoreHelper $apsisCoreHelper ,
+     * @param ApsisCoreHelper $apsisCoreHelper
      * @param string $eventSubData
      *
      * @return array

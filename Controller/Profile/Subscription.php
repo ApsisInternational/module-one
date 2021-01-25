@@ -96,7 +96,6 @@ class Subscription extends Action
 
             if ($params['CLD'] === 'all') {
                 $subscriber = $this->subscriberFactory->create()
-                        ->setStoreId($profile->getSubscriberStoreId())
                         ->load($profile->getSubscriberId());
                 if ($subscriber->getId()) {
                     $subscriber->unsubscribe();

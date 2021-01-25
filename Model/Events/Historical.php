@@ -130,7 +130,7 @@ class Historical implements SyncInterface
                 $types = $this->getEventTypesToFetchHistoryFor($apsisCoreHelper, $store);
                 if ($account && ! empty($types)) {
                     $profileCollection = $this->profileCollectionFactory->create()
-                        ->getProfileCollectionForStore($store->getStoreId());
+                        ->getProfileCollectionForStore($store->getId());
                     if ($profileCollection->getSize()) {
                         $this->runByType($types, $store, $apsisCoreHelper, $profileCollection);
                         $clearCache = true;

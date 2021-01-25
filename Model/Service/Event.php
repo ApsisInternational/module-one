@@ -340,7 +340,7 @@ class Event
                 $eventData,
                 (int) $profile->getId(),
                 (string) $customer->getEmail(),
-                (int) $customer->getStoreId(),
+                (int) $reviewObject->getStoreId(),
                 (int) $customer->getId()
             );
         }

@@ -23,26 +23,6 @@ class Collection extends AbstractCollection
     }
 
     /**
-     * @param string $email
-     * @param int $storeId
-     *
-     * @return bool|DataObject|Profile
-     */
-    public function loadSubscriberByEmailAndStoreId(string $email, int $storeId)
-    {
-        $collection = $this->addFieldToFilter('email', $email)
-            ->addFieldToFilter('store_id', $storeId)
-            ->addFieldToFilter('is_subscriber', 1)
-            ->setPageSize(1);
-
-        if ($collection->getSize()) {
-            return $collection->getFirstItem();
-        }
-
-        return false;
-    }
-
-    /**
      * @param int $customerId
      *
      * @return bool|DataObject|Profile
@@ -60,15 +40,30 @@ class Collection extends AbstractCollection
     }
 
     /**
-     * @param string $email
-     * @param int $storeId
+     * @param int $subscriberId
      *
-     * @return bool|DataObject|Profile
+     * @return bool|DataObject
      */
-    public function loadByEmailAndStoreId(string $email, int $storeId)
+    public function loadBySubscriberId(int $subscriberId)
     {
-        $collection = $this->addFieldToFilter('email', $email)
-            ->addFieldToFilter('store_id', $storeId)
+        $collection = $this->addFieldToFilter('subscriber_id', $subscriberId)
+            ->setPageSize(1);
+
+        if ($collection->getSize()) {
+            return $collection->getFirstItem();
+        }
+
+        return false;
+    }
+
+    /**
+     * @param string $integrationId
+     *
+     * @return bool|DataObject
+     */
+    public function loadByIntegrationId(string $integrationId)
+    {
+        $collection = $this->addFieldToFilter('integration_uid', $integrationId)
             ->setPageSize(1);
 
         if ($collection->getSize()) {
@@ -91,7 +86,7 @@ class Collection extends AbstractCollection
             ->addFieldToFilter('subscriber_id', ['notnull' => true])
             ->addFieldToFilter('subscriber_status', $subscriberStatus)
             ->addFieldToFilter('subscriber_sync_status', Profile::SYNC_STATUS_PENDING)
-            ->addFieldToFilter('store_id', $storeId)
+            ->addFieldToFilter('subscriber_store_id', $storeId)
             ->setPageSize($syncLimit);
     }
 
@@ -128,41 +123,12 @@ class Collection extends AbstractCollection
      */
     public function getProfileCollectionForStore(int $storeId)
     {
-        return $this->addFieldToFilter('store_id', $storeId)
-            ->addFieldToFilter('email', ['notnull' => true]);
-    }
-
-    /**
-     * @param int $subscriberId
-     *
-     * @return bool|DataObject
-     */
-    public function loadBySubscriberId(int $subscriberId)
-    {
-        $collection = $this->addFieldToFilter('subscriber_id', $subscriberId)
-            ->setPageSize(1);
-
-        if ($collection->getSize()) {
-            return $collection->getFirstItem();
-        }
-
-        return false;
-    }
-
-    /**
-     * @param string $integrationId
-     *
-     * @return bool|DataObject
-     */
-    public function loadByIntegrationId(string $integrationId)
-    {
-        $collection = $this->addFieldToFilter('integration_uid', $integrationId)
-            ->setPageSize(1);
-
-        if ($collection->getSize()) {
-            return $collection->getFirstItem();
-        }
-
-        return false;
+        return $this->addFieldToFilter(
+            ['store_id', 'subscriber_store_id'],
+            [
+                ['eq' => $storeId],
+                ['eq' => $storeId]
+            ]
+        )->addFieldToFilter('email', ['notnull' => true]);
     }
 }

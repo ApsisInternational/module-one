@@ -2,18 +2,19 @@
 
 namespace Apsis\One\Observer\Sales\Order;
 
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Event;
 use Exception;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 
 class Placed implements ObserverInterface
 {
@@ -38,19 +39,27 @@ class Placed implements ObserverInterface
     private $eventService;
 
     /**
+     * @var SubscriberFactory
+     */
+    private $subscriberFactory;
+
+    /**
      * Placed constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param ProfileCollectionFactory $profileCollectionFactory
      * @param ProfileResource $profileResource
      * @param Event $eventService
+     * @param SubscriberFactory $subscriberFactory
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
         ProfileCollectionFactory $profileCollectionFactory,
         ProfileResource $profileResource,
-        Event $eventService
+        Event $eventService,
+        SubscriberFactory $subscriberFactory
     ) {
+        $this->subscriberFactory = $subscriberFactory;
         $this->eventService = $eventService;
         $this->profileResource = $profileResource;
         $this->profileCollectionFactory = $profileCollectionFactory;
@@ -71,28 +80,45 @@ class Placed implements ObserverInterface
         }
 
         try {
-            if ($order->getCustomerIsGuest()) {
-                $profile = $this->profileCollectionFactory->create()
-                    ->loadSubscriberByEmailAndStoreId($order->getCustomerEmail(), $order->getStoreId());
-                if (! $profile) {
-                    return $this;
-                }
-            } else {
-                /** @var Profile $profile */
-                $profile = $this->profileCollectionFactory->create()
-                    ->loadByEmailAndStoreId(
-                        $order->getCustomerEmail(),
-                        $order->getStore()->getId()
-                    );
-                $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
+            $profile = $this->findProfile($order);
+            if ($profile) {
+                $this->eventService->registerOrderPlacedEvent($order, $profile);
             }
-            $this->eventService->registerOrderPlacedEvent($order, $profile);
-            $this->profileResource->save($profile);
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
 
         return $this;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool|Profile
+     */
+    private function findProfile(Order $order)
+    {
+        try {
+            if ($order->getCustomerId()) {
+                $profile = $this->profileCollectionFactory->create()->loadByCustomerId($order->getCustomerId());
+                if ($profile) {
+                    $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
+                    $this->profileResource->save($profile);
+                    return $profile;
+                }
+            }
+            $subscriber = $this->subscriberFactory->create()->loadByEmail($order->getCustomerEmail());
+            if ($subscriber->getId()) {
+                $found = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
+                if ($found) {
+                    return $found;
+                }
+            }
+            return false;
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return false;
+        }
     }
 
     /**

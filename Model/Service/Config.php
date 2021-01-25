@@ -31,6 +31,8 @@ class Config
     /** Customer/Subscriber common attributes */
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_GROUP
         = 'apsis_one_mappings/customer_subscriber_common_attribute';
+    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_PROFILE_KEY
+        = 'apsis_one_mappings/customer_subscriber_common_attribute/profile_key';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_WEBSITE_ID
         = 'apsis_one_mappings/customer_subscriber_common_attribute/website_id';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_STORE_ID
@@ -292,10 +294,12 @@ class Config
     ) {
         $attributeMappings = [];
         foreach ($mappings as $key => $mapping) {
-            $attributeMappings[] = [
-                'field_selector' => $key,
-                'attribute_version_id' => $attributesArrWithVersionId[$mapping]
-            ];
+            if (isset($attributesArrWithVersionId[$mapping])) {
+                $attributeMappings[] = [
+                    'field_selector' => $key,
+                    'attribute_version_id' => $attributesArrWithVersionId[$mapping]
+                ];
+            }
         }
 
         $jsonMappingData = [

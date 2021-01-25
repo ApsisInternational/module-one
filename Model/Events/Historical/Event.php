@@ -31,16 +31,18 @@ class Event
     protected $eventData;
 
     /**
+     * @param int $storeId
      * @param Profile $profile
      * @param int $eventType
      * @param string $createdAt
      * @param string $eventData
-     * @param ApsisCoreHelper $apsisCoreHelper,
+     * @param ApsisCoreHelper $apsisCoreHelper
      * @param string $eventSubData
      *
      * @return array
      */
     protected function getEventData(
+        int $storeId,
         Profile $profile,
         int $eventType,
         string $createdAt,
@@ -56,7 +58,7 @@ class Event
                 'profile_id' => (int) $profile->getId(),
                 'customer_id' => (int) $profile->getCustomerId(),
                 'subscriber_id' => (int) $profile->getSubscriberId(),
-                'store_id' => (int) $profile->getStoreId(),
+                'store_id' => $storeId,
                 'email' => (string) $profile->getEmail(),
                 'status' => Profile::SYNC_STATUS_PENDING,
                 'created_at' => $createdAt,

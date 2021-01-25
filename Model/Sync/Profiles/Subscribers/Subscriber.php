@@ -91,6 +91,14 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return string
      */
+    private function getProfileKey()
+    {
+        return (string) $this->subscriber->getProfileKey();
+    }
+
+    /**
+     * @return string
+     */
     private function getIntegrationUid()
     {
         return (string) $this->subscriber->getIntegrationUid();

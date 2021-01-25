@@ -45,7 +45,7 @@ class Data extends EventData implements EventDataInterface
         Product $product,
         ApsisCoreHelper $apsisCoreHelper
     ) {
-        $this->store = $store;
+        $this->store = $wishlist->getStore();
         $this->wishlistItem = $item;
         $this->product = $product;
         return $this->getProcessedDataArr($wishlist, $apsisCoreHelper);

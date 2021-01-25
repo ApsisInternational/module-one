@@ -111,7 +111,6 @@ class Profile extends AbstractDb implements ResourceInterface
 
     /**
      * @param array $subscriberIds
-     * @param int $storeId
      * @param int $status
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param string $msg
@@ -120,7 +119,6 @@ class Profile extends AbstractDb implements ResourceInterface
      */
     public function updateSubscribersSyncStatus(
         array $subscriberIds,
-        int $storeId,
         int $status,
         ApsisCoreHelper $apsisCoreHelper,
         string $msg = ''
@@ -139,7 +137,7 @@ class Profile extends AbstractDb implements ResourceInterface
             return $write->update(
                 $this->getMainTable(),
                 $bind,
-                ["subscriber_id IN (?)" => $subscriberIds, "store_id = ?" => $storeId]
+                ["subscriber_id IN (?)" => $subscriberIds]
             );
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
@@ -149,7 +147,6 @@ class Profile extends AbstractDb implements ResourceInterface
 
     /**
      * @param array $subscriberIds
-     * @param int $storeId
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param string $topics
      *
@@ -157,7 +154,6 @@ class Profile extends AbstractDb implements ResourceInterface
      */
     public function updateSubscribersSubscription(
         array $subscriberIds,
-        int $storeId,
         ApsisCoreHelper $apsisCoreHelper,
         string $topics
     ) {
@@ -168,7 +164,6 @@ class Profile extends AbstractDb implements ResourceInterface
                 ['topic_subscription' => $topics, 'updated_at' => $this->dateTime->formatDate(true)],
                 [
                     "subscriber_id IN (?)" => $subscriberIds,
-                    "store_id = ?" => $storeId,
                     "topic_subscription is ?" => $this->expressionFactory->create(["expression" => ('null')])
                 ]
             );
@@ -180,7 +175,6 @@ class Profile extends AbstractDb implements ResourceInterface
 
     /**
      * @param array $customerIds
-     * @param int $storeId
      * @param int $status
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param string $msg
@@ -189,7 +183,6 @@ class Profile extends AbstractDb implements ResourceInterface
      */
     public function updateCustomerSyncStatus(
         array $customerIds,
-        int $storeId,
         int $status,
         ApsisCoreHelper $apsisCoreHelper,
         string $msg = ''
@@ -208,7 +201,7 @@ class Profile extends AbstractDb implements ResourceInterface
             return $write->update(
                 $this->getMainTable(),
                 $bind,
-                ["customer_id IN (?)" => $customerIds, "store_id = ?" => $storeId]
+                ["customer_id IN (?)" => $customerIds]
             );
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
@@ -418,10 +411,9 @@ class Profile extends AbstractDb implements ResourceInterface
             ->addExpressionFieldToSelect('number_of_orders', 'COUNT({{*}})', '*')
             ->addExpressionFieldToSelect('average_order_value', 'AVG({{grand_total}})', 'grand_total')
             ->addFieldToFilter('customer_id', ['in' => $customerIds])
-            ->addFieldToFilter('store_id', $store->getId())
             ->addFieldToFilter('status', ['in' => $statuses]);
 
-        $columnData = $this->buildColumnData($salesOrderGrid, (int) $store->getId(), $statuses);
+        $columnData = $this->buildColumnData($salesOrderGrid, $statuses);
         $orderCollection->getSelect()
             ->columns($columnData)
             ->group('customer_id');
@@ -442,12 +434,11 @@ class Profile extends AbstractDb implements ResourceInterface
 
     /**
      * @param string $salesOrderGrid
-     * @param int $storeId
      * @param string $statuses
      *
      * @return array
      */
-    private function buildColumnData(string $salesOrderGrid, int $storeId, string $statuses)
+    private function buildColumnData(string $salesOrderGrid, string $statuses)
     {
         $statusText = $this->getConnection()->quoteInto('status in (?)', explode(",", $statuses));
         return [
@@ -455,7 +446,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 ["expression" => "(
                     SELECT created_at
                     FROM $salesOrderGrid
-                    WHERE customer_id = main_table.customer_id AND $salesOrderGrid.store_id = $storeId AND $statusText
+                    WHERE customer_id = main_table.customer_id AND $statusText
                     ORDER BY created_at DESC
                     LIMIT 1
                 )"]
@@ -504,7 +495,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 [
                     'integration_uid' => $this->expressionFactory->create(["expression" => ('UUID()')]),
                     'subscriber_id',
-                    'store_id',
+                    'subscriber_store_id' => 'store_id',
                     'email' => 'subscriber_email',
                     'subscriber_status',
                     'is_subscriber' => $this->expressionFactory->create(["expression" => ('1')]),
@@ -520,7 +511,7 @@ class Profile extends AbstractDb implements ResourceInterface
             [
                 'integration_uid',
                 'subscriber_id',
-                'store_id',
+                'subscriber_store_id',
                 'email',
                 'subscriber_status',
                 'is_subscriber',
@@ -544,6 +535,7 @@ class Profile extends AbstractDb implements ResourceInterface
             [
                 'subscriber_id',
                 'subscriber_status',
+                'subscriber_store_id' => 'store_id',
                 'is_subscriber' => $this->expressionFactory->create(["expression" => ('1')]),
             ]
         )

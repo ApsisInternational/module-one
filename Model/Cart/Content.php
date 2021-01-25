@@ -5,7 +5,6 @@ namespace Apsis\One\Model\Cart;
 use Apsis\One\Model\Service\Product as ProductServiceProvider;
 use Exception;
 use Magento\Framework\App\Area;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Pricing\Helper\Data;
 use Magento\Quote\Model\Quote\Item;
 use Magento\Store\Model\App\EmulationFactory;

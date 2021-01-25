@@ -131,6 +131,11 @@ class Events implements SyncInterface
     private $mappedEmailAttribute = '';
 
     /**
+     * @var string
+     */
+    private $mappedProfileKeyAttribute = '';
+
+    /**
      * @var array
      */
     private $attributesArrWithVersionId = [];
@@ -175,6 +180,10 @@ class Events implements SyncInterface
                 $this->mappedEmailAttribute = $this->apsisCoreHelper->getStoreConfig(
                     $store,
                     ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
+                );
+                $this->mappedProfileKeyAttribute = $this->apsisCoreHelper->getStoreConfig(
+                    $store,
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_PROFILE_KEY
                 );
 
                 if ($this->sectionDiscriminator && $client && $this->mappedEmailAttribute) {
@@ -407,6 +416,10 @@ class Events implements SyncInterface
     private function syncProfileForEvent(Client $client, Profile $profile)
     {
         $attributesToSync[$this->attributesArrWithVersionId[$this->mappedEmailAttribute]] = $profile->getEmail();
+        if (isset($this->attributesArrWithVersionId[$this->mappedProfileKeyAttribute])) {
+            $attributesToSync[$this->attributesArrWithVersionId[$this->mappedProfileKeyAttribute]]
+                = $profile->getIntegrationUid();
+        }
         return $client->addAttributesToProfile(
             $this->keySpaceDiscriminator,
             $profile->getIntegrationUid(),

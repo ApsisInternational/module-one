@@ -264,6 +264,7 @@ class Subscribers implements ProfileSyncInterface
                         try {
                             $profileData = $profileDataArr[$subscriber->getSubscriberId()];
                             $subscriber->setIntegrationUid($profileData['integration_uid']);
+                            $subscriber->setProfileKey($profileData['integration_uid']);
 
                             //Main operation for both opt-in and opt-out consents
                             if (! empty($profileData['consent_topics']['main_function'])) {
@@ -549,7 +550,6 @@ class Subscribers implements ProfileSyncInterface
                 );
             $this->profileResource->updateSubscribersSyncStatus(
                 $subscribersToUpdate,
-                $store->getId(),
                 Profile::SYNC_STATUS_BATCHED,
                 $this->apsisCoreHelper
             );
@@ -557,7 +557,6 @@ class Subscribers implements ProfileSyncInterface
             if ($consentType == self::CONSENT_TYPE_OPT_IN) {
                 $this->profileResource->updateSubscribersSubscription(
                     $subscribersToUpdate,
-                    $store->getId(),
                     $this->apsisCoreHelper,
                     $topics
                 );

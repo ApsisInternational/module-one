@@ -141,23 +141,11 @@
                 </item>
             </argument>
         </column>
-        <column name="store_id">
-            <argument name="data" xsi:type="array">
-                <item name="options" xsi:type="object">Magento\Store\Model\ResourceModel\Store\Collection</item>
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">select</item>
-                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
-                    <item name="dataType" xsi:type="string">select</item>
-                    <item name="editor" xsi:type="string">select</item>
-                    <item name="label" xsi:type="string" translate="true">Store</item>
-                </item>
-            </argument>
-        </column>
-        <column name="subscriber_id">
+        <column name="email">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">Subscriber Id</item>
+                    <item name="label" xsi:type="string" translate="true">Email</item>
                 </item>
             </argument>
         </column>
@@ -169,11 +157,35 @@
                 </item>
             </argument>
         </column>
-        <column name="email">
+        <column name="store_id">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Magento\Store\Model\ResourceModel\Store\Collection</item>
+                <item name="config" xsi:type="array">
+                    <item name="filter" xsi:type="string">select</item>
+                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
+                    <item name="dataType" xsi:type="string">select</item>
+                    <item name="editor" xsi:type="string">select</item>
+                    <item name="label" xsi:type="string" translate="true">Customer Store</item>
+                </item>
+            </argument>
+        </column>
+        <column name="subscriber_id">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">Email</item>
+                    <item name="label" xsi:type="string" translate="true">Subscriber Id</item>
+                </item>
+            </argument>
+        </column>
+        <column name="subscriber_store_id">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Magento\Store\Model\ResourceModel\Store\Collection</item>
+                <item name="config" xsi:type="array">
+                    <item name="filter" xsi:type="string">select</item>
+                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
+                    <item name="dataType" xsi:type="string">select</item>
+                    <item name="editor" xsi:type="string">select</item>
+                    <item name="label" xsi:type="string" translate="true">Subscriber Store</item>
                 </item>
             </argument>
         </column>

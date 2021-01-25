@@ -21,6 +21,8 @@ use Magento\Newsletter\Model\Subscriber;
  * @method $this setSubscriberStatus(int $value)
  * @method int getStoreId()
  * @method $this setStoreId(int $value)
+ * @method int getSubscriberStoreId()
+ * @method $this setSubscriberStoreId(int $value)
  * @method int getSubscriberId()
  * @method $this setSubscriberId(int $value)
  * @method int getCustomerId()

@@ -139,7 +139,6 @@ class Batch implements ProfileSyncInterface
                     } elseif (is_string($result)) {
                         $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $result);
                         $this->updateProfilesStatus(
-                            $store,
                             $item,
                             Profile::SYNC_STATUS_FAILED,
                             'Batch id: ' . $item->getId() . ' - ' . $result
@@ -166,7 +165,6 @@ class Batch implements ProfileSyncInterface
                         } elseif (is_string($status)) {
                             $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $status);
                             $this->updateProfilesStatus(
-                                $store,
                                 $item,
                                 Profile::SYNC_STATUS_FAILED,
                                 'Batch id: ' . $item->getId() . ' - ' . $result
@@ -215,7 +213,6 @@ class Batch implements ProfileSyncInterface
                     if (is_string($result)) {
                         $this->updateItem($item, ProfileBatch::SYNC_STATUS_ERROR, $result);
                         $this->updateProfilesStatus(
-                            $store,
                             $item,
                             Profile::SYNC_STATUS_FAILED,
                             'Batch id: ' . $item->getId() . ' - ' . $result
@@ -264,18 +261,16 @@ class Batch implements ProfileSyncInterface
     }
 
     /**
-     * @param StoreInterface $store
      * @param ProfileBatch $item
      * @param int $status
      * @param string $msg
      */
-    private function updateProfilesStatus(StoreInterface $store, ProfileBatch $item, int $status, string $msg = '')
+    private function updateProfilesStatus(ProfileBatch $item, int $status, string $msg = '')
     {
         try {
             if ((int)$item->getBatchType() === ProfileBatch::BATCH_TYPE_CUSTOMER) {
                 $this->profileResource->updateCustomerSyncStatus(
                     explode(",", $item->getEntityIds()),
-                    $store->getId(),
                     $status,
                     $this->apsisCoreHelper,
                     $msg
@@ -283,7 +278,6 @@ class Batch implements ProfileSyncInterface
             } elseif ((int)$item->getBatchType() === ProfileBatch::BATCH_TYPE_SUBSCRIBER) {
                 $this->profileResource->updateSubscribersSyncStatus(
                     explode(",", $item->getEntityIds()),
-                    $store->getId(),
                     $status,
                     $this->apsisCoreHelper,
                     $msg
@@ -303,19 +297,19 @@ class Batch implements ProfileSyncInterface
     {
         try {
             if ($result->result->status === 'completed') {
-                $this->updateProfilesStatus($store, $item, Profile::SYNC_STATUS_SYNCED);
+                $this->updateProfilesStatus($item, Profile::SYNC_STATUS_SYNCED);
                 $this->updateItem($item, ProfileBatch::SYNC_STATUS_COMPLETED);
                 $this->importCountInProcessingStatus -= 1;
             } elseif ($result->result->status === 'error') {
                 $msg = 'Import failed with returned "error" status';
-                $this->updateProfilesStatus($store, $item, Profile::SYNC_STATUS_FAILED, $msg);
+                $this->updateProfilesStatus($item, Profile::SYNC_STATUS_FAILED, $msg);
                 $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $msg);
                 $this->importCountInProcessingStatus -= 1;
             } elseif ($result->result->status === 'waiting_for_file' && $item->getFileUploadExpiresAt() &&
                 $this->apsisDateHelper->isExpired($item->getFileUploadExpiresAt())
             ) {
                 $msg = 'File upload time expired';
-                $this->updateProfilesStatus($store, $item, Profile::SYNC_STATUS_PENDING);
+                $this->updateProfilesStatus($item, Profile::SYNC_STATUS_PENDING);
                 $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $msg);
                 $this->importCountInProcessingStatus -= 1;
             } elseif (in_array($result->result->status, $this->statusToCheckIfExpired)) {
@@ -323,7 +317,7 @@ class Batch implements ProfileSyncInterface
                 if ($inputDateTime && $this->apsisDateHelper->isExpired($inputDateTime)) {
                     $msg = 'Expired. Stuck in processing state for 1 day';
                     $this->updateItem($item, ProfileBatch::SYNC_STATUS_ERROR, $msg);
-                    $this->updateProfilesStatus($store, $item, Profile::SYNC_STATUS_PENDING);
+                    $this->updateProfilesStatus($item, Profile::SYNC_STATUS_PENDING);
                     $this->importCountInProcessingStatus -= 1;
                 }
             }

@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Observer\Subscriber;
 
+use Apsis\One\Model\Profile as ProfileModel;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Profile;
 use Magento\Framework\Event\Observer;
@@ -58,12 +59,7 @@ class SaveUpdate implements ObserverInterface
             $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
 
             if ($account) {
-                $profile = $this->profileCollectionFactory->create()
-                    ->loadByEmailAndStoreId(
-                        $subscriber->getEmail(),
-                        $subscriber->getStoreId()
-                    );
-
+                $profile = $this->findProfile($subscriber);
                 if (! $profile) {
                     $this->profileService->createProfileForSubscriber($subscriber);
                 } else {
@@ -75,5 +71,25 @@ class SaveUpdate implements ObserverInterface
         }
 
         return $this;
+    }
+
+    /**
+     * @param Subscriber $subscriber
+     *
+     * @return bool|ProfileModel
+     */
+    private function findProfile(Subscriber $subscriber)
+    {
+        $found = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
+        if ($found) {
+            return $found;
+        }
+        if ($subscriber->getCustomerId()) {
+            $found = $this->profileCollectionFactory->create()->loadByCustomerId($subscriber->getCustomerId());
+            if ($found) {
+                return $found;
+            }
+        }
+        return false;
     }
 }

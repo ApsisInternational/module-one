@@ -65,7 +65,6 @@ class LoggerPlugin
 
     /**
      * @param CustomerLogger $logger
-     *
      * @param CustomerLogger $result
      * @param int $customerId
      * @param array $data
@@ -87,7 +86,7 @@ class LoggerPlugin
             }
 
             $profile = $this->profileCollectionFactory->create()
-                ->loadByEmailAndStoreId($customer->getEmail(), $customer->getStoreId());
+                ->loadByCustomerId($customer->getId());
             if (! $profile) {
                 return $result;
             }

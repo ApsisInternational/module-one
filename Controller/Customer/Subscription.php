@@ -5,6 +5,8 @@ namespace Apsis\One\Controller\Customer;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Plugin\Customer\NewsletterManageIndexPlugin;
 use Exception;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Magento\Customer\Api\Data\CustomerInterface;
@@ -16,8 +18,6 @@ use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Plugin\Customer\NewsletterManageIndexPlugin;
 
 class Subscription extends Action
 {
@@ -201,7 +201,7 @@ class Subscription extends Action
             } else {
                 $this->subscriberFactory->create()->unsubscribeCustomerById($customer->getId());
                 $this->messageManager->addSuccess(__('We removed the subscription.'));
-            };
+            }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             $this->messageManager->addError(__('Something went wrong while saving your subscription.'));

@@ -11,10 +11,14 @@ use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollection
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Exception;
+use Magento\Framework\App\Area;
 use Magento\Framework\Stdlib\DateTime;
+use Magento\Newsletter\Model\SubscriberFactory;
+use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\ResourceModel\Quote\Collection;
 use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
 use Magento\Store\Api\Data\StoreInterface;
+use Magento\Store\Model\App\EmulationFactory;
 
 class AbandonedSub
 {
@@ -54,8 +58,19 @@ class AbandonedSub
     private $apsisDateHelper;
 
     /**
+     * @var SubscriberFactory
+     */
+    private $subscriberFactory;
+
+    /**
+     * @var EmulationFactory
+     */
+    private $emulationFactory;
+
+    /**
      * AbandonedSub constructor.
      *
+     * @param EmulationFactory $emulationFactory
      * @param ContentFactory $cartContentFactory
      * @param QuoteCollectionFactory $quoteCollectionFactory
      * @param AbandonedResource $abandonedResource
@@ -63,16 +78,20 @@ class AbandonedSub
      * @param DateTime $dateTime
      * @param ApsisDateHelper $apsisDateHelper
      * @param ProfileCollectionFactory $profileCollectionFactory
+     * @param SubscriberFactory $subscriberFactory
      */
     public function __construct(
+        EmulationFactory $emulationFactory,
         ContentFactory $cartContentFactory,
         QuoteCollectionFactory $quoteCollectionFactory,
         AbandonedResource $abandonedResource,
         EventResource $eventResource,
         DateTime $dateTime,
         ApsisDateHelper $apsisDateHelper,
-        ProfileCollectionFactory $profileCollectionFactory
+        ProfileCollectionFactory $profileCollectionFactory,
+        SubscriberFactory $subscriberFactory
     ) {
+        $this->subscriberFactory = $subscriberFactory;
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->apsisDateHelper = $apsisDateHelper;
         $this->dateTime = $dateTime;
@@ -80,6 +99,7 @@ class AbandonedSub
         $this->abandonedResource = $abandonedResource;
         $this->quoteCollectionFactory = $quoteCollectionFactory;
         $this->cartContentFactory = $cartContentFactory;
+        $this->emulationFactory = $emulationFactory;
     }
 
     /**
@@ -124,13 +144,12 @@ class AbandonedSub
         $abandonedCarts = [];
         $events = [];
         $createdAt = $this->dateTime->formatDate(true);
+        /** @var Quote $quote */
         foreach ($quoteCollection as $quote) {
             try {
+                $profile = $this->findProfile($quote, $apsisCoreHelper);
                 $cartData = $this->cartContentFactory->create()
                     ->getCartData($quote, $apsisCoreHelper);
-                /** @var Profile $profile */
-                $profile = $this->profileCollectionFactory->create()
-                    ->loadByEmailAndStoreId($quote->getCustomerEmail(), $quote->getStoreId());
                 if (! empty($cartData) && ! empty($cartData['items']) && $profile) {
                     $uuid = ApsisCoreHelper::generateUniversallyUniqueIdentifier();
                     $abandonedCarts[] = [
@@ -174,6 +193,39 @@ class AbandonedSub
                 $this->eventResource->insertEvents($events, $apsisCoreHelper);
             }
         }
+    }
+
+    /**
+     * @param Quote $quote
+     * @param ApsisCoreHelper $apsisCoreHelper
+     *
+     * @return bool|Profile
+     */
+    private function findProfile(Quote $quote, ApsisCoreHelper $apsisCoreHelper)
+    {
+        if ($quote->getCustomerId()) {
+            $profile = $this->profileCollectionFactory->create()->loadByCustomerId($quote->getCustomerId());
+            if ($profile) {
+                return $profile;
+            }
+        }
+        $appEmulation = $this->emulationFactory->create();
+        try {
+            $appEmulation->startEnvironmentEmulation($quote->getStoreId(), Area::AREA_FRONTEND, true);
+            $subscriber = $this->subscriberFactory->create()->loadByEmail($quote->getCustomerEmail());
+            $appEmulation->stopEnvironmentEmulation();
+        } catch (Exception $e) {
+            $appEmulation->stopEnvironmentEmulation();
+            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            return false;
+        }
+        if ($subscriber->getId()) {
+            $found = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
+            if ($found) {
+                return $found;
+            }
+        }
+        return false;
     }
 
     /**

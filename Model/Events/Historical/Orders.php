@@ -113,6 +113,7 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
                         $subData = $mainData['items'];
                         unset($mainData['items']);
                         $eventDataForEvent = $this->getEventData(
+                            $order->getStoreId(),
                             $profileCollectionArray[$order->getCustomerEmail()],
                             Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER,
                             $order->getCreatedAt(),

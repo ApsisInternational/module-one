@@ -17,6 +17,7 @@ use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductColl
 use Magento\Catalog\Model\Product;
 use Apsis\One\Model\Events\Historical\Reviews\Data as ReviewEventData;
 use Apsis\One\Model\Event;
+use Magento\Review\Model\ReviewFactory;
 
 class Reviews extends HistoricalEvent implements EventHistoryInterface
 {
@@ -31,6 +32,11 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
     private $productCollectionFactory;
 
     /**
+     * @var ReviewFactory
+     */
+    private $reviewFactory;
+
+    /**
      * Reviews constructor.
      *
      * @param DateTime $dateTime
@@ -38,14 +44,17 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
      * @param ProductCollectionFactory $productCollectionFactory
      * @param EventResource $eventResource
      * @param ReviewEventData $reviewEventData
+     * @param ReviewFactory $reviewFactory
      */
     public function __construct(
         DateTime $dateTime,
         ProductReviewCollectionFactory $reviewProductCollectionFactory,
         ProductCollectionFactory $productCollectionFactory,
         EventResource $eventResource,
-        ReviewEventData $reviewEventData
+        ReviewEventData $reviewEventData,
+        ReviewFactory $reviewFactory
     ) {
+        $this->reviewFactory = $reviewFactory;
         $this->dateTime = $dateTime;
         $this->eventData = $reviewEventData;
         $this->eventResource = $eventResource;
@@ -124,6 +133,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
                 if (isset($profileCollectionArray[$review->getCustomerId()]) &&
                     isset($productCollectionArray[$review->getEntityPkValue()])
                 ) {
+                    $review = $this->reviewFactory->create()->load($review->getId());
                     $eventData = $this->eventData->getDataArr(
                         $review,
                         $productCollectionArray[$review->getEntityPkValue()],
@@ -131,6 +141,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
                     );
                     if (! empty($eventData)) {
                         $eventDataForEvent = $this->getEventData(
+                            $review->getStoreId(),
                             $profileCollectionArray[$review->getCustomerId()],
                             Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW,
                             $review->getCreatedAt(),

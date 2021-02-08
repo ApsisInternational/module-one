@@ -95,8 +95,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 'subscriber_sync_status' => ApsisProfile::SYNC_STATUS_PENDING,
                 'customer_sync_status' => ApsisProfile::SYNC_STATUS_PENDING,
                 'error_message' => '',
-                'updated_at' => $this->dateTime->formatDate(true),
-                'topic_subscription' => $this->expressionFactory->create(["expression" => ('null')])
+                'updated_at' => $this->dateTime->formatDate(true)
             ];
             return $this->getConnection()->update(
                 $this->getMainTable(),
@@ -138,34 +137,6 @@ class Profile extends AbstractDb implements ResourceInterface
                 $this->getMainTable(),
                 $bind,
                 ["subscriber_id IN (?)" => $subscriberIds]
-            );
-        } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-            return 0;
-        }
-    }
-
-    /**
-     * @param array $subscriberIds
-     * @param ApsisCoreHelper $apsisCoreHelper
-     * @param string $topics
-     *
-     * @return int
-     */
-    public function updateSubscribersSubscription(
-        array $subscriberIds,
-        ApsisCoreHelper $apsisCoreHelper,
-        string $topics
-    ) {
-        try {
-            $write = $this->getConnection();
-            return $write->update(
-                $this->getMainTable(),
-                ['topic_subscription' => $topics, 'updated_at' => $this->dateTime->formatDate(true)],
-                [
-                    "subscriber_id IN (?)" => $subscriberIds,
-                    "topic_subscription is ?" => $this->expressionFactory->create(["expression" => ('null')])
-                ]
             );
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());

@@ -227,7 +227,7 @@
         </column>
         <column name="subscriber_sync_status" class="Apsis\One\Block\Adminhtml\Ui\SyncStatus">
             <argument name="data" xsi:type="array">
-                <item name="options" xsi:type="object">Apsis\One\Model\Config\Source\System\SyncStatus</item>
+                <item name="options" xsi:type="object">Apsis\One\Model\Config\Source\System\SubscriberSyncStatus</item>
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">select</item>
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>

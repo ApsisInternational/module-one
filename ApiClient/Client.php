@@ -511,6 +511,34 @@ class Client extends Rest
     }
 
     /**
+     * CONSENTS: Get opt-in consents
+     *
+     * Returns all opt-in consented topics for a given address.
+     * Verifies whether an opt-in consent (topic-level opt-in with no opt-out on higher level) exists for given address.
+     * If no opt-in consent exists for a given address then an empty list is returned.
+     *
+     * @param string $channelDiscriminator
+     * @param string $address
+     * @param string $sectionDiscriminator
+     * @param string $consentListDiscriminator
+     *
+     * @return mixed
+     */
+    public function getOptInConsents(
+        string $channelDiscriminator,
+        string $address,
+        string $sectionDiscriminator,
+        string $consentListDiscriminator
+    ) {
+        $url = $this->hostName . '/audience/channels/' . $channelDiscriminator . '/addresses/' . $address
+            . '/consents/sections/' . $sectionDiscriminator . '/consent-lists/' . $consentListDiscriminator
+            . '/evaluations';
+        $this->setUrl($url)
+            ->setVerb(Rest::VERB_GET);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
      * EXPORTS & IMPORTS: Import profiles - Initialize
      *
      * Initialize importing profiles into APSIS One.

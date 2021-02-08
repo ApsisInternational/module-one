@@ -25,7 +25,7 @@ class Config
     /**
      * Data mapping section
      */
-    /** Section & topic */
+    /** Section & data mappings */
     const CONFIG_APSIS_ONE_MAPPINGS_SECTION_GROUP = 'apsis_one_mappings/section_mapping';
     const CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION = 'apsis_one_mappings/section_mapping/section';
     /** Customer/Subscriber common attributes */
@@ -104,6 +104,7 @@ class Config
     const CONFIG_APSIS_ONE_SYNC_SETTING_GROUP = 'apsis_one_sync/sync';
     const CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED = 'apsis_one_sync/sync/subscriber_enabled';
     const CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC = 'apsis_one_sync/sync/subscriber_consent_topic';
+    const CONFIG_APSIS_ONE_SYNC_SETTING_ADDITIONAL_TOPIC = 'apsis_one_sync/sync/additional_consent_topic';
     const CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED = 'apsis_one_sync/sync/customer_enabled';
 
     /**
@@ -325,7 +326,7 @@ class Config
                 $consents[] = [
                     'resubscribe_if_opted_out' => true,
                     'field_selector' => $topicDiscriminator,
-                    'channel_discriminator' => 'com.apsis1.channels.email',
+                    'channel_discriminator' => Profile::EMAIL_CHANNEL_DISCRIMINATOR,
                     'consent_list_discriminator' => $consentListDiscriminator,
                     'topic_discriminator' => $topicDiscriminator,
                     'type' => $consentType

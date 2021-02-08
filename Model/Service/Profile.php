@@ -284,11 +284,15 @@ class Profile
                 if ($profile->getIsCustomer()) {
                     $this->eventService->registerCustomerBecomesSubscriberEvent($subscriber, $profile, $store);
                 }
+                if ((int) $profile->getSubscriberSyncStatus() === ProfileModel::SYNC_STATUS_SYNCED) {
+                    $profile->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE);
+                } else {
+                    $profile->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_PENDING);
+                }
                 $profile->setSubscriberId($subscriber->getSubscriberId())
                     ->setSubscriberStoreId($subscriber->getStoreId())
                     ->setSubscriberStatus(Subscriber::STATUS_SUBSCRIBED)
                     ->setIsSubscriber(ProfileModel::IS_FLAGGED)
-                    ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
                     ->setErrorMessage('');
                 $this->profileResource->save($profile);
             }

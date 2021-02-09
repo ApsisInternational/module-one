@@ -162,7 +162,7 @@ class Subscribers implements ProfileSyncInterface
                     $attributesArrWithVersionId,
                     Subscriber::STATUS_UNSUBSCRIBED,
                     self::CONSENT_TYPE_OPT_OUT,
-                    [Profile::SYNC_STATUS_PENDING]
+                    [Profile::SYNC_STATUS_PENDING, Profile::SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE]
                 );
             }
         } catch (Exception $e) {

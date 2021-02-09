@@ -93,10 +93,10 @@ class Subscription extends Template
         if (strlen($selectedConsentTopics) &&
             ! empty($subscriber = $this->subscriberFactory->create()->loadByCustomerId($customer->getId())) &&
             $subscriber->getId()) {
-            $topicMappings = explode(
+            $topicMappings = array_unique(explode(
                 ',',
                 $this->apsisCoreHelper->getMergedConfigTopics($selectedConsentTopics, $additionalConsentTopics)
-            );
+            ));
             $profile = $this->profileCollectionFactory->create()
                 ->loadBySubscriberId($subscriber->getSubscriberId());
             $sortedTopicArr = ($profile) ? $this->getConsentListsWithTopicsArr(

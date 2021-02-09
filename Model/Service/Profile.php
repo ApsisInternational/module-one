@@ -284,7 +284,9 @@ class Profile
                 if ($profile->getIsCustomer()) {
                     $this->eventService->registerCustomerBecomesSubscriberEvent($subscriber, $profile, $store);
                 }
-                if ((int) $profile->getSubscriberSyncStatus() === ProfileModel::SYNC_STATUS_SYNCED) {
+                if ((int) $profile->getSubscriberSyncStatus() === ProfileModel::SYNC_STATUS_SYNCED &&
+                    $profile->getIsSubscriber()
+                ) {
                     $profile->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE);
                 } else {
                     $profile->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_PENDING);

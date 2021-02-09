@@ -3,6 +3,7 @@
 namespace Apsis\One\Controller\Profile;
 
 use Apsis\One\Model\Profile;
+use Apsis\One\Model\Profile as ProfileModel;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
@@ -12,6 +13,7 @@ use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Escaper;
+use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
 
 class Subscription extends Action
@@ -91,6 +93,14 @@ class Subscription extends Action
             if ($profile->getSubscriberId()) {
                 $subscriber = $this->subscriberFactory->create()->load($profile->getSubscriberId());
                 if ($subscriber->getId()) {
+                    //Set subscriber status
+                    $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED)
+                        ->setSubscriberStoreId($subscriber->getStoreId())
+                        ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE)
+                        ->setIsSubscriber(ProfileModel::NO_FLAGGED)
+                        ->setErrorMessage('');
+                    $this->profileResource->save($profile);
+                    //Unsubscribe from Magento
                     $subscriber->unsubscribe();
                     return $this->sendResponse(204);
                 }

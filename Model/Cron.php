@@ -179,7 +179,7 @@ class Cron
             ->addFieldToFilter('status', 'running')
             ->setPageSize(1);
 
-        if (! $currentRunningJob->getSize() && empty($currentRunningJob->getFirstItem()->getScheduledAt())) {
+        if (! $currentRunningJob->getSize() || empty($dateTime = $currentRunningJob->getFirstItem()->getScheduledAt())) {
             return false;
         }
 
@@ -187,7 +187,7 @@ class Cron
             ->create()
             ->addFieldToFilter(
                 'scheduled_at',
-                $currentRunningJob->getFirstItem()->getScheduledAt()
+                $dateTime
             )
             ->addFieldToFilter('job_code', $jobCode)
             ->addFieldToFilter(

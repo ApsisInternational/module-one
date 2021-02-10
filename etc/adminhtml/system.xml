@@ -417,6 +417,15 @@
                         <field id="subscriber_enabled">1</field>
                     </depends>
                 </field>
+                <field id="additional_consent_topic" type="multiselect" translate="label" sortOrder="35" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Additional Consent List Topics</label>
+                    <source_model>Apsis\One\Model\Config\Source\Datamapping\Topic</source_model>
+                    <comment><![CDATA[Additional topics to show to subscribers, to which they can opt-in/opt-out.]]></comment>
+                    <depends>
+                        <field id="subscriber_enabled">1</field>
+                    </depends>
+                </field>
                 <field id="customer_heading" translate="label" sortOrder="40" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Customer</label>

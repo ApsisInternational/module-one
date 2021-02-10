@@ -774,4 +774,18 @@ class Core extends ApsisLogHelper
             mt_rand(0, 0xffff)
         );
     }
+
+    /**
+     * @param string $selectedTopics
+     * @param string $additionalTopics
+     *
+     * @return string
+     */
+    public function getMergedConfigTopics(string $selectedTopics, string $additionalTopics)
+    {
+        if (strlen($additionalTopics)) {
+            return $selectedTopics . ',' . $additionalTopics;
+        }
+        return $selectedTopics;
+    }
 }

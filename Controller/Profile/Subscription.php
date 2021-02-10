@@ -3,17 +3,17 @@
 namespace Apsis\One\Controller\Profile;
 
 use Apsis\One\Model\Profile;
+use Apsis\One\Model\Profile as ProfileModel;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Exception;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Escaper;
+use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
 
 class Subscription extends Action
@@ -82,7 +82,7 @@ class Subscription extends Action
             }
 
             $params = $this->getRequest()->getParams();
-            if (! $this->validateParams($params)) {
+            if (empty($params['KS_ID'])) {
                 return $this->sendResponse(400);
             }
 
@@ -90,24 +90,22 @@ class Subscription extends Action
                 return $this->sendResponse(404);
             }
 
-            if (! $this->validateEmail($params, $profile)) {
-                return $this->sendResponse(400);
-            }
-
-            if ($params['CLD'] === 'all') {
-                $subscriber = $this->subscriberFactory->create()
-                        ->load($profile->getSubscriberId());
+            if ($profile->getSubscriberId()) {
+                $subscriber = $this->subscriberFactory->create()->load($profile->getSubscriberId());
                 if ($subscriber->getId()) {
+                    //Set subscriber status
+                    $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED)
+                        ->setSubscriberStoreId($subscriber->getStoreId())
+                        ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE)
+                        ->setIsSubscriber(ProfileModel::NO_FLAGGED)
+                        ->setErrorMessage('');
+                    $this->profileResource->save($profile);
+                    //Unsubscribe from Magento
                     $subscriber->unsubscribe();
                     return $this->sendResponse(204);
                 }
-            } elseif (! empty($profileConsent = explode(',', $profile->getTopicSubscription()))) {
-                $consent = $this->processConsent($profileConsent, $params);
-                $profile->setTopicSubscription(empty($consent) ? '-' : $consent)
-                        ->setSubscriberSyncStatus(Profile::SYNC_STATUS_PENDING);
-                $this->profileResource->save($profile);
-                return $this->sendResponse(204);
             }
+
             return $this->sendResponse(200, 'No change made to profile subscription.');
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
@@ -135,29 +133,6 @@ class Subscription extends Action
     }
 
     /**
-     * @param array $profileConsent
-     * @param array $params
-     *
-     * @return string
-     */
-    private function processConsent(array $profileConsent, array $params)
-    {
-        try {
-            $original = $profileConsent;
-            foreach ($profileConsent as $index => $value) {
-                if (! empty($consent = explode('|', $value)) && is_array($consent) && count($consent) === 4 &&
-                    $params['CLD'] === $consent[0] && $params['TD'] === $consent[1]) {
-                    unset($profileConsent[$index]);
-                }
-            }
-            return empty($profileConsent) ? '' : implode(',', $profileConsent);
-        } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-            return implode(',', $original);
-        }
-    }
-
-    /**
      * @param string $key
      *
      * @return bool
@@ -172,35 +147,9 @@ class Subscription extends Action
      *
      * @return Profile|bool
      */
-    private function validateParams(array $params)
-    {
-        if (empty($params['KS_ID']) || empty($params['EMAIL']) || empty($params['CLD']) ||
-            ($params['CLD'] !== 'all' && empty($params['TD']))) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * @param array $params
-     *
-     * @return Profile|bool
-     */
     private function validateId(array $params)
     {
         return $this->profileCollectionFactory->create()
             ->loadByIntegrationId($this->escaper->escapeHtml($params['KS_ID']));
-    }
-
-    /**
-     * @param array $params
-     * @param Profile $profile
-     *
-     * @return bool
-     */
-    private function validateEmail(array $params, Profile $profile)
-    {
-        return $params['EMAIL'] === $profile->getEmail();
     }
 }

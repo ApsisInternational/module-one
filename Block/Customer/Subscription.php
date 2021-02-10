@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Block\Customer;
 
+use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
@@ -9,6 +10,7 @@ use Magento\Customer\Model\Session;
 use Magento\Framework\View\Element\Template;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
+use Magento\Store\Model\ScopeInterface;
 
 /**
  * NewsletterPreferences block
@@ -83,50 +85,81 @@ class Subscription extends Template
             $customer->getStore(),
             ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC
         );
+        $additionalConsentTopics = (string) $this->apsisCoreHelper->getStoreConfig(
+            $customer->getStore(),
+            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_ADDITIONAL_TOPIC
+        );
         /** @var Subscriber $subscriber */
         if (strlen($selectedConsentTopics) &&
             ! empty($subscriber = $this->subscriberFactory->create()->loadByCustomerId($customer->getId())) &&
             $subscriber->getId()) {
+            $topicMappings = array_unique(explode(
+                ',',
+                $this->apsisCoreHelper->getMergedConfigTopics($selectedConsentTopics, $additionalConsentTopics)
+            ));
             $profile = $this->profileCollectionFactory->create()
                 ->loadBySubscriberId($subscriber->getSubscriberId());
             $sortedTopicArr = ($profile) ? $this->getConsentListsWithTopicsArr(
-                $selectedConsentTopics,
-                $this->getProfileTopicArr((string) $profile->getTopicSubscription())
+                $topicMappings,
+                $this->getProfileTopicArr($profile, $topicMappings)
             ) : [];
+        }
+        if (! empty($sortedTopicArr)) {
+            $this->customerSession->setPreUpdateConsents($sortedTopicArr);
         }
         return $sortedTopicArr;
     }
 
     /**
-     * @param string $profileTopics
+     * @param Profile $profile
+     * @param array $topicMappings
      *
      * @return array
      */
-    private function getProfileTopicArr(string $profileTopics)
+    private function getProfileTopicArr(Profile $profile, array $topicMappings)
     {
         $topicArr = [];
-        if (strlen($profileTopics) > 1) {
-            $topics = explode(',', $profileTopics);
-            foreach ($topics as $topic) {
-                $topicMapping = explode('|', $topic);
-                if (empty($topicMapping) || ! isset($topicMapping[1])) {
+        $store = $this->apsisCoreHelper->getStore($profile->getSubscriberStoreId());
+        $client = $this->apsisCoreHelper->getApiClient(
+            ScopeInterface::SCOPE_STORES,
+            $store->getId()
+        );
+        $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
+            $store,
+            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+        );
+        if ($client && $sectionDiscriminator) {
+            foreach ($topicMappings as $topicMappingString) {
+                $topicMapping = explode('|', $topicMappingString);
+                if (empty($topicMapping) || count($topicMapping) < 4) {
                     continue;
                 }
-                $topicArr[] = $topicMapping[1];
+                if ($consentListDiscriminator = $topicMapping[0]) {
+                    $consents = $client->getOptInConsents(
+                        Profile::EMAIL_CHANNEL_DISCRIMINATOR,
+                        $profile->getEmail(),
+                        $sectionDiscriminator,
+                        $consentListDiscriminator
+                    );
+                    if (! empty($consents->items)) {
+                        foreach ($consents->items as $consent) {
+                            $topicArr[] = $consent->topic_discriminator;
+                        }
+                    }
+                }
             }
         }
         return $topicArr;
     }
 
     /**
-     * @param string $topicMappings
+     * @param array $topicMappings
      * @param array $profileTopics
      *
      * @return array
      */
-    private function getConsentListsWithTopicsArr(string $topicMappings, array $profileTopics)
+    private function getConsentListsWithTopicsArr(array $topicMappings, array $profileTopics)
     {
-        $topicMappings = explode(',', $topicMappings);
         $topicMappingsArr = [];
         foreach ($topicMappings as $topicMappingString) {
             $topicMapping = explode('|', $topicMappingString);

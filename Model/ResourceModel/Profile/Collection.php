@@ -77,15 +77,16 @@ class Collection extends AbstractCollection
      * @param int $storeId
      * @param int $syncLimit
      * @param int $subscriberStatus
+     * @param array $syncStatus
      *
      * @return Collection
      */
-    public function getSubscribersToBatchByStore(int $storeId, int $syncLimit, int $subscriberStatus)
+    public function getSubscribersToBatchByStore(int $storeId, int $syncLimit, int $subscriberStatus, array $syncStatus)
     {
         return $this->addFieldToSelect('*')
             ->addFieldToFilter('subscriber_id', ['notnull' => true])
             ->addFieldToFilter('subscriber_status', $subscriberStatus)
-            ->addFieldToFilter('subscriber_sync_status', Profile::SYNC_STATUS_PENDING)
+            ->addFieldToFilter('subscriber_sync_status', ['in' => $syncStatus])
             ->addFieldToFilter('subscriber_store_id', $storeId)
             ->setPageSize($syncLimit);
     }

@@ -66,14 +66,15 @@ class Subscriber implements ProfileDataInterface
     }
 
     /**
-     * @param array $consentLists
+     * @param array $topics
+     * @param int $consent
      *
      * @return $this
      */
-    public function setConsentListData(array $consentLists)
+    public function setConsentTopicData(array $topics, int $consent)
     {
-        foreach ($consentLists as $column => $value) {
-            $this->subscriberData[$column] = $value;
+        foreach ($topics as $topic) {
+            $this->subscriberData[$topic] = $consent;
         }
         return $this;
     }

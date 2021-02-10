@@ -23,7 +23,21 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (version_compare($context->getVersion(), '1.3.0', '<')) {
             $this->upgradeOneThreeZero($setup);
         }
+        if (version_compare($context->getVersion(), '1.8.0', '<')) {
+            $this->upgradeOneEightZero($setup);
+        }
         $setup->endSetup();
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function upgradeOneEightZero(SchemaSetupInterface $setup)
+    {
+        $setup->getConnection()->dropColumn(
+            $setup->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
+            'topic_subscription'
+        );
     }
 
     /**

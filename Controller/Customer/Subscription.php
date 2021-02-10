@@ -3,9 +3,10 @@
 namespace Apsis\One\Controller\Customer;
 
 use Apsis\One\Model\Profile;
-use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Sync\Profiles\Subscribers;
 use Apsis\One\Plugin\Customer\NewsletterManageIndexPlugin;
 use Exception;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
@@ -18,6 +19,7 @@ use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
+use Magento\Store\Model\ScopeInterface;
 
 class Subscription extends Action
 {
@@ -55,11 +57,6 @@ class Subscription extends Action
     private $profileCollectionFactory;
 
     /**
-     * @var ProfileResource
-     */
-    private $profileResource;
-
-    /**
      * Subscription constructor.
      *
      * @param Context $context
@@ -69,7 +66,6 @@ class Subscription extends Action
      * @param CustomerRepository $customerRepository
      * @param SubscriberFactory $subscriberFactory
      * @param ProfileCollectionFactory $profileCollectionFactory
-     * @param ProfileResource $profileResource
      */
     public function __construct(
         Context $context,
@@ -78,10 +74,8 @@ class Subscription extends Action
         Validator $formKeyValidator,
         CustomerRepository $customerRepository,
         SubscriberFactory $subscriberFactory,
-        ProfileCollectionFactory $profileCollectionFactory,
-        ProfileResource $profileResource
+        ProfileCollectionFactory $profileCollectionFactory
     ) {
-        $this->profileResource = $profileResource;
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->subscriberFactory = $subscriberFactory;
@@ -111,11 +105,17 @@ class Subscription extends Action
                     $subscriber->getSubscriberId()
                 ))
             ) {
-                $subscription = implode(',', $this->getRequest()->getParam('topic_subscriptions', []));
-                $profile->setTopicSubscription(empty($subscription) ? '-' : $subscription)
-                    ->setSubscriberSyncStatus(Profile::SYNC_STATUS_PENDING);
-                $this->profileResource->save($profile);
-                $this->messageManager->addSuccessMessage(__('The subscription topics has been saved.'));
+                $preUpdateConsents = $this->customerSession->getPreUpdateConsents();
+                $this->customerSession->unsPreUpdateConsents();
+                if (! empty($preUpdateConsents)) {
+                    $check = $this->evaluateAndUpdateConsent($preUpdateConsents, $profile);
+                    if ($check) {
+                        $this->messageManager->addSuccessMessage(__('The subscription topics has been saved.'));
+                    } else {
+                        $this->messageManager
+                            ->addNoticeMessage(__('We could not save all subscription topics, please try again later'));
+                    }
+                }
                 return $this->_redirect(NewsletterManageIndexPlugin::APSIS_NEWSLETTER_MANAGE_URL);
             }
             return $this->_redirect(self::MAGENTO_NEWSLETTER_MANAGE_URL);
@@ -124,6 +124,70 @@ class Subscription extends Action
             $this->messageManager->addErrorMessage(__('An error occurred while saving your subscription topics.'));
             return $this->_redirect(self::MAGENTO_NEWSLETTER_MANAGE_URL);
         }
+    }
+
+    /**
+     * @param array $preUpdateConsents
+     * @param Profile $profile
+     *
+     * @return bool
+     */
+    private function evaluateAndUpdateConsent(array $preUpdateConsents, Profile $profile)
+    {
+        $postConsents = $this->getRequest()->getParam('topic_subscriptions', []);
+        $check = true;
+        foreach ($preUpdateConsents as $cld => $preUpdateConsent) {
+            foreach ($preUpdateConsent['topics'] as $topic) {
+                if ($topic['consent'] === true && ! in_array($topic['value'], $postConsents)) {
+                    //create consent (Remove)
+                    $check = $this->createConsent($profile, Subscribers::CONSENT_TYPE_OPT_OUT, $topic['value']);
+                } elseif ($topic['consent'] === false && in_array($topic['value'], $postConsents)) {
+                    //create consent (Add)
+                    $check = $this->createConsent($profile, Subscribers::CONSENT_TYPE_OPT_IN, $topic['value'], true);
+                }
+            }
+        }
+        return $check;
+    }
+
+    /**
+     * @param Profile $profile
+     * @param string $type
+     * @param string $consent
+     * @param bool $subscribe
+     *
+     * @return bool
+     */
+    private function createConsent(Profile $profile, string $type, string $consent, bool $subscribe = false)
+    {
+        $store = $this->apsisCoreHelper->getStore($profile->getSubscriberStoreId());
+        $client = $this->apsisCoreHelper->getApiClient(
+            ScopeInterface::SCOPE_STORES,
+            $store->getId()
+        );
+        $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
+            $store,
+            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+        );
+        $consent = explode('|', $consent);
+        if ($subscribe) {
+            $result = $client->subscribeProfileToTopic(
+                $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator),
+                $profile->getIntegrationUid(),
+                $sectionDiscriminator,
+                $consent[0],
+                $consent[1]
+            );
+        }
+        $result = $client->createConsent(
+            Profile::EMAIL_CHANNEL_DISCRIMINATOR,
+            $profile->getEmail(),
+            $sectionDiscriminator,
+            $consent[0],
+            $consent[1],
+            $type
+        );
+        return ($result === false || is_string($result)) ? false : true;
     }
 
     /**

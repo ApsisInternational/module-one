@@ -10,7 +10,6 @@ use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime;
-use Magento\Newsletter\Model\Subscriber;
 
 /**
  * Class Profile
@@ -41,8 +40,6 @@ use Magento\Newsletter\Model\Subscriber;
  * @method $this setErrorMessage(string $value)
  * @method string getUpdatedAt()
  * @method $this setUpdatedAt(string $value)
- * @method string getTopicSubscription()
- * @method $this setTopicSubscription(string $value)
  */
 class Profile extends AbstractModel
 {
@@ -50,6 +47,7 @@ class Profile extends AbstractModel
     const SYNC_STATUS_BATCHED = 1;
     const SYNC_STATUS_SYNCED = 2;
     const SYNC_STATUS_FAILED = 3;
+    const SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE = 4;
 
     const IS_FLAGGED = 1;
     const NO_FLAGGED = 0;
@@ -57,6 +55,7 @@ class Profile extends AbstractModel
     const INTEGRATION_KEYSPACE = 'integration_uid';
     const EMAIL_FIELD = 'email';
     const EMAIL_KEYSPACE_DISCRIMINATOR = 'com.apsis1.keyspaces.email';
+    const EMAIL_CHANNEL_DISCRIMINATOR = 'com.apsis1.channels.email';
 
     /**
      * @var DateTime
@@ -121,10 +120,6 @@ class Profile extends AbstractModel
                     ["expression" => "(SELECT UUID())"]
                 )
             );
-        }
-
-        if ($this->getSubscriberStatus() == Subscriber::STATUS_UNSUBSCRIBED) {
-            $this->setTopicSubscription($this->expressionFactory->create(["expression" => "null"]));
         }
 
         return $this;

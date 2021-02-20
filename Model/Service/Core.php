@@ -5,6 +5,7 @@ namespace Apsis\One\Model\Service;
 use Apsis\One\ApiClient\Client;
 use Apsis\One\ApiClient\ClientFactory;
 use Apsis\One\Logger\Logger;
+use Apsis\One\Model\Profile;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
@@ -787,5 +788,104 @@ class Core extends ApsisLogHelper
             return $selectedTopics . ',' . $additionalTopics;
         }
         return $selectedTopics;
+    }
+
+    /**
+     * @param Profile $profile
+     * @param array $topicMappings
+     *
+     * @return array
+     */
+    public function getConsentListTopicsToShowForProfile(Profile $profile, array $topicMappings)
+    {
+        $topics = [];
+        if (! empty($topicMappings)) {
+            $topics = $this->getConsentListsWithTopicsArr(
+                $topicMappings,
+                $this->getProfileTopicArr($profile, $topicMappings)
+            );
+        }
+        return $topics;
+    }
+
+    /**
+     * @param Profile $profile
+     * @param array $topicMappings
+     *
+     * @return array
+     */
+    private function getProfileTopicArr(Profile $profile, array $topicMappings)
+    {
+        $topicArr = [];
+        try {
+            $store = $this->getStore($profile->getSubscriberStoreId());
+            $client = $this->getApiClient(
+                ScopeInterface::SCOPE_STORES,
+                $store->getId()
+            );
+            $sectionDiscriminator = $this->getStoreConfig(
+                $store,
+                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+            );
+            if ($client && $sectionDiscriminator) {
+                foreach ($topicMappings as $topicMappingString) {
+                    $topicMapping = explode('|', $topicMappingString);
+                    if (empty($topicMapping) || count($topicMapping) < 4) {
+                        continue;
+                    }
+                    if ($consentListDiscriminator = $topicMapping[0]) {
+                        $consents = $client->getOptInConsents(
+                            Profile::EMAIL_CHANNEL_DISCRIMINATOR,
+                            $profile->getEmail(),
+                            $sectionDiscriminator,
+                            $consentListDiscriminator
+                        );
+                        if (! empty($consents->items)) {
+                            foreach ($consents->items as $consent) {
+                                $topicArr[] = $consent->topic_discriminator;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
+        return $topicArr;
+    }
+
+    /**
+     * @param array $topicMappings
+     * @param array $profileTopics
+     *
+     * @return array
+     */
+    private function getConsentListsWithTopicsArr(array $topicMappings, array $profileTopics)
+    {
+        $topicMappingsArr = [];
+        try {
+            foreach ($topicMappings as $topicMappingString) {
+                $topicMapping = explode('|', $topicMappingString);
+                if (empty($topicMapping) || count($topicMapping) < 4) {
+                    continue;
+                }
+                $topic = [
+                    'value' => $topicMapping[0] . '|' . $topicMapping[1],
+                    'name' => $topicMapping[3],
+                    'consent' => in_array($topicMapping[1], $profileTopics)
+                ];
+                if (empty($topicMappingsArr[$topicMapping[0]]['topics'])) {
+                    $topicMappingsArr[$topicMapping[0]] = [
+                        'name' => $topicMapping[2],
+                        'topics' => [$topic]
+                    ];
+                    continue;
+                }
+                $topicMappingsArr[$topicMapping[0]]['topics'][] = $topic;
+            }
+        } catch (Exception $e) {
+            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
+        return $topicMappingsArr;
     }
 }

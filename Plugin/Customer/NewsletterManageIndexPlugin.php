@@ -3,16 +3,16 @@
 namespace Apsis\One\Plugin\Customer;
 
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Customer\Model\Session;
 use Magento\Framework\App\Response\Http;
 use Magento\Framework\App\Response\HttpInterface;
 use Magento\Framework\UrlFactory;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Newsletter\Controller\Manage\Index;
-use Magento\Store\Model\ScopeInterface;
-use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Newsletter\Model\Subscriber;
+use Magento\Newsletter\Model\SubscriberFactory;
+use Magento\Store\Model\ScopeInterface;
 
 class NewsletterManageIndexPlugin
 {
@@ -116,12 +116,18 @@ class NewsletterManageIndexPlugin
         );
         $profileFound = ($subscriber->getId() && $subscriber->isSubscribed()) ?
             $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getSubscriberId()) : false;
+        $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
+            $store,
+            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+        );
         return (
             $accountEnabled &&
             $syncEnabled &&
             strlen($selectedConsentTopics) &&
             $subscriber->getId() &&
-            $profileFound
+            $profileFound &&
+            $profileFound->getSubscriberSyncStatus() &&
+            $sectionDiscriminator
         );
     }
 }

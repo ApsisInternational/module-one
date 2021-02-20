@@ -2,8 +2,6 @@
 
 namespace Apsis\One\Observer\Customer;
 
-use Apsis\One\Model\Profile as ProfileModel;
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Profile;
 use Exception;
@@ -11,7 +9,6 @@ use Magento\Customer\Model\Customer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Registry;
-use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Store\Model\ScopeInterface;
 
 class SaveUpdate implements ObserverInterface
@@ -24,11 +21,6 @@ class SaveUpdate implements ObserverInterface
     private $apsisCoreHelper;
 
     /**
-     * @var ProfileCollectionFactory
-     */
-    private $profileCollectionFactory;
-
-    /**
      * @var Registry
      */
     private $registry;
@@ -39,30 +31,19 @@ class SaveUpdate implements ObserverInterface
     private $profileService;
 
     /**
-     * @var SubscriberFactory
-     */
-    private $subscriberFactory;
-
-    /**
      * SaveUpdate constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
-     * @param ProfileCollectionFactory $profileCollectionFactory
      * @param Registry $registry
      * @param Profile $profileService
-     * @param SubscriberFactory $subscriberFactory
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
-        ProfileCollectionFactory $profileCollectionFactory,
         Registry $registry,
-        Profile $profileService,
-        SubscriberFactory $subscriberFactory
+        Profile $profileService
     ) {
-        $this->subscriberFactory = $subscriberFactory;
         $this->profileService = $profileService;
         $this->registry = $registry;
-        $this->profileCollectionFactory = $profileCollectionFactory;
         $this->apsisCoreHelper = $apsisCoreHelper;
     }
 
@@ -87,10 +68,7 @@ class SaveUpdate implements ObserverInterface
             $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $customer->getStoreId());
 
             if ($account) {
-                if (! $customer->getStore()->getWebsite()) {
-                    return $this;
-                }
-                $profile = $this->findProfile($customer);
+                $profile = $this->profileService->findProfileForCustomer($customer);
 
                 if (! $profile) {
                     $this->profileService->createProfileForCustomer($customer);
@@ -102,26 +80,5 @@ class SaveUpdate implements ObserverInterface
             $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
         return $this;
-    }
-
-    /**
-     * @param Customer $customer
-     *
-     * @return bool|ProfileModel
-     */
-    private function findProfile(Customer $customer)
-    {
-        $found = $this->profileCollectionFactory->create()->loadByCustomerId($customer->getId());
-        if ($found) {
-            return $found;
-        }
-        $subscriber = $this->subscriberFactory->create()->loadByEmail($customer->getEmail());
-        if ($subscriber->getId()) {
-            $found = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
-            if ($found) {
-                return $found;
-            }
-        }
-        return false;
     }
 }

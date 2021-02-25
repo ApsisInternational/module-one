@@ -51,6 +51,7 @@ class Topic implements OptionSourceInterface
                 return $options;
             }
 
+            $options[] = ['label' => __('--- Please select ---'), 'value' => ''];
             foreach ($consentLists->items as $consentList) {
                 $topics = $apiClient->getTopics($section, $consentList->discriminator);
                 if (! $topics || ! isset($topics->items)) {

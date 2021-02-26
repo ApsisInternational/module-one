@@ -1,10 +1,12 @@
 require(['jquery', 'jquery/ui', 'domReady!', 'mage/translate'], function ($) {
     'use strict';
 
-    const text = $.mage.__('You may select maximum 5 topics.');
+    const generalElmId = '#apsis_one_sync_sync_subscriber_consent_topic';
+    const additionalEmlId = '#apsis_one_sync_sync_additional_consent_topic';
+    const text = $.mage.__('You may select maximum 4 additional topics.');
     const tip = '<div class="apsis-tooltip" style="position: absolute; top: -10px; background-color: #333;' +
         'color: #fff; padding: 5px;"></div>';
-    const maxAllowedSelection = 5;
+    const maxAllowedSelection = 4;
     let last_valid_selection = null;
 
     /**
@@ -53,10 +55,32 @@ require(['jquery', 'jquery/ui', 'domReady!', 'mage/translate'], function ($) {
     }
 
     /**
+     * Update options
+     *
+     * @param element
+     */
+    function updateAdditionalTopics(element)
+    {
+        if (element.val()) {
+            $(additionalEmlId + ' option').each(function () {
+                $(this).removeAttr('disabled');
+            });
+            let additionalElement = $(additionalEmlId + " option[value='" + element.val() + "']");
+            additionalElement.attr('disabled', true);
+            additionalElement.attr('selected', false);
+        }
+    }
+
+    /**
      * Multiselect selection change observer
      */
-    $(document).on('change', '#apsis_one_sync_sync_subscriber_consent_topic', function() {
+    $(additionalEmlId + " option[value='']").remove();
+    updateAdditionalTopics($(generalElmId));
+    $(document).on('change', additionalEmlId, function() {
         validate($(this));
+    });
+    $(document).on('change', generalElmId, function() {
+        updateAdditionalTopics($(this));
     });
 });
 

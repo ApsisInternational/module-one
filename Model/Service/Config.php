@@ -225,24 +225,34 @@ class Config
 
     /**
      * @param StoreInterface $store
+     * @param bool $withCommon
+     *
      * @return array
      */
-    public function getSubscriberAttributeMapping(StoreInterface $store)
+    public function getSubscriberAttributeMapping(StoreInterface $store, bool $withCommon = true)
     {
         $subscriberMapping = $this->getConfigMappingsByPath($store, self::CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_GROUP);
-        $commonMapping = $this->getCommonAttributeMapping($store);
-        return array_merge($subscriberMapping, $commonMapping);
+        if ($withCommon) {
+            $commonMapping = $this->getCommonAttributeMapping($store);
+            return array_merge($subscriberMapping, $commonMapping);
+        }
+        return $subscriberMapping;
     }
 
     /**
      * @param StoreInterface $store
+     * @param bool $withCommon
+     *
      * @return array
      */
-    public function getCustomerAttributeMapping(StoreInterface $store)
+    public function getCustomerAttributeMapping(StoreInterface $store, bool $withCommon = true)
     {
         $customerMapping = $this->getConfigMappingsByPath($store, self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_GROUP);
-        $commonMapping = $this->getCommonAttributeMapping($store);
-        return array_merge($customerMapping, $commonMapping);
+        if ($withCommon) {
+            $commonMapping = $this->getCommonAttributeMapping($store);
+            return array_merge($customerMapping, $commonMapping);
+        }
+        return $customerMapping;
     }
 
     /**

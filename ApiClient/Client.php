@@ -477,6 +477,25 @@ class Client extends Rest
     }
 
     /**
+     * Delete a profile
+     *
+     * Profile will be permanently deleted along with its consents and events.
+     * This operation is permanent and irreversible.
+     *
+     * @param string $keySpaceDiscriminator
+     * @param string $profileKey
+     *
+     * @return mixed
+     */
+    public function deleteProfile(string $keySpaceDiscriminator, string $profileKey)
+    {
+        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey;
+        $this->setUrl($url)
+            ->setVerb(Rest::VERB_DELETE);
+        return $this->processResponse($this->execute(), __METHOD__);
+    }
+
+    /**
      * CONSENTS: Create consent
      *
      * @param string $channelDiscriminator
@@ -497,16 +516,19 @@ class Client extends Rest
         string $type
     ) {
         $url = $this->hostName . '/audience/channels/' . $channelDiscriminator . '/addresses/' . $address . '/consents';
+        $body = [
+            'section_discriminator' => $sectionDiscriminator,
+            'type' => $type
+        ];
+        if (strlen($consentListDiscriminator)) {
+            $body['consent_list_discriminator'] = $consentListDiscriminator;
+        }
+        if (strlen($topicDiscriminator)) {
+            $body['topic_discriminator'] = $topicDiscriminator;
+        }
         $this->setUrl($url)
             ->setVerb(Rest::VERB_POST)
-            ->buildBody(
-                [
-                    'section_discriminator' => $sectionDiscriminator,
-                    'consent_list_discriminator' => $consentListDiscriminator,
-                    'topic_discriminator' => $topicDiscriminator,
-                    'type' => $type
-                ]
-            );
+            ->buildBody($body);
         return $this->processResponse($this->execute(), __METHOD__);
     }
 

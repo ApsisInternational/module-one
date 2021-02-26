@@ -60,7 +60,39 @@ class UpgradeData implements UpgradeDataInterface
         if (version_compare($context->getVersion(), '1.5.0', '<')) {
             $this->updateOneFiveZero($setup);
         }
+        if (version_compare($context->getVersion(), '1.9.0', '<')) {
+            $this->updateOneNineZero($setup);
+        }
         $setup->endSetup();
+    }
+
+    /**
+     * @param ModuleDataSetupInterface $setup
+     */
+    private function updateOneNineZero(ModuleDataSetupInterface $setup)
+    {
+        try {
+            foreach ($this->apsisCoreHelper->getStores(true) as $store) {
+                $oldValue = (string) $store
+                    ->getConfig(ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC);
+                if (strlen($oldValue) && ! empty($topics = explode(',', $oldValue)) && count($topics)) {
+                    $scopeArray = $this->apsisCoreHelper->resolveContext(
+                        ScopeInterface::SCOPE_STORES,
+                        $store->getId(),
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC
+                    );
+                    $this->apsisCoreHelper->saveConfigValue(
+                        ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC,
+                        $topics[0],
+                        $scopeArray['scope'],
+                        $scopeArray['id']
+                    );
+                }
+                $store->resetConfig();
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
     }
 
     /**

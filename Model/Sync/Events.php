@@ -342,6 +342,7 @@ class Events implements SyncInterface
             $event->getCreatedAt(),
             Zend_Date::ISO_8601
         );
+        $withAddedSecond = '';
         if ((int) $event->getEventType() === Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART ||
             (int) $event->getEventType() === Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER) {
             $typeArray = $this->eventsDiscriminatorMapping[$event->getEventType()];
@@ -360,8 +361,11 @@ class Events implements SyncInterface
                 'data' => $mainData,
             ];
             foreach ($subData as $item) {
+                if (empty($withAddedSecond)) {
+                    $withAddedSecond = $createdAt;
+                }
                 $eventData[] = [
-                    'event_time' => $createdAt,
+                    'event_time' => $withAddedSecond = $this->apsisDateHelper->addSecond($withAddedSecond, Zend_Date::ISO_8601),
                     'version_id' => $this->eventsVersionMapping[$typeArray['sub']],
                     'data' => (array) $item,
                 ];

@@ -26,7 +26,43 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (version_compare($context->getVersion(), '1.8.0', '<')) {
             $this->upgradeOneEightZero($setup);
         }
+        if (version_compare($context->getVersion(), '1.9.1', '<')) {
+            $this->upgradeOneNineOne($setup);
+        }
         $setup->endSetup();
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function upgradeOneNineOne(SchemaSetupInterface $setup)
+    {
+        $tableName = $setup->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
+        $setup->getConnection()->addColumn(
+            $tableName,
+            'subscriber_id',
+            [
+                'type' => Table::TYPE_INTEGER,
+                'nullable' => true,
+                'default' => null,
+                'comment' => 'Subscriber ID'
+            ]
+        );
+        $setup->getConnection()->modifyColumn(
+            $tableName,
+            'customer_id',
+            [
+                'type' => Table::TYPE_INTEGER,
+                'nullable' => true,
+                'default' => null,
+                'comment' => 'Customer ID'
+            ]
+        );
+        $setup->getConnection()->addIndex(
+            $tableName,
+            $setup->getIdxName($tableName, ['subscriber_id']),
+            ['subscriber_id']
+        );
     }
 
     /**

@@ -25,6 +25,8 @@ use Magento\Framework\Data\Collection\AbstractDb;
  * @method $this setProfileId(int $value)
  * @method int getCustomerId()
  * @method $this setCustomerId(int $value)
+ * @method int getSubscriberId()
+ * @method $this setSubscriberId(int $value)
  * @method string getCustomerEmail()
  * @method $this setCustomerEmail(string $value)
  * @method string getToken()

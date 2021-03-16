@@ -64,6 +64,19 @@ class Date
     }
 
     /**
+     * @param string|null $date
+     * @param string $format
+     *
+     * @return string
+     */
+    public function addSecond($date = null, $format = Zend_Date::TIMESTAMP)
+    {
+        return (string) $this->localeDate->date($date)
+            ->add($this->getDateIntervalFromIntervalSpec('PT1S'))
+            ->format($format);
+    }
+
+    /**
      * @param string $time
      * @param string $timezone
      *

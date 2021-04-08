@@ -81,22 +81,15 @@ class Subscription extends Template
     {
         $sortedTopicArr = [];
         $customer = $this->customerSession->getCustomer();
-        $selectedConsentTopics = (string) $this->apsisCoreHelper->getStoreConfig(
-            $customer->getStore(),
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC
-        );
-        $additionalConsentTopics = (string) $this->apsisCoreHelper->getStoreConfig(
+        $additionalTopics = (string) $this->apsisCoreHelper->getStoreConfig(
             $customer->getStore(),
             ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_ADDITIONAL_TOPIC
         );
         /** @var Subscriber $subscriber */
-        if (strlen($selectedConsentTopics) &&
+        if (strlen($additionalTopics) &&
             ! empty($subscriber = $this->subscriberFactory->create()->loadByCustomerId($customer->getId())) &&
             $subscriber->getId()) {
-            $topicMappings = array_unique(explode(
-                ',',
-                $this->apsisCoreHelper->getMergedConfigTopics($selectedConsentTopics, $additionalConsentTopics)
-            ));
+            $topicMappings = explode(',', $additionalTopics);
             $profile = $this->profileCollectionFactory->create()
                 ->loadBySubscriberId($subscriber->getSubscriberId());
             $sortedTopicArr = ($profile) ? $this->getConsentListsWithTopicsArr(

@@ -61,10 +61,10 @@ require(['jquery', 'jquery/ui', 'domReady!', 'mage/translate'], function ($) {
      */
     function updateAdditionalTopics(element)
     {
+        $(additionalEmlId + ' option').each(function () {
+            $(this).removeAttr('disabled');
+        });
         if (element.val()) {
-            $(additionalEmlId + ' option').each(function () {
-                $(this).removeAttr('disabled');
-            });
             let additionalElement = $(additionalEmlId + " option[value='" + element.val() + "']");
             additionalElement.attr('disabled', true);
             additionalElement.attr('selected', false);
@@ -74,7 +74,7 @@ require(['jquery', 'jquery/ui', 'domReady!', 'mage/translate'], function ($) {
     /**
      * Multiselect selection change observer
      */
-    $(additionalEmlId + " option[value='']").remove();
+    //$(additionalEmlId + " option[value='']").remove();
     updateAdditionalTopics($(generalElmId));
     $(document).on('change', additionalEmlId, function() {
         validate($(this));

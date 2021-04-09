@@ -82,8 +82,8 @@ class Subscription extends Action
                 return $this->sendResponse(401);
             }
 
-            $params = $this->getRequest()->getParams();
-            if (empty($params['KS_ID']) || empty($params['TD']) || empty($params['CLD'])) {
+            $params = $this->getBodyParams();
+            if (empty($params['PK']) || empty($params['TD']) || empty($params['CLD'])) {
                 return $this->sendResponse(400);
             }
 
@@ -112,6 +112,20 @@ class Subscription extends Action
             $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return $this->sendResponse(500, $e->getMessage());
         }
+    }
+
+    /**
+     * Fetch data from HTTP Request body.
+     *
+     * @return array
+     */
+    private function getBodyParams()
+    {
+        $bodyParams = [];
+        if ($body = $this->getRequest()->getContent()) {
+            $bodyParams = (array) $this->apsisCoreHelper->unserialize((string) $body);
+        }
+        return $bodyParams;
     }
 
     /**
@@ -175,6 +189,6 @@ class Subscription extends Action
     private function validateId(array $params)
     {
         return $this->profileCollectionFactory->create()
-            ->loadByIntegrationId($this->escaper->escapeHtml($params['KS_ID']));
+            ->loadByIntegrationId($this->escaper->escapeHtml($params['PK']));
     }
 }

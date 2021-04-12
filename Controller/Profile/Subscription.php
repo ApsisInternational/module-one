@@ -136,6 +136,15 @@ class Subscription extends Action
      */
     private function isTopicMatchedWithConfigTopic(ProfileModel $profile, array $params)
     {
+        $isSyncEnabled = (string) $this->apsisCoreHelper->getConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED,
+            ScopeInterface::SCOPE_STORES,
+            ($profile->getSubscriberStoreId()) ? $profile->getSubscriberStoreId() : $profile->getStoreId()
+        );
+        if (! $isSyncEnabled) {
+            return false;
+        }
+
         $selectedTopicInConfig = (string) $this->apsisCoreHelper->getConfigValue(
             ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC,
             ScopeInterface::SCOPE_STORES,

@@ -231,13 +231,6 @@ class Subscribers implements ProfileSyncInterface
         string $consentType
     ) {
         try {
-            if ($consentType === self::CONSENT_TYPE_OPT_OUT) {
-                $additionalConsentTopics = (string) $this->apsisCoreHelper->getStoreConfig(
-                    $store,
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_ADDITIONAL_TOPIC
-                );
-                $topics = $this->apsisCoreHelper->getMergedConfigTopics($topics, $additionalConsentTopics);
-            }
             $topicsMapping = $this->getTopicArrFromString($topics);
             $profileDataArr = $this->getProfileDataArr($collection);
             if (! empty($topicsMapping) && ! empty($profileDataArr)) {

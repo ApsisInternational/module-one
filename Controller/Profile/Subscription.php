@@ -2,10 +2,10 @@
 
 namespace Apsis\One\Controller\Profile;
 
-use Apsis\One\Model\Profile;
 use Apsis\One\Model\Profile as ProfileModel;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Exception;
 use Magento\Framework\App\Action\Action;
@@ -15,6 +15,7 @@ use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Escaper;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
+use Magento\Store\Model\ScopeInterface;
 
 class Subscription extends Action
 {
@@ -81,8 +82,8 @@ class Subscription extends Action
                 return $this->sendResponse(401);
             }
 
-            $params = $this->getRequest()->getParams();
-            if (empty($params['KS_ID'])) {
+            $params = $this->getBodyParams();
+            if (empty($params['PK']) || empty($params['TD']) || empty($params['CLD'])) {
                 return $this->sendResponse(400);
             }
 
@@ -90,7 +91,7 @@ class Subscription extends Action
                 return $this->sendResponse(404);
             }
 
-            if ($profile->getSubscriberId()) {
+            if ($profile->getSubscriberId() && $this->isTopicMatchedWithConfigTopic($profile, $params)) {
                 $subscriber = $this->subscriberFactory->create()->load($profile->getSubscriberId());
                 if ($subscriber->getId()) {
                     //Set subscriber status
@@ -111,6 +112,53 @@ class Subscription extends Action
             $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
             return $this->sendResponse(500, $e->getMessage());
         }
+    }
+
+    /**
+     * Fetch data from HTTP Request body.
+     *
+     * @return array
+     */
+    private function getBodyParams()
+    {
+        $bodyParams = [];
+        if ($body = $this->getRequest()->getContent()) {
+            $bodyParams = (array) $this->apsisCoreHelper->unserialize((string) $body);
+        }
+        return $bodyParams;
+    }
+
+    /**
+     * @param ProfileModel $profile
+     * @param array $params
+     *
+     * @return bool
+     */
+    private function isTopicMatchedWithConfigTopic(ProfileModel $profile, array $params)
+    {
+        $isSyncEnabled = (string) $this->apsisCoreHelper->getConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED,
+            ScopeInterface::SCOPE_STORES,
+            ($profile->getSubscriberStoreId()) ? $profile->getSubscriberStoreId() : $profile->getStoreId()
+        );
+        if (! $isSyncEnabled) {
+            return false;
+        }
+
+        $selectedTopicInConfig = (string) $this->apsisCoreHelper->getConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC,
+            ScopeInterface::SCOPE_STORES,
+            ($profile->getSubscriberStoreId()) ? $profile->getSubscriberStoreId() : $profile->getStoreId()
+        );
+
+        if (strlen($selectedTopicInConfig) &&
+            ! empty($topicMappings = explode('|', $selectedTopicInConfig)) &&
+            isset($topicMappings[0]) && isset($topicMappings[1])
+        ) {
+            return ($topicMappings[0] === $params['CLD'] && $topicMappings[1] === $params['TD']);
+        }
+
+        return false;
     }
 
     /**
@@ -145,11 +193,11 @@ class Subscription extends Action
     /**
      * @param array $params
      *
-     * @return Profile|bool
+     * @return ProfileModel|bool
      */
     private function validateId(array $params)
     {
         return $this->profileCollectionFactory->create()
-            ->loadByIntegrationId($this->escaper->escapeHtml($params['KS_ID']));
+            ->loadByIntegrationId($this->escaper->escapeHtml($params['PK']));
     }
 }

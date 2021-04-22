@@ -515,13 +515,13 @@ class Profile
             );
             $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
             if ($client && $sectionDiscriminator && $profile->getIntegrationUid()) {
-                $IsSubscriberSyncEnabled = (boolean) $this->apsisCoreHelper->getStoreConfig(
+                $isSubscriberSyncEnabled = (boolean) $this->apsisCoreHelper->getStoreConfig(
                     $store,
                     ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED
                 );
                 $this->removeConsentForSubscriberDelete(
                     $store,
-                    $IsSubscriberSyncEnabled,
+                    $isSubscriberSyncEnabled,
                     $profile,
                     $client,
                     $sectionDiscriminator
@@ -534,10 +534,10 @@ class Profile
                         $sectionDiscriminator,
                         $store,
                         $keySpaceDiscriminator,
-                        $IsSubscriberSyncEnabled
+                        $isSubscriberSyncEnabled
                     );
                 } else {
-                    if ($IsSubscriberSyncEnabled) {
+                    if ($isSubscriberSyncEnabled) {
                         $client->deleteProfile($keySpaceDiscriminator, $profile->getIntegrationUid());
                     }
                     $this->profileResource->delete($profile);
@@ -656,56 +656,51 @@ class Profile
             );
             if ((int)$profile->getSubscriberSyncStatus() === ProfileModel::SYNC_STATUS_SYNCED &&
                 (int)$profile->getSubscriberStatus() === Subscriber::STATUS_SUBSCRIBED &&
-                $IsSubscriberSyncEnabled && strlen($sectionDiscriminator) && strlen($selectedConsentTopics)
+                $IsSubscriberSyncEnabled && strlen($sectionDiscriminator) && strlen($selectedConsentTopics) &&
+                ! empty($topicMappings = explode('|', $selectedConsentTopics)) && isset($topicMappings[0]) &&
+                isset($topicMappings[1]) &&
+                $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId())
             ) {
-                $additionalConsentTopics = (string) $this->apsisCoreHelper->getStoreConfig(
-                    $customer->getStore(),
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_ADDITIONAL_TOPIC
+                $attributesArrWithVersionId = $this->apsisCoreHelper
+                    ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
+                $mappedEmailAttribute = $this->apsisCoreHelper->getStoreConfig(
+                    $store,
+                    ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
                 );
-                $topicMappings = explode(
-                    ',',
-                    $this->apsisCoreHelper->getMergedConfigTopics($selectedConsentTopics, $additionalConsentTopics)
-                );
-                $sortedTopicArr = $this->apsisCoreHelper->getConsentListTopicsToShowForProfile($profile, $topicMappings);
-                $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
-
-                if (! empty($sortedTopicArr) && $client) {
-                    $attributesArrWithVersionId = $this->apsisCoreHelper
-                        ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
-                    $mappedEmailAttribute = $this->apsisCoreHelper->getStoreConfig(
-                        $store,
-                        ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
+                $keySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator);
+                if (! empty($attributesArrWithVersionId) && $mappedEmailAttribute && $keySpaceDiscriminator &&
+                    isset($attributesArrWithVersionId[$mappedEmailAttribute])
+                ) {
+                    $status = $client->addAttributesToProfile(
+                        $keySpaceDiscriminator,
+                        $profile->getIntegrationUid(),
+                        $sectionDiscriminator,
+                        [$attributesArrWithVersionId[$mappedEmailAttribute] => $customer->getEmail()]
                     );
-                    $keySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator);
-                    if (! empty($attributesArrWithVersionId) && $mappedEmailAttribute && $keySpaceDiscriminator &&
-                        isset($attributesArrWithVersionId[$mappedEmailAttribute])
-                    ) {
-                        $client->addAttributesToProfile(
-                            $keySpaceDiscriminator,
-                            $profile->getIntegrationUid(),
-                            $sectionDiscriminator,
-                            [$attributesArrWithVersionId[$mappedEmailAttribute] => $customer->getEmail()]
+
+                    if ($status === false || is_string($status)) {
+                        $this->apsisCoreHelper->log(
+                            __METHOD__ . ': Unable to change email for Profile ' . $profile->getId()
                         );
-                    }
-                    foreach ($sortedTopicArr as $sortedTopics) {
-                        if (! empty($sortedTopics['topics'])) {
-                            //Make call to remove consent from old email
-                            $this->createConsentForTopics(
-                                $client,
-                                $profile->getEmail(),
-                                $sectionDiscriminator,
-                                $sortedTopics['topics'],
-                                Subscribers::CONSENT_TYPE_OPT_OUT
-                            );
-                            //Make call to add consent to old email
-                            $this->createConsentForTopics(
-                                $client,
-                                $customer->getEmail(),
-                                $sectionDiscriminator,
-                                $sortedTopics['topics'],
-                                Subscribers::CONSENT_TYPE_OPT_IN
-                            );
-                        }
+                    } else {
+                        //Make call to remove consent from old email
+                        $this->createConsentForTopics(
+                            $client,
+                            $profile->getEmail(),
+                            $sectionDiscriminator,
+                            $topicMappings[0],
+                            $topicMappings[1],
+                            Subscribers::CONSENT_TYPE_OPT_OUT
+                        );
+                        //Make call to add consent to old email
+                        $this->createConsentForTopics(
+                            $client,
+                            $customer->getEmail(),
+                            $sectionDiscriminator,
+                            $topicMappings[0],
+                            $topicMappings[1],
+                            Subscribers::CONSENT_TYPE_OPT_IN
+                        );
                     }
                 }
             }
@@ -718,46 +713,42 @@ class Profile
      * @param Client $client
      * @param string $email
      * @param string $sectionDiscriminator
-     * @param array $topics
+     * @param string $consentListDiscriminator
+     * @param string $topicDiscriminator
      * @param string $type
      */
     private function createConsentForTopics(
         Client $client,
         string $email,
         string $sectionDiscriminator,
-        array $topics,
+        string $consentListDiscriminator,
+        string $topicDiscriminator,
         string $type
     ) {
-        foreach ($topics as $topic) {
-            try {
-                if (! empty($topic['consent'])) {
-                    $consent = explode('|', $topic['value']);
-                    $client->createConsent(
-                        ProfileModel::EMAIL_CHANNEL_DISCRIMINATOR,
-                        $email,
-                        $sectionDiscriminator,
-                        $consent[0],
-                        $consent[1],
-                        $type
-                    );
-                }
-            } catch (Exception $e) {
-                $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-                continue;
-            }
+        try {
+            $client->createConsent(
+                ProfileModel::EMAIL_CHANNEL_DISCRIMINATOR,
+                $email,
+                $sectionDiscriminator,
+                $consentListDiscriminator,
+                $topicDiscriminator,
+                $type
+            );
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
     }
 
     /**
      * @param StoreInterface $store
-     * @param bool $IsSubscriberSyncEnabled
+     * @param bool $isSubscriberSyncEnabled
      * @param ProfileModel $profile
      * @param Client $client
      * @param string $sectionDiscriminator
      */
     private function removeConsentForSubscriberDelete(
         StoreInterface $store,
-        bool $IsSubscriberSyncEnabled,
+        bool $isSubscriberSyncEnabled,
         ProfileModel $profile,
         Client $client,
         string $sectionDiscriminator
@@ -768,31 +759,19 @@ class Profile
                 ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC
             );
 
-            if ($IsSubscriberSyncEnabled && strlen($selectedConsentTopics)) {
-                $additionalConsentTopics = (string)$this->apsisCoreHelper->getStoreConfig(
-                    $store,
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_ADDITIONAL_TOPIC
+            if ($isSubscriberSyncEnabled && strlen($selectedConsentTopics) &&
+                ! empty($topicMappings = explode('|', $selectedConsentTopics)) && isset($topicMappings[0]) &&
+                    isset($topicMappings[1])
+            ) {
+                //Make call to remove consent from email
+                $this->createConsentForTopics(
+                    $client,
+                    $profile->getEmail(),
+                    $sectionDiscriminator,
+                    $topicMappings[0],
+                    $topicMappings[1],
+                    Subscribers::CONSENT_TYPE_OPT_OUT
                 );
-                $topicMappings = explode(
-                    ',',
-                    $this->apsisCoreHelper->getMergedConfigTopics($selectedConsentTopics, $additionalConsentTopics)
-                );
-                $sortedTopicArr = $this->apsisCoreHelper
-                    ->getConsentListTopicsToShowForProfile($profile, $topicMappings);
-                if (!empty($sortedTopicArr)) {
-                    foreach ($sortedTopicArr as $sortedTopics) {
-                        if (!empty($sortedTopics['topics'])) {
-                            //Make call to remove consent from email
-                            $this->createConsentForTopics(
-                                $client,
-                                $profile->getEmail(),
-                                $sectionDiscriminator,
-                                $sortedTopics['topics'],
-                                Subscribers::CONSENT_TYPE_OPT_OUT
-                            );
-                        }
-                    }
-                }
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());

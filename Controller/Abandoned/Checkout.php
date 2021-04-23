@@ -6,27 +6,16 @@ use Apsis\One\Model\Service\Cart as ApsisCartHelper;
 use Apsis\One\Model\Service\Log;
 use Exception;
 use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultInterface;
+use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
-use Magento\Quote\Api\Data\CartInterfaceFactory as QuoteFactory;
 use Magento\Quote\Model\Quote;
 
 class Checkout extends Action
 {
-    /**
-     * @var QuoteFactory
-     */
-    private $quoteFactory;
-
-    /**
-     * @var CustomerSession
-     */
-    private $customerSession;
-
     /**
      * @var CartRepositoryInterface
      */
@@ -51,8 +40,6 @@ class Checkout extends Action
      * Checkout constructor.
      *
      * @param Context $context
-     * @param QuoteFactory $quoteFactory
-     * @param CustomerSession $customerSession
      * @param CheckoutSession $checkoutSession
      * @param CartRepositoryInterface $cartRepository
      * @param Log $log
@@ -60,8 +47,6 @@ class Checkout extends Action
      */
     public function __construct(
         Context $context,
-        QuoteFactory $quoteFactory,
-        CustomerSession $customerSession,
         CheckoutSession $checkoutSession,
         CartRepositoryInterface $cartRepository,
         Log $log,
@@ -71,8 +56,6 @@ class Checkout extends Action
         $this->log = $log;
         $this->cartRepository = $cartRepository;
         $this->checkoutSession = $checkoutSession;
-        $this->quoteFactory = $quoteFactory;
-        $this->customerSession = $customerSession;
         parent::__construct($context);
     }
 
@@ -111,7 +94,14 @@ class Checkout extends Action
     private function handleCartRebuildRequest(Quote $quoteModel)
     {
         try {
-            $quoteModel->setIsActive(1)->setReservedOrderId(null);
+            $quoteModel->setIsActive(1)
+                ->setCustomerId(null)
+                ->setCustomerGroupId(0)
+                ->setCustomerIsGuest(true)
+                ->setCheckoutMethod(CartManagementInterface::METHOD_GUEST)
+                ->setReservedOrderId(null);
+            $quoteModel->getBillingAddress()->setCustomerId(null)->setCustomerAddressId(null)->save();
+            $quoteModel->getShippingAddress()->setCustomerId(null)->setCustomerAddressId(null)->save();
             $this->cartRepository->save($quoteModel);
             $this->checkoutSession->replaceQuote($quoteModel)->unsLastRealOrderId();
             return $this->_redirect($quoteModel->getStore()->getUrl('checkout/cart'));

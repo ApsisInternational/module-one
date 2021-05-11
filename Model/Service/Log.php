@@ -5,6 +5,7 @@ namespace Apsis\One\Model\Service;
 use Apsis\One\Logger\Logger;
 use Exception;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Module\ResourceInterface;
 
 class Log
 {
@@ -19,15 +20,22 @@ class Log
     private $logger;
 
     /**
+     * @var ResourceInterface
+     */
+    private $moduleResource;
+
+    /**
      * Log constructor.
      *
      * @param Logger $logger
      * @param ScopeConfigInterface $scopeConfig
+     * @param ResourceInterface $moduleResource
      */
-    public function __construct(Logger $logger, ScopeConfigInterface $scopeConfig)
+    public function __construct(Logger $logger, ScopeConfigInterface $scopeConfig, ResourceInterface $moduleResource)
     {
         $this->logger = $logger;
         $this->scopeConfig = $scopeConfig;
+        $this->moduleResource = $moduleResource;
     }
 
     /**
@@ -42,19 +50,6 @@ class Log
     }
 
     /**
-     * @param string $functionName
-     * @param string $text
-     * @param string $trace
-     *
-     * @return string
-     */
-    private function getStringForLog(string $functionName, string $text, string $trace)
-    {
-        $string = ' - Class & Method: ' . $functionName . ' - Text: ' . $text;
-        return strlen($trace) ? $string . PHP_EOL . $trace : $string;
-    }
-
-    /**
      * INFO (200): Interesting events.
      *
      * @param string $message
@@ -62,7 +57,7 @@ class Log
      */
     public function log(string $message, $extra = [])
     {
-        $this->logger->info($message, $extra);
+        $this->logger->info($this->addModuleVersionToMessage($message), $extra);
     }
 
     /**
@@ -73,7 +68,7 @@ class Log
      */
     public function debug(string $message, $extra = [])
     {
-        $this->logger->debug($message, $extra);
+        $this->logger->debug($this->addModuleVersionToMessage($message), $extra);
     }
 
     /**
@@ -84,7 +79,7 @@ class Log
      */
     public function error(string $message, $extra = [])
     {
-        $this->logger->error($message, $extra);
+        $this->logger->error($this->addModuleVersionToMessage($message), $extra);
     }
 
     /**
@@ -125,5 +120,29 @@ class Log
     public function cleanCache()
     {
         $this->scopeConfig->clean();
+    }
+
+    /**
+     * @param string $functionName
+     * @param string $text
+     * @param string $trace
+     *
+     * @return string
+     */
+    private function getStringForLog(string $functionName, string $text, string $trace)
+    {
+        $string = ' - Class & Method: ' . $functionName . ' - Text: ' . $text;
+        return strlen($trace) ? $string . PHP_EOL . $trace : $string;
+    }
+
+    /**
+     * @param string $message
+     *
+     * @return string
+     */
+    private function addModuleVersionToMessage(string $message)
+    {
+
+        return '(v' . $this->moduleResource->getDbVersion('Apsis_One') . ') ' . $message;
     }
 }

@@ -4,12 +4,30 @@ namespace Apsis\One\Setup;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Framework\DB\Ddl\Table;
+use Magento\Framework\Registry;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Magento\Framework\Setup\UpgradeSchemaInterface;
 
 class UpgradeSchema implements UpgradeSchemaInterface
 {
+    const REGISTRY_NAME = 'APSIS_SCHEMA_RUN';
+
+    /**
+     * @var Registry
+     */
+    private $registry;
+
+    /**
+     * UpgradeSchema constructor.
+     *
+     * @param Registry $registry
+     */
+    public function __construct(Registry $registry)
+    {
+        $this->registry = $registry;
+    }
+
     /**
      * @param SchemaSetupInterface $setup
      * @param ModuleContextInterface $context
@@ -29,7 +47,69 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (version_compare($context->getVersion(), '1.9.1', '<')) {
             $this->upgradeOneNineOne($setup);
         }
+        if (version_compare($context->getVersion(), '1.9.4', '<')) {
+            $this->upgradeOneNineFour($setup);
+        }
         $setup->endSetup();
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function upgradeOneNineFour(SchemaSetupInterface $setup)
+    {
+        $tableName = $setup->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
+        $columnName = 'subscriber_store_id';
+
+        //Column doesn't exist then create it.
+        if (! $setup->getConnection()->tableColumnExists($tableName, $columnName)) {
+            //Add Column
+            $setup->getConnection()->addColumn(
+                $tableName,
+                $columnName,
+                [
+                    'type' => Table::TYPE_SMALLINT,
+                    'nullable' => true,
+                    'default' => null,
+                    'comment' => 'Subscriber Store Id'
+                ]
+            );
+            //Add Index
+            $setup->getConnection()->addIndex(
+                $tableName,
+                $setup->getIdxName($tableName, [$columnName]),
+                [$columnName]
+            );
+            $this->registry->register(self::REGISTRY_NAME, 1, true);
+        }
+
+        //Remove foreign key
+        $setup->getConnection()->dropForeignKey(
+            $tableName,
+            $setup->getFkName(
+                $tableName,
+                'store_id',
+                $setup->getTable('store'),
+                'store_id'
+            )
+        );
+
+        //Modify column
+        if ($setup->getConnection()->tableColumnExists($tableName, 'store_id')) {
+            $setup->getConnection()->modifyColumn(
+                $tableName,
+                'store_id',
+                [
+                    'type' => Table::TYPE_SMALLINT,
+                    'nullable' => true,
+                    'default' => null,
+                    'comment' => 'Store ID'
+                ]
+            );
+        }
+
+        //Remove column
+        $setup->getConnection()->dropColumn($tableName, 'website_id');
     }
 
     /**

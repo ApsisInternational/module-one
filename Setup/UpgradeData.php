@@ -4,12 +4,14 @@ namespace Apsis\One\Setup;
 
 use Apsis\One\Model\Config\Source\System\Region;
 use Apsis\One\Model\Profile;
+use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Exception;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Math\Random;
+use Magento\Framework\Registry;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\UpgradeDataInterface;
@@ -18,6 +20,11 @@ use Magento\Store\Model\ScopeInterface;
 
 class UpgradeData implements UpgradeDataInterface
 {
+    /**
+     * @var Registry
+     */
+    private $registry;
+
     /**
      * @var ApsisCoreHelper
      */
@@ -34,17 +41,31 @@ class UpgradeData implements UpgradeDataInterface
     private $encryptor;
 
     /**
+     * @var ProfileResource
+     */
+    private $profileResource;
+
+    /**
      * UpgradeData constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param Random $random
      * @param EncryptorInterface $encryptor
+     * @param Registry $registry
+     * @param ProfileResource $profileResource
      */
-    public function __construct(ApsisCoreHelper $apsisCoreHelper, Random $random, EncryptorInterface $encryptor)
-    {
+    public function __construct(
+        ApsisCoreHelper $apsisCoreHelper,
+        Random $random,
+        EncryptorInterface $encryptor,
+        Registry $registry,
+        ProfileResource $profileResource
+    ) {
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->random = $random;
         $this->encryptor = $encryptor;
+        $this->registry = $registry;
+        $this->profileResource = $profileResource;
     }
 
     /**
@@ -55,13 +76,16 @@ class UpgradeData implements UpgradeDataInterface
     {
         $setup->startSetup();
         if (version_compare($context->getVersion(), '1.2.0', '<')) {
-            $this->updateOneTwoZero($setup);
+            $this->upgradeOneTwoZero($setup);
         }
         if (version_compare($context->getVersion(), '1.5.0', '<')) {
-            $this->updateOneFiveZero($setup);
+            $this->upgradeOneFiveZero($setup);
         }
         if (version_compare($context->getVersion(), '1.9.0', '<')) {
-            $this->updateOneNineZero($setup);
+            $this->upgradeOneNineZero($setup);
+        }
+        if (version_compare($context->getVersion(), '1.9.4', '<')) {
+            $this->upgradeOneNineFour($setup);
         }
         $setup->endSetup();
     }
@@ -69,7 +93,26 @@ class UpgradeData implements UpgradeDataInterface
     /**
      * @param ModuleDataSetupInterface $setup
      */
-    private function updateOneNineZero(ModuleDataSetupInterface $setup)
+    private function upgradeOneNineFour(ModuleDataSetupInterface $setup)
+    {
+        try {
+            $this->apsisCoreHelper->log(__METHOD__);
+            if ($this->registry->registry(UpgradeSchema::REGISTRY_NAME)) {
+                $this->profileResource->updateSubscriberStoreId(
+                    $setup->getConnection(),
+                    $setup->getTable('newsletter_subscriber'),
+                    $setup->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE)
+                );
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
+    }
+
+    /**
+     * @param ModuleDataSetupInterface $setup
+     */
+    private function upgradeOneNineZero(ModuleDataSetupInterface $setup)
     {
         try {
             foreach ($this->apsisCoreHelper->getStores(true) as $store) {
@@ -98,7 +141,7 @@ class UpgradeData implements UpgradeDataInterface
     /**
      * @param ModuleDataSetupInterface $setup
      */
-    private function updateOneFiveZero(ModuleDataSetupInterface $setup)
+    private function upgradeOneFiveZero(ModuleDataSetupInterface $setup)
     {
         try {
             //Take value from older path
@@ -140,7 +183,7 @@ class UpgradeData implements UpgradeDataInterface
     /**
      * @param ModuleDataSetupInterface $setup
      */
-    private function updateOneTwoZero(ModuleDataSetupInterface $setup)
+    private function upgradeOneTwoZero(ModuleDataSetupInterface $setup)
     {
         $this->generateGlobalKey();
         foreach ($this->apsisCoreHelper->getStores(true) as $store) {

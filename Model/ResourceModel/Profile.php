@@ -518,6 +518,29 @@ class Profile extends AbstractDb implements ResourceInterface
     }
 
     /**
+     * @param AdapterInterface $connection
+     * @param string $magentoTable
+     * @param string $apsisTable
+     */
+    public function updateSubscriberStoreId(AdapterInterface $connection, string $magentoTable, string $apsisTable)
+    {
+        $select = $connection->select();
+        $select->from(
+            ['subscriber' => $magentoTable],
+            [
+                'subscriber_store_id' => 'store_id',
+                'subscriber_sync_status' =>
+                    $this->expressionFactory->create(["expression" => (ApsisProfile::SYNC_STATUS_PENDING)]),
+                'updated_at' => $this->expressionFactory
+                    ->create(["expression" => "'" . $this->dateTime->formatDate(true) . "'"])
+            ]
+        )->where('subscriber.subscriber_id = profile.subscriber_id');
+
+        $sqlQuery = $select->crossUpdateFromSelect(['profile' => $apsisTable]);
+        $connection->query($sqlQuery);
+    }
+
+    /**
      * @param ApsisLogHelper $apsisLogHelper
      *
      * @return bool

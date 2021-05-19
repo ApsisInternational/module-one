@@ -5,6 +5,7 @@ namespace Apsis\One\Setup;
 use Apsis\One\Model\Config\Source\System\Region;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
+use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Exception;
@@ -46,6 +47,11 @@ class UpgradeData implements UpgradeDataInterface
     private $profileResource;
 
     /**
+     * @var EventResource
+     */
+    private $eventResource;
+
+    /**
      * UpgradeData constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -53,19 +59,22 @@ class UpgradeData implements UpgradeDataInterface
      * @param EncryptorInterface $encryptor
      * @param Registry $registry
      * @param ProfileResource $profileResource
+     * @param EventResource $eventResource
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
         Random $random,
         EncryptorInterface $encryptor,
         Registry $registry,
-        ProfileResource $profileResource
+        ProfileResource $profileResource,
+        EventResource $eventResource
     ) {
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->random = $random;
         $this->encryptor = $encryptor;
         $this->registry = $registry;
         $this->profileResource = $profileResource;
+        $this->eventResource = $eventResource;
     }
 
     /**
@@ -74,6 +83,7 @@ class UpgradeData implements UpgradeDataInterface
      */
     public function upgrade(ModuleDataSetupInterface $setup, ModuleContextInterface $context)
     {
+        $this->apsisCoreHelper->log(__METHOD__);
         $setup->startSetup();
         if (version_compare($context->getVersion(), '1.2.0', '<')) {
             $this->upgradeOneTwoZero($setup);
@@ -87,7 +97,40 @@ class UpgradeData implements UpgradeDataInterface
         if (version_compare($context->getVersion(), '1.9.4', '<')) {
             $this->upgradeOneNineFour($setup);
         }
+        if (version_compare($context->getVersion(), '1.9.5', '<')) {
+            $this->upgradeOneNineFive($setup);
+        }
         $setup->endSetup();
+    }
+
+    /**
+     * @param ModuleDataSetupInterface $setup
+     */
+    private function upgradeOneNineFive(ModuleDataSetupInterface $setup)
+    {
+        $this->apsisCoreHelper->log(__METHOD__);
+        try {
+            //Remove both token and token expiry for force regeneration of token
+            $configs = [
+                ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
+                ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE
+            ];
+            foreach ($configs as $config) {
+                $setup->getConnection()->delete(
+                    $setup->getTable('core_config_data'),
+                    $setup->getConnection()->quoteInto('path = ?', $config)
+                );
+            }
+
+            //Reset all profile & events to re-sync with failed error
+            $whereC = $setup->getConnection()->quoteInto('customer_sync_status = ?', Profile::SYNC_STATUS_FAILED);
+            $whereS = $setup->getConnection()->quoteInto('subscriber_sync_status = ?', Profile::SYNC_STATUS_FAILED);
+            $whereE = $setup->getConnection()->quoteInto('status = ?', Profile::SYNC_STATUS_FAILED);
+            $this->profileResource->resetProfiles($this->apsisCoreHelper, [], [], [$whereC . ' OR ' . $whereS]);
+            $this->eventResource->resetEvents($this->apsisCoreHelper, [], [], [$whereE]);
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+        }
     }
 
     /**
@@ -95,6 +138,7 @@ class UpgradeData implements UpgradeDataInterface
      */
     private function upgradeOneNineFour(ModuleDataSetupInterface $setup)
     {
+        $this->apsisCoreHelper->log(__METHOD__);
         try {
             $this->apsisCoreHelper->log(__METHOD__);
             if ($this->registry->registry(UpgradeSchema::REGISTRY_NAME)) {
@@ -114,6 +158,7 @@ class UpgradeData implements UpgradeDataInterface
      */
     private function upgradeOneNineZero(ModuleDataSetupInterface $setup)
     {
+        $this->apsisCoreHelper->log(__METHOD__);
         try {
             foreach ($this->apsisCoreHelper->getStores(true) as $store) {
                 $oldValue = (string) $store
@@ -143,6 +188,7 @@ class UpgradeData implements UpgradeDataInterface
      */
     private function upgradeOneFiveZero(ModuleDataSetupInterface $setup)
     {
+        $this->apsisCoreHelper->log(__METHOD__);
         try {
             //Take value from older path
             $oldConfigPath = 'apsis_one_sync/sync/endpoint_key';
@@ -185,6 +231,7 @@ class UpgradeData implements UpgradeDataInterface
      */
     private function upgradeOneTwoZero(ModuleDataSetupInterface $setup)
     {
+        $this->apsisCoreHelper->log(__METHOD__);
         $this->generateGlobalKey();
         foreach ($this->apsisCoreHelper->getStores(true) as $store) {
             $topics = (string) $store->getConfig(ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC);
@@ -207,7 +254,7 @@ class UpgradeData implements UpgradeDataInterface
         }
         //Remove AC token mapping
         $setup->getConnection()->delete(
-            'core_config_data',
+            $setup->getTable('core_config_data'),
             "path='apsis_one_mappings/customer_attribute/ac_token'"
         );
     }

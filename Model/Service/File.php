@@ -4,8 +4,6 @@ namespace Apsis\One\Model\Service;
 
 use Exception;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Exception\FileSystemException;
-use Magento\Framework\Exception\ValidatorException;
 use Magento\Framework\Filesystem\Directory\WriteFactory;
 use Magento\Framework\Filesystem\Directory\Write;
 
@@ -27,7 +25,7 @@ class File
      * @param DirectoryList $directoryList
      * @param WriteFactory $write
      *
-     * @throws FileSystemException
+     * @throws Exception
      */
     public function __construct(
         DirectoryList $directoryList,
@@ -39,6 +37,8 @@ class File
 
     /**
      * @return string
+     *
+     * @throws Exception
      */
     private function getOutputFolder()
     {
@@ -50,7 +50,7 @@ class File
      *
      * @return string
      *
-     * @throws FileSystemException
+     * @throws Exception
      */
     public function getFilePath(string $filename)
     {
@@ -62,7 +62,7 @@ class File
      *
      * @return bool
      *
-     * @throws FileSystemException
+     * @throws Exception
      */
     public function deleteFile(string $filePath)
     {
@@ -73,7 +73,7 @@ class File
      * @param string $file
      * @param array $data
      *
-     * @throws FileSystemException
+     * @throws Exception
      */
     public function outputCSV($file, $data)
     {
@@ -107,31 +107,34 @@ class File
             default:
                 return "Log file is not valid. Log file name is " . $filename;
         }
+
+        $contents = '';
+
         try {
             $pathLogfile = $this->directoryList->getPath('log') . DIRECTORY_SEPARATOR . $filename;
             if (! $this->write->getDriver()->isExists($pathLogfile)) {
                 return "Log file does not exist at this moment. File path is " . $pathLogfile;
             }
 
-            $lengthBefore = 500000;
-            $contents = '';
             $handle = $this->write->getDriver()->fileOpen($pathLogfile, 'r');
-            fseek($handle, -$lengthBefore, SEEK_END);
+            fseek($handle, -500000, SEEK_END);
+
             if (! $handle) {
-                return "Log file is not readable or does not exist at this moment. File path is "
-                    . $pathLogfile;
+                $this->write->getDriver()->fileClose($handle);
+                return "Log file is not readable or does not exist at this moment. File path is " . $pathLogfile;
             }
 
-            if (filesize($pathLogfile) > 0) {
-                $contents = $this->write->getDriver()->fileRead($handle, filesize($pathLogfile));
-                if ($contents === false) {
-                    return "Log file is not readable or does not exist at this moment. File path is " . $pathLogfile;
-                }
+            if ($this->write->getDriver()->stat($pathLogfile)['size'] > 0) {
+                $contents = $this->write->getDriver()->fileReadLine(
+                    $handle,
+                    $this->write->getDriver()->stat($pathLogfile)['size']
+                );
                 $this->write->getDriver()->fileClose($handle);
             }
-            return $contents;
         } catch (Exception $e) {
-            return $e->getMessage();
+            $contents = $e->getMessage() . ' : File Name - ' . $filename;
         }
+
+        return $contents;
     }
 }

@@ -147,6 +147,14 @@ class Batch implements ProfileSyncInterface
                     }
 
                     if ($result && isset($result->import_id)) {
+                        try {
+                            $this->apsisCoreHelper->validateIsUrlReachable($result->file_upload_url);
+                        } catch (Exception $e) {
+                            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                            $this->disableProfileSync($store);
+                            return;
+                        }
+
                         $item->setImportId($result->import_id)
                             ->setFileUploadExpiresAt($result->file_upload_url_expires_at);
 
@@ -324,5 +332,25 @@ class Batch implements ProfileSyncInterface
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
         }
+    }
+
+    /**
+     * @param StoreInterface $store
+     */
+    private function disableProfileSync(StoreInterface $store)
+    {
+        $this->apsisCoreHelper->saveConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED,
+            0,
+            ScopeInterface::SCOPE_STORES,
+            $store->getId()
+        );
+        $this->apsisCoreHelper->saveConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED,
+            0,
+            ScopeInterface::SCOPE_STORES,
+            $store->getId()
+        );
+        $this->apsisCoreHelper->log('Profile sync disabled.');
     }
 }

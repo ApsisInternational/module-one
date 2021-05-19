@@ -150,13 +150,17 @@ class Event extends AbstractDb implements ResourceInterface
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param array $storeIds
      * @param array $ids
+     * @param array $where
      *
      * @return int
      */
-    public function resetEvents(ApsisCoreHelper $apsisCoreHelper, array $storeIds = [], array $ids = [])
-    {
+    public function resetEvents(
+        ApsisCoreHelper $apsisCoreHelper,
+        array $storeIds = [],
+        array $ids = [],
+        array $where = []
+    ) {
         try {
-            $where = [];
             if (! empty($storeIds)) {
                 $where["store_id IN (?)"] = $storeIds;
             }

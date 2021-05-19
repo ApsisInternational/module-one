@@ -13,20 +13,14 @@ class Client extends Rest
      * OAuth 2.0 access token. Provide that token as Authorization: Bearer <access token> header when making calls to
      * other endpoints of this API.
      *
-     * @param string $clientId
-     * @param string $clientSecret
      *
      * @return mixed
      */
-    public function getAccessToken(string $clientId, string $clientSecret)
+    public function getAccessToken()
     {
         $this->setUrl($this->hostName . '/oauth/token')
             ->setVerb(Rest::VERB_POST)
-            ->buildBody([
-                'grant_type' => 'client_credentials',
-                'client_id' => $clientId,
-                'client_secret' => $clientSecret
-            ]);
+            ->buildBodyForGetAccessTokenCall();
         return $this->processResponse($this->execute(), __METHOD__);
     }
 

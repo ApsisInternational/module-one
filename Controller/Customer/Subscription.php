@@ -165,6 +165,11 @@ class Subscription extends Action
             ScopeInterface::SCOPE_STORES,
             $store->getId()
         );
+
+        if (! $client) {
+            return false;
+        }
+
         $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
             $store,
             ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION

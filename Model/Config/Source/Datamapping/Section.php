@@ -43,7 +43,7 @@ class Section implements OptionSourceInterface
 
             $request = $apiClient->getSections();
             if (! $request || ! isset($request->items)) {
-                $this->apsisCoreHelper->log(__METHOD__ . ': No section found on account');
+                $this->apsisCoreHelper->log(__METHOD__ . ': No section found on account. Try again.');
                 return [];
             }
 
@@ -51,7 +51,7 @@ class Section implements OptionSourceInterface
                 $fields[] = ['value' => $section->discriminator, 'label' => $section->name];
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $fields;
     }

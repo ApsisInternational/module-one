@@ -54,7 +54,7 @@ class Event extends AbstractDb implements ResourceInterface
             $write = $this->getConnection();
             return $write->insertMultiple($this->getMainTable(), $events);
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return 0;
         }
     }
@@ -76,7 +76,7 @@ class Event extends AbstractDb implements ResourceInterface
                 $this->getConnection()->quoteInto('email = ?', $oldEmail)
             );
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return 0;
         }
     }
@@ -108,7 +108,7 @@ class Event extends AbstractDb implements ResourceInterface
                 ["id IN (?)" => $ids]
             );
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return 0;
         }
     }
@@ -126,7 +126,7 @@ class Event extends AbstractDb implements ResourceInterface
             ];
             $this->getConnection()->delete($this->getMainTable(), $where);
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -141,7 +141,7 @@ class Event extends AbstractDb implements ResourceInterface
             $this->getConnection()->truncateTable($this->getMainTable());
             return true;
         } catch (Exception $e) {
-            $apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisLogHelper->logError(__METHOD__, $e);
             return false;
         }
     }
@@ -178,7 +178,7 @@ class Event extends AbstractDb implements ResourceInterface
                 $where
             );
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return 0;
         }
     }

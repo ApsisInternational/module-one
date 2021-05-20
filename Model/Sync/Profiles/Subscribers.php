@@ -166,7 +166,7 @@ class Subscribers implements ProfileSyncInterface
                 );
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -210,7 +210,7 @@ class Subscribers implements ProfileSyncInterface
                 );
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -272,7 +272,7 @@ class Subscribers implements ProfileSyncInterface
                             $this->apsisFileHelper->outputCSV($file, $subscriberData);
                             $subscribersToUpdate[] = $subscriber->getSubscriberId();
                         } catch (Exception $e) {
-                            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                            $this->apsisCoreHelper->logError(__METHOD__, $e);
                             $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscriber with id :' .
                                 $subscriber->getSubscriberId());
                             continue;
@@ -290,7 +290,7 @@ class Subscribers implements ProfileSyncInterface
                 }
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
             if (! empty($subscribersToUpdate)) {
                 $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscribers with ids :' .
                     implode(',', $subscribersToUpdate));
@@ -397,7 +397,7 @@ class Subscribers implements ProfileSyncInterface
                 $this->apsisCoreHelper
             );
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -427,7 +427,7 @@ class Subscribers implements ProfileSyncInterface
 
             return $collection;
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
     }

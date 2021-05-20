@@ -76,7 +76,7 @@ class Cart extends Template
                 }
             }
         } catch (Exception $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisLogHelper->logError(__METHOD__, $e);
         }
         return [];
     }
@@ -98,7 +98,7 @@ class Cart extends Template
                 return array_splice($items, 0, $limit);
             }
         } catch (Exception $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisLogHelper->logError(__METHOD__, $e);
         }
         return $items;
     }
@@ -114,7 +114,7 @@ class Cart extends Template
             $storeId = $this->cart->getStoreId();
             return $this->priceHelper->currencyByStore($value, $storeId, true, false);
         } catch (Exception $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisLogHelper->logError(__METHOD__, $e);
         }
         return $value;
     }
@@ -129,7 +129,7 @@ class Cart extends Template
             $storeId = $this->cart->getStoreId();
             return $this->_storeManager->getStore($storeId)->getUrl(self::APSIS_CART_HANDLE_ENDPOINT, $params);
         } catch (Exception $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisLogHelper->logError(__METHOD__, $e);
             return $this->getUrl(self::APSIS_CART_HANDLE_ENDPOINT, $params);
         }
     }

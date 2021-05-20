@@ -48,13 +48,13 @@ class Find implements SyncInterface
                         }
                     }
                 } catch (Exception $e) {
-                    $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                    $apsisCoreHelper->logError(__METHOD__, $e);
                     $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
                     continue;
                 }
             }
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 }

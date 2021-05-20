@@ -123,7 +123,7 @@ class Customers implements ProfileSyncInterface
                 }
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -140,13 +140,13 @@ class Customers implements ProfileSyncInterface
                 try {
                     $customer->setData($column, $value);
                 } catch (Exception $e) {
-                    $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                    $this->apsisCoreHelper->logError(__METHOD__, $e);
                     $this->apsisCoreHelper->log(__METHOD__ . ' Skipped for Customer id: ' . $customer->getId());
                     continue;
                 }
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $customer;
     }
@@ -196,7 +196,7 @@ class Customers implements ProfileSyncInterface
                         $customersToUpdate[] = $customer->getId();
                     }
                 } catch (Exception $e) {
-                    $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                    $this->apsisCoreHelper->logError(__METHOD__, $e);
                     $this->apsisCoreHelper->log(__METHOD__ . ': Skipped customer with id :' . $customer->getId());
                     continue;
                 }
@@ -220,7 +220,7 @@ class Customers implements ProfileSyncInterface
                 );
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
             if (! empty($customersToUpdate)) {
                 $this->apsisCoreHelper->log(__METHOD__ . ': Skipped customers with id :' .
                     implode(',', $customersToUpdate));
@@ -242,13 +242,13 @@ class Customers implements ProfileSyncInterface
                 try {
                     $integrationIdsArray[$item->getCustomerId()] = $item->getIntegrationUid();
                 } catch (Exception $e) {
-                    $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                    $this->apsisCoreHelper->logError(__METHOD__, $e);
                     $this->apsisCoreHelper->log(__METHOD__ . ' Skipped for Profile id: ' . $item->getId());
                     continue;
                 }
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $integrationIdsArray;
     }

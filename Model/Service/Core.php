@@ -37,6 +37,9 @@ class Core extends ApsisLogHelper
     const PRODUCTION_TLD = 'one';
     const STAGE_TLD = 'cloud';
 
+    const EU_FILE_UPLOAD_URL = 'https://s3.eu-west-1.amazonaws.com';
+    const APAC_FILE_UPLOAD_URL = 'https://s3.ap-southeast-1.amazonaws.com';
+
     /**
      * @var StoreManagerInterface
      */
@@ -119,7 +122,7 @@ class Core extends ApsisLogHelper
         try {
             return $this->storeManager->getStore($storeId);
         } catch (Exception $e) {
-            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e);
             return false;
         }
     }
@@ -144,7 +147,7 @@ class Core extends ApsisLogHelper
             $store = $this->getStore($storeId);
             return ($store) ? $this->storeManager->getWebsite($store->getWebsiteId())->getName() : '';
         } catch (Exception $e) {
-            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e);
             return '';
         }
     }
@@ -186,7 +189,7 @@ class Core extends ApsisLogHelper
         try {
             return $this->scopeConfig->getValue($path, $contextScope, $contextScopeId);
         } catch (Exception $e) {
-            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e);
             return null;
         }
     }
@@ -209,7 +212,7 @@ class Core extends ApsisLogHelper
             $context = $this->getScopeForConfigUpdate($path, $contextScope, $contextScopeId);
             $this->writer->save($path, $value, $context['scope'], $context['id']);
         } catch (Exception $e) {
-            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e);
         }
     }
 
@@ -229,7 +232,7 @@ class Core extends ApsisLogHelper
             $context = $this->getScopeForConfigUpdate($path, $contextScope, $contextScopeId);
             $this->writer->delete($path, $context['scope'], $context['id']);
         } catch (Exception $e) {
-            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e);
         }
     }
 
@@ -243,8 +246,13 @@ class Core extends ApsisLogHelper
     private function getScopeForConfigUpdate(string $path, string $contextScope, int $scopeId)
     {
         if ($path == Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN ||
-            $path == Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE)
-        {
+            $path == Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE ||
+            $path == Config::CONFIG_APSIS_ONE_EVENTS_ORDER_HISTORY_DONE_FLAG ||
+            $path == Config::CONFIG_APSIS_ONE_EVENTS_QUOTE_HISTORY_DONE_FLAG ||
+            $path == Config::CONFIG_APSIS_ONE_EVENTS_REVIEW_HISTORY_DONE_FLAG ||
+            $path == Config::CONFIG_APSIS_ONE_EVENTS_WISHLIST_HISTORY_DONE_FLAG
+
+        ) {
             return $this->resolveContext($contextScope, $scopeId, $path);
         }
 
@@ -277,7 +285,7 @@ class Core extends ApsisLogHelper
         try {
             return $this->storeManager->getStores($withDefault);
         } catch (Exception $e) {
-            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e);
             return [];
         }
     }
@@ -293,7 +301,7 @@ class Core extends ApsisLogHelper
         try {
             return $store->getConfig($path);
         } catch (Exception $e) {
-            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e);
             return null;
         }
     }
@@ -309,9 +317,24 @@ class Core extends ApsisLogHelper
         try {
             return (float) round($price, $precision);
         } catch (Exception $e) {
-            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e);
             return 0.00;
         }
+    }
+
+    /**
+     * @param string $contextScope
+     * @param int $scopeId
+     *
+     * @return mixed
+     */
+    public function getRegion(string $contextScope, int $scopeId)
+    {
+        return $this->getConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_REGION,
+            $contextScope,
+            $scopeId
+        );
     }
 
     /**
@@ -408,7 +431,7 @@ class Core extends ApsisLogHelper
                 }
             }
         } catch (Exception $e) {
-            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e);
         }
         return $token;
     }
@@ -583,11 +606,7 @@ class Core extends ApsisLogHelper
             }
 
             if (empty($region)) {
-                $region = (string) $this->getConfigValue(
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_REGION,
-                    $contextScope,
-                    $scopeId
-                );
+                $region = $this->getRegion($contextScope, $scopeId);
             }
 
             if (empty($clientId) || empty($clientSecret) || empty($region)) {
@@ -719,7 +738,7 @@ class Core extends ApsisLogHelper
      *
      * @return DataCollection
      */
-    private function getDataCollectionByContextAndPath(string $contextScope, int $scopeId, string $path)
+    public function getDataCollectionByContextAndPath(string $contextScope, int $scopeId, string $path)
     {
         $collection = $this->dataCollectionFactory->create()
             ->addFieldToFilter('scope', $contextScope)
@@ -753,7 +772,7 @@ class Core extends ApsisLogHelper
         try {
             return $this->storeManager->getWebsites($withDefault);
         } catch (Exception $e) {
-            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e);
             return [];
         }
     }
@@ -768,7 +787,7 @@ class Core extends ApsisLogHelper
         try {
             return $this->storeManager->getWebsite($websiteId)->getStoreIds();
         } catch (Exception $e) {
-            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e);
             return [];
         }
     }
@@ -808,7 +827,7 @@ class Core extends ApsisLogHelper
             $hash = substr(md5($sectionDiscriminator), 0, 8);
             return "com.apsis1.integrations.keyspaces.$hash.magento";
         } catch (Exception $e) {
-            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e);
             return '';
         }
     }
@@ -847,7 +866,7 @@ class Core extends ApsisLogHelper
             $store =  (! $defaultGroup) ? null : $defaultGroup->getDefaultStore();
             return $this->storeManager->getStore($store)->getBaseUrl(UrlInterface::URL_TYPE_LINK);
         } catch (Exception $e) {
-            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e);
             return '';
         }
     }
@@ -888,6 +907,7 @@ class Core extends ApsisLogHelper
 
     /**
      * @param string $url
+     *
      * @throws Exception
      */
     public function validateIsUrlReachable(string $url)
@@ -899,7 +919,7 @@ class Core extends ApsisLogHelper
         curl_exec($ch);
 
         if (curl_errno($ch)) {
-            $msg = __METHOD__ . ': CURL ERROR: ' . curl_error($ch) . '. Unable to reach URL: ' . $url;
+            $msg = 'CURL ERROR: ' . curl_error($ch) . '. Unable to reach URL: ' . $url;
             curl_close($ch);
 
             throw new Exception($msg);
@@ -920,5 +940,41 @@ class Core extends ApsisLogHelper
             $tld = self::STAGE_TLD;
         }
         return sprintf('https://%s.apsis.%s', $region, $tld);
+    }
+
+    /**
+     * @param string $region
+     *
+     * @return string
+     */
+    public function buildFileUploadHostName(string $region)
+    {
+        $url = self::EU_FILE_UPLOAD_URL;
+        if ($region === Region::REGION_APAC) {
+            $url = self::APAC_FILE_UPLOAD_URL;
+        }
+        return $url;
+    }
+
+    /**
+     * @param string $scope
+     *
+     * @param int $scopeId
+     */
+    public function disableProfileSync(string $scope, int $scopeId)
+    {
+        $this->saveConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED,
+            0,
+            $scope,
+            $scopeId
+        );
+        $this->saveConfigValue(
+            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED,
+            0,
+            $scope,
+            $scopeId
+        );
+        $this->log('Profile sync disabled.');
     }
 }

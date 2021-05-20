@@ -130,7 +130,7 @@ class AbandonedSub
                 ->addFieldToFilter('main_table.store_id', $store->getId())
                 ->addFieldToFilter('main_table.updated_at', $updated);
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return false;
         }
     }
@@ -183,7 +183,7 @@ class AbandonedSub
                     }
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
             }
         }
@@ -218,7 +218,7 @@ class AbandonedSub
             $appEmulation->stopEnvironmentEmulation();
         } catch (Exception $e) {
             $appEmulation->stopEnvironmentEmulation();
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return false;
         }
         if ($subscriber->getId()) {
@@ -267,7 +267,7 @@ class AbandonedSub
                 'items' => $items
             ];
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
     }

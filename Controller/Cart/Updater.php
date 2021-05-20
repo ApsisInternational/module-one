@@ -62,7 +62,7 @@ class Updater extends Action
                 $this->quoteResource->save($quote);
             }
         } catch (Exception $e) {
-            $this->log->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->log->logError(__METHOD__, $e);
         }
     }
 }

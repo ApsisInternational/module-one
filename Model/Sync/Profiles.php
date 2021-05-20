@@ -53,12 +53,18 @@ class Profiles implements SyncInterface
             try {
                 $account = $apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
                 if ($account) {
+                    $apsisCoreHelper->validateIsUrlReachable(
+                        $apsisCoreHelper->buildFileUploadHostName(
+                            $apsisCoreHelper->getRegion(ScopeInterface::SCOPE_STORES, $store->getId())
+                        )
+                    );
+
                     $this->subscribers->processForStore($store, $apsisCoreHelper);
                     $this->customers->processForStore($store, $apsisCoreHelper);
                     $this->batch->processForStore($store, $apsisCoreHelper);
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e);
                 $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
                 continue;
             }

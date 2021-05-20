@@ -80,7 +80,7 @@ class MassReset extends Action
             $this->profileResource->resetProfiles($this->apsisCoreHelper, [], $collection->getAllIds());
             $this->messageManager->addSuccessMessage(__('A total of %1 record(s) have been reset.', $collectionSize));
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
             $this->messageManager->addErrorMessage(__('An error happen during execution. Please check logs'));
         }
         return $resultRedirect->setPath('*/*/');

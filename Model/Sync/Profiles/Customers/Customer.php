@@ -571,7 +571,7 @@ class Customer implements ProfileDataInterface
                 }
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $formattedNumber;
     }

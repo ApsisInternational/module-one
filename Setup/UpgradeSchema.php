@@ -3,6 +3,7 @@
 namespace Apsis\One\Setup;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Magento\Framework\DB\Ddl\Table;
 use Magento\Framework\Registry;
 use Magento\Framework\Setup\ModuleContextInterface;
@@ -19,13 +20,20 @@ class UpgradeSchema implements UpgradeSchemaInterface
     private $registry;
 
     /**
+     * @var ApsisLogHelper
+     */
+    private $logHelper;
+
+    /**
      * UpgradeSchema constructor.
      *
      * @param Registry $registry
+     * @param ApsisLogHelper $logHelper
      */
-    public function __construct(Registry $registry)
+    public function __construct(Registry $registry, ApsisLogHelper $logHelper)
     {
         $this->registry = $registry;
+        $this->logHelper = $logHelper;
     }
 
     /**
@@ -34,6 +42,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
      */
     public function upgrade(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {
+        $this->logHelper->log(__METHOD__);
         $setup->startSetup();
         if (version_compare($context->getVersion(), '1.1.0', '<')) {
             $this->upgradeOneOneZero($setup);
@@ -58,6 +67,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
      */
     private function upgradeOneNineFour(SchemaSetupInterface $setup)
     {
+        $this->logHelper->log(__METHOD__);
         $tableName = $setup->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
         $columnName = 'subscriber_store_id';
 
@@ -117,6 +127,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
      */
     private function upgradeOneNineOne(SchemaSetupInterface $setup)
     {
+        $this->logHelper->log(__METHOD__);
         $tableName = $setup->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
         $setup->getConnection()->addColumn(
             $tableName,
@@ -150,6 +161,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
      */
     private function upgradeOneEightZero(SchemaSetupInterface $setup)
     {
+        $this->logHelper->log(__METHOD__);
         $setup->getConnection()->dropColumn(
             $setup->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
             'topic_subscription'
@@ -161,6 +173,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
      */
     private function upgradeOneOneZero(SchemaSetupInterface $setup)
     {
+        $this->logHelper->log(__METHOD__);
         $setup->getConnection()->addColumn(
             $setup->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
             'topic_subscription',
@@ -178,6 +191,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
      */
     private function upgradeOneThreeZero(SchemaSetupInterface $setup)
     {
+        $this->logHelper->log(__METHOD__);
         $setup->getConnection()->dropForeignKey(
             $setup->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE),
             $setup->getFkName(

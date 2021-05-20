@@ -101,7 +101,7 @@ class Batch implements ProfileSyncInterface
                 $this->handlePendingCollectionForStore($apiClient, $store, $sectionDiscriminator);
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -133,7 +133,7 @@ class Batch implements ProfileSyncInterface
                     if ($result === false || $result === null) {
                         $this->apsisCoreHelper->log(
                             __METHOD__ . ': Unable to initialise import for Store ' . $store->getCode() .
-                            ' Item ' . $item->getId()
+                            ' Item ' . $item->getId() . '. Integration will try again in next cron run.'
                         );
                         continue;
                     } elseif (is_string($result)) {
@@ -150,8 +150,8 @@ class Batch implements ProfileSyncInterface
                         try {
                             $this->apsisCoreHelper->validateIsUrlReachable($result->file_upload_url);
                         } catch (Exception $e) {
-                            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-                            $this->disableProfileSync($store);
+                            $this->apsisCoreHelper->logError(__METHOD__, $e);
+                            $this->apsisCoreHelper->disableProfileSync(ScopeInterface::SCOPE_STORES, $store->getId());
                             return;
                         }
 
@@ -184,7 +184,7 @@ class Batch implements ProfileSyncInterface
                         $this->updateItem($item, ProfileBatch::SYNC_STATUS_PROCESSING);
                     }
                 } catch (Exception $e) {
-                    $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                    $this->apsisCoreHelper->logError(__METHOD__, $e);
                     $this->apsisCoreHelper->log(__METHOD__ . ': Skipped batch item :' . $item->getId());
                     continue;
                 }
@@ -232,7 +232,7 @@ class Batch implements ProfileSyncInterface
                         $this->processImportStatus($store, $result, $item);
                     }
                 } catch (Exception $e) {
-                    $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                    $this->apsisCoreHelper->logError(__METHOD__, $e);
                     $this->apsisCoreHelper->log(__METHOD__ . ': Skipped batch item :' . $item->getId());
                     continue;
                 }
@@ -255,7 +255,7 @@ class Batch implements ProfileSyncInterface
         try {
             $this->profileBatchResource->save($item);
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 
         if ($status === ProfileBatch::SYNC_STATUS_FAILED || $status === ProfileBatch::SYNC_STATUS_COMPLETED ||
@@ -263,7 +263,7 @@ class Batch implements ProfileSyncInterface
             try {
                 $this->apsisFileHelper->deleteFile($item->getFilePath());
             } catch (Exception $e) {
-                $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $this->apsisCoreHelper->logError(__METHOD__, $e);
             }
         }
     }
@@ -292,7 +292,7 @@ class Batch implements ProfileSyncInterface
                 );
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -330,27 +330,7 @@ class Batch implements ProfileSyncInterface
                 }
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
-    }
-
-    /**
-     * @param StoreInterface $store
-     */
-    private function disableProfileSync(StoreInterface $store)
-    {
-        $this->apsisCoreHelper->saveConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED,
-            0,
-            ScopeInterface::SCOPE_STORES,
-            $store->getId()
-        );
-        $this->apsisCoreHelper->saveConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED,
-            0,
-            ScopeInterface::SCOPE_STORES,
-            $store->getId()
-        );
-        $this->apsisCoreHelper->log('Profile sync disabled.');
     }
 }

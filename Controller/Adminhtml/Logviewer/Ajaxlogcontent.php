@@ -83,7 +83,7 @@ class Ajaxlogcontent extends Action
             }
             $content = nl2br($this->escaper->escapeHtml($this->file->getLogFileContent($logFile)));
         } catch (Exception $e) {
-            $this->logHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logHelper->logError(__METHOD__, $e);
             $content = $e->getMessage();
         }
 

@@ -112,7 +112,7 @@ abstract class Rest
             }
         } catch (Exception $e) {
             curl_close($ch);
-            $this->helper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->helper->logError(__METHOD__, $e);
         }
         return $this->responseBody;
     }

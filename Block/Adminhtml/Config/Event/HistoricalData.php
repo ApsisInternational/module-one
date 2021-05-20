@@ -84,7 +84,7 @@ class HistoricalData extends Field
                 );
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return false;
     }
@@ -104,7 +104,7 @@ class HistoricalData extends Field
                 ->addFieldToFilter('path', $path);
             return (boolean) $collection->getSize();
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
             return false;
         }
     }

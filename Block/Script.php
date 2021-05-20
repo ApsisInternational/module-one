@@ -59,7 +59,7 @@ class Script extends Template
                 return (string) $store->getConfig(ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_SCRIPT);
             }
         } catch (Exception $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisLogHelper->logError(__METHOD__, $e);
         }
         return '';
     }

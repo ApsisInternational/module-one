@@ -120,7 +120,7 @@ class Subscription extends Action
             }
             return $this->_redirect(self::MAGENTO_NEWSLETTER_MANAGE_URL);
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
             $this->messageManager->addErrorMessage(__('An error occurred while saving your subscription topics.'));
             return $this->_redirect(self::MAGENTO_NEWSLETTER_MANAGE_URL);
         }
@@ -219,7 +219,7 @@ class Subscription extends Action
                     $this->updateForCustomerWithoutExtensionAttributes($isSubscribedParam, $customer);
                 }
             } catch (Exception $e) {
-                $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $this->apsisCoreHelper->logError(__METHOD__, $e);
                 $this->messageManager->addError(__('Something went wrong while saving your subscription.'));
             }
         }
@@ -251,7 +251,7 @@ class Subscription extends Action
                 $this->messageManager->addSuccess(__('We have removed your newsletter subscription.'));
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
             $this->messageManager->addError(__('Something went wrong while saving your subscription.'));
         }
     }
@@ -272,7 +272,7 @@ class Subscription extends Action
                 $this->messageManager->addSuccess(__('We removed the subscription.'));
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
             $this->messageManager->addError(__('Something went wrong while saving your subscription.'));
         }
     }

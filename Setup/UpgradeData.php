@@ -9,6 +9,10 @@ use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Exception;
+use Magento\Authorization\Model\RoleFactory;
+use Magento\Authorization\Model\RulesFactory;
+use Magento\Authorization\Model\Acl\Role\Group as RoleGroup;
+use Magento\Authorization\Model\UserContextInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Math\Random;
@@ -52,6 +56,16 @@ class UpgradeData implements UpgradeDataInterface
     private $eventResource;
 
     /**
+     * @var RoleFactory
+     */
+    private $roleFactory;
+
+    /**
+     * @var RulesFactory
+     */
+    private $rulesFactory;
+
+    /**
      * UpgradeData constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -60,6 +74,8 @@ class UpgradeData implements UpgradeDataInterface
      * @param Registry $registry
      * @param ProfileResource $profileResource
      * @param EventResource $eventResource
+     * @param RoleFactory $roleFactory
+     * @param RulesFactory $rulesFactory
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -67,7 +83,9 @@ class UpgradeData implements UpgradeDataInterface
         EncryptorInterface $encryptor,
         Registry $registry,
         ProfileResource $profileResource,
-        EventResource $eventResource
+        EventResource $eventResource,
+        RoleFactory $roleFactory,
+        RulesFactory $rulesFactory
     ) {
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->random = $random;
@@ -75,6 +93,8 @@ class UpgradeData implements UpgradeDataInterface
         $this->registry = $registry;
         $this->profileResource = $profileResource;
         $this->eventResource = $eventResource;
+        $this->roleFactory = $roleFactory;
+        $this->rulesFactory = $rulesFactory;
     }
 
     /**
@@ -128,8 +148,33 @@ class UpgradeData implements UpgradeDataInterface
             $whereE = $setup->getConnection()->quoteInto('status = ?', Profile::SYNC_STATUS_FAILED);
             $this->profileResource->resetProfiles($this->apsisCoreHelper, [], [], [$whereC . ' OR ' . $whereS]);
             $this->eventResource->resetEvents($this->apsisCoreHelper, [], [], [$whereE]);
+
+            //Create Role for APSIS Support
+            $role = $this->roleFactory->create()
+                ->setRoleName('APSIS Support Agent')
+                ->setUserType(UserContextInterface::USER_TYPE_ADMIN)
+                ->setUserId(0)
+                ->setRoleType(RoleGroup::ROLE_TYPE)
+                ->setSortOrder(0)
+                ->setTreeLevel(1)
+                ->setParentId(0)
+                ->save();
+
+            $resource = [
+                'Apsis_One::reports',
+                'Apsis_One::profile',
+                'Apsis_One::event',
+                'Apsis_One::abandoned',
+                'Apsis_One::logviewer',
+                'Apsis_One::config',
+            ];
+
+            $this->rulesFactory->create()
+                ->setRoleId($role->getId())
+                ->setResources($resource)
+                ->saveRel();
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -149,7 +194,7 @@ class UpgradeData implements UpgradeDataInterface
                 );
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -179,7 +224,7 @@ class UpgradeData implements UpgradeDataInterface
                 $store->resetConfig();
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -222,7 +267,7 @@ class UpgradeData implements UpgradeDataInterface
                 );
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -272,7 +317,7 @@ class UpgradeData implements UpgradeDataInterface
                 0
             );
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -306,7 +351,7 @@ class UpgradeData implements UpgradeDataInterface
                 ]
             );
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -342,7 +387,7 @@ class UpgradeData implements UpgradeDataInterface
                 $updatedConsents = implode(',', $consents);
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $updatedConsents;
     }

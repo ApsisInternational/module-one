@@ -77,7 +77,7 @@ class Data extends EventData implements EventDataInterface
                 'currencyCode' => (string)$this->store->getCurrentCurrencyCode(),
             ];
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
     }

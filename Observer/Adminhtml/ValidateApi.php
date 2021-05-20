@@ -51,13 +51,14 @@ class ValidateApi implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
+        $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
+
         try {
             $groups = $this->context->getRequest()->getPost('groups');
 
             if (isset($groups['oauth']['fields']['id']['inherit']) ||
                 isset($groups['oauth']['fields']['secret']['inherit'])
             ) {
-                $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
                 if (in_array($scope['context_scope'], [ScopeInterface::SCOPE_STORES, ScopeInterface::SCOPE_WEBSITES])) {
                     $this->apsisCoreHelper->removeTokenConfig($scope['context_scope'], $scope['context_scope_id']);
                 }
@@ -69,10 +70,43 @@ class ValidateApi implements ObserverInterface
             $region = $groups['oauth']['fields']['region']['value'] ?? false;
 
             if ($id && $secret && $region) {
-                $this->validateApiCredentials($id, $secret, $region);
+                try {
+                    $this->apsisCoreHelper->validateIsUrlReachable($this->apsisCoreHelper->buildHostName($region));
+                } catch (Exception $e) {
+                    $this->apsisCoreHelper->logError(__METHOD__, $e);
+                    $this->apsisCoreHelper
+                        ->disableAccountAndRemoveTokenConfig($scope['context_scope'], $scope['context_scope_id']);
+                    $msg = '. Cannot enable account. Host for URL must be whitelisted first.';
+                    $this->messageManager->addWarningMessage(__($e->getMessage() . $msg));
+                    return $this;
+                }
+
+                $check = $this->validateApiCredentials($id, $secret, $region, $scope);
+                if ($check === true) {
+                    $this->messageManager
+                        ->addSuccessMessage(__('API credentials are valid and Magento keySpace exist.'));
+                } else {
+                    $this->apsisCoreHelper
+                        ->disableAccountAndRemoveTokenConfig($scope['context_scope'], $scope['context_scope_id']);
+                    $this->apsisCoreHelper->log($check);
+                    $this->messageManager->addWarningMessage(__($check));
+                }
+
+                try {
+                    $this->apsisCoreHelper
+                        ->validateIsUrlReachable($this->apsisCoreHelper->buildFileUploadHostName($region));
+                } catch (Exception $e) {
+                    $this->apsisCoreHelper->logError(__METHOD__, $e);
+                    $this->apsisCoreHelper->disableProfileSync($scope['context_scope'], $scope['context_scope_id']);
+                    $msg = '. Profile sync is disabled and will not work until host for URL is whitelisted.';
+                    $this->messageManager->addWarningMessage(__($e->getMessage() . $msg));
+                }
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper
+                ->disableAccountAndRemoveTokenConfig($scope['context_scope'], $scope['context_scope_id']);
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->messageManager->addWarningMessage(__('Something went wrong, please check exception logs.'));
         }
 
         return $this;
@@ -82,15 +116,13 @@ class ValidateApi implements ObserverInterface
      * @param string $id
      * @param string $secret
      * @param string $region
+     * @param array $scope
+     *
+     * @return bool|string
      */
-    private function validateApiCredentials(string $id, string $secret, string $region)
+    private function validateApiCredentials(string $id, string $secret, string $region, array $scope)
     {
-        $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
-
         try {
-            $host = $this->apsisCoreHelper->buildHostName($region);
-            $this->apsisCoreHelper->validateIsUrlReachable($host);
-
             $client = $this->apsisCoreHelper->getApiClient(
                 $scope['context_scope'],
                 $scope['context_scope_id'],
@@ -101,38 +133,21 @@ class ValidateApi implements ObserverInterface
             );
 
             if ($client) {
-                $isValid = false;
                 $keySpaces = $client->getKeySpaces();
-
                 if (is_object($keySpaces) && isset($keySpaces->items)) {
                     foreach ($keySpaces->items as $item) {
                         if (strpos($item->discriminator, 'magento') !== false) {
-                            $isValid = true;
+                            return true;
                         }
                     }
                 }
-
-                if ($isValid) {
-                    $this->messageManager->addSuccessMessage(
-                        __('API credentials are valid and Magento keySpace exist.')
-                    );
-                } else {
-                    $msg = 'API credentials are invalid for this integration. Magento keySpace does not exist.';
-                    $this->apsisCoreHelper->log($msg);
-                    $this->messageManager->addWarningMessage(__($msg));
-                }
+                return 'API credentials are invalid for this integration. Magento keySpace does not exist.';
             } else {
-                $msg = 'Unable to generate access token. Authorization has been denied for this request.';
-                $this->apsisCoreHelper->log(__METHOD__ . ": " . $msg, $scope);
-                $this->messageManager->addWarningMessage(__($msg));
+                return 'Unable to generate access token. Authorization has been denied for this request.';
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->disableAccountAndRemoveTokenConfig(
-                $scope['context_scope'],
-                $scope['context_scope_id']
-            );
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
-            $this->messageManager->addWarningMessage(__($e->getMessage()));
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            return 'Something went wrong, please check exception logs.';
         }
     }
 }

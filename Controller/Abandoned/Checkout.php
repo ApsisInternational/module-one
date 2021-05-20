@@ -81,7 +81,7 @@ class Checkout extends Action
 
             return $this->handleCartRebuildRequest($quoteModel);
         } catch (Exception $e) {
-            $this->log->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->log->logError(__METHOD__, $e);
             return $this->_redirect('');
         }
     }
@@ -106,7 +106,7 @@ class Checkout extends Action
             $this->checkoutSession->replaceQuote($quoteModel)->unsLastRealOrderId();
             return $this->_redirect($quoteModel->getStore()->getUrl('checkout/cart'));
         } catch (Exception $e) {
-            $this->log->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->log->logError(__METHOD__, $e);
             return $this->_redirect('');
         }
     }

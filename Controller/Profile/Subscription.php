@@ -109,7 +109,7 @@ class Subscription extends Action
 
             return $this->sendResponse(200, 'No change made to profile subscription.');
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
             return $this->sendResponse(500, $e->getMessage());
         }
     }

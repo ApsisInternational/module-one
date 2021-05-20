@@ -85,7 +85,7 @@ class Placed implements ObserverInterface
                 $this->eventService->registerOrderPlacedEvent($order, $profile);
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 
         return $this;
@@ -116,7 +116,7 @@ class Placed implements ObserverInterface
             }
             return false;
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
             return false;
         }
     }

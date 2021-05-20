@@ -82,7 +82,7 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
                     );
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e);
             }
         }
     }
@@ -122,12 +122,12 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
                             }
                         }
                     } catch (Exception $e) {
-                        $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                        $apsisCoreHelper->logError(__METHOD__, $e);
                         continue;
                     }
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
             }
         }
@@ -154,7 +154,7 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
                 ->addFieldToFilter('main_table.customer_id', ['in' => $customerIds])
                 ->addFieldToFilter('main_table.created_at', $duration);
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
     }

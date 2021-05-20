@@ -609,7 +609,7 @@ class Client extends Rest
             $this->curlError = curl_error($ch);
         } catch (Exception $e) {
             curl_close($ch);
-            $this->helper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->helper->logError(__METHOD__, $e);
         }
         return $this->processResponse($this->responseBody, __METHOD__);
     }

@@ -82,7 +82,7 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
                     );
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e);
             }
         }
     }
@@ -127,7 +127,7 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
                     }
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
             }
         }
@@ -154,7 +154,7 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
                 ->addFieldToFilter('main_table.customer_email', ['in' => $emails])
                 ->addFieldToFilter('main_table.created_at', $duration);
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
     }
@@ -175,7 +175,7 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
                 $formattedProfileCollectionArray[$profile->getEmail()] = $profile;
             }
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $formattedProfileCollectionArray;
     }

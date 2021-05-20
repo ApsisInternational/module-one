@@ -85,7 +85,7 @@ class Content
             $cartData = $this->getMainCartData($quoteModel);
             $cartData['items'] = $this->getItemData($quoteModel->getAllVisibleItems());
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         $appEmulation->stopEnvironmentEmulation();
         return $cartData;
@@ -105,7 +105,7 @@ class Content
                 $itemsData[] = $this->getItemsData($quoteItem);
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $itemsData;
     }
@@ -143,7 +143,7 @@ class Content
                 'billing_address' => $this->getAddress($quoteModel->getBillingAddress()),
             ];
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return [];
     }
@@ -172,7 +172,7 @@ class Content
                 'telephone' => (string) $address->getTelephone()
             ];
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return [];
     }
@@ -196,7 +196,7 @@ class Content
                 'last_name' => (string) $quoteModel->getCustomerLastname()
             ];
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return [];
     }
@@ -247,7 +247,7 @@ class Content
                 $sortedOptions = $this->getBundleOptions($options);
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $sortedOptions;
     }
@@ -271,7 +271,7 @@ class Content
                 $sortedOptions[] = $option;
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $sortedOptions;
     }
@@ -297,7 +297,7 @@ class Content
                 $sortedOptions[] = $option;
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $sortedOptions;
     }

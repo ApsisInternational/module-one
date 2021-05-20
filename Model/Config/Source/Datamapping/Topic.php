@@ -47,7 +47,9 @@ class Topic implements OptionSourceInterface
 
             $consentLists = $apiClient->getConsentLists($section);
             if (! $consentLists || ! isset($consentLists->items)) {
-                $this->apsisCoreHelper->log(__METHOD__ . ': No consent list / topic found on section ' . $section);
+                $this->apsisCoreHelper->log(
+                    __METHOD__ . ': No consent list / topic found on section ' . $section . '. Try again later.'
+                );
                 return $options;
             }
 
@@ -72,7 +74,7 @@ class Topic implements OptionSourceInterface
                 ];
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $options;
     }

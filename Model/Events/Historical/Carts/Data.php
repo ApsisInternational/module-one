@@ -59,7 +59,7 @@ class Data extends EventData implements EventDataInterface
                 'rowTotalAmount' => $apsisCoreHelper->round($this->cartItem->getRowTotal()),
             ];
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
     }

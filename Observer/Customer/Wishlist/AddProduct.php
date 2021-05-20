@@ -78,7 +78,7 @@ class AddProduct implements ObserverInterface
                 $this->eventService->registerWishlistEvent($observer, $wishlist, $store, $profile, $customer);
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $this;
     }

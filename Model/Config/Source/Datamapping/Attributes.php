@@ -75,7 +75,7 @@ class Attributes implements OptionSourceInterface
                 $fields[] = ['value' => $attribute->discriminator, 'label' => $attribute->name];
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $fields;
     }

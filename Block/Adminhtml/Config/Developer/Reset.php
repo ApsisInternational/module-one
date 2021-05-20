@@ -76,7 +76,7 @@ class Reset extends Field
             }
             return $elm->toHtml();
         } catch (Exception $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->apsisLogHelper->logError(__METHOD__, $e);
             return parent::_getElementHtml($element);
         }
     }

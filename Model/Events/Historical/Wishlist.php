@@ -110,7 +110,7 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
                     );
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e);
                 $appEmulation->stopEnvironmentEmulation();
             }
             $appEmulation->stopEnvironmentEmulation();
@@ -136,7 +136,7 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
                 }
             }
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $wishlistCollectionArray;
     }
@@ -165,7 +165,7 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
             $collection->getSelect()->group('wishlist_item_id');
             return $collection;
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
     }
@@ -217,7 +217,7 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
                     }
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
             }
         }

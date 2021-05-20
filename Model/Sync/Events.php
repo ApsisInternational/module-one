@@ -204,7 +204,7 @@ class Events implements SyncInterface
                     }
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e);
                 $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
                 continue;
             }
@@ -325,7 +325,7 @@ class Events implements SyncInterface
                     );
                 }
             } catch (Exception $e) {
-                $this->apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $this->apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
             }
         }

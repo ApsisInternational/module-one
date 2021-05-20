@@ -2,17 +2,19 @@
 
 namespace Apsis\One\ApiClient;
 
-use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Apsis\One\Model\Config\Source\System\Region;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Exception;
 use stdClass;
 
 /**
  * Rest class to make cURL requests.
  */
-class Rest
+abstract class Rest
 {
     const HTTP_CODE_CONFLICT = 409;
+    const HTTP_ERROR_CODE_TO_RETRY = [500, 501, 503, 408, 429];
+    const HTTP_CODES_DISABLE_MODULE = [400, 401, 403];
+    const HTTP_CODES_FORCE_GENERATE_TOKEN = [401, 403];
 
     /**
      * http verbs
@@ -23,18 +25,10 @@ class Rest
     const VERB_DELETE = 'DELETE';
     const VERB_PATCH = 'PATCH';
 
-    const PRODUCTION_TLD = 'one';
-    const STAGE_TLD = 'cloud';
-
-    /**
-     * @var array
-     */
-    private $errorCodesToRetry = [500, 501, 503, 408, 429];
-
     /**
      * @var string
      */
-    protected $hostName = 'https://%s.apsis.%s';
+    protected $hostName;
 
     /**
      * @var string
@@ -57,6 +51,16 @@ class Rest
     private $token;
 
     /**
+     * @var string
+     */
+    private $clientId;
+
+    /**
+     * @var string
+     */
+    private $clientSecret;
+
+    /**
      * @var null|stdClass
      */
     protected $responseBody;
@@ -67,7 +71,7 @@ class Rest
     protected $responseInfo;
 
     /**
-     * @var ApsisLogHelper
+     * @var ApsisCoreHelper
      */
     protected $helper;
 
@@ -75,16 +79,6 @@ class Rest
      * @var string
      */
     protected $curlError;
-
-    /**
-     * Rest constructor.
-     *
-     * @param ApsisLogHelper $helper
-     */
-    public function __construct(ApsisLogHelper $helper)
-    {
-        $this->helper = $helper;
-    }
 
     /**
      * @return null|stdClass
@@ -118,7 +112,7 @@ class Rest
             }
         } catch (Exception $e) {
             curl_close($ch);
-            $this->helper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->helper->logError(__METHOD__, $e);
         }
         return $this->responseBody;
     }
@@ -234,6 +228,18 @@ class Rest
     }
 
     /**
+     * @return $this
+     */
+    protected function buildBodyForGetAccessTokenCall()
+    {
+        return $this->buildBody([
+            'grant_type' => 'client_credentials',
+            'client_id' => $this->clientId,
+            'client_secret' => $this->clientSecret
+        ]);
+    }
+
+    /**
      * Curl options.
      *
      * @param mixed $ch
@@ -278,17 +284,37 @@ class Rest
     }
 
     /**
-     * @param string $region
+     * @param string $clientId
+     * @param string $clientSecret
      *
      * @return $this
      */
-    public function setRegion(string $region)
+    public function setClientCredentials(string $clientId, string $clientSecret)
     {
-        $tld = self::PRODUCTION_TLD;
-        if ($region === Region::REGION_STAGE) {
-            $tld = self::STAGE_TLD;
-        }
-        $this->hostName = sprintf($this->hostName, $region, $tld);
+        $this->clientId = $clientId;
+        $this->clientSecret = $clientSecret;
+        return $this;
+    }
+
+    /**
+     * @param ApsisCoreHelper $helper
+     *
+     * @return $this
+     */
+    public function setHelper(ApsisCoreHelper $helper)
+    {
+        $this->helper = $helper;
+        return $this;
+    }
+
+    /**
+     * @param string $hostName
+     *
+     * @return $this
+     */
+    public function setHostName(string $hostName)
+    {
+        $this->hostName = $hostName;
         return $this;
     }
 
@@ -332,21 +358,22 @@ class Rest
         }
 
         if (isset($response->status) && isset($response->detail)) {
-            //For Profile merge request
-            if ($response->status === self::HTTP_CODE_CONFLICT) {
+            if (strpos($method, '::getAccessToken') !== false) {
+                // Return as it is
+                return $response;
+            } elseif (in_array($response->status, self::HTTP_CODES_FORCE_GENERATE_TOKEN)) {
+                // Client factory will automatically generate new one. If not then will disable automatically.
+                return false;
+            } elseif ($response->status === self::HTTP_CODE_CONFLICT) {
+                //For Profile merge request
                 return self::HTTP_CODE_CONFLICT;
             }
 
             //Log error
             $this->helper->debug($method, (array) $response);
 
-            //For getAccessToken api call
-            if (strpos($method, '::getAccessToken') !== false) {
-                return $response;
-            }
-
             //All other error response handling
-            return (in_array($response->status, $this->errorCodesToRetry)) ? false : (string) $response->detail;
+            return (in_array($response->status, self::HTTP_ERROR_CODE_TO_RETRY)) ? false : (string) $response->detail;
         }
 
         return $response;

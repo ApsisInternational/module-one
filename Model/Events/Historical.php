@@ -137,7 +137,7 @@ class Historical implements SyncInterface
                     }
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e);
                 $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
                 continue;
             }
@@ -176,10 +176,13 @@ class Historical implements SyncInterface
         StoreInterface $store,
         string $path
     ) {
-        return (boolean) $apsisCoreHelper->getStoreConfig(
-            $store,
-            $path
-        );
+        $context = $apsisCoreHelper->resolveContext(ScopeInterface::SCOPE_STORES, $store->getId(), $path);
+        $collection = $apsisCoreHelper->getDataCollectionByContextAndPath($context['scope'], $context['id'], $path);
+
+        if ($collection->getSize()) {
+            return (boolean) $collection->getFirstItem()->getValue();
+        }
+        return false;
     }
 
     /**
@@ -209,7 +212,7 @@ class Historical implements SyncInterface
                 }
             }
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $period;
     }
@@ -232,7 +235,7 @@ class Historical implements SyncInterface
                     self::EVENT_TYPE_HISTORY_DURATION_TIMESTAMP_PATH_MAPPING[$eventType]
                 );
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return '';
         }
     }
@@ -252,7 +255,7 @@ class Historical implements SyncInterface
                 ->sub($this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('P%sM', $pastEventsDuration)))
                 ->format('Y-m-d H:i:s') : '';
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return '';
         }
     }
@@ -310,7 +313,7 @@ class Historical implements SyncInterface
                     }
                 }
             } catch (Exception $e) {
-                $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+                $apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
             }
         }

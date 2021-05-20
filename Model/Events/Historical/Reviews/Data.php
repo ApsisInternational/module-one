@@ -80,7 +80,7 @@ class Data extends EventData implements EventDataInterface
                     (int) $voteCollection->getFirstItem()->getValue() : 0
             ];
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
     }

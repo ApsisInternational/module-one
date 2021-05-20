@@ -65,7 +65,7 @@ class Event
                 'updated_at' => $this->dateTime->formatDate(true)
             ];
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
         }
         return [];
     }
@@ -112,7 +112,7 @@ class Event
                 $formattedProfileCollectionArray[$profile->getCustomerId()] = $profile;
             }
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $formattedProfileCollectionArray;
     }

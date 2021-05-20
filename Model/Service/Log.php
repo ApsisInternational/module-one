@@ -40,13 +40,12 @@ class Log
 
     /**
      * @param string $classMethodName
-     * @param string $text
-     * @param string $trace
+     * @param Exception $e
      * @param array $extra
      */
-    public function logError(string $classMethodName, string $text, string $trace = '', array $extra = [])
+    public function logError(string $classMethodName, Exception $e, array $extra = [])
     {
-        $this->error($this->getStringForLog($classMethodName, $text, $trace), $extra);
+        $this->error($this->getStringForLog($classMethodName, $e->getMessage(), $e->getTraceAsString()), $extra);
     }
 
     /**
@@ -64,11 +63,13 @@ class Log
      * DEBUG (100): Detailed debug information.
      *
      * @param string $message
+     * @param array $response
      * @param array $extra
      */
-    public function debug(string $message, $extra = [])
+    public function debug(string $message, array $response = [], array $extra = [])
     {
-        $this->logger->debug($this->addModuleVersionToMessage($message), $extra);
+        $msg = $this->getStringForLog($message, (string) json_encode($response, JSON_PRETTY_PRINT), '');
+        $this->logger->debug($this->addModuleVersionToMessage($msg), $extra);
     }
 
     /**
@@ -91,7 +92,7 @@ class Log
         try {
             return json_encode($data);
         } catch (Exception $e) {
-            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e);
             return '{}';
         }
     }
@@ -106,7 +107,7 @@ class Log
         try {
             return json_decode($string);
         } catch (Exception $e) {
-            $this->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $this->logError(__METHOD__, $e);
             return [];
         }
     }
@@ -131,7 +132,7 @@ class Log
      */
     private function getStringForLog(string $functionName, string $text, string $trace)
     {
-        $string = ' - Class & Method: ' . $functionName . ' - Text: ' . $text;
+        $string = ' - Class & Method: ' . $functionName . ' - Message: ' . $text;
         return strlen($trace) ? $string . PHP_EOL . $trace : $string;
     }
 

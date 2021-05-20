@@ -29,7 +29,7 @@ class Abandoned extends AbstractDb implements ResourceInterface
             $write = $this->getConnection();
             return $write->insertMultiple($this->getMainTable(), $carts);
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
             return 0;
         }
     }
@@ -45,7 +45,7 @@ class Abandoned extends AbstractDb implements ResourceInterface
             $this->getConnection()->truncateTable($this->getMainTable());
             return true;
         } catch (Exception $e) {
-            $apsisLogHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisLogHelper->logError(__METHOD__, $e);
             return false;
         }
     }
@@ -62,7 +62,7 @@ class Abandoned extends AbstractDb implements ResourceInterface
                 ["created_at < DATE_SUB(NOW(), INTERVAL ? DAY)" => $day]
             );
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e->getMessage(), $e->getTraceAsString());
+            $apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 }

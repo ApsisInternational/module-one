@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Setup;
 
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Magento\Framework\Setup\InstallSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
@@ -12,6 +13,21 @@ use Zend_Db_Exception;
 class InstallSchema implements InstallSchemaInterface
 {
     /**
+     * @var ApsisLogHelper
+     */
+    private $logHelper;
+
+    /**
+     * InstallSchema constructor.
+     *
+     * @param ApsisLogHelper $logHelper
+     */
+    public function __construct(ApsisLogHelper $logHelper)
+    {
+        $this->logHelper = $logHelper;
+    }
+
+    /**
      * @param SchemaSetupInterface $setup
      * @param ModuleContextInterface $context
      *
@@ -19,6 +35,7 @@ class InstallSchema implements InstallSchemaInterface
      */
     public function install(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {
+        $this->logHelper->log(__METHOD__);
         $installer = $setup;
         $installer->startSetup();
 
@@ -41,6 +58,7 @@ class InstallSchema implements InstallSchemaInterface
      */
     private function createApsisAbandonedTable(SchemaSetupInterface $installer)
     {
+        $this->logHelper->log(__METHOD__);
         $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_ABANDONED_TABLE);
 
         $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
@@ -215,6 +233,7 @@ class InstallSchema implements InstallSchemaInterface
      */
     private function createApsisEventTable(SchemaSetupInterface $installer)
     {
+        $this->logHelper->log(__METHOD__);
         $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_EVENT_TABLE);
 
         $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_EVENT_TABLE);
@@ -399,6 +418,7 @@ class InstallSchema implements InstallSchemaInterface
      */
     private function createApsisProfileBatchTable(SchemaSetupInterface $installer)
     {
+        $this->logHelper->log(__METHOD__);
         $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE);
 
         $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE);
@@ -553,6 +573,7 @@ class InstallSchema implements InstallSchemaInterface
      */
     private function createApsisProfileTable(SchemaSetupInterface $installer)
     {
+        $this->logHelper->log(__METHOD__);
         $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_PROFILE_TABLE);
 
         $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);

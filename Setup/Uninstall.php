@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Setup;
 
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Magento\Framework\Setup\UninstallInterface;
@@ -9,6 +10,21 @@ use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 
 class Uninstall implements UninstallInterface
 {
+    /**
+     * @var ApsisLogHelper
+     */
+    private $logHelper;
+
+    /**
+     * Uninstall constructor.
+     *
+     * @param ApsisLogHelper $logHelper
+     */
+    public function __construct(ApsisLogHelper $logHelper)
+    {
+        $this->logHelper = $logHelper;
+    }
+
     /**
      * @var array
      */
@@ -25,6 +41,8 @@ class Uninstall implements UninstallInterface
      */
     public function uninstall(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {
+        $this->logHelper->log(__METHOD__);
+
         //Remove all module tables
         foreach ($this->apsisTablesArr as $tableName) {
             $setup->getConnection()->dropTable($setup->getTable($tableName));

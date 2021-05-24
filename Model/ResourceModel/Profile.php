@@ -78,38 +78,37 @@ class Profile extends AbstractDb implements ResourceInterface
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param array $storeIds
      * @param array $ids
-     * @param array $where
-     *
-     * @return int
+     * @param int $status
+     * @param array $isEntityTypeCond
      */
     public function resetProfiles(
         ApsisCoreHelper $apsisCoreHelper,
         array $storeIds = [],
         array $ids = [],
-        array $where = []
+        int $status = ApsisProfile::SYNC_STATUS_PENDING,
+        array $isEntityTypeCond = []
     ) {
-        try {
-            if (! empty($storeIds)) {
-                $where["store_id IN (?)"] = $storeIds;
-            }
-            if (! empty($ids)) {
-                $where["id IN (?)"] = $ids;
-            }
-            $bind = [
-                'subscriber_sync_status' => ApsisProfile::SYNC_STATUS_PENDING,
-                'customer_sync_status' => ApsisProfile::SYNC_STATUS_PENDING,
-                'error_message' => '',
-                'updated_at' => $this->dateTime->formatDate(true)
-            ];
-            return $this->getConnection()->update(
-                $this->getMainTable(),
-                $bind,
-                $where
-            );
-        } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e);
-            return 0;
-        }
+        $this->updateCustomerSyncStatus(
+            [],
+            $status,
+            $apsisCoreHelper,
+            '',
+            $storeIds,
+            $ids,
+           ['error_message' => ''],
+            $isEntityTypeCond
+        );
+
+        $this->updateSubscribersSyncStatus(
+            [],
+            $status,
+            $apsisCoreHelper,
+            '',
+            $storeIds,
+            $ids,
+            ['error_message' => ''],
+            $isEntityTypeCond
+        );
     }
 
     /**
@@ -117,6 +116,10 @@ class Profile extends AbstractDb implements ResourceInterface
      * @param int $status
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param string $msg
+     * @param array $storeIds
+     * @param array $profileIds
+     * @param array $bind
+     * @param array $isEntityTypeCond
      *
      * @return int
      */
@@ -124,28 +127,23 @@ class Profile extends AbstractDb implements ResourceInterface
         array $subscriberIds,
         int $status,
         ApsisCoreHelper $apsisCoreHelper,
-        string $msg = ''
+        string $msg = '',
+        array $storeIds = [],
+        array $profileIds = [],
+        array $bind = [],
+        array $isEntityTypeCond = []
     ) {
-        if (empty($subscriberIds)) {
-            return 0;
-        }
-
-        $bind = ['subscriber_sync_status' => $status, 'updated_at' => $this->dateTime->formatDate(true)];
-        if (strlen($msg)) {
-            $bind['error_message'] = $msg;
-        }
-
-        try {
-            $write = $this->getConnection();
-            return $write->update(
-                $this->getMainTable(),
-                $bind,
-                ["subscriber_id IN (?)" => $subscriberIds]
-            );
-        } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e);
-            return 0;
-        }
+        return $this->updateProfilSyncStatus(
+            $apsisCoreHelper,
+            $status,
+            ApsisProfile::PROFILE_TYPE_SUBSCRIBER,
+            $subscriberIds,
+            $msg,
+            $storeIds,
+            $profileIds,
+            $bind,
+            $isEntityTypeCond
+        );
     }
 
     /**
@@ -153,6 +151,10 @@ class Profile extends AbstractDb implements ResourceInterface
      * @param int $status
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param string $msg
+     * @param array $storeIds
+     * @param array $profileIds
+     * @param array $bind
+     * @param array $isEntityTypeCond
      *
      * @return int
      */
@@ -160,24 +162,89 @@ class Profile extends AbstractDb implements ResourceInterface
         array $customerIds,
         int $status,
         ApsisCoreHelper $apsisCoreHelper,
-        string $msg = ''
+        string $msg = '',
+        array $storeIds = [],
+        array $profileIds = [],
+        array $bind = [],
+        array $isEntityTypeCond = []
     ) {
-        if (empty($customerIds)) {
-            return 0;
-        }
+        return $this->updateProfilSyncStatus(
+            $apsisCoreHelper,
+            $status,
+            ApsisProfile::PROFILE_TYPE_CUSTOMER,
+            $customerIds,
+            $msg,
+            $storeIds,
+            $profileIds,
+            $bind,
+            $isEntityTypeCond
+        );
+    }
 
-        $bind = ['customer_sync_status' => $status, 'updated_at' => $this->dateTime->formatDate(true)];
-        if (strlen($msg)) {
-            $bind['error_message'] = $msg;
-        }
-
+    /**
+     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param int $status
+     * @param string $profileType
+     * @param array $entityIds
+     * @param string $msg
+     * @param array $storeIds
+     * @param array $profileIds
+     * @param array $bind
+     * @param array $isEntityTypeCond
+     *
+     * @return int
+     */
+    private function updateProfilSyncStatus(
+        ApsisCoreHelper $apsisCoreHelper,
+        int $status,
+        string $profileType,
+        array $entityIds = [],
+        string $msg = '',
+        array $storeIds = [],
+        array $profileIds = [],
+        array $bind = [],
+        array $isEntityTypeCond = []
+    ) {
         try {
-            $write = $this->getConnection();
-            return $write->update(
-                $this->getMainTable(),
-                $bind,
-                ["customer_id IN (?)" => $customerIds]
-            );
+            $where = [];
+
+            $bind[$profileType . '_sync_status'] = $status;
+            $bind['updated_at'] = $this->dateTime->formatDate(true);
+
+            if (strlen($msg)) {
+                $bind['error_message'] = $msg;
+            }
+
+            if (! empty($storeIds)) {
+                if ($profileType == ApsisProfile::PROFILE_TYPE_CUSTOMER) {
+                    $where["store_id IN (?)"] = $storeIds;
+                }
+                if ($profileType == ApsisProfile::PROFILE_TYPE_SUBSCRIBER) {
+                    $where["subscriber_store_id IN (?)"] = $storeIds;
+                }
+            }
+
+            if (! empty($entityIds)) {
+                $where[$profileType . "_id IN (?)"] = $entityIds;
+            }
+
+            if (! empty($profileIds)) {
+                $where["id IN (?)"] = $profileIds;
+            }
+
+            if (! empty($isEntityTypeCond) && isset($isEntityTypeCond['condition']) &&
+                isset($isEntityTypeCond['value'])
+            ) {
+                if ($isEntityTypeCond['condition'] == 'is_') {
+                    $where["is_" . $profileType . " = ?"] = $isEntityTypeCond['value'];
+                }
+                if ($isEntityTypeCond['condition'] == '_sync_status') {
+                    $where[$profileType . '_sync_status = ?'] = $isEntityTypeCond['value'];
+                }
+            }
+            //$apsisCoreHelper->debug(__METHOD__, [$bind, $where]);
+
+            return $this->getConnection()->update($this->getMainTable(), $bind, $where);
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return 0;
@@ -600,5 +667,24 @@ class Profile extends AbstractDb implements ResourceInterface
     public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper)
     {
         // Not needed for profiles
+    }
+
+    /**
+     * @param ApsisLogHelper|ApsisCoreHelper $apsisHelper
+     * @param string $andCondition
+     *
+     * @return bool
+     */
+    public function deleteAllModuleConfig($apsisHelper, string $andCondition = '')
+    {
+        try {
+            $connection = $this->getConnection();
+            $connection->delete($this->getTable('core_config_data'), "path LIKE 'apsis_one%' $andCondition");
+            $apsisHelper->cleanCache();
+            return true;
+        } catch (Exception $e) {
+            $apsisHelper->logError(__METHOD__, $e);
+            return false;
+        }
     }
 }

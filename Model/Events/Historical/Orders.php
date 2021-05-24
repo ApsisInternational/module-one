@@ -74,12 +74,18 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
                         $orderCollection,
                         $profileCollectionArray
                     );
-                    $this->registerEvents(
+                    $status = $this->registerEvents(
                         $eventsToRegister,
                         $apsisCoreHelper,
                         $store,
                         ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_ORDER_HISTORY_DONE_FLAG
                     );
+
+                    $info = [
+                        'Total Events Inserted' => $status,
+                        'Store Id' => $store->getId()
+                    ];
+                    $apsisCoreHelper->debug(__METHOD__, $info);
                 }
             } catch (Exception $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);

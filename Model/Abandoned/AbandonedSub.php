@@ -138,9 +138,13 @@ class AbandonedSub
     /**
      * @param Collection $quoteCollection
      * @param ApsisCoreHelper $apsisCoreHelper
+     * @param int $storeId
      */
-    public function aggregateCartDataFromStoreCollection(Collection $quoteCollection, ApsisCoreHelper $apsisCoreHelper)
-    {
+    public function aggregateCartDataFromStoreCollection(
+        Collection $quoteCollection,
+        ApsisCoreHelper $apsisCoreHelper,
+        int $storeId
+    ) {
         $abandonedCarts = [];
         $events = [];
         $createdAt = $this->dateTime->formatDate(true);
@@ -192,7 +196,13 @@ class AbandonedSub
             $result = $this->abandonedResource->insertAbandonedCarts($abandonedCarts, $apsisCoreHelper);
 
             if ($result && ! empty($events)) {
-                $this->eventResource->insertEvents($events, $apsisCoreHelper);
+                $status = $this->eventResource->insertEvents($events, $apsisCoreHelper);
+                $info = [
+                    'Total ACs Inserted' => count($abandonedCarts),
+                    'Total AC Events Inserted' => $status,
+                    'Store Id' => $storeId
+                ];
+                $apsisCoreHelper->debug(__METHOD__, $info);
             }
         }
     }

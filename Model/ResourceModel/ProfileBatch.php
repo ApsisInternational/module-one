@@ -49,7 +49,8 @@ class ProfileBatch extends AbstractDb implements ResourceInterface
                     ProfileBatchModel::SYNC_STATUS_FAILED
                 ]
             ];
-            $this->getConnection()->delete($this->getMainTable(), $where);
+            $status = $this->getConnection()->delete($this->getMainTable(), $where);
+            $apsisCoreHelper->log(__METHOD__, [$status]);
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }

@@ -9,6 +9,15 @@ use Magento\Store\Model\ScopeInterface;
 
 class Config
 {
+    const MODULE_VERSION = '1.9.6';
+
+    const CONFIG_PATHS_SECURE = [
+        self::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID,
+        self::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET,
+        self::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
+        self::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY
+    ];
+
     /**
      * Accounts section
      */
@@ -25,9 +34,11 @@ class Config
     /**
      * Data mapping section
      */
+
     /** Section & data mappings */
     const CONFIG_APSIS_ONE_MAPPINGS_SECTION_GROUP = 'apsis_one_mappings/section_mapping';
     const CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION = 'apsis_one_mappings/section_mapping/section';
+
     /** Customer/Subscriber common attributes */
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_GROUP
         = 'apsis_one_mappings/customer_subscriber_common_attribute';
@@ -43,12 +54,14 @@ class Config
         = 'apsis_one_mappings/customer_subscriber_common_attribute/store_name';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
         = 'apsis_one_mappings/customer_subscriber_common_attribute/email';
+
     /** Subscriber attributes */
     const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_GROUP = 'apsis_one_mappings/subscriber_attribute';
     const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_ID = 'apsis_one_mappings/subscriber_attribute/subscriber_id';
     const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_STATUS = 'apsis_one_mappings/subscriber_attribute/subscriber_status';
     const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_STATUS_CHANGE_AT
         = 'apsis_one_mappings/subscriber_attribute/change_status_at';
+
     /** Customer attributes */
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_GROUP = 'apsis_one_mappings/customer_attribute';
     const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_TITLE = 'apsis_one_mappings/customer_attribute/title';
@@ -145,6 +158,7 @@ class Config
     /**
      * Configuration section
      */
+
     /** Profile Sync */
     const CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_SECTION = 'apsis_one_configuration/profile_sync';
     const CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_ORDER_STATUSES
@@ -153,60 +167,22 @@ class Config
         = 'apsis_one_configuration/profile_sync/subscriber_batch_size';
     const CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_CUSTOMER_BATCH_SIZE
         = 'apsis_one_configuration/profile_sync/customer_batch_size';
+
     /** Developer settings */
     const CONFIG_APSIS_ONE_CONFIGURATION_DEVELOPER_SETTING_SECTION = 'apsis_one_configuration/developer_settings';
     const CONFIG_APSIS_ONE_CONFIGURATION_DEVELOPER_SETTING_CLEANUP_AFTER =
         'apsis_one_configuration/developer_settings/cleanup_after';
+    const CONFIG_APSIS_ONE_CONFIGURATION_DEVELOPER_PROFILE_CRON =
+        'apsis_one_configuration/developer_settings/cron_schedule_profile_sync';
+    const CONFIG_APSIS_ONE_CONFIGURATION_DEVELOPER_EVENT_CRON =
+        'apsis_one_configuration/developer_settings/cron_schedule_events_sync';
+    const CONFIG_APSIS_ONE_CONFIGURATION_DEVELOPER_HISTORY_CRON =
+        'apsis_one_configuration/developer_settings/cron_schedule_historical_events';
+
     /** Tracking Script */
     const CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_SECTION = 'apsis_one_configuration/tracking';
     const CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_ENABLED = 'apsis_one_configuration/tracking/enabled';
     const CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_SCRIPT = 'apsis_one_configuration/tracking/script';
-
-    const SUBSCRIBER_ATTRIBUTE_LIST = [
-        self::CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_ID,
-        self::CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_STATUS,
-        self::CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_STATUS_CHANGE_AT
-    ];
-    const CUSTOMER_ATTRIBUTE_LIST = [
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_ADDRESS_LINE_1,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_ADDRESS_LINE_2,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_CITY,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_COMPANY,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_COUNTRY,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_POSTCODE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_STATE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_TELEPHONE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_ADDRESS_1,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_ADDRESS_2,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_CITY,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_COMPANY,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_COUNTRY,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_POSTCODE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_STATE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_TELEPHONE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_CREATED_AT,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_CUSTOMER_GROUP,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_LOGGED_IN_DATE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_NAME,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_PURCHASE_DATE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_REVIEW_DATE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_TITLE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_AVERAGE_ORDER_VALUE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_ID,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_GENDER,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_TOTAL_NUMBER_OF_ORDERS,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_TOTAL_SPEND,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_REVIEW_COUNT,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DOB,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_FIRST_NAME
-    ];
-    const COMMON_ATTRIBUTE_LIST = [
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_STORE_ID,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_STORE_NAME,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_WEBSITE_ID,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_WEBSITE_NAME
-    ];
 
     /**
      * @var ScopeConfigInterface

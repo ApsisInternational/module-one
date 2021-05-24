@@ -42,6 +42,11 @@ class Subscription extends Template
     private $profileCollectionFactory;
 
     /**
+     * @var bool
+     */
+    protected $_isScopePrivate = true;
+
+    /**
      * NewsletterPreferences constructor.
      *
      * @param Template\Context $context
@@ -64,6 +69,14 @@ class Subscription extends Template
         $this->customerSession = $customerSession;
         $this->apsisCoreHelper = $apsisCoreHelper;
         parent::__construct($context, $data);
+    }
+
+    /**
+     * @return null
+     */
+    public function getCacheLifetime()
+    {
+        return null;
     }
 
     /**

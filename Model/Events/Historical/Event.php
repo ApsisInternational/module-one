@@ -55,11 +55,11 @@ class Event
                 'event_type' => $eventType,
                 'event_data' => $eventData,
                 'sub_event_data' => $eventSubData,
-                'profile_id' => (int) $profile->getId(),
-                'customer_id' => (int) $profile->getCustomerId(),
-                'subscriber_id' => (int) $profile->getSubscriberId(),
+                'profile_id' => $profile->getId(),
+                'customer_id' => $profile->getCustomerId(),
+                'subscriber_id' => $profile->getSubscriberId(),
                 'store_id' => $storeId,
-                'email' => (string) $profile->getEmail(),
+                'email' => $profile->getEmail(),
                 'status' => Profile::SYNC_STATUS_PENDING,
                 'created_at' => $createdAt,
                 'updated_at' => $this->dateTime->formatDate(true)
@@ -75,6 +75,8 @@ class Event
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param StoreInterface $store
      * @param string $path
+     *
+     * @return int
      */
     protected function registerEvents(
         array $eventsToRegister,
@@ -90,8 +92,10 @@ class Event
                     ScopeInterface::SCOPE_STORES,
                     $store->getId()
                 );
+                return $inserted;
             }
         }
+        return 0;
     }
 
     /**

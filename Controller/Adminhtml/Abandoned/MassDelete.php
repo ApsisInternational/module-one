@@ -76,9 +76,15 @@ class MassDelete extends Action
         try {
             $collection = $this->filter->getCollection($this->abandonedCollectionFactory->create());
             $collectionSize = $collection->getSize();
+            $ids = $collection->getAllIds();
             foreach ($collection as $item) {
                 $this->abandonedResource->delete($item);
             }
+
+            $this->apsisLogHelper->debug(
+                __METHOD__,
+                ['Total Deleted' => $collectionSize, 'AC Ids' => implode(", ", $ids)]
+            );
             $this->messageManager->addSuccessMessage(__('A total of %1 record(s) have been deleted.', $collectionSize));
         } catch (Exception $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);

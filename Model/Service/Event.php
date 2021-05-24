@@ -397,4 +397,20 @@ class Event
             $this->apsisCoreHelper
         );
     }
+
+    /**
+     * @param string $from
+     * @param array $storeIds
+     *
+     * @return int
+     */
+    public function fullResetEvents(string $from, array $storeIds)
+    {
+        $info = [
+            'From' => $from,
+            'Store Ids' => empty($stores = implode(", ", $storeIds)) ? 'Default Scope' : $stores
+        ];
+        $this->apsisCoreHelper->debug(__METHOD__, $info);
+        return $this->eventResource->resetEvents($this->apsisCoreHelper, $storeIds);
+    }
 }

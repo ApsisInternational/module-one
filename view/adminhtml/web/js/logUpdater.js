@@ -34,7 +34,8 @@ define(['jquery', 'domReady!'], function ($) {
      * @param {Object} logUpdater
      */
     return function (logUpdater) {
-        consoleScroll();
+        //Always load APSIS Log on page load.
+        doUpdate('apsis_one', logUpdater.url);
 
         $('#one-log-selector').change(function () {
             doUpdate($('#one-log-selector').val(), logUpdater.url);

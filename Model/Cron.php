@@ -194,6 +194,12 @@ class Cron
                 'status',
                 ['in' => ['success', 'failed']]
             );
-        return (boolean) ($jobAlreadyExecuted->getSize());
+
+        $check = (boolean) ($jobAlreadyExecuted->getSize());
+        if ($check) {
+            $this->coreHelper->debug(__METHOD__, ['Job already ran.' => $jobCode]);
+        }
+
+        return $check;
     }
 }

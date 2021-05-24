@@ -53,7 +53,7 @@ class InstallData implements InstallDataInterface
         $installer->startSetup();
 
         /** Remove old config */
-        $this->developer->deleteAllModuleConfig();
+        $this->profileResource->deleteAllModuleConfig($this->logHelper);
 
         /** Populate apsis profile table */
         $this->populateApsisProfileTable($installer);

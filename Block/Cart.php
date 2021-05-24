@@ -5,10 +5,8 @@ namespace Apsis\One\Block;
 use Exception;
 use Magento\Framework\DataObject;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
-use Magento\Framework\Registry;
 use Magento\Framework\View\Element\Template;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Apsis\One\Controller\Abandoned\Cart as AbandonedCartController;
 
 /**
  * Cart block
@@ -25,11 +23,6 @@ class Cart extends Template
     private $apsisLogHelper;
 
     /**
-     * @var Registry
-     */
-    private $registry;
-
-    /**
      * @var PriceHelper
      */
     private $priceHelper;
@@ -44,21 +37,29 @@ class Cart extends Template
      *
      * @param Template\Context $context
      * @param ApsisLogHelper $apsisLogHelper
-     * @param Registry $registry
      * @param PriceHelper $priceHelper
      * @param array $data
      */
     public function __construct(
         Template\Context $context,
         ApsisLogHelper $apsisLogHelper,
-        Registry $registry,
         PriceHelper $priceHelper,
         array $data = []
     ) {
         $this->apsisLogHelper = $apsisLogHelper;
         $this->priceHelper = $priceHelper;
-        $this->registry = $registry;
         parent::__construct($context, $data);
+    }
+
+    /**
+     * @param DataObject $cart
+     *
+     * @return $this
+     */
+    public function setCart(DataObject $cart)
+    {
+        $this->cart = $cart;
+        return $this;
     }
 
     /**
@@ -67,13 +68,9 @@ class Cart extends Template
     public function getCartItems()
     {
         try {
-            $cart = $this->registry->registry(AbandonedCartController::REGISTRY_NAME);
-            if ($cart instanceof DataObject) {
-                $this->cart = $cart;
-                $obj = $this->apsisLogHelper->unserialize($this->cart->getCartData());
-                if (isset($obj->items) && is_array($obj->items)) {
-                    return $this->getItemsWithLimitApplied($obj->items);
-                }
+            $obj = $this->apsisLogHelper->unserialize($this->cart->getCartData());
+            if (isset($obj->items) && is_array($obj->items)) {
+                return $this->getItemsWithLimitApplied($obj->items);
             }
         } catch (Exception $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);

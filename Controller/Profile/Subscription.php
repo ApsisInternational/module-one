@@ -172,8 +172,8 @@ class Subscription extends Action
         $this->getResponse()
             ->setHttpResponseCode($code)
             ->setHeader('Pragma', 'public', true)
-            ->setHeader('Cache-Control', 'must-revalidate, post-check=0, pre-check=0', true)
-            ->setHeader('Content-type', 'text/html; charset=UTF-8', true);
+            ->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0', true)
+            ->setHeader('Content-Type', 'application/json', true);
         if (strlen($body)) {
             $this->getResponse()->setBody($body);
         }

@@ -9,6 +9,7 @@ use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Exception;
+use Magento\Authorization\Model\ResourceModel\Role\Collection;
 use Magento\Authorization\Model\RoleFactory;
 use Magento\Authorization\Model\RulesFactory;
 use Magento\Authorization\Model\Acl\Role\Group as RoleGroup;
@@ -120,7 +121,34 @@ class UpgradeData implements UpgradeDataInterface
         if (version_compare($context->getVersion(), '1.9.5', '<')) {
             $this->upgradeOneNineFive($setup);
         }
+        if (version_compare($context->getVersion(), '1.9.6', '<')) {
+            $this->upgradeOneNineSix($setup);
+        }
         $setup->endSetup();
+    }
+
+    /**
+     * @param ModuleDataSetupInterface $setup
+     */
+    private function upgradeOneNineSix(ModuleDataSetupInterface $setup)
+    {
+        $this->apsisCoreHelper->log(__METHOD__);
+
+        //Set status to N/A for Profile type if given type for Profile is 0
+        $this->profileResource->resetProfiles(
+            $this->apsisCoreHelper,
+            [],
+            [],
+            Profile::SYNC_STATUS_NA,
+            ['condition' => 'is_', 'value' => Profile::NO_FLAGGED]
+        );
+
+        //Remove all ui bookmarks belonging to module to force rebuild new ui bookmarks
+        $grids = ['apsis_abandoned_grid', 'apsis_event_grid', 'apsis_profile_grid'];
+        $setup->getConnection()->delete(
+            $setup->getTable('ui_bookmark'),
+            $setup->getConnection()->quoteInto('namespace in (?)', $grids)
+        );
     }
 
     /**
@@ -142,11 +170,17 @@ class UpgradeData implements UpgradeDataInterface
                 );
             }
 
-            //Reset all profile & events to re-sync with failed error
-            $whereC = $setup->getConnection()->quoteInto('customer_sync_status = ?', Profile::SYNC_STATUS_FAILED);
-            $whereS = $setup->getConnection()->quoteInto('subscriber_sync_status = ?', Profile::SYNC_STATUS_FAILED);
+            //Reset all profile to re-sync if it has failed sync status
+            $this->profileResource->resetProfiles(
+                $this->apsisCoreHelper,
+                [],
+                [],
+                Profile::SYNC_STATUS_PENDING,
+                ['condition' => '_sync_status', 'value' => Profile::SYNC_STATUS_FAILED]
+            );
+
+            //Reset all events to re-sync if it has failed sync status
             $whereE = $setup->getConnection()->quoteInto('status = ?', Profile::SYNC_STATUS_FAILED);
-            $this->profileResource->resetProfiles($this->apsisCoreHelper, [], [], [$whereC . ' OR ' . $whereS]);
             $this->eventResource->resetEvents($this->apsisCoreHelper, [], [], [$whereE]);
 
             //Create Role for APSIS Support
@@ -173,6 +207,8 @@ class UpgradeData implements UpgradeDataInterface
                 ->setRoleId($role->getId())
                 ->setResources($resource)
                 ->saveRel();
+
+            $this->apsisCoreHelper->log('Role created: "APSIS Support Agent"');
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }

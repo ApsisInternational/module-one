@@ -66,7 +66,7 @@ abstract class Rest
     protected $responseBody;
 
     /**
-     * @var string|array
+     * @var array
      */
     protected $responseInfo;
 
@@ -81,12 +81,17 @@ abstract class Rest
     protected $curlError;
 
     /**
+     * @var bool
+     */
+    protected $logResponse = false;
+
+    /**
      * @return null|stdClass
      */
     protected function execute()
     {
         $this->responseBody = null;
-        $this->responseInfo = null;
+        $this->responseInfo = [];
         $this->curlError = '';
         $ch = curl_init();
         try {
@@ -107,11 +112,12 @@ abstract class Rest
                     $this->executeDelete($ch);
                     break;
                 default:
-                    $this->helper->debug(__METHOD__ . ' : Current verb (' . $this->verb . ') is an invalid REST verb.');
+                    $this->curlError = __METHOD__ . ' : Current verb (' . $this->verb . ') is an invalid REST verb.';
                     curl_close($ch);
             }
         } catch (Exception $e) {
             curl_close($ch);
+            $this->curlError = $e->getMessage();
             $this->helper->logError(__METHOD__, $e);
         }
         return $this->responseBody;
@@ -209,8 +215,10 @@ abstract class Rest
     {
         $this->setCurlOpts($ch, $headers);
         $this->responseBody = $this->helper->unserialize(curl_exec($ch));
-        $this->responseInfo = curl_getinfo($ch);
         $this->curlError = curl_error($ch);
+        if (empty($this->curlError)) {
+            $this->responseInfo = curl_getinfo($ch);
+        }
         curl_close($ch);
     }
 
@@ -263,16 +271,6 @@ abstract class Rest
     }
 
     /**
-     * Get response info.
-     *
-     * @return string|array
-     */
-    protected function getResponseInfo()
-    {
-        return $this->responseInfo;
-    }
-
-    /**
      * @param string $token
      *
      * @return $this
@@ -298,12 +296,14 @@ abstract class Rest
 
     /**
      * @param ApsisCoreHelper $helper
+     * @param bool $logResponse
      *
      * @return $this
      */
-    public function setHelper(ApsisCoreHelper $helper)
+    public function setHelper(ApsisCoreHelper $helper, bool $logResponse = false)
     {
         $this->helper = $helper;
+        $this->logResponse = $logResponse;
         return $this;
     }
 
@@ -355,6 +355,15 @@ abstract class Rest
         if (strlen($this->curlError)) {
             $this->helper->log(__METHOD__ . ': CURL ERROR: ' . $this->curlError);
             return false;
+        }
+
+        if ($this->logResponse && ! empty($this->responseInfo)) {
+            $info = [
+                'Request time in seconds' => $this->responseInfo['total_time'],
+                'Endpoint URL' => $this->responseInfo['url'],
+                'Http code' => $this->responseInfo['http_code']
+            ];
+            $this->helper->debug('CURL Transfer', $info);
         }
 
         if (isset($response->status) && isset($response->detail)) {

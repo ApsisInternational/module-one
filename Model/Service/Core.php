@@ -210,6 +210,19 @@ class Core extends ApsisLogHelper
     ) {
         try {
             $context = $this->getScopeForConfigUpdate($path, $contextScope, $contextScopeId);
+
+            $info = [
+                'Scope' => $context['scope'],
+                'Scope Id' => $context['id'],
+                'Config Path' => $path,
+                'Old Value' => $this->getConfigValue($path, $contextScope, $contextScopeId),
+                'New Value' => $value
+            ];
+            if (in_array($path, Config::CONFIG_PATHS_SECURE)) {
+                $info['Old Value'] = $info['New Value'] = 'An encrypted value.';
+            }
+            $this->debug(__METHOD__, $info);
+
             $this->writer->save($path, $value, $context['scope'], $context['id']);
         } catch (Exception $e) {
             $this->logError(__METHOD__, $e);
@@ -230,6 +243,19 @@ class Core extends ApsisLogHelper
     ) {
         try {
             $context = $this->getScopeForConfigUpdate($path, $contextScope, $contextScopeId);
+
+            $info = [
+                'Scope' => $context['scope'],
+                'Scope Id' => $context['id'],
+                'Config Path' => $path,
+                'Old Value' => $this->getConfigValue($path, $contextScope, $contextScopeId),
+                'New Value' => null
+            ];
+            if (in_array($path, Config::CONFIG_PATHS_SECURE)) {
+                $info['Old Value'] = 'An encrypted value';
+            }
+            $this->debug(__METHOD__, $info);
+
             $this->writer->delete($path, $context['scope'], $context['id']);
         } catch (Exception $e) {
             $this->logError(__METHOD__, $e);
@@ -417,15 +443,17 @@ class Core extends ApsisLogHelper
 
                 //Success in generating token
                 if ($response && isset($response->access_token)) {
+                    $this->debug('Token renewed', ['Context' => $contextScope, 'Id' => $scopeId]);
                     $this->saveTokenAndExpiry($contextScope, $scopeId, $response);
                     return (string) $response->access_token;
                 }
 
                 //Error in generating token, disable module & remove token along with token expiry
                 if ($response && isset($response->status) &&
-                    in_array($response->status, Client::HTTP_CODES_DISABLE_MODULE)
+                    in_array($response->status, Client::HTTP_CODES_DISABLE_MODULE) &&
+                    ! $bypassDb
                 ) {
-                    $this->log(__METHOD__ . ' : Http code ' . $response->status . ' on generating token.');
+                    $this->debug(__METHOD__, (array) $response);
                     $this->disableAccountAndRemoveTokenConfig($contextScope, $scopeId);
                     return '';
                 }
@@ -482,7 +510,7 @@ class Core extends ApsisLogHelper
             ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE
         );
         if ($collection->getSize()) {
-            $expiryTime = $collection->getFirstItem()->getValue();
+            $expiryTime = (string) $collection->getFirstItem()->getValue();
         }
 
         return $expiryTime;
@@ -563,15 +591,23 @@ class Core extends ApsisLogHelper
     {
         $expiryTime = $this->getTokenExpiryFromDb($contextScope, $scopeId);
 
-        if (empty($expiryTime)) {
-            return true;
-        }
-
         $nowTime = $this->apsisDateHelper->getDateTimeFromTimeAndTimeZone()
             ->add($this->apsisDateHelper->getDateIntervalFromIntervalSpec('PT15M'))
             ->format('Y-m-d H:i:s');
 
-        return ($nowTime > $expiryTime);
+        $check = ($nowTime > $expiryTime);
+
+        if ($check) {
+            $info = [
+                'Scope' => $contextScope,
+                'Scope Id' => $scopeId,
+                'Is Expired/Empty' => true,
+                'Last Expiry DateTime' => $expiryTime
+            ];
+            $this->debug(__METHOD__, $info);
+        }
+
+        return $check;
     }
 
     /**
@@ -803,6 +839,16 @@ class Core extends ApsisLogHelper
 
         if ($websiteId = $this->request->getParam('website')) {
             return $this->getAllStoreIdsFromWebsite($websiteId);
+        }
+
+        try {
+            if ($id = $this->storeManager->getDefaultStoreView()->getId()) {
+                $this->log('Scope is default. Returning default store id');
+                return [$id];
+            }
+        } catch (Exception $e) {
+            $this->log('Unable to get store id. See error.');
+            $this->logError(__METHOD__, $e);
         }
 
         return [];

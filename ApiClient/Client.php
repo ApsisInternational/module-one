@@ -605,10 +605,14 @@ class Client extends Rest
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: multipart/form-data']);
 
             $this->responseBody = $this->helper->unserialize(curl_exec($ch));
-            $this->responseInfo = curl_getinfo($ch);
             $this->curlError = curl_error($ch);
+            if (empty($this->curlError)) {
+                $this->responseInfo = curl_getinfo($ch);
+            }
+            curl_close($ch);
         } catch (Exception $e) {
             curl_close($ch);
+            $this->curlError = $e->getMessage();
             $this->helper->logError(__METHOD__, $e);
         }
         return $this->processResponse($this->responseBody, __METHOD__);

@@ -276,21 +276,42 @@ class Batch implements ProfileSyncInterface
     private function updateProfilesStatus(ProfileBatch $item, int $status, string $msg = '')
     {
         try {
+            $ids = explode(",", $item->getEntityIds());
             if ((int)$item->getBatchType() === ProfileBatch::BATCH_TYPE_CUSTOMER) {
                 $this->profileResource->updateCustomerSyncStatus(
-                    explode(",", $item->getEntityIds()),
+                    $ids,
                     $status,
                     $this->apsisCoreHelper,
                     $msg
                 );
             } elseif ((int)$item->getBatchType() === ProfileBatch::BATCH_TYPE_SUBSCRIBER) {
                 $this->profileResource->updateSubscribersSyncStatus(
-                    explode(",", $item->getEntityIds()),
+                    $ids,
                     $status,
                     $this->apsisCoreHelper,
                     $msg
                 );
+                //Reset subscriber status to 5, if not a subscriber
+                $this->profileResource->updateSubscribersSyncStatus(
+                    $ids,
+                    Profile::SYNC_STATUS_NA,
+                    $this->apsisCoreHelper,
+                    '',
+                    [],
+                    [],
+                    ['error_message' => ''],
+                    ['condition' => 'is_', 'value' => Profile::NO_FLAGGED]
+                );
             }
+
+            $info = [
+                'Total Profiles Updated' => count($ids),
+                'Profile Type' => Profile::PROFILE_TYPE_TEXT_MAP[$item->getBatchType()],
+                'Entity Ids' => $item->getEntityIds(),
+                'With Status' => Profile::STATUS_TEXT_MAP[$status],
+                'Store Id' => $item->getStoreId()
+            ];
+            $this->apsisCoreHelper->debug(__METHOD__, $info);
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }

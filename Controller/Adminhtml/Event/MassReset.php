@@ -76,7 +76,13 @@ class MassReset extends Action
         try {
             $collection = $this->filter->getCollection($this->eventCollectionFactory->create());
             $collectionSize = $collection->getSize();
-            $this->eventResource->resetEvents($this->apsisCoreHelper, [], $collection->getAllIds());
+            $ids = $collection->getAllIds();
+            $this->eventResource->resetEvents($this->apsisCoreHelper, [], $ids);
+
+            $this->apsisCoreHelper->debug(
+                __METHOD__,
+                ['Total Reset' => $collectionSize, 'Event Ids' => implode(", ", $ids)]
+            );
             $this->messageManager->addSuccessMessage(__('A total of %1 record(s) have been reset.', $collectionSize));
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);

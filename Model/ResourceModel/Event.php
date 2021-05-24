@@ -124,7 +124,8 @@ class Event extends AbstractDb implements ResourceInterface
                 "updated_at < DATE_SUB(NOW(), INTERVAL ? DAY)" => $day,
                 "status IN(?)" => [Profile::SYNC_STATUS_SYNCED, Profile::SYNC_STATUS_FAILED]
             ];
-            $this->getConnection()->delete($this->getMainTable(), $where);
+            $status = $this->getConnection()->delete($this->getMainTable(), $where);
+            $apsisCoreHelper->log(__METHOD__, [$status]);
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }

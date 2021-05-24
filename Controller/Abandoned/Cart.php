@@ -3,27 +3,23 @@
 namespace Apsis\One\Controller\Abandoned;
 
 use Apsis\One\Model\Service\Cart as ApsisCartHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Apsis\One\Block\Cart as CartBlock;
+use Exception;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\App\ResponseInterface;
-use Magento\Framework\Controller\Result\Json;
+use Magento\Framework\Controller\Result\Raw;
+use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\DataObject;
-use Magento\Framework\Registry;
 
 class Cart extends Action
 {
-    const REGISTRY_NAME = 'apsis_one_cart';
     /**
      * @var JsonFactory
      */
     private $resultJsonFactory;
-
-    /**
-     * @var Registry
-     */
-    private $registry;
 
     /**
      * @var ApsisCartHelper
@@ -31,96 +27,142 @@ class Cart extends Action
     private $apsisCartHelper;
 
     /**
+     * @var ApsisLogHelper
+     */
+    private $apsisLogHelper;
+
+    /**
+     * @var Raw
+     */
+    private $resultRaw;
+
+    /**
      * Cart constructor.
      *
      * @param Context $context
      * @param JsonFactory $resultJsonFactory
-     * @param Registry $registry
      * @param ApsisCartHelper $apsisCartHelper
+     * @param ApsisLogHelper $apsisLogHelper
      */
     public function __construct(
         Context $context,
         JsonFactory $resultJsonFactory,
-        Registry $registry,
-        ApsisCartHelper $apsisCartHelper
+        ApsisCartHelper $apsisCartHelper,
+        ApsisLogHelper $apsisLogHelper
     ) {
-        $this->apsisCartHelper = $apsisCartHelper;
-        $this->registry = $registry;
-        $this->resultJsonFactory = $resultJsonFactory;
         parent::__construct($context);
+
+        $this->apsisCartHelper = $apsisCartHelper;
+        $this->resultJsonFactory = $resultJsonFactory;
+        $this->apsisLogHelper = $apsisLogHelper;
+        $this->resultRaw = $this->resultFactory->create(ResultFactory::TYPE_RAW);
     }
 
     /**
-     * @return ResponseInterface|Json|ResultInterface
+     * @inheritdoc
      */
     public function execute()
     {
         $token = (string) $this->getRequest()->getParam('token');
-        if ($this->apsisCartHelper->isClean($token) && $cart = $this->apsisCartHelper->getCart($token)) {
-            return (strlen($cart->getCartData())) ? $this->renderOutput($cart) : $this->sendResponse(204);
-        } else {
-            return $this->sendResponse(401, '401 Unauthorized');
+        if (empty($token) || ! $this->apsisCartHelper->isClean($token)) {
+            return $this->sendResponse($this->resultRaw, 400);
+        }
+
+        $cart = $this->apsisCartHelper->getCart($token);
+        if (empty($cart) || empty($cart->getCartData()) || ! $this->isJson($cart->getCartData())) {
+            return $this->sendResponse($this->resultRaw, 404);
+        }
+
+        return $this->renderOutput($cart);
+    }
+
+    /**
+     * @param DataObject $cart
+     *
+     * @return ResultInterface
+     */
+    private function renderOutput(DataObject $cart)
+    {
+        $output = $this->getRequest()->getParam('output');
+        switch ($output) {
+            case 'json':
+                return $this->renderJson($cart);
+            case 'html':
+                return $this->renderHtml($cart);
+            default:
+                return $this->sendResponse($this->resultRaw, 204);
+        }
+    }
+
+
+    /**
+     * @param DataObject $cart
+     *
+     * @return ResultInterface
+     */
+    private function renderHtml(DataObject $cart)
+    {
+        try {
+            /** @var CartBlock $block */
+            $block = $this->_view->getLayout()->createBlock(CartBlock::class)->setCacheable(false);
+            $html = $block->setCart($cart)
+                ->setTemplate('Apsis_One::cart.phtml')
+                ->toHtml();
+
+            $this->resultRaw
+                ->setHeader('Content-type', 'text/html; charset=UTF-8', true)
+                ->setContents($html);
+
+            return $this->sendResponse($this->resultRaw, 200);
+        } catch (Exception $e) {
+            $this->apsisLogHelper->logError(__METHOD__, $e);
+            return $this->sendResponse($this->resultRaw, 500);
         }
     }
 
     /**
      * @param DataObject $cart
      *
-     * @return ResponseInterface|Json
+     * @return ResultInterface
      */
-    private function renderOutput(DataObject $cart)
+    private function renderJson(DataObject $cart)
     {
-        switch ($this->getRequest()->getParam('output')) {
-            case 'json':
-                return $this->renderJson((string) $cart->getCartData());
-            case 'html':
-                $this->registry->unregister(self::REGISTRY_NAME);
-                $this->registry->register(self::REGISTRY_NAME, $cart, true);
-                return $this->renderHtml();
-            default:
-                return $this->sendResponse(204);
+        try {
+            $resultJson = $this->resultJsonFactory
+                ->create()
+                ->setJsonData('[' . $cart->getCartData() . ']');
+            return $this->sendResponse($resultJson, 200);
+        } catch (Exception $e) {
+            $this->apsisLogHelper->logError(__METHOD__, $e);
+            return $this->sendResponse($this->resultRaw, 500);
         }
     }
 
     /**
-     * @return ResponseInterface
-     */
-    private function renderHtml()
-    {
-        $this->_view->loadLayout();
-        $this->_view->renderLayout();
-        return $this->getResponse();
-    }
-
-    /**
-     * @param string $body
-     *
-     * @return Json
-     */
-    private function renderJson(string $body)
-    {
-        $resultJson = $this->resultJsonFactory->create();
-        return $resultJson->setJsonData('[' . $body . ']');
-    }
-
-    /**
+     * @param ResultInterface $result
      * @param int $code
-     * @param string $body
      *
-     * @return ResponseInterface
+     * @return ResultInterface
      */
-    public function sendResponse(int $code, string $body = '')
+    public function sendResponse(ResultInterface $result, int $code)
     {
-        $this->getResponse()
-            ->setHttpResponseCode($code)
+        return $result->setHttpResponseCode($code)
             ->setHeader('Pragma', 'public', true)
-            ->setHeader('Cache-Control', 'must-revalidate, post-check=0, pre-check=0', true)
-            ->setHeader('Content-type', 'text/html; charset=UTF-8', true);
+            ->setHeader(
+                'Cache-Control',
+                'no-store, no-cache, must-revalidate, max-age=0',
+                true
+            );
+    }
 
-        if (strlen($body)) {
-            $this->getResponse()->setBody($body);
-        }
-
-        return $this->getResponse();
+    /**
+     * @param string $string
+     *
+     * @return bool
+     */
+    private function isJson(string $string)
+    {
+        json_decode($string);
+        return (json_last_error() == JSON_ERROR_NONE);
     }
 }

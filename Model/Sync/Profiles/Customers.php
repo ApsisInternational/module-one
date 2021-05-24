@@ -218,6 +218,12 @@ class Customers implements ProfileSyncInterface
                     Profile::SYNC_STATUS_BATCHED,
                     $this->apsisCoreHelper
                 );
+
+                $info = [
+                    'Total Profiles Batched' => count($customersToUpdate),
+                    'Store Id' => $store->getId()
+                ];
+                $this->apsisCoreHelper->debug(__METHOD__, $info);
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);

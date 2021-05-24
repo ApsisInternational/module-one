@@ -400,12 +400,14 @@ class Profile
             if ($customerId) {
                 $profile->setCustomerId($customerId)
                     ->setStoreId($storeId)
+                    ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
                     ->setIsCustomer(ProfileModel::IS_FLAGGED);
             }
             if ($subscriberId) {
                 $profile->setSubscriberId($subscriberId)
                     ->setSubscriberStoreId($storeId)
                     ->setSubscriberStatus(Subscriber::STATUS_SUBSCRIBED)
+                    ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
                     ->setIsSubscriber(ProfileModel::IS_FLAGGED);
             }
             $this->profileResource->save($profile);
@@ -569,7 +571,7 @@ class Profile
                 ->setSubscriberStoreId(null)
                 ->setIsSubscriber(ProfileModel::NO_FLAGGED)
                 ->setSubscriberStatus(null)
-                ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_PENDING);
+                ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_NA);
             $this->profileResource->save($profile);
 
             if ($IsSubscriberSyncEnabled) {
@@ -612,7 +614,7 @@ class Profile
             $profile->setCustomerId(null)
                 ->setStoreId(null)
                 ->setIsCustomer(ProfileModel::NO_FLAGGED)
-                ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_PENDING);
+                ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_NA);
             $this->profileResource->save($profile);
             if ($IsCustomerSyncEnabled) {
                 $attributesArrWithVersionId = $this->apsisCoreHelper
@@ -773,6 +775,91 @@ class Profile
                     Subscribers::CONSENT_TYPE_OPT_OUT
                 );
             }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
+     * Reset profiles and events
+     *
+     * @param string $from
+     * @param array $extra
+     */
+    public function fullResetRequest(string $from, array $extra = [])
+    {
+        try {
+            $this->apsisCoreHelper->debug(__METHOD__, ['From' => $from]);
+
+            if (! empty($storeIds = $this->apsisCoreHelper->getStoreIdsBasedOnScope())) {
+                $this->fullResetProfiles($from, $storeIds);
+                $this->eventService->fullResetEvents($from, $storeIds);
+            }
+            $this->removeAllConfigExceptAccountConfig($from, $extra);
+            $this->apsisCoreHelper->cleanCache();
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
+     * @param string $from
+     * @param array $extra
+     */
+    public function removeAllConfigExceptAccountConfig(string $from, array $extra = [])
+    {
+        $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
+        $connection = $this->profileResource->getConnection();
+        $andCondPath = $connection->quoteInto(
+            'AND path NOT IN(?)',
+            array_merge(
+                [
+                    Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED,
+                    Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID,
+                    Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET,
+                    Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_REGION,
+                    Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
+                    Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE,
+                    Config::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY
+                ],
+                $extra
+            )
+        );
+
+        $andCondScope = $connection->quoteInto('AND scope = ?', $scope['context_scope']);
+        $andCondScopeId = $connection->quoteInto('AND scope_id = ?', $scope['context_scope_id']);
+        $status = $this->profileResource->deleteAllModuleConfig(
+            $this->apsisCoreHelper,
+            $andCondPath . ' ' . $andCondScope . ' '. $andCondScopeId
+        );
+
+        if ($status) {
+            $info = ['From' => $from, 'Scope' => $scope['context_scope'], 'Scope Id' => $scope['context_scope_id']];
+            $this->apsisCoreHelper->debug(__METHOD__, $info);
+        }
+    }
+
+    /**
+     * @param string $from
+     * @param array $storeIds
+     */
+    public function fullResetProfiles(string $from, array $storeIds)
+    {
+        try {
+            $this->profileResource->resetProfiles($this->apsisCoreHelper, $storeIds, []);
+            $this->profileResource->resetProfiles(
+                $this->apsisCoreHelper,
+                $storeIds,
+                [],
+                ProfileModel::SYNC_STATUS_NA,
+                ['condition' => 'is_', 'value' => ProfileModel::NO_FLAGGED]
+            );
+
+            $info = [
+                'From' => $from,
+                'Store Ids' => empty($stores = implode(", ", $storeIds)) ? 'Default Scope' : $stores
+            ];
+            $this->apsisCoreHelper->debug(__METHOD__, $info);
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }

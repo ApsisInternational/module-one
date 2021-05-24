@@ -48,6 +48,11 @@ class Index extends Manage
         } else {
             $this->_view->loadLayout();
             $this->_view->getPage()->getConfig()->getTitle()->set(__('Newsletter Subscription'));
+            $this->_view->getPage()->setHeader(
+                'Cache-Control',
+                'no-store, no-cache, must-revalidate, max-age=0',
+                true
+            );
             $this->_view->renderLayout();
         }
     }

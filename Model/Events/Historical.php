@@ -309,7 +309,7 @@ class Historical implements SyncInterface
                             );
                             break;
                         default:
-                            $apsisCoreHelper->log(__METHOD__, 'Unsupported type.');
+                            $apsisCoreHelper->log(__METHOD__, ['Unsupported type.']);
                     }
                 }
             } catch (Exception $e) {

@@ -43,8 +43,11 @@ class Find implements SyncInterface
                         $quoteCollection = $this->abandonedSub
                             ->getQuoteCollectionByStore($store, $acDelayPeriod, $apsisCoreHelper);
                         if ($quoteCollection && $quoteCollection->getSize()) {
-                            $this->abandonedSub
-                                ->aggregateCartDataFromStoreCollection($quoteCollection, $apsisCoreHelper);
+                            $this->abandonedSub->aggregateCartDataFromStoreCollection(
+                                $quoteCollection,
+                                $apsisCoreHelper,
+                                $store->getId()
+                            );
                         }
                     }
                 } catch (Exception $e) {

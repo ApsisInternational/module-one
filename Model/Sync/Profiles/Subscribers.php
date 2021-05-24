@@ -149,8 +149,7 @@ class Subscribers implements ProfileSyncInterface
                     $topics,
                     $attributesArrWithVersionId,
                     Subscriber::STATUS_SUBSCRIBED,
-                    self::CONSENT_TYPE_OPT_IN,
-                    [Profile::SYNC_STATUS_PENDING, Profile::SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE]
+                    self::CONSENT_TYPE_OPT_IN
                 );
 
                 //Subscribers : opt-out
@@ -161,8 +160,7 @@ class Subscribers implements ProfileSyncInterface
                     $topics,
                     $attributesArrWithVersionId,
                     Subscriber::STATUS_UNSUBSCRIBED,
-                    self::CONSENT_TYPE_OPT_OUT,
-                    [Profile::SYNC_STATUS_PENDING, Profile::SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE]
+                    self::CONSENT_TYPE_OPT_OUT
                 );
             }
         } catch (Exception $e) {
@@ -178,7 +176,6 @@ class Subscribers implements ProfileSyncInterface
      * @param array $attributesArrWithVersionId
      * @param int $subscriberStatus
      * @param string $consentType
-     * @param array $syncStatus
      */
     private function batchSubscribersForStore(
         StoreInterface $store,
@@ -187,9 +184,9 @@ class Subscribers implements ProfileSyncInterface
         string $topics,
         array $attributesArrWithVersionId,
         int $subscriberStatus,
-        string $consentType,
-        array $syncStatus
+        string $consentType
     ) {
+        $syncStatus = [Profile::SYNC_STATUS_PENDING, Profile::SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE];
         try {
             $collection = $this->profileCollectionFactory->create()
                 ->getSubscribersToBatchByStore(
@@ -396,6 +393,24 @@ class Subscribers implements ProfileSyncInterface
                 Profile::SYNC_STATUS_BATCHED,
                 $this->apsisCoreHelper
             );
+            //Reset subscriber status to 5, if not a subscriber
+            $this->profileResource->updateSubscribersSyncStatus(
+                $subscribersToUpdate,
+                Profile::SYNC_STATUS_NA,
+                $this->apsisCoreHelper,
+                '',
+                [],
+                [],
+                ['error_message' => ''],
+                ['condition' => 'is_', 'value' => Profile::NO_FLAGGED]
+            );
+
+            $info = [
+                'Total Profiles Batched' => count($subscribersToUpdate),
+                'Store Id' => $store->getId()
+            ];
+            $this->apsisCoreHelper->debug(__METHOD__, $info);
+
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }

@@ -99,12 +99,18 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
                         $profileCollectionArray,
                         $productCollectionArray
                     );
-                    $this->registerEvents(
+                    $status = $this->registerEvents(
                         $eventsToRegister,
                         $apsisCoreHelper,
                         $store,
                         ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_REVIEW_HISTORY_DONE_FLAG
                     );
+
+                    $info = [
+                        'Total Events Inserted' => $status,
+                        'Store Id' => $store->getId()
+                    ];
+                    $apsisCoreHelper->debug(__METHOD__, $info);
                 }
             } catch (Exception $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);

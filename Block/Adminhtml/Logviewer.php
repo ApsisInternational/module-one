@@ -48,16 +48,6 @@ class Logviewer extends Container
     }
 
     /**
-     * Get log file content
-     *
-     * @return string
-     */
-    public function getLogFileContent()
-    {
-        return nl2br($this->_escaper->escapeHtml($this->file->getLogFileContent()));
-    }
-
-    /**
      * @return string
      */
     public function getAjaxUrl()

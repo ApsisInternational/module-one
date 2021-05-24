@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Controller\Adminhtml\Profile;
 
+use Apsis\One\Model\Profile;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Exception;
 use Magento\Framework\App\ResponseInterface;
@@ -77,7 +78,19 @@ class MassReset extends Action
             $collection = $this->profileCollectionFactory->create();
             $collection = $this->filter->getCollection($collection);
             $collectionSize = $collection->getSize();
-            $this->profileResource->resetProfiles($this->apsisCoreHelper, [], $collection->getAllIds());
+            $ids = $collection->getAllIds();
+            $this->profileResource->resetProfiles($this->apsisCoreHelper, [], $ids);
+            $this->profileResource->resetProfiles(
+                $this->apsisCoreHelper,
+                [],
+                $ids,
+                Profile::SYNC_STATUS_NA,
+                ['condition' => 'is_', 'value' => Profile::NO_FLAGGED]
+            );
+            $this->apsisCoreHelper->debug(
+                __METHOD__,
+                ['Total Reset' => $collectionSize, 'Profile Ids' => implode(", ", $ids)]
+            );
             $this->messageManager->addSuccessMessage(__('A total of %1 record(s) have been reset.', $collectionSize));
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);

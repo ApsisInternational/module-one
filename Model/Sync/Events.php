@@ -303,7 +303,7 @@ class Events implements SyncInterface
 
                     if ($status === false) {
                         $this->apsisCoreHelper->log(
-                            __METHOD__ . ': Unable to post events for store ' . $store->getCode() .
+                            __METHOD__ . ': Unable to post events for store id ' . $store->getId() .
                             ' profile ' . $profile->getId()
                         );
                         continue;
@@ -317,6 +317,13 @@ class Events implements SyncInterface
                             );
                         continue;
                     }
+
+                    $info = [
+                        'Profile Id' => $profile->getId(),
+                        'Store Id' => $store->getId(),
+                        'Total Synced' => count($groupedEventArray)
+                    ];
+                    $this->apsisCoreHelper->debug(__METHOD__, $info);
 
                     $this->eventResourceModel->updateSyncStatus(
                         array_keys($events),

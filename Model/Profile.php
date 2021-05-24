@@ -48,9 +48,27 @@ class Profile extends AbstractModel
     const SYNC_STATUS_SYNCED = 2;
     const SYNC_STATUS_FAILED = 3;
     const SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE = 4;
+    const SYNC_STATUS_NA = 5;
+
+    const STATUS_TEXT_MAP = [
+        self::SYNC_STATUS_PENDING => 'Pending',
+        self::SYNC_STATUS_BATCHED => 'Batched',
+        self::SYNC_STATUS_SYNCED => 'Synced',
+        self::SYNC_STATUS_FAILED => 'Failed',
+        self::SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE => 'Pending Update',
+        self::SYNC_STATUS_NA => 'N/A',
+    ];
 
     const IS_FLAGGED = 1;
     const NO_FLAGGED = 0;
+
+    const PROFILE_TYPE_CUSTOMER = 'customer';
+    const PROFILE_TYPE_SUBSCRIBER = 'subscriber';
+
+    const PROFILE_TYPE_TEXT_MAP = [
+        ProfileBatch::BATCH_TYPE_CUSTOMER => self::PROFILE_TYPE_CUSTOMER,
+        ProfileBatch::BATCH_TYPE_SUBSCRIBER => self::PROFILE_TYPE_SUBSCRIBER
+    ];
 
     const INTEGRATION_KEYSPACE = 'integration_uid';
     const EMAIL_FIELD = 'email';

@@ -9,6 +9,7 @@ use Magento\Framework\App\Cache\TypeListInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Config\Value as ConfigValue;
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Model\Context;
@@ -63,6 +64,10 @@ class Value extends ConfigValue
      */
     private $messageManager;
 
+    /**
+     * @var RequestInterface
+     */
+    private $request;
 
     /**
      * Value constructor.
@@ -74,6 +79,7 @@ class Value extends ConfigValue
      * @param ApsisCoreHelper $apsisLogHelper
      * @param ManagerInterface $messageManager
      * @param ProfileService $profileService
+     * @param RequestInterface $request
      * @param DateTime $dateTime
      * @param WriterInterface $writer
      * @param AbstractResource|null $resource
@@ -87,6 +93,7 @@ class Value extends ConfigValue
         ApsisCoreHelper $apsisLogHelper,
         ManagerInterface $messageManager,
         ProfileService $profileService,
+        RequestInterface $request,
         DateTime $dateTime,
         WriterInterface $writer,
         AbstractResource $resource = null,
@@ -97,6 +104,7 @@ class Value extends ConfigValue
         $this->dateTime = $dateTime;
         $this->writer = $writer;
         $this->messageManager = $messageManager;
+        $this->request = $request;
         parent::__construct(
             $context,
             $registry,
@@ -112,6 +120,17 @@ class Value extends ConfigValue
      */
     public function beforeSave()
     {
+        if (in_array($this->getPath(), Config::CONFIG_PATHS_ACCOUNT)) {
+            $groups = $this->request->getPost('groups');
+
+            //If set to inherit parent context's config value then no need to validate
+            if (isset($groups['oauth']['fields']['id']['inherit']) ||
+                isset($groups['oauth']['fields']['secret']['inherit'])
+            ) {
+                return parent::afterSave();
+            }
+        }
+
         //Find registry key, if exit don't save config
         if ($this->_registry->registry(self::REGISTRY_NAME_FOR_ERROR)) {
             $this->_dataSaveAllowed = false;
@@ -123,16 +142,9 @@ class Value extends ConfigValue
             $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
             $this->getScopeId()
         );
-        $ignoreAccountEnableCheckConfigs = [
-            Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED,
-            Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID,
-            Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_REGION,
-            Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
-            Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE
-        ];
 
         //If account is not enabled, do not save value.
-        if (! $isAccountEnabled && ! in_array($this->getPath(), $ignoreAccountEnableCheckConfigs)) {
+        if (! $isAccountEnabled && ! in_array($this->getPath(), Config::CONFIG_PATHS_ACCOUNT)) {
             //Set registry key
             $this->_registry->unregister(self::REGISTRY_NAME_FOR_ERROR);
             $this->_registry->register(self::REGISTRY_NAME_FOR_ERROR, true, true);
@@ -144,15 +156,8 @@ class Value extends ConfigValue
             return $this;
         }
 
-        $fileUploadUrlCheckOnConfigs = [
-            Config::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED,
-            Config::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED.
-            Config::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC,
-            Config::CONFIG_APSIS_ONE_SYNC_SETTING_ADDITIONAL_TOPIC
-        ];
-
         //If enabling Subscriber/Customer sync then validate file upload url reachable
-        if (in_array($this->getPath(), $fileUploadUrlCheckOnConfigs) && ! $this->isFileUploadHostReachable()) {
+        if (in_array($this->getPath(), Config::CONFIG_PATHS_SYNCS) && ! $this->isFileUploadHostReachable()) {
             $this->_dataSaveAllowed = false;
             return $this;
         }
@@ -214,18 +219,18 @@ class Value extends ConfigValue
                     $this->deleteDependantConfig();
                 }
             }
-        }
 
-        //Log
-        $info = [
-            'Scope' => $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            'Scope Id' => $this->getScopeId(),
-            'Config Path' => $this->getPath(),
-            'Old Value' => ($this->getOldValue() == $this->getValue()) ?
-                $this->_registry->registry(self::REGISTRY_NAME_FOR_OLD_VALUE) : $this->getOldValue(),
-            'New Value' => $this->getValue()
-        ];
-        $this->apsisCoreHelper->debug(__METHOD__, $info);
+            //Log it
+            $info = [
+                'Scope' => $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'Scope Id' => $this->getScopeId(),
+                'Config Path' => $this->getPath(),
+                'Old Value' => ($this->getOldValue() == $this->getValue()) ?
+                    $this->_registry->registry(self::REGISTRY_NAME_FOR_OLD_VALUE) : $this->getOldValue(),
+                'New Value' => $this->getValue()
+            ];
+            $this->apsisCoreHelper->debug(__METHOD__, $info);
+        }
 
         return parent::afterSave();
     }

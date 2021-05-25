@@ -19,6 +19,8 @@ use Exception;
 
 class EncryptedValue extends Encrypted
 {
+    const SUCCESS_MESSAGE = 'API credentials are valid and Magento KeySpace exist.';
+
     /**
      * @var ProfileService
      */
@@ -88,111 +90,97 @@ class EncryptedValue extends Encrypted
     /**
      * @inheritdoc
      */
-    public function beforeSave()
-    {
-        parent::beforeSave();
-
-        if ($this->getPath() == Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET && ! empty($this->getValue())) {
-            if ($this->isApiCredentialsValid()) {
-                $this->_dataSaveAllowed = true;
-            } else {
-                //Credentials are invalid, dont save value
-                $this->_dataSaveAllowed = false;
-
-                //Set registry key
-                $this->_registry->unregister(Value::REGISTRY_NAME_FOR_ERROR);
-                $this->_registry->register(Value::REGISTRY_NAME_FOR_ERROR, true, true);
-            }
-        }
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function afterSave()
     {
-        $value = 'Obscured value, encrypted. ';
-
         if ($this->isValueChanged()) {
+            $value = 'Obscured value, encrypted. ';
 
-            //If api credentials changed and there exist an old value.
-            if ($this->getPath() == Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET && $this->getOldValue()) {
-                //Remove old config, reset Profiles and Events
-                $this->profileService->fullResetRequest(__METHOD__);
+            if ($this->getPath() == Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET) {
+                $groups = $this->request->getPost('groups');
 
-                //Log request
-                $this->apsisCoreHelper->log('User changed API credentials. Sending full reset request.');
-                $value .= 'API credentials.';
+                //If set to inherit parent context's config value then no need to validate
+                if (isset($groups['oauth']['fields']['id']['inherit']) ||
+                    isset($groups['oauth']['fields']['secret']['inherit'])
+                ) {
+                    return parent::afterSave();
+                }
+
+                $id = $groups['oauth']['fields']['id']['value'] ?? false;
+                $secret = $this->processValue($this->getValue());
+                $region = $groups['oauth']['fields']['region']['value'] ?? false;
+
+                if (empty($id) || empty($secret) || empty($region)) {
+                    //Set registry key
+                    $this->_registry->unregister(Value::REGISTRY_NAME_FOR_ERROR);
+                    $this->_registry->register(Value::REGISTRY_NAME_FOR_ERROR, true, true);
+                }
+
+                $status = $this->isApiCredentialsValid($id, $secret, $region);
+                if ($status === self::SUCCESS_MESSAGE) {
+                    $this->apsisCoreHelper->log(self::SUCCESS_MESSAGE);
+                    $this->messageManager->addSuccessMessage(__(self::SUCCESS_MESSAGE));
+                } else {
+                    //Set registry key
+                    $this->_registry->unregister(Value::REGISTRY_NAME_FOR_ERROR);
+                    $this->_registry->register(Value::REGISTRY_NAME_FOR_ERROR, true, true);
+                }
+
+                //If api credentials changed and there exist an old value.
+                if ($this->getOldValue()) {
+                    //Remove old config, reset Profiles and Events
+                    $this->profileService->fullResetRequest(__METHOD__);
+
+                    //Log request
+                    $this->apsisCoreHelper->log('User changed API credentials. Sending full reset request.');
+                    $value .= 'API credentials.';
+                }
             }
-        }
 
-        $info = [
-            'Scope' => $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            'Scope Id' => $this->getScopeId(),
-            'Config Path' => $this->getPath(),
-            'Old Value' => $value,
-            'New Value' => $value
-        ];
-        $this->apsisCoreHelper->debug(__METHOD__, $info);
+            $info = [
+                'Scope' => $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'Scope Id' => $this->getScopeId(),
+                'Config Path' => $this->getPath(),
+                'Old Value' => $value,
+                'New Value' => $value
+            ];
+            $this->apsisCoreHelper->debug(__METHOD__, $info);
+        }
 
         return parent::afterSave();
     }
 
     /**
-     * @return bool
+     * @return bool|string
      */
-    private function isApiCredentialsValid()
+    private function isApiCredentialsValid(string $id, string $secret, string $region)
     {
         try {
-            $groups = $this->request->getPost('groups');
+            //Validate api host is reachable
+            try {
+                $this->apsisCoreHelper->validateIsUrlReachable($this->apsisCoreHelper->buildHostName($region));
+            } catch (Exception $e) {
+                $this->apsisCoreHelper->logError(__METHOD__, $e);
+                $msg = '. Cannot enable account. Host for URL must be whitelisted first.';
+                $this->messageManager->addWarningMessage(__($e->getMessage() . $msg));
 
-            //If set to inherit parent context's config value then no need to validate
-            if (isset($groups['oauth']['fields']['id']['inherit']) ||
-                isset($groups['oauth']['fields']['secret']['inherit'])
-            ) {
-                return true;
+                return false;
             }
 
-            $id = $groups['oauth']['fields']['id']['value'] ?? false;
-            $secret = $this->processValue($this->getValue()) ?? false;
-            $region = $groups['oauth']['fields']['region']['value'] ?? false;
+            //Validate api credential validity for integration
+            $check = $this->validateApiCredentials($id, $secret, $region);
+            if ($check === true) {
+                return self::SUCCESS_MESSAGE;
+            } else {
+                $this->apsisCoreHelper->debug($check);
+                $this->messageManager->addWarningMessage(__($check));
 
-            //All configs needed to validate api credentials
-            if ($id && $secret && $region) {
-
-                //Validate api host is reachable
-                try {
-                    $this->apsisCoreHelper->validateIsUrlReachable($this->apsisCoreHelper->buildHostName($region));
-                } catch (Exception $e) {
-                    $this->apsisCoreHelper->logError(__METHOD__, $e);
-                    $msg = '. Cannot enable account. Host for URL must be whitelisted first.';
-                    $this->messageManager->addWarningMessage(__($e->getMessage() . $msg));
-
-                    return false;
-                }
-
-                //Validate api credential validity for integration
-                $check = $this->validateApiCredentials($id, $secret, $region);
-                if ($check === true) {
-                    $msg = 'API credentials are valid and Magento KeySpace exist.';
-                    $this->apsisCoreHelper->log($msg);
-                    $this->messageManager->addSuccessMessage(__($msg));
-
-                    return true;
-                } else {
-                    $this->apsisCoreHelper->debug($check);
-                    $this->messageManager->addWarningMessage(__($check));
-
-                    return false;
-                }
+                return false;
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             $this->messageManager->addWarningMessage(__('Something went wrong, please check exception logs.'));
             return false;
         }
-
-        return false;
     }
 
     /**
@@ -214,7 +202,9 @@ class EncryptedValue extends Encrypted
                 $secret
             );
 
-            if ($client) {
+            if (empty($client)) {
+                return 'Unable to generate access token. Authorization has been denied for this request.';
+            } else {
                 $keySpaces = $client->getKeySpaces();
                 if (is_object($keySpaces) && isset($keySpaces->items)) {
                     foreach ($keySpaces->items as $item) {
@@ -224,8 +214,6 @@ class EncryptedValue extends Encrypted
                     }
                 }
                 return 'API credentials are invalid for this integration. Magento keySpace does not exist.';
-            } else {
-                return 'Unable to generate access token. Authorization has been denied for this request.';
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);

@@ -81,11 +81,6 @@ abstract class Rest
     protected $curlError;
 
     /**
-     * @var bool
-     */
-    protected $logResponse = false;
-
-    /**
      * @return null|stdClass
      */
     protected function execute()
@@ -262,8 +257,6 @@ abstract class Rest
         curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
         curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $this->verb);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
         if (isset($this->token)) {
             $headers[] = 'Authorization: Bearer ' . $this->token;
         }
@@ -296,14 +289,12 @@ abstract class Rest
 
     /**
      * @param ApsisCoreHelper $helper
-     * @param bool $logResponse
      *
      * @return $this
      */
-    public function setHelper(ApsisCoreHelper $helper, bool $logResponse = false)
+    public function setHelper(ApsisCoreHelper $helper)
     {
         $this->helper = $helper;
-        $this->logResponse = $logResponse;
         return $this;
     }
 
@@ -357,7 +348,7 @@ abstract class Rest
             return false;
         }
 
-        if ($this->logResponse && ! empty($this->responseInfo)) {
+        if ((bool) getenv('APSIS_DEVELOPER') && ! empty($this->responseInfo)) {
             $info = [
                 'Request time in seconds' => $this->responseInfo['total_time'],
                 'Endpoint URL' => $this->responseInfo['url'],

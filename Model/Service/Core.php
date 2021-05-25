@@ -235,18 +235,23 @@ class Core extends ApsisLogHelper
      * @param string $path
      * @param string $contextScope
      * @param int $contextScopeId
+     * @param bool $isUpdate
      */
-    public function deleteConfigByScope(
-        string $path,
-        string $contextScope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-        $contextScopeId = 0
-    ) {
+    public function deleteConfigByScope(string $path, string $contextScope, int $contextScopeId, bool $isUpdate = true)
+    {
         try {
-            $context = $this->getScopeForConfigUpdate($path, $contextScope, $contextScopeId);
+            if ($isUpdate) {
+                $context = $this->getScopeForConfigUpdate($path, $contextScope, $contextScopeId);
+                $scope = $context['scope'];
+                $id = $context['id'];
+            } else {
+                $scope = $contextScope;
+                $id = $contextScopeId;
+            }
 
             $info = [
-                'Scope' => $context['scope'],
-                'Scope Id' => $context['id'],
+                'Scope' => $scope,
+                'Scope Id' => $id,
                 'Config Path' => $path,
                 'Old Value' => $this->getConfigValue($path, $contextScope, $contextScopeId),
                 'New Value' => null
@@ -256,7 +261,7 @@ class Core extends ApsisLogHelper
             }
             $this->debug(__METHOD__, $info);
 
-            $this->writer->delete($path, $context['scope'], $context['id']);
+            $this->writer->delete($path, $scope, $id);
         } catch (Exception $e) {
             $this->logError(__METHOD__, $e);
         }
@@ -450,12 +455,12 @@ class Core extends ApsisLogHelper
 
                 //Error in generating token, disable module & remove token along with token expiry
                 if ($response && isset($response->status) &&
-                    in_array($response->status, Client::HTTP_CODES_DISABLE_MODULE) &&
-                    ! $bypassDb
+                    in_array($response->status, Client::HTTP_CODES_DISABLE_MODULE)
                 ) {
                     $this->debug(__METHOD__, (array) $response);
-                    $this->disableAccountAndRemoveTokenConfig($contextScope, $scopeId);
-                    return '';
+                    if (! $bypassDb) {
+                        $this->disableAccountAndRemoveTokenConfig(__METHOD__, $contextScope, $scopeId);
+                    }
                 }
             }
         } catch (Exception $e) {
@@ -517,67 +522,75 @@ class Core extends ApsisLogHelper
     }
 
     /**
+     * @param string $fromMethod
      * @param string $contextScope
      * @param int $scopeId
      */
-    public function disableAccountAndRemoveTokenConfig(string $contextScope, int $scopeId)
+    public function disableAccountAndRemoveTokenConfig(string $fromMethod, string $contextScope, int $scopeId)
     {
-        $this->log(__METHOD__);
+        $this->debug(__METHOD__, ['From' => $fromMethod]);
 
-        $this->removeTokenConfig($contextScope, $scopeId);
-        $this->disableAccountOnContext($contextScope, $scopeId);
-    }
+        //Remove token configs
+        $this->removeTokenConfig(__METHOD__, $contextScope, $scopeId);
 
-    /**
-     * @param string $contextScope
-     *
-     * @param int $contextScopeId
-     */
-    private function disableAccountOnContext(string $contextScope, int $contextScopeId)
-    {
-        $this->log(__METHOD__);
-
-        $this->saveConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED,
-            0,
-            $contextScope,
-            $contextScopeId
-        );
+        //Remove account configs
+        if ($contextScope == ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {
+            $this->deleteConfigByScope(
+                ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED,
+                $contextScope,
+                $scopeId
+            );
+        } else {
+            $this->saveConfigValue(
+                ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED,
+                0,
+                $contextScope,
+                $scopeId
+            );
+        }
         $this->deleteConfigByScope(
             ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID,
             $contextScope,
-            $contextScopeId
+            $scopeId
         );
         $this->deleteConfigByScope(
             ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET,
             $contextScope,
-            $contextScopeId
+            $scopeId
         );
         $this->deleteConfigByScope(
             ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_REGION,
             $contextScope,
-            $contextScopeId
+            $scopeId
         );
         $this->cleanCache();
     }
 
     /**
+     * @param string $fromMethod
      * @param string $contextScope
      * @param int $contextScopeId
+     * @param bool $isUpdate
      */
-    public function removeTokenConfig(string $contextScope, int $contextScopeId)
-    {
-        $this->log(__METHOD__);
+    public function removeTokenConfig(
+        string $fromMethod,
+        string $contextScope,
+        int $contextScopeId,
+        bool $isUpdate = true
+    ) {
+        $this->debug(__METHOD__, ['From' => $fromMethod]);
 
         $this->deleteConfigByScope(
             ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
             $contextScope,
-            $contextScopeId
+            $contextScopeId,
+            $isUpdate
         );
         $this->deleteConfigByScope(
             ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE,
             $contextScope,
-            $contextScopeId
+            $contextScopeId,
+            $isUpdate
         );
     }
 
@@ -647,7 +660,7 @@ class Core extends ApsisLogHelper
 
             if (empty($clientId) || empty($clientSecret) || empty($region)) {
                 $this->log(__METHOD__ . ' : Missing client credentials.');
-                $this->disableAccountAndRemoveTokenConfig($contextScope, $scopeId);
+                $this->disableAccountAndRemoveTokenConfig(__METHOD__, $contextScope, $scopeId);
                 return false;
             }
         } elseif (empty($clientId) || empty($clientSecret) || empty($region)) {

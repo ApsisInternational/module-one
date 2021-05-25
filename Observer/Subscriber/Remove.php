@@ -47,6 +47,7 @@ class Remove implements ObserverInterface
             $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $subscriber->getStoreId());
 
             if ($account && $profile = $this->profileService->findProfileForSubscriber($subscriber)) {
+                $this->apsisCoreHelper->log(__METHOD__);
                 $this->profileService->handleSubscriberDeleteForProfile($profile);
             }
         } catch (Exception $e) {

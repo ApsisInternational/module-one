@@ -600,8 +600,6 @@ class Client extends Rest
             curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
             curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, Rest::VERB_POST);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: multipart/form-data']);
 
             $this->responseBody = $this->helper->unserialize(curl_exec($ch));

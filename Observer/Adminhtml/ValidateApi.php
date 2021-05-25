@@ -71,7 +71,12 @@ class ValidateApi implements ObserverInterface
                 isset($groups['oauth']['fields']['secret']['inherit'])
             ) {
                 if (in_array($scope['context_scope'], [ScopeInterface::SCOPE_STORES, ScopeInterface::SCOPE_WEBSITES])) {
-                    $this->apsisCoreHelper->removeTokenConfig($scope['context_scope'], $scope['context_scope_id']);
+                    $this->apsisCoreHelper->removeTokenConfig(
+                        __METHOD__,
+                        $scope['context_scope'],
+                        $scope['context_scope_id'],
+                        false
+                    );
                 }
 
                 return $this;
@@ -80,6 +85,7 @@ class ValidateApi implements ObserverInterface
             //Additional measure in case registry exist, means should disable account
             if ($this->registry->registry(Value::REGISTRY_NAME_FOR_ERROR)) {
                 $this->apsisCoreHelper->disableAccountAndRemoveTokenConfig(
+                    __METHOD__,
                     $scope['context_scope'],
                     $scope['context_scope_id']
                 );
@@ -88,6 +94,7 @@ class ValidateApi implements ObserverInterface
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->disableAccountAndRemoveTokenConfig(
+                __METHOD__,
                 $scope['context_scope'],
                 $scope['context_scope_id']
             );

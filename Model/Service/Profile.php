@@ -130,6 +130,7 @@ class Profile
         ) {
             if ($this->isProfileSynced($apiClient, $sectionDiscriminator, $mappedEmailAttribute, $profile, $customer)) {
                 if ($apiClient->mergeProfile($keySpacesToMerge) === Client::HTTP_CODE_CONFLICT) {
+                    $this->apsisCoreHelper->debug(__METHOD__, ['Message' => 'Conflict, creating new cookie.']);
                     $keySpacesToMerge[1]['profile_key'] =
                         md5($profile->getIntegrationUid() . date(Zend_Date::TIMESTAMP));
                     if ($apiClient->mergeProfile($keySpacesToMerge) === null) {
@@ -254,12 +255,17 @@ class Profile
                     ->setHttpOnly(false)
                     ->setSecure(false)
                     ->setDurationOneYear();
-                $this->phpCookieManager->create()
+                $status = $this->phpCookieManager->create()
                     ->setPublicCookie(
                         self::APSIS_WEB_COOKIE_NAME,
                         $keySpacesToMerge[1]['profile_key'],
                         $cookieMetaData
                     );
+
+                if ($status) {
+                    $info = ['Name' => self::APSIS_WEB_COOKIE_NAME, 'Value' => keySpacesToMerge[1]['profile_key']];
+                    $this->apsisCoreHelper->debug(__METHOD__, $info);
+                }
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
@@ -459,7 +465,7 @@ class Profile
                     ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED
                 );
                 $keySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator);
-                if ($profile->getSubscriberId()) {
+                if ($profile->getSubscriberId() && $profile->getIsSubscriber()) {
                     $this->removeCustomerAttributesFromProfile(
                         $profile,
                         $IsCustomerSyncEnabled,
@@ -470,9 +476,24 @@ class Profile
                     );
                 } else {
                     if ($IsCustomerSyncEnabled) {
-                        $client->deleteProfile($keySpaceDiscriminator, $profile->getIntegrationUid());
+                        $status = $client->deleteProfile($keySpaceDiscriminator, $profile->getIntegrationUid());
+
+                        //Log it
+                        if ($status === null) {
+                            $info = [
+                                'Request' => 'Delete a profile',
+                                'Profile Id' => $profile->getIntegrationUid(),
+                                'KeySpace' => $keySpaceDiscriminator
+                            ];
+                            $this->apsisCoreHelper->debug(__METHOD__, $info);
+                        }
                     }
-                    $this->profileResource->delete($profile);
+                    $id = $profile->getId();
+                    $status = $this->profileResource->delete($profile);
+                    if ($status) {
+                        $info = ['Profile Id' => $id];
+                        $this->apsisCoreHelper->debug('Profile deleted from modules Profile entity.', $info);
+                    }
                 }
             }
         } catch (Exception $e) {
@@ -510,6 +531,15 @@ class Profile
     public function handleSubscriberDeleteForProfile(ProfileModel $profile)
     {
         try {
+            if (! $profile->getIsSubscriber() && ! $profile->getCustomerId()) {
+                $status = $this->profileResource->delete($profile);
+                if ($status) {
+                    $info = ['Profile Id' => $id];
+                    $this->apsisCoreHelper->debug('Profile deleted from modules Profile entity.', $info);
+                }
+                return;
+            }
+
             $store = $this->apsisCoreHelper->getStore($profile->getSubscriberStoreId());
             $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
                 $store,
@@ -529,7 +559,7 @@ class Profile
                     $sectionDiscriminator
                 );
                 $keySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator);
-                if ($profile->getCustomerId()) {
+                if ($profile->getCustomerId() && $profile->getIsSubscriber()) {
                     $this->removeSubscriberAttributesFromProfile(
                         $profile,
                         $client,
@@ -540,9 +570,25 @@ class Profile
                     );
                 } else {
                     if ($isSubscriberSyncEnabled) {
-                        $client->deleteProfile($keySpaceDiscriminator, $profile->getIntegrationUid());
+                        $status = $client->deleteProfile($keySpaceDiscriminator, $profile->getIntegrationUid());
+
+                        //Log it
+                        if ($status === null) {
+                            $info = [
+                                'Request' => 'Delete a profile',
+                                'Profile Id' => $profile->getIntegrationUid(),
+                                'KeySpace' => $keySpaceDiscriminator
+                            ];
+                            $this->apsisCoreHelper->debug(__METHOD__, $info);
+                        }
                     }
-                    $this->profileResource->delete($profile);
+
+                    $id = $profile->getId();
+                    $status = $this->profileResource->delete($profile);
+                    if ($status) {
+                        $info = ['Profile Id' => $id];
+                        $this->apsisCoreHelper->debug('Profile deleted from modules Profile entity.', $info);
+                    }
                 }
             }
         } catch (Exception $e) {
@@ -575,18 +621,29 @@ class Profile
             $this->profileResource->save($profile);
 
             if ($IsSubscriberSyncEnabled) {
+                $status = false;
                 $attributesArrWithVersionId = $this->apsisCoreHelper
                     ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
                 $subscriberAttributes = $this->apsisConfigHelper->getSubscriberAttributeMapping($store, false);
                 foreach ($subscriberAttributes as $subscriberAttribute) {
                     if (isset($attributesArrWithVersionId[$subscriberAttribute])) {
-                        $client->clearProfileAttribute(
+                        $status = $client->clearProfileAttribute(
                             $keySpaceDiscriminator,
                             $profile->getIntegrationUid(),
                             $sectionDiscriminator,
                             $attributesArrWithVersionId[$subscriberAttribute]
                         );
                     }
+                }
+
+                //Log it
+                if ($status === null) {
+                    $info = [
+                        'Profile Id' => $profile->getIntegrationUid(),
+                        'KeySpace' => $keySpaceDiscriminator,
+                        'Section' => $sectionDiscriminator
+                    ];
+                    $this->apsisCoreHelper->debug(__METHOD__, $info);
                 }
             }
         } catch (Exception $e) {
@@ -617,18 +674,29 @@ class Profile
                 ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_NA);
             $this->profileResource->save($profile);
             if ($IsCustomerSyncEnabled) {
+                $status = false;
                 $attributesArrWithVersionId = $this->apsisCoreHelper
                     ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
                 $customerAttributes = $this->apsisConfigHelper->getCustomerAttributeMapping($store, false);
                 foreach ($customerAttributes as $customerAttribute) {
                     if (isset($attributesArrWithVersionId[$customerAttribute])) {
-                        $client->clearProfileAttribute(
+                        $status = $client->clearProfileAttribute(
                             $keySpaceDiscriminator,
                             $profile->getIntegrationUid(),
                             $sectionDiscriminator,
                             $attributesArrWithVersionId[$customerAttribute]
                         );
                     }
+                }
+
+                //Log it
+                if ($status === null) {
+                    $info = [
+                        'Profile Id' => $profile->getIntegrationUid(),
+                        'KeySpace' => $keySpaceDiscriminator,
+                        'Section' => $sectionDiscriminator
+                    ];
+                    $this->apsisCoreHelper->debug(__METHOD__, $info);
                 }
             }
         } catch (Exception $e) {
@@ -728,7 +796,7 @@ class Profile
         string $type
     ) {
         try {
-            $client->createConsent(
+            $status = $client->createConsent(
                 ProfileModel::EMAIL_CHANNEL_DISCRIMINATOR,
                 $email,
                 $sectionDiscriminator,
@@ -736,6 +804,20 @@ class Profile
                 $topicDiscriminator,
                 $type
             );
+
+            //Log it
+            if ($status === null) {
+                $info = [
+                    'Email' => $email,
+                    'Section' => $sectionDiscriminator,
+                    'Consent List' => $consentListDiscriminator,
+                    'Topic' => $topicDiscriminator,
+                    'Type' => $type,
+
+                ];
+                $this->apsisCoreHelper->debug(__METHOD__, $info);
+            }
+
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }

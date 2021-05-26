@@ -33,7 +33,7 @@ class Index extends Manage
     }
 
     /**
-     * @return ResponseInterface|ResultInterface|void
+     * @inheritdoc
      */
     public function execute()
     {

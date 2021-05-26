@@ -94,6 +94,7 @@ class Subscription extends Action
             if ($profile->getSubscriberId() && $this->isTopicMatchedWithConfigTopic($profile, $params)) {
                 $subscriber = $this->subscriberFactory->create()->load($profile->getSubscriberId());
                 if ($subscriber->getId()) {
+
                     //Set subscriber status
                     $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED)
                         ->setSubscriberStoreId($subscriber->getStoreId())
@@ -101,8 +102,20 @@ class Subscription extends Action
                         ->setIsSubscriber(ProfileModel::NO_FLAGGED)
                         ->setErrorMessage('');
                     $this->profileResource->save($profile);
+
                     //Unsubscribe from Magento
                     $subscriber->unsubscribe();
+
+                    //Log it
+                    $info = [
+                        'Request' => 'opt-out from JUSTIN',
+                        'Profile Id' => $profile->getId(),
+                        'Subscriber Id' => $profile->getSubscriberId(),
+                        'Store Id' => $subscriber->getStoreId()
+                    ];
+                    $this->apsisCoreHelper->debug(__METHOD__, $info);
+
+                    //Send success response
                     return $this->sendResponse(204);
                 }
             }

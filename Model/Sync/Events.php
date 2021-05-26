@@ -219,8 +219,6 @@ class Events implements SyncInterface
         foreach ($this->eventsVersionMapping as $mapping) {
             if ($mapping !== false) {
                 return true;
-            } else {
-                continue;
             }
         }
         return false;

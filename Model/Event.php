@@ -9,6 +9,7 @@ use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime;
+use Apsis\One\Model\Service\Log;
 
 /**
  * Class Event
@@ -60,11 +61,17 @@ class Event extends AbstractModel
     private $dateTime;
 
     /**
+     * @var Log
+     */
+    private $logger;
+
+    /**
      * Event constructor.
      *
      * @param Context $context
      * @param Registry $registry
      * @param DateTime $dateTime
+     * @param Log $logger
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -73,10 +80,12 @@ class Event extends AbstractModel
         Context $context,
         Registry $registry,
         DateTime $dateTime,
+        Log $logger,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = []
     ) {
+        $this->logger = $logger;
         $this->dateTime = $dateTime;
         parent::__construct(
             $context,
@@ -93,6 +102,15 @@ class Event extends AbstractModel
     public function _construct()
     {
         $this->_init(EventResource::class);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function afterDelete()
+    {
+        $this->logger->debug(__METHOD__, ['Entity Id' => $this->getId()]);
+        return parent::afterDelete();
     }
 
     /**

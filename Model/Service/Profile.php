@@ -255,17 +255,16 @@ class Profile
                     ->setHttpOnly(false)
                     ->setSecure(false)
                     ->setDurationOneYear();
-                $status = $this->phpCookieManager->create()
-                    ->setPublicCookie(
+
+                $this->phpCookieManager->create()->setPublicCookie(
                         self::APSIS_WEB_COOKIE_NAME,
                         $keySpacesToMerge[1]['profile_key'],
                         $cookieMetaData
                     );
 
-                if ($status) {
-                    $info = ['Name' => self::APSIS_WEB_COOKIE_NAME, 'Value' => keySpacesToMerge[1]['profile_key']];
-                    $this->apsisCoreHelper->debug(__METHOD__, $info);
-                }
+                //Log it
+                $info = ['Name' => self::APSIS_WEB_COOKIE_NAME, 'Value' => $keySpacesToMerge[1]['profile_key']];
+                $this->apsisCoreHelper->debug(__METHOD__, $info);
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
@@ -406,7 +405,8 @@ class Profile
             if ($customerId) {
                 $profile->setCustomerId($customerId)
                     ->setStoreId($storeId)
-                    ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
+                    ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_NA)
+                    ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
                     ->setIsCustomer(ProfileModel::IS_FLAGGED);
             }
             if ($subscriberId) {
@@ -414,6 +414,7 @@ class Profile
                     ->setSubscriberStoreId($storeId)
                     ->setSubscriberStatus(Subscriber::STATUS_SUBSCRIBED)
                     ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
+                    ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_NA)
                     ->setIsSubscriber(ProfileModel::IS_FLAGGED);
             }
             $this->profileResource->save($profile);
@@ -475,25 +476,7 @@ class Profile
                         $keySpaceDiscriminator
                     );
                 } else {
-                    if ($IsCustomerSyncEnabled) {
-                        $status = $client->deleteProfile($keySpaceDiscriminator, $profile->getIntegrationUid());
-
-                        //Log it
-                        if ($status === null) {
-                            $info = [
-                                'Request' => 'Delete a profile',
-                                'Profile Id' => $profile->getIntegrationUid(),
-                                'KeySpace' => $keySpaceDiscriminator
-                            ];
-                            $this->apsisCoreHelper->debug(__METHOD__, $info);
-                        }
-                    }
-                    $id = $profile->getId();
-                    $status = $this->profileResource->delete($profile);
-                    if ($status) {
-                        $info = ['Profile Id' => $id];
-                        $this->apsisCoreHelper->debug('Profile deleted from modules Profile entity.', $info);
-                    }
+                    $this->deleteProfile($IsCustomerSyncEnabled, $client, $keySpaceDiscriminator, $profile);
                 }
             }
         } catch (Exception $e) {
@@ -532,11 +515,7 @@ class Profile
     {
         try {
             if (! $profile->getIsSubscriber() && ! $profile->getCustomerId()) {
-                $status = $this->profileResource->delete($profile);
-                if ($status) {
-                    $info = ['Profile Id' => $id];
-                    $this->apsisCoreHelper->debug('Profile deleted from modules Profile entity.', $info);
-                }
+                $this->profileResource->delete($profile);
                 return;
             }
 
@@ -569,31 +548,43 @@ class Profile
                         $isSubscriberSyncEnabled
                     );
                 } else {
-                    if ($isSubscriberSyncEnabled) {
-                        $status = $client->deleteProfile($keySpaceDiscriminator, $profile->getIntegrationUid());
-
-                        //Log it
-                        if ($status === null) {
-                            $info = [
-                                'Request' => 'Delete a profile',
-                                'Profile Id' => $profile->getIntegrationUid(),
-                                'KeySpace' => $keySpaceDiscriminator
-                            ];
-                            $this->apsisCoreHelper->debug(__METHOD__, $info);
-                        }
-                    }
-
-                    $id = $profile->getId();
-                    $status = $this->profileResource->delete($profile);
-                    if ($status) {
-                        $info = ['Profile Id' => $id];
-                        $this->apsisCoreHelper->debug('Profile deleted from modules Profile entity.', $info);
-                    }
+                    $this->deleteProfile($isSubscriberSyncEnabled, $client, $keySpaceDiscriminator, $profile);
                 }
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
+    }
+
+    /**
+     * @param bool $isSubscriberSyncEnabled
+     * @param Client $client
+     * @param string $keySpaceDiscriminator
+     * @param ProfileModel $profile
+     *
+     * @throws Exception
+     */
+    private function deleteProfile(
+        bool $isSubscriberSyncEnabled,
+        Client $client,
+        string $keySpaceDiscriminator,
+        ProfileModel $profile
+    ) {
+        if ($isSubscriberSyncEnabled) {
+            $status = $client->deleteProfile($keySpaceDiscriminator, $profile->getIntegrationUid());
+
+            //Log it
+            if ($status === null) {
+                $info = [
+                    'Request' => 'Delete a profile',
+                    'Profile Id' => $profile->getIntegrationUid(),
+                    'KeySpace' => $keySpaceDiscriminator
+                ];
+                $this->apsisCoreHelper->debug(__METHOD__, $info);
+            }
+        }
+
+        $this->profileResource->delete($profile);
     }
 
     /**
@@ -620,34 +611,60 @@ class Profile
                 ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_NA);
             $this->profileResource->save($profile);
 
-            if ($IsSubscriberSyncEnabled) {
-                $status = false;
-                $attributesArrWithVersionId = $this->apsisCoreHelper
-                    ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
-                $subscriberAttributes = $this->apsisConfigHelper->getSubscriberAttributeMapping($store, false);
-                foreach ($subscriberAttributes as $subscriberAttribute) {
-                    if (isset($attributesArrWithVersionId[$subscriberAttribute])) {
-                        $status = $client->clearProfileAttribute(
-                            $keySpaceDiscriminator,
-                            $profile->getIntegrationUid(),
-                            $sectionDiscriminator,
-                            $attributesArrWithVersionId[$subscriberAttribute]
-                        );
-                    }
-                }
+            $attributesArrWithVersionId = $this->apsisCoreHelper
+                ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
 
-                //Log it
-                if ($status === null) {
-                    $info = [
-                        'Profile Id' => $profile->getIntegrationUid(),
-                        'KeySpace' => $keySpaceDiscriminator,
-                        'Section' => $sectionDiscriminator
-                    ];
-                    $this->apsisCoreHelper->debug(__METHOD__, $info);
-                }
+            if ($IsSubscriberSyncEnabled && ! empty($attributesArrWithVersionId)) {
+                $this->clearProfileAttributes(
+                    $this->apsisConfigHelper->getSubscriberAttributeMapping($store, false),
+                    $attributesArrWithVersionId,
+                    $keySpaceDiscriminator,
+                    $sectionDiscriminator,
+                    $client,
+                    $profile
+                );
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
+     * @param array $attributes
+     * @param array $attributesArrWithVersionId
+     * @param string $keySpaceDiscriminator
+     * @param string $sectionDiscriminator
+     * @param Client $client
+     * @param ProfileModel $profile
+     */
+    public function clearProfileAttributes(
+        array $attributes,
+        array $attributesArrWithVersionId,
+        string $keySpaceDiscriminator,
+        string $sectionDiscriminator,
+        Client $client,
+        ProfileModel $profile
+    ) {
+        $status = false;
+        foreach ($attributes as $attribute) {
+            if (isset($attributesArrWithVersionId[$attribute])) {
+                $status = $client->clearProfileAttribute(
+                    $keySpaceDiscriminator,
+                    $profile->getIntegrationUid(),
+                    $sectionDiscriminator,
+                    $attributesArrWithVersionId[$attribute]
+                );
+            }
+        }
+
+        //Log it
+        if ($status === null) {
+            $info = [
+                'Profile Id' => $profile->getIntegrationUid(),
+                'KeySpace' => $keySpaceDiscriminator,
+                'Section' => $sectionDiscriminator
+            ];
+            $this->apsisCoreHelper->debug(__METHOD__, $info);
         }
     }
 
@@ -673,31 +690,19 @@ class Profile
                 ->setIsCustomer(ProfileModel::NO_FLAGGED)
                 ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_NA);
             $this->profileResource->save($profile);
-            if ($IsCustomerSyncEnabled) {
-                $status = false;
-                $attributesArrWithVersionId = $this->apsisCoreHelper
-                    ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
-                $customerAttributes = $this->apsisConfigHelper->getCustomerAttributeMapping($store, false);
-                foreach ($customerAttributes as $customerAttribute) {
-                    if (isset($attributesArrWithVersionId[$customerAttribute])) {
-                        $status = $client->clearProfileAttribute(
-                            $keySpaceDiscriminator,
-                            $profile->getIntegrationUid(),
-                            $sectionDiscriminator,
-                            $attributesArrWithVersionId[$customerAttribute]
-                        );
-                    }
-                }
 
-                //Log it
-                if ($status === null) {
-                    $info = [
-                        'Profile Id' => $profile->getIntegrationUid(),
-                        'KeySpace' => $keySpaceDiscriminator,
-                        'Section' => $sectionDiscriminator
-                    ];
-                    $this->apsisCoreHelper->debug(__METHOD__, $info);
-                }
+            $attributesArrWithVersionId = $this->apsisCoreHelper
+                ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
+
+            if ($IsCustomerSyncEnabled && ! empty($attributesArrWithVersionId)) {
+                $this->clearProfileAttributes(
+                    $this->apsisConfigHelper->getCustomerAttributeMapping($store, false),
+                    $attributesArrWithVersionId,
+                    $keySpaceDiscriminator,
+                    $sectionDiscriminator,
+                    $client,
+                    $profile
+                );
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);

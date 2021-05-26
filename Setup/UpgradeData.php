@@ -121,8 +121,8 @@ class UpgradeData implements UpgradeDataInterface
         if (version_compare($context->getVersion(), '1.9.5', '<')) {
             $this->upgradeOneNineFive($setup);
         }
-        if (version_compare($context->getVersion(), '1.9.6', '<')) {
-            $this->upgradeOneNineSix($setup);
+        if (version_compare($context->getVersion(), '2.0.0', '<')) {
+            $this->upgradeTwoZeroZero($setup);
         }
         $setup->endSetup();
     }
@@ -130,7 +130,7 @@ class UpgradeData implements UpgradeDataInterface
     /**
      * @param ModuleDataSetupInterface $setup
      */
-    private function upgradeOneNineSix(ModuleDataSetupInterface $setup)
+    private function upgradeTwoZeroZero(ModuleDataSetupInterface $setup)
     {
         $this->apsisCoreHelper->log(__METHOD__);
 
@@ -208,7 +208,7 @@ class UpgradeData implements UpgradeDataInterface
                 ->setResources($resource)
                 ->saveRel();
 
-            $this->apsisCoreHelper->log('Role created: "APSIS Support Agent"');
+            $this->apsisCoreHelper->log('User Role created: "APSIS Support Agent"');
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }

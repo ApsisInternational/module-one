@@ -10,6 +10,7 @@ use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime;
+use Apsis\One\Model\Service\Log;
 
 /**
  * Class Profile
@@ -86,12 +87,18 @@ class Profile extends AbstractModel
     private $expressionFactory;
 
     /**
+     * @var Log
+     */
+    private $logger;
+
+    /**
      * Subscriber constructor.
      *
      * @param Context $context
      * @param Registry $registry
      * @param DateTime $dateTime
      * @param ExpressionFactory $expressionFactory
+     * @param Log $logger
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -101,10 +108,12 @@ class Profile extends AbstractModel
         Registry $registry,
         DateTime $dateTime,
         ExpressionFactory $expressionFactory,
+        Log $logger,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = []
     ) {
+        $this->logger = $logger;
         $this->expressionFactory = $expressionFactory;
         $this->dateTime = $dateTime;
         parent::__construct(
@@ -122,6 +131,15 @@ class Profile extends AbstractModel
     public function _construct()
     {
         $this->_init(ProfileResource::class);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function afterDelete()
+    {
+        $this->logger->debug(__METHOD__, ['Entity Id' => $this->getId()]);
+        return parent::afterDelete();
     }
 
     /**

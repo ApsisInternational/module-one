@@ -12,6 +12,7 @@ use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime;
 use Apsis\One\Model\ResourceModel\ProfileBatch\CollectionFactory as ProfileBatchCollectionFactory;
 use Apsis\One\Model\ResourceModel\ProfileBatch\Collection as ProfileBatchCollection;
+use Apsis\One\Model\Service\Log;
 
 /**
  * Class ProfileBatch
@@ -67,6 +68,11 @@ class ProfileBatch extends AbstractModel
     private $profileBatchCollectionFactory;
 
     /**
+     * @var Log
+     */
+    private $logger;
+
+    /**
      * Subscriber constructor.
      *
      * @param Context $context
@@ -74,6 +80,7 @@ class ProfileBatch extends AbstractModel
      * @param DateTime $dateTime
      * @param ProfileBatchResource $profileBatchResource
      * @param ProfileBatchCollectionFactory $profileBatchCollectionFactory
+     * @param Log $logger
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -84,10 +91,12 @@ class ProfileBatch extends AbstractModel
         DateTime $dateTime,
         ProfileBatchResource $profileBatchResource,
         ProfileBatchCollectionFactory $profileBatchCollectionFactory,
+        Log $logger,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = []
     ) {
+        $this->logger = $logger;
         $this->profileBatchCollectionFactory = $profileBatchCollectionFactory;
         $this->dateTime = $dateTime;
         $this->profileBatchResource = $profileBatchResource;
@@ -106,6 +115,15 @@ class ProfileBatch extends AbstractModel
     public function _construct()
     {
         $this->_init(ProfileBatchResource::class);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function afterDelete()
+    {
+        $this->logger->debug(__METHOD__, ['Entity Id' => $this->getId()]);
+        return parent::afterDelete();
     }
 
     /**

@@ -94,6 +94,15 @@ class Abandoned extends AbstractModel
     }
 
     /**
+     * @inheritdoc
+     */
+    public function afterDelete()
+    {
+        $this->apsisLogHelper->debug(__METHOD__, ['Entity Id' => $this->getId()]);
+        return parent::afterDelete();
+    }
+
+    /**
      * @return $this
      */
     public function beforeSave()

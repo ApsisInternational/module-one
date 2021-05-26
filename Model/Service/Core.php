@@ -17,7 +17,6 @@ use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ResourceInterface;
-use Magento\Framework\UrlInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Api\Data\WebsiteInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -76,6 +75,11 @@ class Core extends ApsisLogHelper
      * @var RequestInterface
      */
     private $request;
+
+    /**
+     * @var array
+     */
+    private $cachedClient = [];
 
     /**
      * Core constructor.
@@ -431,15 +435,15 @@ class Core extends ApsisLogHelper
      * @param Client $apiClient
      * @param string $contextScope
      * @param int $scopeId
-     * @param bool $bypassDb
+     * @param bool $bypass
      *
      * @return string
      */
-    private function getToken(Client $apiClient, string $contextScope, int $scopeId, bool $bypassDb = false)
+    private function getToken(Client $apiClient, string $contextScope, int $scopeId, bool $bypass = false)
     {
         $token = '';
         try {
-            if (! $bypassDb) {
+            if (! $bypass) {
                 $token = $this->getTokenFromDb($contextScope, $scopeId);
             }
 
@@ -458,7 +462,7 @@ class Core extends ApsisLogHelper
                     in_array($response->status, Client::HTTP_CODES_DISABLE_MODULE)
                 ) {
                     $this->debug(__METHOD__, (array) $response);
-                    if (! $bypassDb) {
+                    if (! $bypass) {
                         $this->disableAccountAndRemoveTokenConfig(__METHOD__, $contextScope, $scopeId);
                     }
                 }
@@ -626,7 +630,7 @@ class Core extends ApsisLogHelper
     /**
      * @param string $contextScope
      * @param int $scopeId
-     * @param bool $bypassDb
+     * @param bool $bypass
      * @param string $region
      * @param string $clientId
      * @param string $clientSecret
@@ -636,12 +640,12 @@ class Core extends ApsisLogHelper
     public function getApiClient(
         string $contextScope,
         int $scopeId,
-        bool $bypassDb = false,
+        bool $bypass = false,
         string $region = '',
         string $clientId = '',
         string $clientSecret = ''
     ) {
-        if (! $bypassDb) {
+        if (! $bypass) {
             if (! $this->isEnabled($contextScope, $scopeId)) {
                 return false;
             }
@@ -657,15 +661,22 @@ class Core extends ApsisLogHelper
             if (empty($region)) {
                 $region = $this->getRegion($contextScope, $scopeId);
             }
+        }
 
-            if (empty($clientId) || empty($clientSecret) || empty($region)) {
-                $this->log(__METHOD__ . ' : Missing client credentials.');
-                $this->disableAccountAndRemoveTokenConfig(__METHOD__, $contextScope, $scopeId);
-                return false;
-            }
-        } elseif (empty($clientId) || empty($clientSecret) || empty($region)) {
-            $this->log(__METHOD__ . ' : Missing client credentials given $bypassDb variable.');
+        if (empty($clientId) || empty($clientSecret) || empty($region)) {
+            $this->log(__METHOD__ . ' : Missing client credentials.');
+
+            $this->disableAccountAndRemoveTokenConfig(__METHOD__, $contextScope, $scopeId);
             return false;
+        }
+
+        //Return cached apiClient object. As long as bypass is not true and token is not expired.
+        if (! $bypass && ! $this->isTokenExpired($contextScope, $scopeId) && isset($this->cachedClient[$clientId])) {
+            if ((bool) getenv('APSIS_DEVELOPER')) {
+                $this->debug("apiClient from cache.", ['Client Id' => $clientId, 'Scope Id' => $scopeId]);
+            }
+
+            return $this->cachedClient[$clientId];
         }
 
         $apiClient = $this->apiClientFactory->create()
@@ -673,13 +684,14 @@ class Core extends ApsisLogHelper
             ->setClientCredentials($clientId, $clientSecret)
             ->setHelper($this);
 
-        $token = $this->getToken($apiClient, $contextScope, $scopeId, $bypassDb);
+        $token = $this->getToken($apiClient, $contextScope, $scopeId, $bypass);
 
         if (empty($token)) {
             return false;
         }
 
-        return $apiClient->setToken($token);
+        $apiClient->setToken($token);
+        return $this->cachedClient[$clientId] = $apiClient;
     }
 
     /**
@@ -912,22 +924,6 @@ class Core extends ApsisLogHelper
             }
         }
         return $attributesArr;
-    }
-
-    /**
-     * @return string
-     */
-    public function generateBaseUrlForDynamicContent()
-    {
-        try {
-            $website = $this->storeManager->getWebsite($this->request->getParam('website', 0));
-            $defaultGroup = $website->getDefaultGroup();
-            $store =  (! $defaultGroup) ? null : $defaultGroup->getDefaultStore();
-            return $this->storeManager->getStore($store)->getBaseUrl(UrlInterface::URL_TYPE_LINK);
-        } catch (Exception $e) {
-            $this->logError(__METHOD__, $e);
-            return '';
-        }
     }
 
     /**

@@ -10,6 +10,7 @@ use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\DataObject;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
@@ -79,7 +80,7 @@ class Checkout extends Action
                 return $this->_redirect('');
             }
 
-            return $this->handleCartRebuildRequest($quoteModel);
+            return $this->handleCartRebuildRequest($quoteModel, $ac);
         } catch (Exception $e) {
             $this->log->logError(__METHOD__, $e);
             return $this->_redirect('');
@@ -88,10 +89,11 @@ class Checkout extends Action
 
     /**
      * @param Quote $quoteModel
+     * @param DataObject $ac
      *
      * @return ResponseInterface
      */
-    private function handleCartRebuildRequest(Quote $quoteModel)
+    private function handleCartRebuildRequest(Quote $quoteModel, DataObject $ac)
     {
         try {
             $quoteModel->setIsActive(1)
@@ -104,6 +106,16 @@ class Checkout extends Action
             $quoteModel->getShippingAddress()->setCustomerId(null)->setCustomerAddressId(null)->save();
             $this->cartRepository->save($quoteModel);
             $this->checkoutSession->replaceQuote($quoteModel)->unsLastRealOrderId();
+
+            //Log it
+            $info = [
+                'Status' => 'Successfully rebuilt cart.',
+                'Profile Id' => $ac->getProfileId(),
+                'Cart Id' => $ac->getQuoteId(),
+                'Store Id' => $ac->getStoreId()
+            ];
+            $this->log->debug(__METHOD__, $info);
+
             return $this->_redirect($quoteModel->getStore()->getUrl('checkout/cart'));
         } catch (Exception $e) {
             $this->log->logError(__METHOD__, $e);

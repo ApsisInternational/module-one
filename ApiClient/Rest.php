@@ -350,6 +350,7 @@ abstract class Rest
 
         if ((bool) getenv('APSIS_DEVELOPER') && ! empty($this->responseInfo)) {
             $info = [
+                'Method' => $method,
                 'Request time in seconds' => $this->responseInfo['total_time'],
                 'Endpoint URL' => $this->responseInfo['url'],
                 'Http code' => $this->responseInfo['http_code']

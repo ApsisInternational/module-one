@@ -2,8 +2,8 @@
 
 namespace Apsis\One\Block\Adminhtml\Config\Profile;
 
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Block\Adminhtml\Config\FieldBase;
+use Apsis\One\Model\Service\Log;
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 
@@ -12,24 +12,15 @@ class SubscriptionEndpoint extends FieldBase
     const SUBSCRIPTION_UPDATE_ENDPOINT = 'apsis/profile/subscription';
 
     /**
-     * @var ApsisCoreHelper
-     */
-    private $apsisCoreHelper;
-
-    /**
-     * Url constructor.
+     * SubscriptionEndpoint constructor.
      *
      * @param Context $context
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param Log $logger
      * @param array $data
      */
-    public function __construct(
-        Context $context,
-        ApsisCoreHelper $apsisCoreHelper,
-        array $data = []
-    ) {
-        $this->apsisCoreHelper = $apsisCoreHelper;
-        parent::__construct($context, $data);
+    public function __construct(Context $context, Log $logger, array $data = [])
+    {
+        parent::__construct($context, $logger, $data);
     }
 
     /**
@@ -40,7 +31,7 @@ class SubscriptionEndpoint extends FieldBase
     {
         $text = sprintf(
             '%s%s',
-            $this->apsisCoreHelper->generateBaseUrlForDynamicContent(),
+            $this->generateBaseUrlForDynamicContent(),
             self::SUBSCRIPTION_UPDATE_ENDPOINT
         );
         $element->setData('value', $text);

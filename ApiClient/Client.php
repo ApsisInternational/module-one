@@ -7,6 +7,53 @@ use Exception;
 class Client extends Rest
 {
     /**
+     * @var array
+     */
+    private $cacheContainer = [];
+
+    /**
+     * @param string $key
+     * @return mixed|null
+     */
+    private function getFromCacheContainer(string $key)
+    {
+        if (strlen($key) && isset($this->cacheContainer[$key])) {
+            if ((bool) getenv('APSIS_DEVELOPER')) {
+                $this->helper->debug('API response from cache container.', ['URL' => $key]);
+            }
+
+            return $this->cacheContainer[$key];
+        }
+        return null;
+    }
+
+    /**
+     * @param string $method
+     * @param array $methodParams
+     *
+     * @return string|false
+     */
+    private function buildKeyForCacheContainer(string $method, array $methodParams)
+    {
+        return filter_var(
+            implode(".", array_filter(array_merge([$method], $methodParams))),
+            FILTER_SANITIZE_STRING
+        );
+    }
+
+    /**
+     * @param string $fromMethod
+     * @param string $key
+     *
+     * @return mixed
+     */
+    private function executeRequestAndReturnResponse(string $fromMethod, string $key = '')
+    {
+        $response = $this->processResponse($this->execute(), $fromMethod);
+        return strlen($key) ? $this->cacheContainer[$key] = $response : $response;
+    }
+
+    /**
      * SECURITY: Get access token
      *
      * Use client ID and client secret obtained when creating an API key in your APSIS One account to request an
@@ -21,7 +68,7 @@ class Client extends Rest
         $this->setUrl($this->hostName . '/oauth/token')
             ->setVerb(Rest::VERB_POST)
             ->buildBodyForGetAccessTokenCall();
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__);
     }
 
     /**
@@ -33,23 +80,14 @@ class Client extends Rest
      */
     public function getKeySpaces()
     {
+        $key = $this->buildKeyForCacheContainer(__FUNCTION__, []);
+        if ($fromCache = $this->getFromCacheContainer($key)) {
+            return $fromCache;
+        }
+
         $this->setUrl($this->hostName . '/audience/keyspaces')
             ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
-    }
-
-    /**
-     * DEFINITIONS: Get channels
-     *
-     * Get all available communication channels.
-     *
-     * @return mixed
-     */
-    public function getChannels()
-    {
-        $this->setUrl($this->hostName . '/audience/channels')
-            ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse( __METHOD__, $key);
     }
 
     /**
@@ -61,9 +99,14 @@ class Client extends Rest
      */
     public function getSections()
     {
+        $key = $this->buildKeyForCacheContainer(__FUNCTION__, []);
+        if ($fromCache = $this->getFromCacheContainer($key)) {
+            return $fromCache;
+        }
+
         $this->setUrl($this->hostName . '/audience/sections')
             ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__, $key);
     }
 
     /**
@@ -78,9 +121,14 @@ class Client extends Rest
      */
     public function getAttributes(string $sectionDiscriminator)
     {
+        $key = $this->buildKeyForCacheContainer(__FUNCTION__, func_get_args());
+        if ($fromCache = $this->getFromCacheContainer($key)) {
+            return $fromCache;
+        }
+
         $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/attributes')
             ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__, $key);
     }
 
     /**
@@ -94,9 +142,14 @@ class Client extends Rest
      */
     public function getConsentLists(string $sectionDiscriminator)
     {
+        $key = $this->buildKeyForCacheContainer(__FUNCTION__, func_get_args());
+        if ($fromCache = $this->getFromCacheContainer($key)) {
+            return $fromCache;
+        }
+
         $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/consent-lists')
             ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__, $key);
     }
 
     /**
@@ -111,27 +164,17 @@ class Client extends Rest
      */
     public function getTopics(string $sectionDiscriminator, string $consentListDiscriminator)
     {
-        $this->setUrl(
-            $this->hostName . '/audience/sections/' . $sectionDiscriminator . '/consent-lists/' .
-            $consentListDiscriminator . '/topics'
-        )->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
-    }
+        $key = $this->buildKeyForCacheContainer(__FUNCTION__, func_get_args());
+        if ($fromCache = $this->getFromCacheContainer($key)) {
+            return $fromCache;
+        }
 
-    /**
-     * DEFINITIONS: Get tags
-     *
-     * Get all tags defined within a specific section.
-     *
-     * @param string $sectionDiscriminator
-     *
-     * @return mixed
-     */
-    public function getTags(string $sectionDiscriminator)
-    {
-        $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/tags')
+        $url = $this->hostName . '/audience/sections/' . $sectionDiscriminator . '/consent-lists/' .
+            $consentListDiscriminator . '/topics';
+
+        $this->setUrl($url)
             ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__, $key);
     }
 
     /**
@@ -145,101 +188,14 @@ class Client extends Rest
      */
     public function getEvents(string $sectionDiscriminator)
     {
+        $key = $this->buildKeyForCacheContainer(__FUNCTION__, func_get_args());
+        if ($fromCache = $this->getFromCacheContainer($key)) {
+            return $fromCache;
+        }
+
         $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/events')
             ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
-    }
-
-    /**
-     * DEFINITIONS: Get segments
-     *
-     * Get all segments.
-     *
-     * @return mixed
-     */
-    public function getSegments()
-    {
-        $this->setUrl($this->hostName . '/audience/segments/')
-            ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
-    }
-
-    /**
-     * DEFINITIONS: Get segment
-     *
-     * Get a single segment.
-     *
-     * @param string $segmentDiscriminator
-     *
-     * @return mixed
-     */
-    public function getSegment(string $segmentDiscriminator)
-    {
-        $this->setUrl($this->hostName . '/audience/segments/' . $segmentDiscriminator)
-            ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
-    }
-
-    /**
-     * DEFINITIONS: Get segment version
-     *
-     * Get specific segment version.
-     *
-     * @param string $segmentDiscriminator
-     * @param string $versionId
-     *
-     * @return mixed
-     */
-    public function getSegmentVersion(string $segmentDiscriminator, string $versionId)
-    {
-        $this->setUrl($this->hostName . '/audience/segments/' . $segmentDiscriminator . '/versions/' . $versionId)
-            ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
-    }
-
-    /**
-     * PROFILES: Add tags to a profile
-     *
-     * Content must follow JSON Merge Patch specs.
-     * The maximum data payload size for requests to this endpoint is 100KB.
-     *
-     * @param string $keySpaceDiscriminator
-     * @param string $profileKey
-     * @param string $sectionDiscriminator
-     * @param array $tags
-     *
-     * @return mixed
-     */
-    public function addTagsToProfile(
-        string $keySpaceDiscriminator,
-        string $profileKey,
-        string $sectionDiscriminator,
-        array $tags
-    ) {
-        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
-            '/sections/' . $sectionDiscriminator . '/tags';
-        $this->setUrl($url)
-            ->setVerb(Rest::VERB_PATCH)
-            ->buildBody($tags);
-        return $this->processResponse($this->execute(), __METHOD__);
-    }
-
-    /**
-     * PROFILES: Get all profile tags.
-     *
-     * @param string $keySpaceDiscriminator
-     * @param string $profileKey
-     * @param string $sectionDiscriminator
-     *
-     * @return mixed
-     */
-    public function getAllProfileTags(string $keySpaceDiscriminator, string $profileKey, string $sectionDiscriminator)
-    {
-        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
-            '/sections/' . $sectionDiscriminator . '/tags';
-        $this->setUrl($url)
-            ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__, $key);
     }
 
     /**
@@ -269,31 +225,7 @@ class Client extends Rest
         $this->setUrl($url)
             ->setVerb(Rest::VERB_PATCH)
             ->buildBody($attributes);
-        return $this->processResponse($this->execute(), __METHOD__);
-    }
-
-    /**
-     *  PROFILES: Get all profile attributes
-     *
-     * Gets profile attribute values with their version IDs as keys. Exposes default and custom attributes.
-     * When any ecommerce integration is connected to the specified section then also ecommerce attributes are returned.
-     *
-     * @param string $keySpaceDiscriminator
-     * @param string $profileKey
-     * @param string $sectionDiscriminator
-     *
-     * @return mixed
-     */
-    public function getAllProfileAttributes(
-        string $keySpaceDiscriminator,
-        string $profileKey,
-        string $sectionDiscriminator
-    ) {
-        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
-            '/sections/' . $sectionDiscriminator . '/attributes';
-        $this->setUrl($url)
-            ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__);
     }
 
     /**
@@ -316,29 +248,7 @@ class Client extends Rest
             '/sections/' . $sectionDiscriminator . '/attributes/' . $versionId;
         $this->setUrl($url)
             ->setVerb(Rest::VERB_DELETE);
-        return $this->processResponse($this->execute(), __METHOD__);
-    }
-
-    /**
-     * PROFILES: Get all profile events
-     *
-     * @param string $keySpaceDiscriminator
-     * @param string $profileKey
-     * @param string $sectionDiscriminator
-     *
-     * @return mixed
-     */
-    public function getProfileEvents(
-        string $keySpaceDiscriminator,
-        string $profileKey,
-        string $sectionDiscriminator
-    ) {
-        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
-            '/sections/' . $sectionDiscriminator . '/events';
-        $this->setUrl($url)
-            ->setVerb(Rest::VERB_GET);
-
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__);
     }
 
     /**
@@ -364,7 +274,7 @@ class Client extends Rest
         $this->setUrl($url)
             ->setVerb(Rest::VERB_POST)
             ->buildBody(['items' => $events]);
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__);
     }
 
     /**
@@ -395,34 +305,7 @@ class Client extends Rest
                     'topic_discriminator' => $topicDiscriminator
                 ]
             );
-        return $this->processResponse($this->execute(), __METHOD__);
-    }
-
-    /**
-     * PROFILES: Get profile segments
-     *
-     * Returns a list of segments the defined profile belongs to.
-     *
-     * @param string $keySpaceDiscriminator
-     * @param string $profileKey
-     * @param array $segments
-     * @param string $timeZone
-     *
-     * @return mixed
-     */
-    public function getProfileSegments(
-        string $keySpaceDiscriminator,
-        string $profileKey,
-        array $segments,
-        string $timeZone
-    ) {
-        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
-            '/evaluations';
-        $this->setUrl($url)
-            ->setVerb(Rest::VERB_POST)
-            ->buildBody(['segments' => $segments, 'time_zone' => $timeZone]);
-
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__);
     }
 
     /**
@@ -444,30 +327,7 @@ class Client extends Rest
         $this->setUrl($this->hostName . '/audience/profiles/merges')
             ->setVerb(Rest::VERB_PUT)
             ->buildBody(['profiles' => $keySpacesToMerge]);
-        return $this->processResponse($this->execute(), __METHOD__);
-    }
-
-    /**
-     * PROFILES: Lock a profile
-     *
-     * Profile will be locked and its data permanently deleted. Profile lock is permanent and irreversible.
-     * APSIS One will generate an encrypted, anonymous ID for the profile and block any future attempts of adding a
-     * profile matching this ID.
-     * It is not possible to import or create a locked profile nor for them to opt-in again. This applies to all
-     * keyspaces.
-     *
-     * @param string $keySpaceDiscriminator
-     * @param string $profileKey
-     *
-     * @return mixed
-     */
-    public function lockProfile(string $keySpaceDiscriminator, string $profileKey)
-    {
-        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
-            '/locks';
-        $this->setUrl($url)
-            ->setVerb(Rest::VERB_PUT);
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__);
     }
 
     /**
@@ -486,7 +346,7 @@ class Client extends Rest
         $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey;
         $this->setUrl($url)
             ->setVerb(Rest::VERB_DELETE);
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__);
     }
 
     /**
@@ -523,7 +383,7 @@ class Client extends Rest
         $this->setUrl($url)
             ->setVerb(Rest::VERB_POST)
             ->buildBody($body);
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__);
     }
 
     /**
@@ -551,7 +411,7 @@ class Client extends Rest
             . '/evaluations';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__);
     }
 
     /**
@@ -569,7 +429,7 @@ class Client extends Rest
         $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/imports')
             ->setVerb(Rest::VERB_POST)
             ->buildBody($data);
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__);
     }
 
     /**
@@ -630,6 +490,6 @@ class Client extends Rest
     {
         $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/imports/' . $importId)
             ->setVerb(Rest::VERB_GET);
-        return $this->processResponse($this->execute(), __METHOD__);
+        return $this->executeRequestAndReturnResponse(__METHOD__);
     }
 }

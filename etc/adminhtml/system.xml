@@ -490,12 +490,10 @@
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
                 </field>
                 <field id="order_historical_event_duration" translate="label" type="select" sortOrder="70" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>Past Events</label>
+                       showInWebsite="0" showInStore="0">
+                    <label>Sync Past Events: Duration</label>
                     <source_model>Apsis\One\Model\Config\Source\System\PastEvents</source_model>
-                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Event\HistoricalData</frontend_model>
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
-                    <comment><![CDATA[This is a one time selection. After import this config will be disabled. Past events will be fetched at midnight.]]></comment>
                 </field>
                 <field id="cart_event_title" translate="label" sortOrder="80" showInDefault="1" showInWebsite="1"
                        showInStore="1">
@@ -509,12 +507,10 @@
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
                 </field>
                 <field id="cart_historical_event_duration" translate="label" type="select" sortOrder="100" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>Past Events</label>
+                       showInWebsite="0" showInStore="0">
+                    <label>Sync Past Events: Duration</label>
                     <source_model>Apsis\One\Model\Config\Source\System\PastEvents</source_model>
-                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Event\HistoricalData</frontend_model>
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
-                    <comment><![CDATA[This is a one time selection. After import this config will be disabled. Past events will be fetched at midnight.]]></comment>
                 </field>
                 <field id="review_event_title" translate="label" sortOrder="110" showInDefault="1" showInWebsite="1"
                        showInStore="1">
@@ -528,12 +524,10 @@
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
                 </field>
                 <field id="review_historical_event_duration" translate="label" type="select" sortOrder="130" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>Past Events</label>
+                       showInWebsite="0" showInStore="0">
+                    <label>Sync Past Events: Duration</label>
                     <source_model>Apsis\One\Model\Config\Source\System\PastEvents</source_model>
-                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Event\HistoricalData</frontend_model>
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
-                    <comment><![CDATA[This is a one time selection. After import this config will be disabled. Past events will be fetched at midnight.]]></comment>
                 </field>
                 <field id="wishlist_event_title" translate="label" sortOrder="140" showInDefault="1" showInWebsite="1"
                        showInStore="1">
@@ -547,12 +541,10 @@
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
                 </field>
                 <field id="wishlist_historical_event_duration" translate="label" type="select" sortOrder="160" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>Past Events</label>
+                       showInWebsite="0" showInStore="0">
+                    <label>Sync Past Events: Duration</label>
                     <source_model>Apsis\One\Model\Config\Source\System\PastEvents</source_model>
-                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Event\HistoricalData</frontend_model>
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
-                    <comment><![CDATA[This is a one time selection. After import this config will be disabled. Past events will be fetched at midnight.]]></comment>
                 </field>
                 <field id="abandoned_cart_event_title" translate="label" sortOrder="170" showInDefault="1"
                        showInWebsite="1" showInStore="1">
@@ -626,7 +618,7 @@
                     <label>DB Cleanup - After</label>
                     <source_model>Apsis\One\Model\Config\Source\System\Cleanup</source_model>
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
-                    <comment><![CDATA[Cleanup cronjob will remove entries from DB tables (excluding apsis_profile table) older then set value.]]></comment>
+                    <comment><![CDATA[Cleanup cronjob will remove entries from DB tables (apsis_profile_batch & apsis_abandoned) older then set value.]]></comment>
                 </field>
                 <field id="cron_schedule_profile_sync" translate="label" sortOrder="20" type="select" showInDefault="1">
                     <label>Profile Sync - Cron Schedule</label>
@@ -638,15 +630,10 @@
                     <source_model>Apsis\One\Model\Config\Source\System\CronSchedule</source_model>
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
                 </field>
-                <field id="cron_schedule_historical_events" translate="label" sortOrder="40" type="select" showInDefault="1">
-                    <label>Fetching Historical Events - Cron Schedule</label>
-                    <source_model>Apsis\One\Model\Config\Source\System\HistoricalEventCronSchedule</source_model>
-                    <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
-                </field>
                 <field id="reset" translate="label" sortOrder="50" showInDefault="1">
                     <label>Reset Module</label>
                     <frontend_model>Apsis\One\Block\Adminhtml\Config\Developer\Reset</frontend_model>
-                    <comment><![CDATA[NOTE: This will remove all saved configuration for the module, truncate all tables and re-populate Profile table. Not available on production mode.]]></comment>
+                    <comment><![CDATA[NOTE: This will remove all saved configuration for the module, truncate all tables and re-populate Profile table. This action is irreversible. Not available on production mode.]]></comment>
                 </field>
             </group>
         </section>

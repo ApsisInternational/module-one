@@ -11,6 +11,8 @@ use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime;
 use Apsis\One\Model\Service\Log;
+use Apsis\One\Model\Service\Profile as ProfileService;
+use Exception;
 
 /**
  * Class Profile
@@ -63,12 +65,12 @@ class Profile extends AbstractModel
     const IS_FLAGGED = 1;
     const NO_FLAGGED = 0;
 
-    const PROFILE_TYPE_CUSTOMER = 'customer';
-    const PROFILE_TYPE_SUBSCRIBER = 'subscriber';
+    const TYPE_CUSTOMER = 'customer';
+    const TYPE_SUBSCRIBER = 'subscriber';
 
     const PROFILE_TYPE_TEXT_MAP = [
-        ProfileBatch::BATCH_TYPE_CUSTOMER => self::PROFILE_TYPE_CUSTOMER,
-        ProfileBatch::BATCH_TYPE_SUBSCRIBER => self::PROFILE_TYPE_SUBSCRIBER
+        ProfileBatch::BATCH_TYPE_CUSTOMER => self::TYPE_CUSTOMER,
+        ProfileBatch::BATCH_TYPE_SUBSCRIBER => self::TYPE_SUBSCRIBER
     ];
 
     const INTEGRATION_KEYSPACE = 'integration_uid';
@@ -92,6 +94,11 @@ class Profile extends AbstractModel
     private $logger;
 
     /**
+     * @var ProfileService
+     */
+    private $profileService;
+
+    /**
      * Subscriber constructor.
      *
      * @param Context $context
@@ -99,6 +106,7 @@ class Profile extends AbstractModel
      * @param DateTime $dateTime
      * @param ExpressionFactory $expressionFactory
      * @param Log $logger
+     * @param ProfileService $profileService
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -109,10 +117,12 @@ class Profile extends AbstractModel
         DateTime $dateTime,
         ExpressionFactory $expressionFactory,
         Log $logger,
+        ProfileService $profileService,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = []
     ) {
+        $this->profileService = $profileService;
         $this->logger = $logger;
         $this->expressionFactory = $expressionFactory;
         $this->dateTime = $dateTime;
@@ -126,7 +136,7 @@ class Profile extends AbstractModel
     }
 
     /**
-     * Constructor
+     * @inheritdoc
      */
     public function _construct()
     {
@@ -138,12 +148,27 @@ class Profile extends AbstractModel
      */
     public function afterDelete()
     {
-        $this->logger->debug(__METHOD__, ['Entity Id' => $this->getId()]);
+        try {
+            //Send delete request to One
+            $this->profileService->deleteProfileFromOne($this);
+
+            //Log it
+            $info = [
+                'Message' => 'Profile removed from integration table.',
+                'Entity Id' => $this->getId(),
+                'Store Id' => $this->getStoreId() ? $this->getStoreId() : $this->getSubscriberStoreId(),
+                'Profile Id' => $this->getIntegrationUid()
+            ];
+            $this->logger->debug(__METHOD__, $info);
+        } catch (Exception $e) {
+            $this->logger->logError(__METHOD__, $e);
+        }
+
         return parent::afterDelete();
     }
 
     /**
-     * @return $this
+     * @inheritdoc
      */
     public function beforeSave()
     {

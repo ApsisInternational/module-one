@@ -24,13 +24,12 @@ class Section implements OptionSourceInterface
     }
 
     /**
-     *  Attribute options
-     *
-     * @return array
+     * @inheritdoc
      */
     public function toOptionArray()
     {
-        $fields[] = ['value' => '', 'label' => __('-- Please Select --')];
+        $fields = [['value' => '', 'label' => __('-- Please Select --')]];
+
         try {
             $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
             $apiClient = $this->apsisCoreHelper->getApiClient(
@@ -53,6 +52,7 @@ class Section implements OptionSourceInterface
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
+
         return $fields;
     }
 }

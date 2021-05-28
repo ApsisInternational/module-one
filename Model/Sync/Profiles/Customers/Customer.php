@@ -78,11 +78,7 @@ class Customer implements ProfileDataInterface
     }
 
     /**
-     * @param array $mappingHash
-     * @param AbstractModel $customer
-     * @param ApsisCoreHelper $apsisCoreHelper
-     *
-     * @return $this
+     * @inheritdoc
      */
     public function setModelData(array $mappingHash, AbstractModel $customer, ApsisCoreHelper $apsisCoreHelper)
     {
@@ -115,9 +111,7 @@ class Customer implements ProfileDataInterface
     }
 
     /**
-     * Contact data array.
-     *
-     * @return array
+     * @inheritdoc
      */
     public function toCSVArray()
     {

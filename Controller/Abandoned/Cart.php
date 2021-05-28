@@ -63,6 +63,14 @@ class Cart extends Action
      */
     public function execute()
     {
+        //Validate http method against allowed one.
+        if ('GET' !== $_SERVER['REQUEST_METHOD']) {
+            $msg = $_SERVER['REQUEST_METHOD'] . ': method not allowed to this endpoint.';
+            $resultJson = $this->resultJsonFactory->create()
+                ->setData(['httpCode' => 405, 'message' => $msg]);
+            return $this->sendResponse($resultJson, 405);
+        }
+
         $token = (string) $this->getRequest()->getParam('token');
         if (empty($token) || ! $this->apsisCartHelper->isClean($token)) {
             return $this->sendResponse($this->resultRaw, 400);

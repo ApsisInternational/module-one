@@ -83,19 +83,20 @@ class Batch implements ProfileSyncInterface
     }
 
     /**
-     * @param StoreInterface $store
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @inheritdoc
      */
     public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
     {
         try {
             $this->apsisCoreHelper = $apsisCoreHelper;
             $this->importCountInProcessingStatus = 0;
+
             $apiClient = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
             $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
                 $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+                ApsisConfigHelper::MAPPINGS_SECTION_SECTION
             );
+
             if ($apiClient && $sectionDiscriminator) {
                 $this->handleProcessingCollectionForStore($apiClient, $store, $sectionDiscriminator);
                 $this->handlePendingCollectionForStore($apiClient, $store, $sectionDiscriminator);
@@ -115,10 +116,11 @@ class Batch implements ProfileSyncInterface
         StoreInterface $store,
         string $sectionDiscriminator
     ) {
-        $collection = $this->profileBatchFactory->create()
+        $collection = $this->profileBatchFactory
+            ->create()
             ->getPendingBatchItemsForStore($store->getId());
+
         if ($collection->getSize()) {
-            /** @var ProfileBatch $item */
             foreach ($collection as $item) {
                 try {
                     if ($this->importCountInProcessingStatus >= ProfileBatch::PENDING_LIMIT) {
@@ -135,7 +137,9 @@ class Batch implements ProfileSyncInterface
                             __METHOD__ . ': Unable to initialise import for Store ' . $store->getCode() .
                             ' Item ' . $item->getId() . '. Integration will try again in next cron run.'
                         );
+
                         continue;
+
                     } elseif (is_string($result)) {
                         $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $result);
                         $this->updateProfilesStatus(
@@ -143,6 +147,7 @@ class Batch implements ProfileSyncInterface
                             Profile::SYNC_STATUS_FAILED,
                             'Batch id: ' . $item->getId() . ' - ' . $result
                         );
+
                         continue;
                     }
 
@@ -151,6 +156,7 @@ class Batch implements ProfileSyncInterface
                             $this->apsisCoreHelper->validateIsUrlReachable($result->file_upload_url);
                         } catch (Exception $e) {
                             $this->apsisCoreHelper->logError(__METHOD__, $e);
+
                             $this->apsisCoreHelper->disableProfileSync(ScopeInterface::SCOPE_STORES, $store->getId());
                             return;
                         }
@@ -169,6 +175,7 @@ class Batch implements ProfileSyncInterface
                                 __METHOD__ . ': Unable to upload file for Store ' . $store->getCode() .
                                 ' Item ' . $item->getId()
                             );
+
                             continue;
                         } elseif (is_string($status)) {
                             $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $status);
@@ -177,6 +184,7 @@ class Batch implements ProfileSyncInterface
                                 Profile::SYNC_STATUS_FAILED,
                                 'Batch id: ' . $item->getId() . ' - ' . $result
                             );
+
                             continue;
                         }
 
@@ -202,11 +210,13 @@ class Batch implements ProfileSyncInterface
         StoreInterface $store,
         string $sectionDiscriminator
     ) {
-        $collection = $this->profileBatchFactory->create()
+        $collection = $this->profileBatchFactory
+            ->create()
             ->getProcessingBatchItemsForStore($store->getId());
+
         if ($collection->getSize()) {
             $this->importCountInProcessingStatus = $collection->getSize();
-            /** @var ProfileBatch $item */
+
             foreach ($collection as $item) {
                 try {
                     $result = $apiClient->getImportStatus($sectionDiscriminator, $item->getImportId());
@@ -215,6 +225,7 @@ class Batch implements ProfileSyncInterface
                             __METHOD__ . ': Unable to get import status for Store ' . $store->getCode() .
                             ' Item ' . $item->getId()
                         );
+
                         continue;
                     }
 
@@ -225,6 +236,7 @@ class Batch implements ProfileSyncInterface
                             Profile::SYNC_STATUS_FAILED,
                             'Batch id: ' . $item->getId() . ' - ' . $result
                         );
+
                         continue;
                     }
 
@@ -291,6 +303,7 @@ class Batch implements ProfileSyncInterface
                     $this->apsisCoreHelper,
                     $msg
                 );
+
                 //Reset subscriber status to 5, if not a subscriber
                 $this->profileResource->updateSubscribersSyncStatus(
                     $ids,

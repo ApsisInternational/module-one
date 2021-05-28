@@ -55,9 +55,7 @@ class ValidateApi implements ObserverInterface
     }
 
     /**
-     * @param Observer $observer
-     *
-     * @return $this
+     * @inheritdoc
      */
     public function execute(Observer $observer)
     {
@@ -71,37 +69,44 @@ class ValidateApi implements ObserverInterface
                 isset($groups['oauth']['fields']['secret']['inherit'])
             ) {
                 if (in_array($scope['context_scope'], [ScopeInterface::SCOPE_STORES, ScopeInterface::SCOPE_WEBSITES])) {
-                    $this->apsisCoreHelper->removeTokenConfig(
-                        __METHOD__,
-                        $scope['context_scope'],
-                        $scope['context_scope_id'],
-                        false
-                    );
+                    $this->disableAccountAndRemoveConfig($scope, true);
                 }
 
                 return $this;
             }
 
-            //Additional measure in case registry exist, means should disable account
-            if ($this->registry->registry(Value::REGISTRY_NAME_FOR_ERROR)) {
-                $this->apsisCoreHelper->disableAccountAndRemoveTokenConfig(
-                    __METHOD__,
-                    $scope['context_scope'],
-                    $scope['context_scope_id']
-                );
-
+            if ($this->registry->registry(Value::REGISTRY_NAME_FOR_STATUS_CHECK) === 2) {
+                $this->disableAccountAndRemoveConfig($scope);
                 return $this;
             }
         } catch (Exception $e) {
-            $this->apsisCoreHelper->disableAccountAndRemoveTokenConfig(
-                __METHOD__,
-                $scope['context_scope'],
-                $scope['context_scope_id']
-            );
+            $this->disableAccountAndRemoveConfig($scope);
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             $this->messageManager->addWarningMessage(__('Unable Something went wrong, please check exception logs.'));
         }
 
         return $this;
+    }
+
+    /**
+     * @param array $scope
+     * @param bool $isRemoveOnlyTokenConfig
+     */
+    private function disableAccountAndRemoveConfig(array $scope, bool $isRemoveOnlyTokenConfig = false)
+    {
+        if ($isRemoveOnlyTokenConfig) {
+            $this->apsisCoreHelper->removeTokenConfig(
+                __METHOD__,
+                $scope['context_scope'],
+                $scope['context_scope_id'],
+                false
+            );
+        } else {
+            $this->apsisCoreHelper->disableAccountAndRemoveTokenConfig(
+                __METHOD__,
+                $scope['context_scope'],
+                $scope['context_scope_id']
+            );
+        }
     }
 }

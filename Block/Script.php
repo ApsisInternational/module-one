@@ -5,7 +5,6 @@ namespace Apsis\One\Block;
 use Exception;
 use Magento\Framework\View\Element\Template;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
-use Magento\Store\Model\StoreManagerInterface;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
 
 /**
@@ -21,26 +20,15 @@ class Script extends Template
     private $apsisLogHelper;
 
     /**
-     * @var StoreManagerInterface
-     */
-    private $storeManager;
-
-    /**
      * Cart constructor.
      *
      * @param Template\Context $context
      * @param ApsisLogHelper $apsisLogHelper
-     * @param StoreManagerInterface $storeManager
      * @param array $data
      */
-    public function __construct(
-        Template\Context $context,
-        ApsisLogHelper $apsisLogHelper,
-        StoreManagerInterface $storeManager,
-        array $data = []
-    ) {
+    public function __construct(Template\Context $context, ApsisLogHelper $apsisLogHelper, array $data = [])
+    {
         $this->apsisLogHelper = $apsisLogHelper;
-        $this->storeManager = $storeManager;
         parent::__construct($context, $data);
     }
 
@@ -49,18 +37,24 @@ class Script extends Template
      */
     public function getScriptText()
     {
+        $text = '';
+
         try {
-            $store = $this->storeManager->getStore();
-            $isAccountEnabled = (boolean) $store->getConfig(ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED);
-            $isTrackingEnabled = (boolean) $store->getConfig(
-                ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_ENABLED
-            );
-            if ($isAccountEnabled && $isTrackingEnabled) {
-                return (string) $store->getConfig(ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_SCRIPT);
+            $isTrackingEnabled = (boolean) $this->_storeManager
+                ->getStore()
+                ->getConfig(ApsisConfigHelper::TRACKING_ENABLED);
+            $trackingTextConfig = (string) $this->_storeManager
+                ->getStore()
+                ->getConfig(ApsisConfigHelper::TRACKING_SCRIPT);
+
+            if ($isTrackingEnabled && strlen($trackingTextConfig)) {
+                return $trackingTextConfig;
             }
+
         } catch (Exception $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
         }
-        return '';
+
+        return $text;
     }
 }

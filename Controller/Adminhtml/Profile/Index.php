@@ -34,9 +34,7 @@ class Index extends AbstractAction
     }
 
     /**
-     * Index action.
-     *
-     * @return Page
+     * @inheritdoc
      */
     public function execute()
     {

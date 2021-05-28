@@ -19,9 +19,7 @@ class ProfileBatch extends AbstractDb implements ResourceInterface
     }
 
     /**
-     * @param ApsisLogHelper $apsisLogHelper
-     *
-     * @return bool
+     * @inheritdoc
      */
     public function truncateTable(ApsisLogHelper $apsisLogHelper)
     {
@@ -35,8 +33,7 @@ class ProfileBatch extends AbstractDb implements ResourceInterface
     }
 
     /**
-     * @param int $day
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @inheritdoc
      */
     public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper)
     {

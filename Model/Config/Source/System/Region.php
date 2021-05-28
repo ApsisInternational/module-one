@@ -14,16 +14,20 @@ class Region implements OptionSourceInterface
     const REGION_STAGE = 'api-stage';
 
     /**
-     * @return array
+     * @inheritdoc
      */
     public function toOptionArray()
     {
-        $options[] = ['value' => '', 'label' => __('Please select region')];
+        $options = [
+            ['value' => '', 'label' => __('Please select region')],
+            ['value' => self::REGION_EU, 'label' => 'EU'],
+            ['value' => self::REGION_APAC, 'label' => 'APAC']
+        ];
+
         if ((bool) getenv('APSIS_DEVELOPER')) {
             $options[] = ['value' => self::REGION_STAGE, 'label' => 'Stage'];
         }
-        $options[] = ['value' => self::REGION_EU, 'label' => 'EU'];
-        $options[] = ['value' => self::REGION_APAC, 'label' => 'APAC'];
+
         return $options;
     }
 }

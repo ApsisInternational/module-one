@@ -164,7 +164,7 @@ class Events implements SyncInterface
     }
 
     /**
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @inheritdoc
      */
     public function process(ApsisCoreHelper $apsisCoreHelper)
     {
@@ -174,16 +174,16 @@ class Events implements SyncInterface
             try {
                 $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
                     $store,
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+                    ApsisConfigHelper::MAPPINGS_SECTION_SECTION
                 );
                 $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
                 $this->mappedEmailAttribute = $this->apsisCoreHelper->getStoreConfig(
                     $store,
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
+                    ApsisConfigHelper::MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
                 );
                 $this->mappedProfileKeyAttribute = $this->apsisCoreHelper->getStoreConfig(
                     $store,
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_PROFILE_KEY
+                    ApsisConfigHelper::MAPPINGS_CUSTOMER_SUBSCRIBER_PROFILE_KEY
                 );
 
                 if ($this->sectionDiscriminator && $client && $this->mappedEmailAttribute) {

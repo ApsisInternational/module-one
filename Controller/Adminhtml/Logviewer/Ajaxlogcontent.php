@@ -58,7 +58,7 @@ class Ajaxlogcontent extends Action
     }
 
     /**
-     * Ajax get log file content.
+     * @inheritdoc
      */
     public function execute()
     {

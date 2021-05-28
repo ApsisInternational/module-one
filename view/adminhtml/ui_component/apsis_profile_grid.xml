@@ -86,7 +86,7 @@
                         <item name="url" xsi:type="url" path="*/*/massDelete"/>
                         <item name="confirm" xsi:type="array">
                             <item name="title" xsi:type="string" translate="true">Delete items</item>
-                            <item name="message" xsi:type="string" translate="true">Are you sure to delete?</item>
+                            <item name="message" xsi:type="string" translate="true">This action will delete record(s) from integration table in Magento, as well as already synced Profile(s) along with all of its associated data such as Attributes, Events and Consents will be removed from APSIS One. Are you sure to delete?</item>
                         </item>
                     </item>
                 </argument>
@@ -99,7 +99,7 @@
                         <item name="url" xsi:type="url" path="*/*/massReset"/>
                         <item name="confirm" xsi:type="array">
                             <item name="title" xsi:type="string" translate="true">Reset items</item>
-                            <item name="message" xsi:type="string" translate="true">Are you sure to reset profile sync?</item>
+                            <item name="message" xsi:type="string" translate="true">This action will reset record(s) to re-sync. Are you sure to reset profile sync?</item>
                         </item>
                     </item>
                 </argument>

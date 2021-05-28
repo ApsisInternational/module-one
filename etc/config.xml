@@ -97,7 +97,6 @@
                 <cleanup_after>30</cleanup_after>
                 <cron_schedule_profile_sync>*/5 * * * *</cron_schedule_profile_sync>
                 <cron_schedule_events_sync>*/5 * * * *</cron_schedule_events_sync>
-                <cron_schedule_historical_events>0 0 * * *</cron_schedule_historical_events>
             </developer_settings>
         </apsis_one_configuration>
     </default>

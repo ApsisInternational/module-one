@@ -7,18 +7,14 @@ use Apsis\One\Model\Event;
 use Apsis\One\Model\Events\Historical\Wishlist\Data as WishlistEventData;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile\Collection as ProfileCollection;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Exception;
-use Magento\Framework\App\Area;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Wishlist\Model\ResourceModel\Item\Collection as WishlistItemCollection;
 use Magento\Wishlist\Model\ResourceModel\Item\CollectionFactory as WishlistItemCollectionFactory;
 use Magento\Wishlist\Model\ResourceModel\Wishlist\CollectionFactory as WishlistCollectionFactory;
-use Magento\Wishlist\Model\Wishlist as MagentoWishlist;
 use Magento\Wishlist\Model\Item as MagentoWishlistItem;
-use Magento\Store\Model\App\EmulationFactory;
 
 class Wishlist extends HistoricalEvent implements EventHistoryInterface
 {
@@ -33,18 +29,12 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
     private $wishlistCollectionFactory;
 
     /**
-     * @var EmulationFactory
-     */
-    private $emulationFactory;
-
-    /**
      * Wishlist constructor.
      *
      * @param DateTime $dateTime
      * @param WishlistItemCollectionFactory $wishlistItemCollectionFactory
      * @param WishlistCollectionFactory $wishlistCollectionFactory
      * @param WishlistEventData $wishlistEventData
-     * @param EmulationFactory $emulationFactory
      * @param EventResource $eventResource
      */
     public function __construct(
@@ -52,74 +42,67 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
         WishlistItemCollectionFactory $wishlistItemCollectionFactory,
         WishlistCollectionFactory $wishlistCollectionFactory,
         WishlistEventData $wishlistEventData,
-        EmulationFactory $emulationFactory,
         EventResource $eventResource
     ) {
         $this->dateTime = $dateTime;
         $this->eventResource = $eventResource;
-        $this->emulationFactory = $emulationFactory;
         $this->eventData = $wishlistEventData;
         $this->wishlistCollectionFactory = $wishlistCollectionFactory;
         $this->wishlistItemCollectionFactory = $wishlistItemCollectionFactory;
     }
 
     /**
-     * @param StoreInterface $store
-     * @param ApsisCoreHelper $apsisCoreHelper
-     * @param ProfileCollection $profileCollection
-     * @param array $duration
+     * @inheritdoc
      */
     public function fetchForStore(
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper,
         ProfileCollection $profileCollection,
-        array $duration
+        array $duration,
+        array $profileCollectionArray
     ) {
-        if ((boolean) $apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_WISHLIST
-        )) {
-            $appEmulation = $this->emulationFactory->create();
-            try {
-                $appEmulation->startEnvironmentEmulation($store->getId(), Area::AREA_FRONTEND, true);
-                if (! empty($profileCollectionArray =
-                        $this->getFormattedProfileCollection($profileCollection, $apsisCoreHelper)) &&
-                    ! empty($wishlistArrayCollection = $this->getWishlistCollection(
-                        array_keys($profileCollectionArray),
-                        $apsisCoreHelper
-                    )) &&
-                    ! empty($wishlistItemCollection = $this->getWishlistItemCollection(
-                        $store->getId(),
-                        array_keys($wishlistArrayCollection),
-                        $duration,
-                        $apsisCoreHelper
-                    ))
-                ) {
-                    $eventsToRegister = $this->getEventsToRegister(
-                        $wishlistItemCollection,
-                        $wishlistArrayCollection,
-                        $profileCollectionArray,
-                        $apsisCoreHelper,
-                        $store
-                    );
-                    $status = $this->registerEvents(
-                        $eventsToRegister,
-                        $apsisCoreHelper,
-                        $store,
-                        ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_WISHLIST_HISTORY_DONE_FLAG
-                    );
-
-                    $info = [
-                        'Total Events Inserted' => $status,
-                        'Store Id' => $store->getId()
-                    ];
-                    $apsisCoreHelper->debug(__METHOD__, $info);
-                }
-            } catch (Exception $e) {
-                $apsisCoreHelper->logError(__METHOD__, $e);
-                $appEmulation->stopEnvironmentEmulation();
+        try {
+            if (empty($profileCollectionArray)) {
+                return;
             }
-            $appEmulation->stopEnvironmentEmulation();
+
+            $wishlistArrayCollection = $this->getWishlistCollection(
+                array_keys($profileCollectionArray),
+                $apsisCoreHelper
+            );
+            if (empty($wishlistArrayCollection)) {
+                return;
+            }
+
+            $wishlistItemCollection = $this->getWishlistItemCollection(
+                $store->getId(),
+                array_keys($wishlistArrayCollection),
+                $duration,
+                $apsisCoreHelper
+            );
+            if (empty($wishlistItemCollection)) {
+                return;
+            }
+
+            $eventsToRegister = $this->getEventsToRegister(
+                $wishlistItemCollection,
+                $wishlistArrayCollection,
+                $profileCollectionArray,
+                $apsisCoreHelper,
+                $store
+            );
+
+            $status = $this->registerEvents($eventsToRegister, $apsisCoreHelper);
+
+            if ($status) {
+                $info = [
+                    'Total Events Inserted' => $status,
+                    'Store Id' => $store->getId()
+                ];
+                $apsisCoreHelper->debug(__METHOD__, $info);
+            }
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -132,11 +115,13 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
     private function getWishlistCollection(array $customerIds, ApsisCoreHelper $apsisCoreHelper)
     {
         $wishlistCollectionArray = [];
+
         try {
-            $wishlistCollection = $this->wishlistCollectionFactory->create()
+            $wishlistCollection = $this->wishlistCollectionFactory
+                ->create()
                 ->filterByCustomerIds($customerIds);
+
             if ($wishlistCollection->getSize()) {
-                /** @var MagentoWishlist $wishlist */
                 foreach ($wishlistCollection as $wishlist) {
                     $wishlistCollectionArray[$wishlist->getId()] =  $wishlist;
                 }
@@ -144,6 +129,7 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }
+
         return $wishlistCollectionArray;
     }
 
@@ -193,33 +179,38 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
         StoreInterface $store
     ) {
         $eventsToRegister = [];
+
         /** @var  MagentoWishlistItem $wishlistItem */
         foreach ($wishlistItemCollection as $wishlistItem) {
             try {
-                if (isset($wishlistArrayCollection[$wishlistItem->getWishlistId()]) &&
-                    isset($profileCollectionArray[$wishlistArrayCollection[$wishlistItem->getWishlistId()]
-                            ->getCustomerId()])
-                ) {
-                    $eventData = $this->eventData->getDataArr(
-                        $wishlistArrayCollection[$wishlistItem->getWishlistId()],
-                        $store,
-                        $wishlistItem,
-                        $wishlistItem->getProduct(),
+                if (empty($wishList = $wishlistArrayCollection[$wishlistItem->getWishlistId()])) {
+                    continue;
+                }
+
+                if (empty($profile = $profileCollectionArray[$wishList->getCustomerId()])) {
+                    continue;
+                }
+
+                $eventData = $this->eventData->getDataArr(
+                    $wishList,
+                    $store,
+                    $wishlistItem,
+                    $wishlistItem->getProduct(),
+                    $apsisCoreHelper
+                );
+
+                if (! empty($eventData)) {
+                    $eventDataForEvent = $this->getEventData(
+                        $wishlistItem->getStoreId(),
+                        $profile,
+                        Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST,
+                        $wishlistItem->getAddedAt(),
+                        $apsisCoreHelper->serialize($eventData),
                         $apsisCoreHelper
                     );
-                    if (! empty($eventData)) {
-                        $eventDataForEvent = $this->getEventData(
-                            $wishlistItem->getStoreId(),
-                            $profileCollectionArray[$wishlistArrayCollection[$wishlistItem->getWishlistId()]
-                                ->getCustomerId()],
-                            Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST,
-                            $wishlistItem->getAddedAt(),
-                            $apsisCoreHelper->serialize($eventData),
-                            $apsisCoreHelper
-                        );
-                        if (! empty($eventDataForEvent)) {
-                            $eventsToRegister[] = $eventDataForEvent;
-                        }
+
+                    if (! empty($eventDataForEvent)) {
+                        $eventsToRegister[] = $eventDataForEvent;
                     }
                 }
             } catch (Exception $e) {
@@ -227,6 +218,7 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
                 continue;
             }
         }
+
         return $eventsToRegister;
     }
 }

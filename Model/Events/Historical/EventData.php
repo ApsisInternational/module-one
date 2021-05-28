@@ -16,9 +16,8 @@ class EventData
      *
      * @param ProductServiceProvider $productServiceProvider
      */
-    public function __construct(
-        ProductServiceProvider $productServiceProvider
-    ) {
+    public function __construct(ProductServiceProvider $productServiceProvider)
+    {
         $this->productServiceProvider = $productServiceProvider;
     }
 }

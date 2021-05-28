@@ -9,6 +9,7 @@ use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Event;
 use Exception;
+use Magento\Framework\DataObject;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Newsletter\Model\SubscriberFactory;
@@ -67,9 +68,7 @@ class Placed implements ObserverInterface
     }
 
     /**
-     * @param Observer $observer
-     *
-     * @return $this
+     * @inheritdoc
      */
     public function execute(Observer $observer)
     {
@@ -94,7 +93,7 @@ class Placed implements ObserverInterface
     /**
      * @param Order $order
      *
-     * @return bool|Profile
+     * @return bool|DataObject
      */
     private function findProfile(Order $order)
     {
@@ -107,6 +106,7 @@ class Placed implements ObserverInterface
                     return $profile;
                 }
             }
+
             $subscriber = $this->subscriberFactory->create()->loadByEmail($order->getCustomerEmail());
             if ($subscriber->getId()) {
                 $found = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
@@ -114,6 +114,7 @@ class Placed implements ObserverInterface
                     return $found;
                 }
             }
+
             return false;
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
@@ -131,7 +132,7 @@ class Placed implements ObserverInterface
         $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_ORDER
+            ApsisConfigHelper::EVENTS_CUSTOMER_ORDER
         );
 
         return ($account && $event);

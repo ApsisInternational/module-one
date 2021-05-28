@@ -24,8 +24,7 @@ class SubscriptionEndpoint extends FieldBase
     }
 
     /**
-     * @param AbstractElement $element
-     * @return string
+     * @inheritdoc
      */
     public function _getElementHtml(AbstractElement $element)
     {

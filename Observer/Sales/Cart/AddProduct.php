@@ -68,9 +68,7 @@ class AddProduct implements ObserverInterface
     }
 
     /**
-     * @param Observer $observer
-     *
-     * @return $this
+     * @inheritdoc
      */
     public function execute(Observer $observer)
     {
@@ -112,7 +110,7 @@ class AddProduct implements ObserverInterface
         $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_PRODUCT_CARTED
+            ApsisConfigHelper::EVENTS_PRODUCT_CARTED
         );
         return ($account && $event);
     }

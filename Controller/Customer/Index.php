@@ -4,8 +4,6 @@ namespace Apsis\One\Controller\Customer;
 
 use Magento\Customer\Model\Session;
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\App\ResponseInterface;
-use Magento\Framework\Controller\ResultInterface;
 use Magento\Newsletter\Controller\Manage;
 use Magento\Newsletter\Model\SubscriberFactory;
 
@@ -23,11 +21,8 @@ class Index extends Manage
      * @param Session $customerSession
      * @param SubscriberFactory $subscriberFactory
      */
-    public function __construct(
-        Context $context,
-        Session $customerSession,
-        SubscriberFactory $subscriberFactory
-    ) {
+    public function __construct(Context $context, Session $customerSession, SubscriberFactory $subscriberFactory)
+    {
         $this->subscriberFactory = $subscriberFactory;
         parent::__construct($context, $customerSession);
     }

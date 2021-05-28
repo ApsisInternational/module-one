@@ -8,7 +8,7 @@ use Apsis\One\Model\Event;
 class EventTypes implements OptionSourceInterface
 {
     /**
-     * @return array
+     * @inheritdoc
      */
     public function toOptionArray()
     {

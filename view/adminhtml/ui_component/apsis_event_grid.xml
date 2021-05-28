@@ -84,7 +84,7 @@
                         <item name="url" xsi:type="url" path="*/*/massDelete"/>
                         <item name="confirm" xsi:type="array">
                             <item name="title" xsi:type="string" translate="true">Delete items</item>
-                            <item name="message" xsi:type="string" translate="true">Are you sure to delete?</item>
+                            <item name="message" xsi:type="string" translate="true">This action will only delete record(s) from integration in Magento. Already synced record(s) still remains in APSIS One. Are you sure to delete?</item>
                         </item>
                     </item>
                 </argument>
@@ -97,7 +97,7 @@
                         <item name="url" xsi:type="url" path="*/*/massReset"/>
                         <item name="confirm" xsi:type="array">
                             <item name="title" xsi:type="string" translate="true">Reset items</item>
-                            <item name="message" xsi:type="string" translate="true">Are you sure to reset event sync?</item>
+                            <item name="message" xsi:type="string" translate="true">This action will reset record(s) to re-sync. If record(s) are already synced to mapped section then there is the possibility of duplicate record(s) in APSIS One. Are you sure to reset event sync?</item>
                         </item>
                     </item>
                 </argument>

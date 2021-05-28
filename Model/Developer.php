@@ -8,6 +8,7 @@ use Apsis\One\Model\ResourceModel\Profile;
 use Apsis\One\Model\ResourceModel\ProfileBatch;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Exception;
 
 class Developer
 {
@@ -64,17 +65,22 @@ class Developer
      */
     public function resetModule()
     {
-        $this->apsisLogHelper->log('Module full reset is performed.');
-        return (
-            $this->profileBatch->truncateTable($this->apsisLogHelper) &&
-            $this->event->truncateTable($this->apsisLogHelper) &&
-            $this->abandoned->truncateTable($this->apsisLogHelper) &&
-            $this->profile->truncateTable($this->apsisLogHelper) &&
-            $this->profile->populateProfilesTable($this->apsisLogHelper) &&
-            $this->profile->deleteAllModuleConfig(
-                $this->apsisLogHelper,
-                sprintf("AND path != '%s'", ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY)
-            )
-        );
+        try {
+            $this->apsisLogHelper->log('Module full reset is performed.');
+            return (
+                $this->profileBatch->truncateTable($this->apsisLogHelper) &&
+                $this->event->truncateTable($this->apsisLogHelper) &&
+                $this->abandoned->truncateTable($this->apsisLogHelper) &&
+                $this->profile->truncateTable($this->apsisLogHelper) &&
+                $this->profile->populateProfilesTable($this->apsisLogHelper) &&
+                $this->profile->deleteAllModuleConfig(
+                    $this->apsisLogHelper,
+                    sprintf("AND path != '%s'", ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY)
+                )
+            );
+        } catch (Exception $e) {
+            $this->apsisLogHelper->logError(__METHOD__, $e);
+            return false;
+        }
     }
 }

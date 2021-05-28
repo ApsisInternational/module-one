@@ -156,7 +156,7 @@ class Event
     ) {
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_2_SUBSCRIBER
+            ApsisConfigHelper::EVENTS_CUSTOMER_2_SUBSCRIBER
         );
         if ($event && $profile->getIsCustomer() && ! $profile->getIsSubscriber()) {
             $this->registerEvent(
@@ -197,7 +197,7 @@ class Event
 
         if ((boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_UNSUBSCRIBE
+            ApsisConfigHelper::EVENTS_SUBSCRIBER_UNSUBSCRIBE
         )) {
             $this->registerEvent(
                 EventModel::EVENT_TYPE_SUBSCRIBER_UNSUBSCRIBE,
@@ -268,7 +268,7 @@ class Event
     {
         if ((boolean) $this->apsisCoreHelper->getStoreConfig(
             $customer->getStore(),
-            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_2_CUSTOMER
+            ApsisConfigHelper::EVENTS_SUBSCRIBER_2_CUSTOMER
         ) && $profile->getIsSubscriber() && ! $profile->getIsCustomer()) {
             $eventData = [
                 'subscriberId' => (int) $profile->getSubscriberId(),
@@ -324,7 +324,7 @@ class Event
     /**
      * @param Review $reviewObject
      * @param Product $product
-     * @param $profile
+     * @param Profile $profile
      * @param CustomerInterface $customer
      */
     public function registerProductReviewEvent(

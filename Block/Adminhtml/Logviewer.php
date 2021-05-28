@@ -6,11 +6,6 @@ use Magento\Backend\Block\Widget\Container;
 use Apsis\One\Model\Service\File;
 use Magento\Backend\Block\Widget\Context;
 
-/**
- * Log viewer block
- *
- * @api
- */
 class Logviewer extends Container
 {
 
@@ -38,7 +33,7 @@ class Logviewer extends Container
     }
 
     /**
-     * @return void
+     * @inheritdoc
      */
     public function _construct()
     {

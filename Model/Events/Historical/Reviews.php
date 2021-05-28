@@ -5,7 +5,6 @@ namespace Apsis\One\Model\Events\Historical;
 use Apsis\One\Model\Events\Historical\Event as HistoricalEvent;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile\Collection as ProfileCollection;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Exception;
 use Magento\Framework\Stdlib\DateTime;
@@ -14,7 +13,6 @@ use Magento\Review\Model\ResourceModel\Review\CollectionFactory as ProductReview
 use Magento\Review\Model\ResourceModel\Review\Collection as ProductReviewCollection;
 use Magento\Review\Model\Review;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
-use Magento\Catalog\Model\Product;
 use Apsis\One\Model\Events\Historical\Reviews\Data as ReviewEventData;
 use Apsis\One\Model\Event;
 use Magento\Review\Model\ReviewFactory;
@@ -63,58 +61,57 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
     }
 
     /**
-     * @param StoreInterface $store
-     * @param ApsisCoreHelper $apsisCoreHelper
-     * @param ProfileCollection $profileCollection
-     * @param array $duration
+     * @inheritdoc
      */
     public function fetchForStore(
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper,
         ProfileCollection $profileCollection,
-        array $duration
+        array $duration,
+        array $profileCollectionArray
     ) {
-        if ((boolean) $apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_REVIEW
-        )) {
-            try {
-                if (! empty($profileCollectionArray =
-                        $this->getFormattedProfileCollection($profileCollection, $apsisCoreHelper)) &&
-                    ! empty($reviewCollection = $this->getReviewCollection(
-                        $apsisCoreHelper,
-                        $store,
-                        array_keys($profileCollectionArray),
-                        $duration
-                    )) &&
-                    ! empty($productCollectionArray = $this->getProductCollectionArray(
-                        $store,
-                        $apsisCoreHelper,
-                        $reviewCollection->getColumnValues('entity_pk_value')
-                    ))
-                ) {
-                    $eventsToRegister = $this->getEventsToRegister(
-                        $apsisCoreHelper,
-                        $reviewCollection,
-                        $profileCollectionArray,
-                        $productCollectionArray
-                    );
-                    $status = $this->registerEvents(
-                        $eventsToRegister,
-                        $apsisCoreHelper,
-                        $store,
-                        ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_REVIEW_HISTORY_DONE_FLAG
-                    );
-
-                    $info = [
-                        'Total Events Inserted' => $status,
-                        'Store Id' => $store->getId()
-                    ];
-                    $apsisCoreHelper->debug(__METHOD__, $info);
-                }
-            } catch (Exception $e) {
-                $apsisCoreHelper->logError(__METHOD__, $e);
+        try {
+            if (empty($profileCollectionArray)) {
+                return;
             }
+
+            $reviewCollection = $this->getReviewCollection(
+                $apsisCoreHelper,
+                $store,
+                array_keys($profileCollectionArray),
+                $duration
+            );
+            if (empty($reviewCollection)) {
+                return;
+            }
+
+            $productCollectionArray = $this->getProductCollectionArray(
+                $store,
+                $apsisCoreHelper,
+                $reviewCollection->getColumnValues('entity_pk_value')
+            );
+            if (empty($productCollectionArray)) {
+                return;
+            }
+
+            $eventsToRegister = $this->getEventsToRegister(
+                $apsisCoreHelper,
+                $reviewCollection,
+                $profileCollectionArray,
+                $productCollectionArray
+            );
+
+            $status = $this->registerEvents($eventsToRegister, $apsisCoreHelper);
+
+            if ($status) {
+                $info = [
+                    'Total Events Inserted' => $status,
+                    'Store Id' => $store->getId()
+                ];
+                $apsisCoreHelper->debug(__METHOD__, $info);
+            }
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -133,6 +130,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
         array $productCollectionArray
     ) {
         $eventsToRegister = [];
+
         /** @var Review $review */
         foreach ($reviewCollection as $review) {
             try {
@@ -145,6 +143,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
                         $productCollectionArray[$review->getEntityPkValue()],
                         $apsisCoreHelper
                     );
+
                     if (! empty($eventData)) {
                         $eventDataForEvent = $this->getEventData(
                             $review->getStoreId(),
@@ -164,6 +163,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
                 continue;
             }
         }
+
         return $eventsToRegister;
     }
 
@@ -180,6 +180,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
         array $productIds
     ) {
         $productCollectionArray = [];
+
         try {
             $productCollection = $this->productCollectionFactory->create()
                 ->addAttributeToSelect('*')
@@ -187,13 +188,14 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
                 ->addIdFilter($productIds)
                 ->addUrlRewrite()
                 ->addPriceData();
-            /** @var Product $product */
+
             foreach ($productCollection as $product) {
                 $productCollectionArray[$product->getId()] = $product;
             }
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }
+
         return $productCollectionArray;
     }
 

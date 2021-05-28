@@ -88,20 +88,20 @@ class Customers implements ProfileSyncInterface
     }
 
     /**
-     * @param StoreInterface $store
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @inheritdoc
      */
     public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
     {
         try {
             $this->apsisCoreHelper = $apsisCoreHelper;
+
             $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
                 $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+                ApsisConfigHelper::MAPPINGS_SECTION_SECTION
             );
             $sync = (boolean) $this->apsisCoreHelper->getStoreConfig(
                 $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED
+                ApsisConfigHelper::SYNC_SETTING_CUSTOMER_ENABLED
             );
             $mappings = $this->apsisConfigHelper->getCustomerAttributeMapping($store);
             $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
@@ -109,14 +109,17 @@ class Customers implements ProfileSyncInterface
             if ($client && $sectionDiscriminator && $sync && ! empty($mappings) && isset($mappings['email'])) {
                 $attributesArrWithVersionId = $this->apsisCoreHelper
                     ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
+
                 $this->keySpaceDiscriminator = $this->apsisCoreHelper
                     ->getKeySpaceDiscriminator($sectionDiscriminator);
+
                 $limit = $this->apsisCoreHelper->getStoreConfig(
                     $store,
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_CUSTOMER_BATCH_SIZE
+                    ApsisConfigHelper::PROFILE_SYNC_CUSTOMER_BATCH_SIZE
                 );
+
                 $collection = $this->profileCollectionFactory->create()
-                    ->getCustomerToBatchByStore($store->getId(), ($limit) ? $limit : self::LIMIT);
+                    ->getCustomerToBatchByStore($store->getId(), ($limit) ?: self::LIMIT);
 
                 if ($collection->getSize() && ! empty($attributesArrWithVersionId)) {
                     $this->batchCustomersForStore($store, $collection, $mappings, $attributesArrWithVersionId);
@@ -142,6 +145,7 @@ class Customers implements ProfileSyncInterface
                 } catch (Exception $e) {
                     $this->apsisCoreHelper->logError(__METHOD__, $e);
                     $this->apsisCoreHelper->log(__METHOD__ . ' Skipped for Customer id: ' . $customer->getId());
+
                     continue;
                 }
             }
@@ -176,28 +180,40 @@ class Customers implements ProfileSyncInterface
             $mappings = array_merge([Profile::INTEGRATION_KEYSPACE => Profile::INTEGRATION_KEYSPACE], $mappings);
             $this->apsisFileHelper->outputCSV($file, array_keys($mappings));
             $customerIds = $collection->getColumnValues('customer_id');
-            $customerCollection = $this->profileResource->buildCustomerCollection((int) $store->getId(), $customerIds);
+
+            $customerCollection = $this->profileResource->buildCustomerCollection(
+                (int) $store->getId(),
+                $customerIds,
+                $this->apsisCoreHelper
+            );
+            if (empty($customerCollection)) {
+                return;
+            }
+
             $salesData = $this->profileResource->getSalesDataForCustomers($store, $customerIds, $this->apsisCoreHelper);
             $customersToUpdate = [];
 
-            /** @var Customer $customer */
             foreach ($customerCollection as $customer) {
                 try {
                     if (isset($integrationIdsArray[$customer->getId()])) {
                         $customer->setIntegrationUid($integrationIdsArray[$customer->getId()]);
                         $customer->setProfileKey($integrationIdsArray[$customer->getId()]);
+
                         if (isset($salesData[$customer->getId()])) {
                             $customer = $this->setSalesDataOnCustomer($salesData[$customer->getId()], $customer);
                         }
+
                         $customerData = $this->customerDataFactory->create()
                             ->setModelData(array_keys($mappings), $customer, $this->apsisCoreHelper)
                             ->toCSVArray();
+
                         $this->apsisFileHelper->outputCSV($file, $customerData);
                         $customersToUpdate[] = $customer->getId();
                     }
                 } catch (Exception $e) {
                     $this->apsisCoreHelper->logError(__METHOD__, $e);
                     $this->apsisCoreHelper->log(__METHOD__ . ': Skipped customer with id :' . $customer->getId());
+
                     continue;
                 }
                 $customer->clearInstance();
@@ -213,6 +229,7 @@ class Customers implements ProfileSyncInterface
                         implode(',', $customersToUpdate),
                         $this->apsisCoreHelper->serialize($jsonMappings)
                     );
+
                 $this->profileResource->updateCustomerSyncStatus(
                     $customersToUpdate,
                     Profile::SYNC_STATUS_BATCHED,
@@ -242,20 +259,22 @@ class Customers implements ProfileSyncInterface
     private function getIntegrationIdsArray(Collection $collection)
     {
         $integrationIdsArray = [];
+
         try {
-            /** @var Profile $item */
             foreach ($collection as $item) {
                 try {
                     $integrationIdsArray[$item->getCustomerId()] = $item->getIntegrationUid();
                 } catch (Exception $e) {
                     $this->apsisCoreHelper->logError(__METHOD__, $e);
                     $this->apsisCoreHelper->log(__METHOD__ . ' Skipped for Profile id: ' . $item->getId());
+
                     continue;
                 }
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
+
         return $integrationIdsArray;
     }
 }

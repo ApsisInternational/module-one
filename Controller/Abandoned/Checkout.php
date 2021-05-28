@@ -61,7 +61,7 @@ class Checkout extends Action
     }
 
     /**
-     * @return ResponseInterface|ResultInterface
+     * @inheritdoc
      */
     public function execute()
     {

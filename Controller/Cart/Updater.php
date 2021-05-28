@@ -7,8 +7,7 @@ use Exception;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\App\ResponseInterface;
-use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Quote\Model\ResourceModel\Quote;
 
 class Updater extends Action
@@ -29,19 +28,26 @@ class Updater extends Action
     private $log;
 
     /**
+     * @var Validator
+     */
+    private $formKeyValidator;
+
+    /**
      * Updater constructor.
      *
+     * @param Context $context
+     * @param Validator $formKeyValidator
      * @param Log $log
      * @param Quote $quoteResource
      * @param Session $session
-     * @param Context $context
      */
-    public function __construct(
+    public function __construct(Context $context,
+        Validator $formKeyValidator,
         Log $log,
         Quote $quoteResource,
-        Session $session,
-        Context $context
+        Session $session
     ) {
+        $this->formKeyValidator = $formKeyValidator;
         $this->log = $log;
         $this->quoteResource = $quoteResource;
         $this->cartSession = $session;
@@ -49,14 +55,18 @@ class Updater extends Action
     }
 
     /**
-     * @return ResponseInterface|ResultInterface|void
+     * @inheritdoc
      */
     public function execute()
     {
         try {
-            if (! empty($email = $this->getRequest()->getParam('email')) &&
-                filter_var($email, FILTER_VALIDATE_EMAIL) && ! empty($quote = $this->cartSession->getQuote()) &&
-                $quote->hasItems() && ! $quote->getCustomerEmail()
+            if ($this->formKeyValidator->validate($this->getRequest()) &&
+                $this->getRequest()->isPost() &&
+                $this->getRequest()->isAjax() &&
+                ! empty($email = $this->getRequest()->getParam('email')) &&
+                filter_var($email, FILTER_VALIDATE_EMAIL) &&
+                ! empty($quote = $this->cartSession->getQuote()) &&
+                $quote->hasItems()
             ) {
                 $quote->setCustomerEmail($email);
                 $this->quoteResource->save($quote);

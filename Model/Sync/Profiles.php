@@ -44,12 +44,11 @@ class Profiles implements SyncInterface
     }
 
     /**
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @inheritdoc
      */
     public function process(ApsisCoreHelper $apsisCoreHelper)
     {
-        $stores = $apsisCoreHelper->getStores();
-        foreach ($stores as $store) {
+        foreach ($apsisCoreHelper->getStores() as $store) {
             try {
                 $account = $apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
                 if ($account) {

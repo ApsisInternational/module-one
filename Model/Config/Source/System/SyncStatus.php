@@ -8,7 +8,7 @@ use Apsis\One\Model\Profile;
 class SyncStatus implements OptionSourceInterface
 {
     /**
-     * @return array
+     * @inheritdoc
      */
     public function toOptionArray()
     {

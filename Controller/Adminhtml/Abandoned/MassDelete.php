@@ -11,8 +11,6 @@ use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;
 use Apsis\One\Model\ResourceModel\Abandoned\CollectionFactory as AbandonedCollectionFactory;
 use Magento\Backend\App\Action\Context;
 use Magento\Backend\Model\View\Result\Redirect;
-use Magento\Framework\App\ResponseInterface;
-use Magento\Framework\Controller\ResultInterface;
 
 class MassDelete extends Action
 {
@@ -67,7 +65,7 @@ class MassDelete extends Action
     }
 
     /**
-     * @return Redirect|ResponseInterface|ResultInterface
+     * @inheritdoc
      */
     public function execute()
     {

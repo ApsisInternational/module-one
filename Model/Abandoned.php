@@ -98,7 +98,15 @@ class Abandoned extends AbstractModel
      */
     public function afterDelete()
     {
-        $this->apsisLogHelper->debug(__METHOD__, ['Entity Id' => $this->getId()]);
+        //Log it
+        $info = [
+            'Message' => 'Confirmed delete.',
+            'Entity Id' => $this->getId(),
+            'Profile Table Id' => $this->getProfileId(),
+            'Store Id' => $this->getStoreId()
+        ];
+        $this->apsisLogHelper->debug(__METHOD__, $info);
+
         return parent::afterDelete();
     }
 

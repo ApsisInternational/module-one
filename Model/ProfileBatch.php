@@ -110,7 +110,7 @@ class ProfileBatch extends AbstractModel
     }
 
     /**
-     * Constructor
+     * @inheritdoc
      */
     public function _construct()
     {
@@ -122,12 +122,19 @@ class ProfileBatch extends AbstractModel
      */
     public function afterDelete()
     {
-        $this->logger->debug(__METHOD__, ['Entity Id' => $this->getId()]);
+        //Log it
+        $info = [
+            'Message' => 'Confirmed delete.',
+            'Entity Id' => $this->getId(),
+            'Store Id' => $this->getStoreId()
+        ];
+        $this->logger->debug(__METHOD__, $info);
+
         return parent::afterDelete();
     }
 
     /**
-     * @return $this
+     * @inheritdoc
      */
     public function beforeSave()
     {

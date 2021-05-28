@@ -118,21 +118,32 @@ class Profile
     ) {
         $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
             $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+            ApsisConfigHelper::MAPPINGS_SECTION_SECTION
         );
         $mappedEmailAttribute = $this->apsisCoreHelper->getStoreConfig(
             $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
+            ApsisConfigHelper::MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
         );
+        if (empty($sectionDiscriminator) || empty($mappedEmailAttribute)) {
+            return;
+        }
+
         $apiClient = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
-        if (! empty($apiClient) && ! empty($sectionDiscriminator) && ! empty($mappedEmailAttribute) &&
-            ! empty($keySpacesToMerge = $this->getKeySpacesToMerge($profile, $sectionDiscriminator))
-        ) {
+        $keySpacesToMerge = $this->getKeySpacesToMerge($profile, $sectionDiscriminator);
+
+        if ($apiClient && ! empty($keySpacesToMerge)) {
             if ($this->isProfileSynced($apiClient, $sectionDiscriminator, $mappedEmailAttribute, $profile, $customer)) {
+
+                //If conflict on merge then set new cookie value for web keyspace
                 if ($apiClient->mergeProfile($keySpacesToMerge) === Client::HTTP_CODE_CONFLICT) {
+                    //Log it
                     $this->apsisCoreHelper->debug(__METHOD__, ['Message' => 'Conflict, creating new cookie.']);
+
+                    //Create new cookie value
                     $keySpacesToMerge[1]['profile_key'] =
                         md5($profile->getIntegrationUid() . date(Zend_Date::TIMESTAMP));
+
+                    //Send second merge request
                     if ($apiClient->mergeProfile($keySpacesToMerge) === null) {
                         $this->setNewCookieValue($keySpacesToMerge, $store);
                     }
@@ -150,9 +161,11 @@ class Profile
     private function getKeySpacesToMerge(ProfileModel $profile, string $sectionDiscriminator)
     {
         $keySpacesToMerge = [];
+
         try {
             $magentoKeySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator);
             $elyCookieValue = $this->phpCookieManager->create()->getCookie(self::APSIS_WEB_COOKIE_NAME);
+
             if (! empty($elyCookieValue) && ! empty($magentoKeySpaceDiscriminator)) {
                 $keySpacesToMerge = [
                     [
@@ -209,7 +222,7 @@ class Profile
 
                 //Add first name
                 if (! empty($mappedFNameAttribute = $this->apsisCoreHelper->getConfigValue(
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_FIRST_NAME,
+                    ApsisConfigHelper::MAPPINGS_CUSTOMER_FIRST_NAME,
                     ScopeInterface::SCOPE_STORES,
                     $profile->getStoreId()
                 )) && ! empty($attributesArrWithVersionId[$mappedFNameAttribute])
@@ -219,7 +232,7 @@ class Profile
 
                 //Add last name
                 if (! empty($mappedLNameAttribute = $this->apsisCoreHelper->getConfigValue(
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_NAME,
+                    ApsisConfigHelper::MAPPINGS_CUSTOMER_LAST_NAME,
                     ScopeInterface::SCOPE_STORES,
                     $profile->getStoreId()
                 )) && ! empty($attributesArrWithVersionId[$mappedLNameAttribute])
@@ -306,16 +319,19 @@ class Profile
         try {
             if ($profile->getIsSubscriber() && (int) $subscriber->getStatus() === Subscriber::STATUS_UNSUBSCRIBED) {
                 $this->eventService->registerSubscriberUnsubscribeEvent($subscriber, $profile, $store);
+
                 $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED)
                     ->setSubscriberStoreId($subscriber->getStoreId())
                     ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
                     ->setIsSubscriber(ProfileModel::NO_FLAGGED)
                     ->setErrorMessage('');
                 $this->profileResource->save($profile);
+
             } elseif ((int) $subscriber->getSubscriberStatus() === Subscriber::STATUS_SUBSCRIBED) {
                 if ($profile->getIsCustomer()) {
                     $this->eventService->registerCustomerBecomesSubscriberEvent($subscriber, $profile, $store);
                 }
+
                 if ((int) $profile->getSubscriberSyncStatus() === ProfileModel::SYNC_STATUS_SYNCED &&
                     $profile->getIsSubscriber()
                 ) {
@@ -323,12 +339,14 @@ class Profile
                 } else {
                     $profile->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_PENDING);
                 }
+
                 $profile->setSubscriberId($subscriber->getSubscriberId())
                     ->setSubscriberStoreId($subscriber->getStoreId())
                     ->setSubscriberStatus(Subscriber::STATUS_SUBSCRIBED)
                     ->setIsSubscriber(ProfileModel::IS_FLAGGED)
                     ->setErrorMessage('');
                 $this->profileResource->save($profile);
+
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
@@ -343,17 +361,20 @@ class Profile
     {
         try {
             $this->eventService->registerSubscriberBecomesCustomerEvent($customer, $profile);
+
             if ($customer->getEmail() != $profile->getEmail()) {
                 $this->removeOldSubscriptionsAndAddNewSubscriptions($profile, $customer);
                 $this->eventService->updateEmailInEventsForCustomer($profile, $customer);
                 $profile->setEmail($customer->getEmail());
             }
+
             $profile->setStoreId($customer->getStoreId())
                 ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
                 ->setCustomerId($customer->getEntityId())
                 ->setIsCustomer(ProfileModel::IS_FLAGGED)
                 ->setErrorMessage('');
             $this->profileResource->save($profile);
+
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -399,9 +420,9 @@ class Profile
         int $customerId = 0
     ) {
         try {
-            /** @var ProfileModel $profile */
             $profile = $this->profileFactory->create();
             $profile->setEmail($email);
+
             if ($customerId) {
                 $profile->setCustomerId($customerId)
                     ->setStoreId($storeId)
@@ -409,6 +430,7 @@ class Profile
                     ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
                     ->setIsCustomer(ProfileModel::IS_FLAGGED);
             }
+
             if ($subscriberId) {
                 $profile->setSubscriberId($subscriberId)
                     ->setSubscriberStoreId($storeId)
@@ -417,6 +439,7 @@ class Profile
                     ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_NA)
                     ->setIsSubscriber(ProfileModel::IS_FLAGGED);
             }
+
             $this->profileResource->save($profile);
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
@@ -431,56 +454,240 @@ class Profile
     public function findProfileForCustomer(Customer $customer)
     {
         try {
-            $found = $this->profileCollectionFactory->create()->loadByCustomerId($customer->getId());
-            if ($found) {
-                return $found;
+            $foundCustomerType = $this->profileCollectionFactory->create()
+                ->loadByCustomerId($customer->getId());
+
+            if ($foundCustomerType) {
+                return $foundCustomerType;
             }
+
             $subscriber = $this->subscriberFactory->create()->loadByEmail($customer->getEmail());
             if ($subscriber->getId()) {
-                $found = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
-                if ($found) {
-                    return $found;
+                $foundSubscriberType = $this->profileCollectionFactory->create()
+                    ->loadBySubscriberId($subscriber->getId());
+
+                if ($foundSubscriberType) {
+                    return $foundSubscriberType;
                 }
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
+
         return false;
     }
 
     /**
      * @param ProfileModel $profile
+     * @param string $type
+     *
+     * @return StoreInterface
      */
-    public function handleCustomerDeleteForProfile(ProfileModel $profile)
+    private function getStoreForProfileType(ProfileModel $profile, string $type)
+    {
+        $storeId = 0;
+
+        if ($type == ProfileModel::TYPE_CUSTOMER) {
+            $storeId = $profile->getStoreId();
+        }
+
+        if ($type == ProfileModel::TYPE_SUBSCRIBER) {
+            $storeId = $profile->getSubscriberStoreId();
+        }
+
+        return $this->apsisCoreHelper->getStore($storeId);
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param string $type
+     *
+     * @return bool
+     */
+    private function isSyncEnabledForProfileType(StoreInterface $store, string $type)
+    {
+        $isSyncEnabled = false;
+
+        if ($type == ProfileModel::TYPE_CUSTOMER) {
+            return (boolean) $this->apsisCoreHelper->getStoreConfig(
+                $store,
+                ApsisConfigHelper::SYNC_SETTING_CUSTOMER_ENABLED
+            );
+        }
+
+        if ($type == ProfileModel::TYPE_SUBSCRIBER) {
+            return (boolean) $this->apsisCoreHelper->getStoreConfig(
+                $store,
+                ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENABLED
+            );
+        }
+
+        return $isSyncEnabled;
+    }
+
+    /**
+     * @param ProfileModel $profile
+     * @param string $type
+     *
+     * @return string
+     */
+    private function getActionByType(ProfileModel $profile, string $type)
+    {
+        $action = '';
+
+        if ($type == ProfileModel::TYPE_CUSTOMER) {
+            $action = ($profile->getSubscriberId() && $profile->getIsSubscriber()) ? 'clearAttribute' : 'delete';
+        }
+
+        if ($type == ProfileModel::TYPE_SUBSCRIBER) {
+            $action = ($profile->getCustomerId() && $profile->getIsCustomer()) ? 'clearAttribute' : 'delete';
+        }
+
+        return $action;
+    }
+
+    /**
+     * @param ProfileModel $profile
+     * @param string $type
+     */
+    public function handleDeleteOperationByType(ProfileModel $profile, string $type)
     {
         try {
-            $store = $this->apsisCoreHelper->getStore($profile->getSubscriberStoreId());
+            $store = $this->getStoreForProfileType($profile, $type);
+            $isSyncEnabled = $this->isSyncEnabledForProfileType($store, $type);
             $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
                 $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+                ApsisConfigHelper::MAPPINGS_SECTION_SECTION
             );
-            $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
-            if ($client && $sectionDiscriminator && $profile->getIntegrationUid()) {
-                $IsCustomerSyncEnabled = (boolean) $this->apsisCoreHelper->getStoreConfig(
-                    $store,
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED
-                );
-                $keySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator);
-                if ($profile->getSubscriberId() && $profile->getIsSubscriber()) {
-                    $this->removeCustomerAttributesFromProfile(
-                        $profile,
-                        $IsCustomerSyncEnabled,
-                        $client,
-                        $sectionDiscriminator,
-                        $store,
-                        $keySpaceDiscriminator
-                    );
-                } else {
-                    $this->deleteProfile($IsCustomerSyncEnabled, $client, $keySpaceDiscriminator, $profile);
-                }
+            $action = $this->getActionByType($profile, $type);
+
+            if ((empty($profile->getIsSubscriber()) && empty($profile->getIsSubscriber())) ||
+                empty($profile->getIntegrationUid()) || $action === 'delete'
+            ) {
+                $this->profileResource->delete($profile);
             }
+
+            if (empty($isSyncEnabled) || empty($sectionDiscriminator) ||
+                empty($keySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator)) ||
+                empty($client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId()))
+            ) {
+                return;
+            }
+
+            //Remove consent from one if type is subscriber
+            if ($type == ProfileModel::TYPE_SUBSCRIBER && $action !== 'delete') {
+                $this->removeConsentForSubscriberDelete($store, $profile, $client, $sectionDiscriminator);
+            }
+
+            //Clear attributes from one
+            if ($action === 'clearAttribute') {
+                $this->removeAttributesFromProfile(
+                    $profile,
+                    $client,
+                    $sectionDiscriminator,
+                    $store,
+                    $keySpaceDiscriminator,
+                    $type
+                );
+            }
+
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
+     * @param ProfileModel $profile
+     * @param Client $client
+     * @param string $section
+     * @param StoreInterface $store
+     * @param string $keySpace
+     * @param string $type
+     */
+    private function removeAttributesFromProfile(
+        ProfileModel $profile,
+        Client $client,
+        string $section,
+        StoreInterface $store,
+        string $keySpace,
+        string $type
+    ) {
+        try {
+            $attributes = [];
+
+            //If customer delete request then clear customer attributes
+            if ($type == ProfileModel::TYPE_CUSTOMER) {
+                $profile->setCustomerId(null)
+                    ->setStoreId(null)
+                    ->setIsCustomer(ProfileModel::NO_FLAGGED)
+                    ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_NA);
+
+                $attributes = $this->apsisConfigHelper->getCustomerAttributeMapping($store, false);
+            }
+
+            //If subscriber delete request then clear subscriber attributes
+            if ($type == ProfileModel::TYPE_SUBSCRIBER) {
+                $profile->setSubscriberId(null)
+                    ->setSubscriberStoreId(null)
+                    ->setIsSubscriber(ProfileModel::NO_FLAGGED)
+                    ->setSubscriberStatus(null)
+                    ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_NA);
+
+                $attributes = $this->apsisConfigHelper->getSubscriberAttributeMapping($store, false);
+            }
+
+            //Clear attributes
+            $this->clearProfileAttributes($attributes, $keySpace, $section, $client, $profile);
+
+            //Save profile
+            $this->profileResource->save($profile);
+
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
+     * @param array $attributes
+     * @param string $keySpace
+     * @param string $section
+     * @param Client $client
+     * @param ProfileModel $profile
+     */
+    public function clearProfileAttributes(
+        array $attributes,
+        string $keySpace,
+        string $section,
+        Client $client,
+        ProfileModel $profile
+    ) {
+        $status = false;
+        $attributesArrWithVersionId = $this->apsisCoreHelper->getAttributesArrWithVersionId(
+            $client,
+            $section
+        );
+
+        if (! empty($attributesArrWithVersionId) && ! empty($attributes)) {
+            foreach ($attributes as $attribute) {
+                if (isset($attributesArrWithVersionId[$attribute])) {
+                    $status = $client->clearProfileAttribute(
+                        $keySpace,
+                        $profile->getIntegrationUid(),
+                        $section,
+                        $attributesArrWithVersionId[$attribute]
+                    );
+                }
+            }
+
+            //Log it
+            if ($status === null) {
+                $info = [
+                    'Profile Id' => $profile->getIntegrationUid(),
+                    'KeySpace' => $keySpace,
+                    'Section' => $section
+                ];
+                $this->apsisCoreHelper->debug(__METHOD__, $info);
+            }
         }
     }
 
@@ -511,198 +718,30 @@ class Profile
     /**
      * @param ProfileModel $profile
      */
-    public function handleSubscriberDeleteForProfile(ProfileModel $profile)
+    public function deleteProfileFromOne(ProfileModel $profile)
     {
         try {
-            if (! $profile->getIsSubscriber() && ! $profile->getCustomerId()) {
-                $this->profileResource->delete($profile);
-                return;
-            }
-
-            $store = $this->apsisCoreHelper->getStore($profile->getSubscriberStoreId());
-            $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
-                $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+            $storeId = $profile->getStoreId() ? $profile->getStoreId() : $profile->getSubscriberStoreId();
+            $sectionDiscriminator = $this->apsisCoreHelper->getConfigValue(
+                ApsisConfigHelper::MAPPINGS_SECTION_SECTION,
+                ScopeInterface::SCOPE_STORES,
+                $storeId
             );
-            $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
-            if ($client && $sectionDiscriminator && $profile->getIntegrationUid()) {
-                $isSubscriberSyncEnabled = (boolean) $this->apsisCoreHelper->getStoreConfig(
-                    $store,
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED
-                );
-                $this->removeConsentForSubscriberDelete(
-                    $store,
-                    $isSubscriberSyncEnabled,
-                    $profile,
-                    $client,
-                    $sectionDiscriminator
-                );
-                $keySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator);
-                if ($profile->getCustomerId() && $profile->getIsSubscriber()) {
-                    $this->removeSubscriberAttributesFromProfile(
-                        $profile,
-                        $client,
-                        $sectionDiscriminator,
-                        $store,
-                        $keySpaceDiscriminator,
-                        $isSubscriberSyncEnabled
-                    );
-                } else {
-                    $this->deleteProfile($isSubscriberSyncEnabled, $client, $keySpaceDiscriminator, $profile);
+            $keySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator);
+            $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $storeId);
+
+            if ($sectionDiscriminator && $keySpaceDiscriminator && $client) {
+                $status = $client->deleteProfile($keySpaceDiscriminator, $profile->getIntegrationUid());
+
+                //Log it
+                if ($status === null) {
+                    $info = [
+                        'Request' => 'Profile removed from APSIS One.',
+                        'Profile Id' => $profile->getIntegrationUid(),
+                        'KeySpace' => $keySpaceDiscriminator
+                    ];
+                    $this->apsisCoreHelper->debug(__METHOD__, $info);
                 }
-            }
-        } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param bool $isSubscriberSyncEnabled
-     * @param Client $client
-     * @param string $keySpaceDiscriminator
-     * @param ProfileModel $profile
-     *
-     * @throws Exception
-     */
-    private function deleteProfile(
-        bool $isSubscriberSyncEnabled,
-        Client $client,
-        string $keySpaceDiscriminator,
-        ProfileModel $profile
-    ) {
-        if ($isSubscriberSyncEnabled) {
-            $status = $client->deleteProfile($keySpaceDiscriminator, $profile->getIntegrationUid());
-
-            //Log it
-            if ($status === null) {
-                $info = [
-                    'Request' => 'Delete a profile',
-                    'Profile Id' => $profile->getIntegrationUid(),
-                    'KeySpace' => $keySpaceDiscriminator
-                ];
-                $this->apsisCoreHelper->debug(__METHOD__, $info);
-            }
-        }
-
-        $this->profileResource->delete($profile);
-    }
-
-    /**
-     * @param ProfileModel $profile
-     * @param Client $client
-     * @param string $sectionDiscriminator
-     * @param StoreInterface $store
-     * @param string $keySpaceDiscriminator
-     * @param bool $IsSubscriberSyncEnabled
-     */
-    private function removeSubscriberAttributesFromProfile(
-        ProfileModel $profile,
-        Client $client,
-        string $sectionDiscriminator,
-        StoreInterface $store,
-        string $keySpaceDiscriminator,
-        bool $IsSubscriberSyncEnabled
-    ) {
-        try {
-            $profile->setSubscriberId(null)
-                ->setSubscriberStoreId(null)
-                ->setIsSubscriber(ProfileModel::NO_FLAGGED)
-                ->setSubscriberStatus(null)
-                ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_NA);
-            $this->profileResource->save($profile);
-
-            $attributesArrWithVersionId = $this->apsisCoreHelper
-                ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
-
-            if ($IsSubscriberSyncEnabled && ! empty($attributesArrWithVersionId)) {
-                $this->clearProfileAttributes(
-                    $this->apsisConfigHelper->getSubscriberAttributeMapping($store, false),
-                    $attributesArrWithVersionId,
-                    $keySpaceDiscriminator,
-                    $sectionDiscriminator,
-                    $client,
-                    $profile
-                );
-            }
-        } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param array $attributes
-     * @param array $attributesArrWithVersionId
-     * @param string $keySpaceDiscriminator
-     * @param string $sectionDiscriminator
-     * @param Client $client
-     * @param ProfileModel $profile
-     */
-    public function clearProfileAttributes(
-        array $attributes,
-        array $attributesArrWithVersionId,
-        string $keySpaceDiscriminator,
-        string $sectionDiscriminator,
-        Client $client,
-        ProfileModel $profile
-    ) {
-        $status = false;
-        foreach ($attributes as $attribute) {
-            if (isset($attributesArrWithVersionId[$attribute])) {
-                $status = $client->clearProfileAttribute(
-                    $keySpaceDiscriminator,
-                    $profile->getIntegrationUid(),
-                    $sectionDiscriminator,
-                    $attributesArrWithVersionId[$attribute]
-                );
-            }
-        }
-
-        //Log it
-        if ($status === null) {
-            $info = [
-                'Profile Id' => $profile->getIntegrationUid(),
-                'KeySpace' => $keySpaceDiscriminator,
-                'Section' => $sectionDiscriminator
-            ];
-            $this->apsisCoreHelper->debug(__METHOD__, $info);
-        }
-    }
-
-    /**
-     * @param ProfileModel $profile
-     * @param bool $IsCustomerSyncEnabled
-     * @param Client $client
-     * @param string $sectionDiscriminator
-     * @param StoreInterface $store
-     * @param string $keySpaceDiscriminator
-     */
-    private function removeCustomerAttributesFromProfile(
-        ProfileModel $profile,
-        bool $IsCustomerSyncEnabled,
-        Client $client,
-        string $sectionDiscriminator,
-        StoreInterface $store,
-        string $keySpaceDiscriminator
-    ) {
-        try {
-            $profile->setCustomerId(null)
-                ->setStoreId(null)
-                ->setIsCustomer(ProfileModel::NO_FLAGGED)
-                ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_NA);
-            $this->profileResource->save($profile);
-
-            $attributesArrWithVersionId = $this->apsisCoreHelper
-                ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
-
-            if ($IsCustomerSyncEnabled && ! empty($attributesArrWithVersionId)) {
-                $this->clearProfileAttributes(
-                    $this->apsisConfigHelper->getCustomerAttributeMapping($store, false),
-                    $attributesArrWithVersionId,
-                    $keySpaceDiscriminator,
-                    $sectionDiscriminator,
-                    $client,
-                    $profile
-                );
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
@@ -719,15 +758,15 @@ class Profile
             $store = $customer->getStore();
             $IsSubscriberSyncEnabled = (boolean)$this->apsisCoreHelper->getStoreConfig(
                 $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED
+                ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENABLED
             );
             $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
                 $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+                ApsisConfigHelper::MAPPINGS_SECTION_SECTION
             );
             $selectedConsentTopics = (string) $this->apsisCoreHelper->getStoreConfig(
                 $customer->getStore(),
-                ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC
+                ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC
             );
             if ((int)$profile->getSubscriberSyncStatus() === ProfileModel::SYNC_STATUS_SYNCED &&
                 (int)$profile->getSubscriberStatus() === Subscriber::STATUS_SUBSCRIBED &&
@@ -740,7 +779,7 @@ class Profile
                     ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
                 $mappedEmailAttribute = $this->apsisCoreHelper->getStoreConfig(
                     $store,
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
+                    ApsisConfigHelper::MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
                 );
                 $keySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator);
                 if (! empty($attributesArrWithVersionId) && $mappedEmailAttribute && $keySpaceDiscriminator &&
@@ -830,14 +869,12 @@ class Profile
 
     /**
      * @param StoreInterface $store
-     * @param bool $isSubscriberSyncEnabled
      * @param ProfileModel $profile
      * @param Client $client
      * @param string $sectionDiscriminator
      */
     private function removeConsentForSubscriberDelete(
         StoreInterface $store,
-        bool $isSubscriberSyncEnabled,
         ProfileModel $profile,
         Client $client,
         string $sectionDiscriminator
@@ -845,11 +882,11 @@ class Profile
         try {
             $selectedConsentTopics = (string)$this->apsisCoreHelper->getStoreConfig(
                 $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC
+                ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC
             );
+            $topicMappings = explode('|', $selectedConsentTopics);
 
-            if ($isSubscriberSyncEnabled && strlen($selectedConsentTopics) &&
-                ! empty($topicMappings = explode('|', $selectedConsentTopics)) && isset($topicMappings[0]) &&
+            if (strlen($selectedConsentTopics) && ! empty($topicMappings) && isset($topicMappings[0]) &&
                     isset($topicMappings[1])
             ) {
                 //Make call to remove consent from email
@@ -873,7 +910,7 @@ class Profile
      * @param string $from
      * @param array $extra
      */
-    public function fullResetRequest(string $from, array $extra = [])
+    public function resetRequest(string $from, array $extra = [])
     {
         try {
             $this->apsisCoreHelper->debug(__METHOD__, ['From' => $from]);
@@ -901,13 +938,13 @@ class Profile
             'AND path NOT IN(?)',
             array_merge(
                 [
-                    Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED,
-                    Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID,
-                    Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET,
-                    Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_REGION,
-                    Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
-                    Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE,
-                    Config::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY
+                    Config::ACCOUNTS_OAUTH_ENABLED,
+                    Config::ACCOUNTS_OAUTH_ID,
+                    Config::ACCOUNTS_OAUTH_SECRET,
+                    Config::ACCOUNTS_OAUTH_REGION,
+                    Config::ACCOUNTS_OAUTH_TOKEN,
+                    Config::ACCOUNTS_OAUTH_TOKEN_EXPIRE,
+                    Config::SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY
                 ],
                 $extra
             )

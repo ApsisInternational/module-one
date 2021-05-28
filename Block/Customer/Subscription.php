@@ -7,16 +7,12 @@ use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollection
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Customer\Model\Session;
+use Magento\Framework\DataObject;
 use Magento\Framework\View\Element\Template;
-use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Store\Model\ScopeInterface;
+use Exception;
 
-/**
- * NewsletterPreferences block
- *
- * @api
- */
 class Subscription extends Template
 {
     const CUSTOMER_NEWSLETTER_SAVE_URL = 'apsis/customer/subscription';
@@ -42,7 +38,7 @@ class Subscription extends Template
     private $profileCollectionFactory;
 
     /**
-     * @var bool
+     * @inheritdoc
      */
     protected $_isScopePrivate = true;
 
@@ -93,53 +89,76 @@ class Subscription extends Template
     public function getConsentListTopicsToShow()
     {
         $sortedTopicArr = [];
-        $customer = $this->customerSession->getCustomer();
-        $additionalTopics = (string) $this->apsisCoreHelper->getStoreConfig(
-            $customer->getStore(),
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_ADDITIONAL_TOPIC
-        );
-        /** @var Subscriber $subscriber */
-        if (strlen($additionalTopics) &&
-            ! empty($subscriber = $this->subscriberFactory->create()->loadByCustomerId($customer->getId())) &&
-            $subscriber->getId()) {
-            $topicMappings = explode(',', $additionalTopics);
-            $profile = $this->profileCollectionFactory->create()
-                ->loadBySubscriberId($subscriber->getSubscriberId());
-            $sortedTopicArr = ($profile) ? $this->getConsentListsWithTopicsArr(
+
+        try {
+            $customer = $this->customerSession->getCustomer();
+            if (empty($customer->getId())) {
+                return $sortedTopicArr;
+            }
+
+            $topicMappings = explode(',', (string)$this->apsisCoreHelper->getStoreConfig($customer->getStore(),
+                ApsisConfigHelper::SYNC_SETTING_ADDITIONAL_TOPIC
+            ));
+            $subscriber = $this->subscriberFactory->create()->loadByCustomerId($customer->getId());
+
+            if (empty($topicMappings) || empty($subscriber->getId())) {
+                return $sortedTopicArr;
+            }
+
+
+            $profile = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
+            if (empty($profile)) {
+                return $sortedTopicArr;
+            }
+
+            $sortedTopicArr = $this->getConsentListsWithTopicsArr(
                 $topicMappings,
                 $this->getProfileTopicArr($profile, $topicMappings)
-            ) : [];
+            );
+
+            if (!empty($sortedTopicArr)) {
+                $this->customerSession->setPreUpdateConsents($sortedTopicArr);
+            }
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
-        if (! empty($sortedTopicArr)) {
-            $this->customerSession->setPreUpdateConsents($sortedTopicArr);
-        }
+
         return $sortedTopicArr;
     }
 
     /**
-     * @param Profile $profile
+     * @param DataObject $profile
      * @param array $topicMappings
      *
      * @return array
      */
-    private function getProfileTopicArr(Profile $profile, array $topicMappings)
+    private function getProfileTopicArr(DataObject $profile, array $topicMappings)
     {
         $topicArr = [];
-        $store = $this->apsisCoreHelper->getStore($profile->getSubscriberStoreId());
-        $client = $this->apsisCoreHelper->getApiClient(
-            ScopeInterface::SCOPE_STORES,
-            $store->getId()
-        );
-        $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
-        );
-        if ($client && $sectionDiscriminator) {
+
+        try {
+            $store = $this->apsisCoreHelper->getStore($profile->getSubscriberStoreId());
+            $client = $this->apsisCoreHelper->getApiClient(
+                ScopeInterface::SCOPE_STORES,
+                $store->getId()
+            );
+            $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
+                $store,
+                ApsisConfigHelper::MAPPINGS_SECTION_SECTION
+            );
+
+            if (empty($client) || empty($sectionDiscriminator)) {
+                return $topicArr;
+            }
+
             foreach ($topicMappings as $topicMappingString) {
                 $topicMapping = explode('|', $topicMappingString);
+
+                //Count should always be 4, if not then not a valid config.
                 if (empty($topicMapping) || count($topicMapping) < 4) {
                     continue;
                 }
+
                 if ($consentListDiscriminator = $topicMapping[0]) {
                     $consents = $client->getOptInConsents(
                         Profile::EMAIL_CHANNEL_DISCRIMINATOR,
@@ -147,6 +166,7 @@ class Subscription extends Template
                         $sectionDiscriminator,
                         $consentListDiscriminator
                     );
+
                     if (! empty($consents->items)) {
                         foreach ($consents->items as $consent) {
                             $topicArr[] = $consent->topic_discriminator;
@@ -154,7 +174,11 @@ class Subscription extends Template
                     }
                 }
             }
+
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
+
         return $topicArr;
     }
 
@@ -167,25 +191,39 @@ class Subscription extends Template
     private function getConsentListsWithTopicsArr(array $topicMappings, array $profileTopics)
     {
         $topicMappingsArr = [];
-        foreach ($topicMappings as $topicMappingString) {
-            $topicMapping = explode('|', $topicMappingString);
-            if (empty($topicMapping) || count($topicMapping) < 4) {
-                continue;
-            }
-            $topic = [
-                'value' => $topicMapping[0] . '|' . $topicMapping[1],
-                'name' => $topicMapping[3],
-                'consent' => in_array($topicMapping[1], $profileTopics)
-            ];
-            if (empty($topicMappingsArr[$topicMapping[0]]['topics'])) {
-                $topicMappingsArr[$topicMapping[0]] = [
-                    'name' => $topicMapping[2],
-                    'topics' => [$topic]
+
+        try {
+            foreach ($topicMappings as $topicMappingString) {
+                $topicMapping = explode('|', $topicMappingString);
+
+                //Count should always be 4, if not then not a valid config.
+                if (empty($topicMapping) || count($topicMapping) < 4) {
+                    continue;
+                }
+
+                //index 0 is always CLD, 1 is always TD, 2 is always list name and 3 is always  topic name
+                $topic = [
+                    'value' => $topicMapping[0] . '|' . $topicMapping[1],
+                    'name' => $topicMapping[3],
+                    'consent' => in_array($topicMapping[1], $profileTopics)
                 ];
-                continue;
+
+                //Prepare array
+                if (empty($topicMappingsArr[$topicMapping[0]]['topics'])) {
+                    $topicMappingsArr[$topicMapping[0]] = [
+                        'name' => $topicMapping[2],
+                        'topics' => [$topic]
+                    ];
+                    continue;
+                }
+
+                $topicMappingsArr[$topicMapping[0]]['topics'][] = $topic;
             }
-            $topicMappingsArr[$topicMapping[0]]['topics'][] = $topic;
+
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
+
         return $topicMappingsArr;
     }
 }

@@ -13,7 +13,6 @@ use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\File as ApsisFileHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers\SubscriberFactory as SubscriberDataFactory;
 use Exception;
-use Magento\Framework\Exception\FileSystemException;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
 use Magento\Newsletter\Model\Subscriber;
@@ -109,17 +108,18 @@ class Subscribers implements ProfileSyncInterface
     {
         try {
             $this->apsisCoreHelper = $apsisCoreHelper;
+
             $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
                 $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+                ApsisConfigHelper::MAPPINGS_SECTION_SECTION
             );
             $sync = (boolean) $this->apsisCoreHelper->getStoreConfig(
                 $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED
+                ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENABLED
             );
             $topics = (string) $this->apsisCoreHelper->getStoreConfig(
                 $store,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC
+                ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC
             );
             $mappings = $this->apsisConfigHelper->getSubscriberAttributeMapping($store);
             $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
@@ -129,6 +129,7 @@ class Subscribers implements ProfileSyncInterface
             ) {
                 $attributesArrWithVersionId = $this->apsisCoreHelper
                     ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
+
                 $this->keySpaceDiscriminator = $this->apsisCoreHelper
                     ->getKeySpaceDiscriminator($sectionDiscriminator);
 
@@ -138,7 +139,7 @@ class Subscribers implements ProfileSyncInterface
 
                 $limit = $this->apsisCoreHelper->getStoreConfig(
                     $store,
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_SUBSCRIBER_BATCH_SIZE
+                    ApsisConfigHelper::PROFILE_SYNC_SUBSCRIBER_BATCH_SIZE
                 );
 
                 //Subscribers : opt-in
@@ -230,6 +231,7 @@ class Subscribers implements ProfileSyncInterface
         try {
             $topicsMapping = $this->getTopicArrFromString($topics);
             $profileDataArr = $this->getProfileDataArr($collection);
+
             if (! empty($topicsMapping) && ! empty($profileDataArr)) {
                 $jsonMappings = $this->apsisConfigHelper->getJsonMappingData(
                     $this->keySpaceDiscriminator,
@@ -238,13 +240,24 @@ class Subscribers implements ProfileSyncInterface
                     $topicsMapping,
                     $consentType
                 );
-
                 $mappings = array_merge([Profile::INTEGRATION_KEYSPACE => Profile::INTEGRATION_KEYSPACE], $mappings);
+
                 $file = $this->createFileWithHeaders(
                     $store,
                     $consentType,
                     array_merge(array_keys($mappings), array_keys($topicsMapping))
                 );
+
+                if (empty($file)) {
+                    $info = [
+                        'Message' => 'Unable to create file',
+                        'Store Id' => $store->getId(),
+                        'Consent type', $consentType
+                    ];
+                    $this->apsisCoreHelper->debug(__METHOD__, $info);
+
+                    return;
+                }
 
                 $subscriberCollection = $this->getSubscribersFromIdsByStore(
                     $store,
@@ -252,7 +265,6 @@ class Subscribers implements ProfileSyncInterface
                 );
                 $subscribersToUpdate = [];
 
-                /** @var MagentoSubscriber $subscriber */
                 foreach ($subscriberCollection as $subscriber) {
                     if (! empty($profileDataArr[$subscriber->getSubscriberId()])) {
                         try {
@@ -266,12 +278,14 @@ class Subscribers implements ProfileSyncInterface
                                 array_keys($topicsMapping),
                                 $profileData['consent']
                             );
+
                             $this->apsisFileHelper->outputCSV($file, $subscriberData);
                             $subscribersToUpdate[] = $subscriber->getSubscriberId();
                         } catch (Exception $e) {
                             $this->apsisCoreHelper->logError(__METHOD__, $e);
                             $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscriber with id :' .
                                 $subscriber->getSubscriberId());
+
                             continue;
                         }
                     }
@@ -288,9 +302,12 @@ class Subscribers implements ProfileSyncInterface
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
+
             if (! empty($subscribersToUpdate)) {
-                $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscribers with ids :' .
-                    implode(',', $subscribersToUpdate));
+                $this->apsisCoreHelper->debug(
+                    __METHOD__,
+                    ['Skipped subscribers with ids' => implode(',', $subscribersToUpdate)]
+                );
             }
         }
     }
@@ -304,10 +321,12 @@ class Subscribers implements ProfileSyncInterface
     {
         $topicsArr = explode(',', $topics);
         $topicsMapping = [];
+
         foreach ($topicsArr as $topicMapping) {
             $topicMapping = explode('|', $topicMapping);
             $topicsMapping[$topicMapping[1]] = $topicMapping[0];
         }
+
         return $topicsMapping;
     }
 
@@ -319,13 +338,14 @@ class Subscribers implements ProfileSyncInterface
     private function getProfileDataArr(Collection $collection)
     {
         $profileDataArr = [];
-        /** @var Profile $profile */
+
         foreach ($collection as $profile) {
             $profileDataArr[$profile->getSubscriberId()] = [
                 'integration_uid' => $profile->getIntegrationUid(),
                 'consent' => (int) $profile->getSubscriberSyncStatus() === Profile::SYNC_STATUS_PENDING
             ];
         }
+
         return $profileDataArr;
     }
 
@@ -335,15 +355,18 @@ class Subscribers implements ProfileSyncInterface
      * @param array $headers
      *
      * @return string
-     *
-     * @throws FileSystemException
      */
     private function createFileWithHeaders(StoreInterface $store, string $consentType, array $headers)
     {
-        $file = strtolower($store->getCode() . '_subscriber_' .
-                $consentType . '_' . date('d_m_Y_His') . '.csv');
-        $this->apsisFileHelper->outputCSV($file, $headers);
-        return $file;
+        try {
+            $file = strtolower($store->getCode() . '_subscriber_' . $consentType . '_' . date('d_m_Y_His') . '.csv');
+            $this->apsisFileHelper->outputCSV($file, $headers);
+
+            return $file;
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            return '';
+        }
     }
 
     /**
@@ -388,11 +411,13 @@ class Subscribers implements ProfileSyncInterface
                     implode(',', $subscribersToUpdate),
                     $this->apsisCoreHelper->serialize($jsonMappings)
                 );
+
             $this->profileResource->updateSubscribersSyncStatus(
                 $subscribersToUpdate,
                 Profile::SYNC_STATUS_BATCHED,
                 $this->apsisCoreHelper
             );
+
             //Reset subscriber status to 5, if not a subscriber
             $this->profileResource->updateSubscribersSyncStatus(
                 $subscribersToUpdate,

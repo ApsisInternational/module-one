@@ -5,14 +5,12 @@ namespace Apsis\One\Model\Events\Historical;
 use Apsis\One\Model\Events\Historical\Event as HistoricalEvent;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile\Collection as ProfileCollection;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Exception;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
 use Magento\Quote\Model\ResourceModel\Quote\Collection as QuoteCollection;
-use Magento\Quote\Model\Quote;
 use Apsis\One\Model\Events\Historical\Carts\Data as CartData;
 use Apsis\One\Model\Event;
 
@@ -44,52 +42,47 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
     }
 
     /**
-     * @param StoreInterface $store
-     * @param ApsisCoreHelper $apsisCoreHelper
-     * @param ProfileCollection $profileCollection
-     * @param array $duration
+     * @inheritdoc
      */
     public function fetchForStore(
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper,
         ProfileCollection $profileCollection,
-        array $duration
+        array $duration,
+        array $profileCollectionArray
     ) {
-        if ((boolean) $apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_PRODUCT_CARTED
-        )) {
-            try {
-                if (! empty($profileCollectionArray =
-                        $this->getFormattedProfileCollection($profileCollection, $apsisCoreHelper)) &&
-                    ! empty($quoteCollection = $this->getCartCollection(
-                        $apsisCoreHelper,
-                        $store,
-                        array_keys($profileCollectionArray),
-                        $duration
-                    ))
-                ) {
-                    $eventsToRegister = $this->getEventsToRegister(
-                        $apsisCoreHelper,
-                        $quoteCollection,
-                        $profileCollectionArray
-                    );
-                    $status = $this->registerEvents(
-                        $eventsToRegister,
-                        $apsisCoreHelper,
-                        $store,
-                        ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_QUOTE_HISTORY_DONE_FLAG
-                    );
-
-                    $info = [
-                        'Total Events Inserted' => $status,
-                        'Store Id' => $store->getId()
-                    ];
-                    $apsisCoreHelper->debug(__METHOD__, $info);
-                }
-            } catch (Exception $e) {
-                $apsisCoreHelper->logError(__METHOD__, $e);
+        try {
+            if (empty($profileCollectionArray)) {
+                return;
             }
+
+            $quoteCollection = $this->getCartCollection(
+                $apsisCoreHelper,
+                $store,
+                array_keys($profileCollectionArray),
+                $duration
+            );
+            if (empty($quoteCollection)) {
+                return;
+            }
+
+            $eventsToRegister = $this->getEventsToRegister(
+                $apsisCoreHelper,
+                $quoteCollection,
+                $profileCollectionArray
+            );
+
+            $status = $this->registerEvents($eventsToRegister, $apsisCoreHelper);
+            if ($status) {
+                $info = [
+                    'Total Events Inserted' => $status,
+                    'Store Id' => $store->getId()
+                ];
+                $apsisCoreHelper->debug(__METHOD__, $info);
+            }
+
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -106,7 +99,6 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
         array $profileCollectionArray
     ) {
         $eventsToRegister = [];
-        /** @var Quote $quote */
         foreach ($quoteCollection as $quote) {
             try {
                 $items = $quote->getAllVisibleItems();
@@ -123,6 +115,7 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
                                 $apsisCoreHelper->serialize($eventData),
                                 $apsisCoreHelper
                             );
+
                             if (! empty($eventDataForEvent)) {
                                 $eventsToRegister[] = $eventDataForEvent;
                             }

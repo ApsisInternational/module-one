@@ -42,9 +42,6 @@ use Apsis\One\Model\Service\Log;
  */
 class Event extends AbstractModel
 {
-    /**
-     * Event types / names
-     */
     const EVENT_TYPE_CUSTOMER_ABANDONED_CART = 1;
     const EVENT_TYPE_SUBSCRIBER_BECOMES_CUSTOMER = 2;
     const EVENT_TYPE_CUSTOMER_BECOMES_SUBSCRIBER = 3;
@@ -54,6 +51,8 @@ class Event extends AbstractModel
     const EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW = 7;
     const EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST = 8;
     const EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART = 9;
+
+    const SYNC_STATUS_PENDING_HISTORICAL = 1;
 
     /**
      * @var DateTime
@@ -97,7 +96,7 @@ class Event extends AbstractModel
     }
 
     /**
-     * Constructor.
+     * @inheritdoc
      */
     public function _construct()
     {
@@ -109,12 +108,20 @@ class Event extends AbstractModel
      */
     public function afterDelete()
     {
-        $this->logger->debug(__METHOD__, ['Entity Id' => $this->getId()]);
+        //Log it
+        $info = [
+            'Message' => 'Confirmed delete.',
+            'Entity Id' => $this->getId(),
+            'Profile Table Id' => $this->getProfileId(),
+            'Store Id' => $this->getStoreId()
+        ];
+        $this->logger->debug(__METHOD__, $info);
+
         return parent::afterDelete();
     }
 
     /**
-     * @return $this
+     * @inheritdoc
      */
     public function beforeSave()
     {

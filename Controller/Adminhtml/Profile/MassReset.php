@@ -5,9 +5,7 @@ namespace Apsis\One\Controller\Adminhtml\Profile;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Exception;
-use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultFactory;
-use Magento\Framework\Controller\ResultInterface;
 use Magento\Ui\Component\MassAction\Filter;
 use Magento\Backend\App\Action;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
@@ -68,7 +66,7 @@ class MassReset extends Action
     }
 
     /**
-     * @return Redirect|ResponseInterface|ResultInterface
+     * @inheritdoc
      */
     public function execute()
     {

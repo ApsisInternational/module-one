@@ -2,7 +2,6 @@
 
 namespace Apsis\One\Setup;
 
-use Apsis\One\Model\Developer;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
@@ -18,11 +17,6 @@ class InstallData implements InstallDataInterface
     private $profileResource;
 
     /**
-     * @var Developer
-     */
-    private $developer;
-
-    /**
      * @var ApsisLogHelper
      */
     private $logHelper;
@@ -30,13 +24,11 @@ class InstallData implements InstallDataInterface
     /**
      * InstallData constructor.
      *
-     * @param Developer $developer
      * @param ProfileResource $profileResource
      * @param ApsisLogHelper $logHelper
      */
-    public function __construct(Developer $developer, ProfileResource $profileResource, ApsisLogHelper $logHelper)
+    public function __construct(ProfileResource $profileResource, ApsisLogHelper $logHelper)
     {
-        $this->developer = $developer;
         $this->profileResource = $profileResource;
         $this->logHelper = $logHelper;
     }
@@ -67,23 +59,33 @@ class InstallData implements InstallDataInterface
     private function populateApsisProfileTable(ModuleDataSetupInterface $installer)
     {
         $this->logHelper->log(__METHOD__);
+
         $apsisProfileTable = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
         $installer->getConnection()->truncateTable($apsisProfileTable);
         $magentoSubscriberTable = $installer->getTable('newsletter_subscriber');
+
+        //Fetch customers to profile table
         $this->profileResource->fetchAndPopulateCustomers(
             $installer->getConnection(),
             $installer->getTable('customer_entity'),
-            $apsisProfileTable
+            $apsisProfileTable,
+            $this->logHelper
         );
+
+        //Fetch subscribers to profile table
         $this->profileResource->fetchAndPopulateSubscribers(
             $installer->getConnection(),
             $magentoSubscriberTable,
-            $apsisProfileTable
+            $apsisProfileTable,
+            $this->logHelper
         );
+
+        //Update customers with profile id in profile table
         $this->profileResource->updateCustomerProfiles(
             $installer->getConnection(),
             $magentoSubscriberTable,
-            $apsisProfileTable
+            $apsisProfileTable,
+            $this->logHelper
         );
     }
 }

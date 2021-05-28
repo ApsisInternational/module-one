@@ -11,7 +11,6 @@ use Exception;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\ResponseInterface;
-use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Escaper;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
@@ -71,11 +70,17 @@ class Subscription extends Action
     }
 
     /**
-     * @return ResponseInterface|ResultInterface
+     * @inheritdoc
      */
     public function execute()
     {
         try {
+            //Validate http method against allowed one.
+            if ('PATCH' !== $_SERVER['REQUEST_METHOD']) {
+                $msg = $_SERVER['REQUEST_METHOD'] . ': method not allowed to this endpoint.';
+                return $this->sendResponse( 405, json_encode(['httpCode' => 405, 'message' => $msg]));
+            }
+
             if (empty($key = (string) $this->getRequest()->getHeader('authorization')) ||
                 ! $this->authenticateKey($key)
             ) {
@@ -150,7 +155,7 @@ class Subscription extends Action
     private function isTopicMatchedWithConfigTopic(ProfileModel $profile, array $params)
     {
         $isSyncEnabled = (string) $this->apsisCoreHelper->getConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED,
+            ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENABLED,
             ScopeInterface::SCOPE_STORES,
             ($profile->getSubscriberStoreId()) ? $profile->getSubscriberStoreId() : $profile->getStoreId()
         );
@@ -159,7 +164,7 @@ class Subscription extends Action
         }
 
         $selectedTopicInConfig = (string) $this->apsisCoreHelper->getConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC,
+            ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC,
             ScopeInterface::SCOPE_STORES,
             ($profile->getSubscriberStoreId()) ? $profile->getSubscriberStoreId() : $profile->getStoreId()
         );

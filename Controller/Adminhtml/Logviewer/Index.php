@@ -34,7 +34,7 @@ class Index extends Action
     }
 
     /**
-     * @return Page
+     * @inheritdoc
      */
     public function execute()
     {

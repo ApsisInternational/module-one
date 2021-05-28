@@ -41,27 +41,24 @@ class Subscriber implements ProfileDataInterface
     }
 
     /**
-     * @param array $mappingHash
-     * @param AbstractModel $subscriber
-     * @param ApsisCoreHelper $apsisCoreHelper
-     *
-     * @return $this
+     * @inheritdoc
      */
-    public function setModelData(
-        array $mappingHash,
-        AbstractModel $subscriber,
-        ApsisCoreHelper $apsisCoreHelper
-    ) {
+    public function setModelData(array $mappingHash, AbstractModel $subscriber, ApsisCoreHelper $apsisCoreHelper)
+    {
         $this->subscriber = $subscriber;
         $this->apsisCoreHelper = $apsisCoreHelper;
+
         foreach ($mappingHash as $key) {
             $function = 'get';
             $exploded = explode('_', $key);
+
             foreach ($exploded as $one) {
                 $function .= ucfirst($one);
             }
+
             $this->subscriberData[$key] = call_user_func(['self', $function]);
         }
+
         return $this;
     }
 
@@ -80,9 +77,7 @@ class Subscriber implements ProfileDataInterface
     }
 
     /**
-     * Contact data array.
-     *
-     * @return array
+     * @inheritdoc
      */
     public function toCSVArray()
     {

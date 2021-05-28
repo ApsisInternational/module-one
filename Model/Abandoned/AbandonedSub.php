@@ -148,12 +148,14 @@ class AbandonedSub
         $abandonedCarts = [];
         $events = [];
         $createdAt = $this->dateTime->formatDate(true);
+
         /** @var Quote $quote */
         foreach ($quoteCollection as $quote) {
             try {
                 $profile = $this->findProfile($quote, $apsisCoreHelper);
                 $cartData = $this->cartContentFactory->create()
                     ->getCartData($quote, $apsisCoreHelper);
+
                 if (! empty($cartData) && ! empty($cartData['items']) && $profile) {
                     $uuid = ApsisCoreHelper::generateUniversallyUniqueIdentifier();
                     $abandonedCarts[] = [
@@ -167,6 +169,7 @@ class AbandonedSub
                         'token' => $uuid,
                         'created_at' => $createdAt
                     ];
+
                     $mainData = $this->getDataForEventFromAcData($cartData, $uuid, $apsisCoreHelper);
                     if (! empty($mainData)) {
                         $subData = $mainData['items'];
@@ -221,6 +224,7 @@ class AbandonedSub
                 return $profile;
             }
         }
+
         $appEmulation = $this->emulationFactory->create();
         try {
             $appEmulation->startEnvironmentEmulation($quote->getStoreId(), Area::AREA_FRONTEND, true);
@@ -231,12 +235,14 @@ class AbandonedSub
             $apsisCoreHelper->logError(__METHOD__, $e);
             return false;
         }
+
         if ($subscriber->getId()) {
             $found = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
             if ($found) {
                 return $found;
             }
         }
+
         return false;
     }
 
@@ -251,6 +257,7 @@ class AbandonedSub
     {
         try {
             $items = [];
+
             foreach ($acData['items'] as $item) {
                 $items [] = [
                     'cartId' => $acData['cart_id'],

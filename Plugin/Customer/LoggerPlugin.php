@@ -71,7 +71,7 @@ class LoggerPlugin
      *
      * @return CustomerLogger
      */
-    public function afterLog(CustomerLogger $logger, $result, $customerId, array $data)
+    public function afterLog(CustomerLogger $logger, CustomerLogger $result, int $customerId, array $data)
     {
         try {
             $customer = $this->customerRepository->getById($customerId);
@@ -100,6 +100,7 @@ class LoggerPlugin
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
+
         return $result;
     }
 
@@ -112,7 +113,7 @@ class LoggerPlugin
     {
         return (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_LOGIN
+            ApsisConfigHelper::EVENTS_CUSTOMER_LOGIN
         );
     }
 }

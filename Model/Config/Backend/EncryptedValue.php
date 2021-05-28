@@ -15,7 +15,6 @@ use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
-use Exception;
 
 class EncryptedValue extends Encrypted
 {
@@ -90,134 +89,145 @@ class EncryptedValue extends Encrypted
     /**
      * @inheritdoc
      */
+    public function beforeSave()
+    {
+        //Account config
+        if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
+
+            //Already validated and success. Let the value be saved in DB
+            if ($this->assertRegistryStatus(1)) {
+                parent::beforeSave();
+                return;
+            }
+
+            //No need for validation, observer will remove token config for this context
+            $groups = $this->request->getPost('groups');
+            if (isset($groups['oauth']['fields']['id']['inherit']) ||
+                isset($groups['oauth']['fields']['secret']['inherit'])
+            ) {
+                parent::beforeSave();
+                return;
+            }
+        }
+
+        //Already validated and failure. Do not let the value saved in DB
+        if ($this->assertRegistryStatus(2)) {
+            $this->_dataSaveAllowed = false;
+            return;
+        }
+
+        parent::beforeSave();
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function afterSave()
     {
+        //Value changed, determined by the model
         if ($this->isValueChanged()) {
-            $value = 'Obscured value, encrypted. ';
 
-            if ($this->getPath() == Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET) {
-                $groups = $this->request->getPost('groups');
+            //Placeholder text for encrypted values, we want to avoid logging encrypted value.
+            $value = 'Encrypted value. ';
 
-                //If set to inherit parent context's config value then no need to validate
-                if (isset($groups['oauth']['fields']['id']['inherit']) ||
-                    isset($groups['oauth']['fields']['secret']['inherit'])
-                ) {
+            //Account config
+            if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
+
+                //Already validated and success. No need to do it again.
+                if ($this->assertRegistryStatus(1, __METHOD__, $value)) {
                     return parent::afterSave();
                 }
 
+                //Always Remove old config, reset Profiles and Events
+                $this->profileService->resetRequest('Full reset from API credentials change');
+
+                //No need for validation, observer will remove token config for this context
+                $groups = $this->request->getPost('groups');
+                if (isset($groups['oauth']['fields']['id']['inherit']) ||
+                    isset($groups['oauth']['fields']['secret']['inherit'])
+                ) {
+                    $this->log(__METHOD__, $value);
+                    return parent::afterSave();
+                }
+
+                //Obtained all required values to validate api
                 $id = $groups['oauth']['fields']['id']['value'] ?? false;
                 $secret = $this->processValue($this->getValue());
                 $region = $groups['oauth']['fields']['region']['value'] ?? false;
 
+                //It's a fail if anyone of these are empty
                 if (empty($id) || empty($secret) || empty($region)) {
-                    //Set registry key
-                    $this->_registry->unregister(Value::REGISTRY_NAME_FOR_ERROR);
-                    $this->_registry->register(Value::REGISTRY_NAME_FOR_ERROR, true, true);
+                    $this->setRegistryStatus(2);
+                    return $this;
                 }
 
-                $status = $this->isApiCredentialsValid($id, $secret, $region);
-                if ($status === self::SUCCESS_MESSAGE) {
+                //Get scope, if none found then it is default
+                $scope = $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
+
+                //Determine success or fail
+                $msg = $this->apsisCoreHelper->isApiCredentialsValid($id, $secret, $region, $scope, $this->getScopeId());
+                if ($msg === self::SUCCESS_MESSAGE) {
                     $this->apsisCoreHelper->log(self::SUCCESS_MESSAGE);
                     $this->messageManager->addSuccessMessage(__(self::SUCCESS_MESSAGE));
+                    $this->setRegistryStatus(1);
                 } else {
-                    //Set registry key
-                    $this->_registry->unregister(Value::REGISTRY_NAME_FOR_ERROR);
-                    $this->_registry->register(Value::REGISTRY_NAME_FOR_ERROR, true, true);
+                    $this->messageManager->addWarningMessage(__($msg));
+                    $this->setRegistryStatus(2);
+                    return $this;
                 }
 
                 //If api credentials changed and there exist an old value.
                 if ($this->getOldValue()) {
-                    //Remove old config, reset Profiles and Events
-                    $this->profileService->fullResetRequest(__METHOD__);
-
                     //Log request
                     $this->apsisCoreHelper->log('User changed API credentials. Sending full reset request.');
                     $value .= 'API credentials.';
                 }
             }
 
-            $info = [
-                'Scope' => $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-                'Scope Id' => $this->getScopeId(),
-                'Config Path' => $this->getPath(),
-                'Old Value' => $value,
-                'New Value' => $value
-            ];
-            $this->apsisCoreHelper->debug(__METHOD__, $info);
+            $this->log(__METHOD__, $value);
         }
 
         return parent::afterSave();
     }
 
     /**
-     * @return bool|string
+     * @param int $check
+     * @param string $method
+     * @param string $value
+     *
+     * @return bool
      */
-    private function isApiCredentialsValid(string $id, string $secret, string $region)
+    public function assertRegistryStatus(int $check, string $method = '', string $value = '')
     {
-        try {
-            //Validate api host is reachable
-            try {
-                $this->apsisCoreHelper->validateIsUrlReachable($this->apsisCoreHelper->buildHostName($region));
-            } catch (Exception $e) {
-                $this->apsisCoreHelper->logError(__METHOD__, $e);
-                $msg = '. Cannot enable account. Host for URL must be whitelisted first.';
-                $this->messageManager->addWarningMessage(__($e->getMessage() . $msg));
-
-                return false;
-            }
-
-            //Validate api credential validity for integration
-            $check = $this->validateApiCredentials($id, $secret, $region);
-            if ($check === true) {
-                return self::SUCCESS_MESSAGE;
-            } else {
-                $this->apsisCoreHelper->debug($check);
-                $this->messageManager->addWarningMessage(__($check));
-
-                return false;
-            }
-        } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
-            $this->messageManager->addWarningMessage(__('Something went wrong, please check exception logs.'));
-            return false;
+        $assert = $this->_registry->registry(Value::REGISTRY_NAME_FOR_STATUS_CHECK) === $check;
+        if ($assert && strlen($method) && strlen($value)) {
+            $this->log($method, $value);
         }
+        return $assert;
     }
 
     /**
-     * @param string $id
-     * @param string $secret
-     * @param string $region
-     *
-     * @return bool|string
+     * @param int $value
      */
-    private function validateApiCredentials(string $id, string $secret, string $region)
+    private function setRegistryStatus(int $value)
     {
-        try {
-            $client = $this->apsisCoreHelper->getApiClient(
-                $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-                $this->getScopeId(),
-                true,
-                $region,
-                $id,
-                $secret
-            );
+        $this->_registry->unregister(Value::REGISTRY_NAME_FOR_STATUS_CHECK);
+        $this->_registry->register(Value::REGISTRY_NAME_FOR_STATUS_CHECK, $value, true);
+    }
 
-            if (empty($client)) {
-                return 'Unable to generate access token. Authorization has been denied for this request.';
-            } else {
-                $keySpaces = $client->getKeySpaces();
-                if (is_object($keySpaces) && isset($keySpaces->items)) {
-                    foreach ($keySpaces->items as $item) {
-                        if (strpos($item->discriminator, 'magento') !== false) {
-                            return true;
-                        }
-                    }
-                }
-                return 'API credentials are invalid for this integration. Magento keySpace does not exist.';
-            }
-        } catch (Exception $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
-            return 'Something went wrong, please check exception logs.';
-        }
+    /**
+     * @param string $method
+     * @param string $value
+     */
+    private function log(string $method, string $value)
+    {
+        $info = [
+            'Scope' => $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+            'Scope Id' => $this->getScopeId(),
+            'Config Path' => $this->getPath(),
+            'Old Value' => $value,
+            'New Value' => $value
+        ];
+        $this->apsisCoreHelper->debug($method, $info);
     }
 }

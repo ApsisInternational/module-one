@@ -170,7 +170,7 @@ class Subscription extends Action
 
         $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
             $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+            ApsisConfigHelper::MAPPINGS_SECTION_SECTION
         );
         $consent = explode('|', $consent);
 

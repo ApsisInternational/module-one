@@ -1,0 +1,59 @@
+<?php  /** @var \Apsis\One\Block\Adminhtml\Block $block */ ?>
+<script>
+    require(['jquery', 'Magento_Ui/js/modal/alert', 'domReady!'
+    ], function ($, alert) {
+        'use strict';
+
+        const SECTION_ELM_ID = 'apsis_one_mappings_section_mapping_section';
+        const ACCOUNT_ELM_ID = 'apsis_one_accounts_oauth_id';
+        const ELEMENT_LIST = [SECTION_ELM_ID, ACCOUNT_ELM_ID];
+        const INFO  = '<p>Here in <a target="_blank" href="https://help.apsis.com/en/articles/' +
+            '321-about-the-magento-integration">APSIS Knowledge Base</a> is a summary of the process of integrating' +
+            ' Magento with your APSIS One account.</p>';
+        const SECTION_MSG = '<p>This action (on Save Config) will trigger partial reset. All configurations except' +
+            ' account will be removed, as well as all Profiles and Events will be set to re-sync. This action is' +
+            ' irreversible.</p>' + INFO;
+        const ACCOUNT_MSG = '<p>This action (on Save Config) will trigger full reset. All configurations will be' +
+            ' removed, as well as all Profiles and Events will be set to re-sync. This action is' +
+            ' irreversible.</p>' + INFO;
+        let alertContent = '';
+
+        /**
+         * @param {Object} element
+         */
+        function showWarning(element) {
+            alert({
+                title: $.mage.__('Warning!'),
+                content: $.mage.__(alertContent),
+                modalClass: 'alert',
+                actions: {
+                    always: function() {}
+                },
+                buttons: [{
+                    text: $.mage.__('Accept'),
+                    class: 'action primary accept',
+                    click: function () {
+                        this.closeModal(true);
+                    }
+                }]
+            });
+        }
+
+        /**
+         * Go through each element
+         */
+        $.each(ELEMENT_LIST, function (index, element) {
+            let elm = $('#'+element);
+            elm.on('change', function () {
+                if (elm.attr('id') === SECTION_ELM_ID && '<?= $block->isSectionAlreadyMapped() ?>') {
+                    alertContent = SECTION_MSG;
+                    showWarning(elm);
+                }
+                if (elm.attr('id') === ACCOUNT_ELM_ID && '<?= $block->isAccountAlreadyConfigured() ?>') {
+                    alertContent = ACCOUNT_MSG;
+                    showWarning(elm);
+                }
+            });
+        });
+    });
+</script>

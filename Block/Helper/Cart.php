@@ -4,9 +4,8 @@ namespace Apsis\One\Block\Helper;
 
 use Apsis\One\Model\Service\Config;
 use Apsis\One\Model\Service\Log;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Element\Template;
-use Magento\Store\Api\Data\StoreInterface;
+use Magento\Framework\Data\Form\FormKey;
 use Exception;
 
 class Cart extends Template
@@ -14,30 +13,29 @@ class Cart extends Template
     const EMAIL_UPDATER_URL = 'apsis/cart/updater';
 
     /**
-     * @var StoreInterface
-     */
-    private $store;
-
-    /**
      * @var Log
      */
     private $logger;
 
     /**
+     * @var FormKey
+     */
+    private $formKey;
+
+    /**
      * Cart constructor.
      *
      * @param Template\Context $context
+     * @param FormKey $formKey
      * @param Log $logger
      * @param array $data
-     *
-     * @throws NoSuchEntityException
      */
-    public function __construct(Template\Context $context, Log $logger, array $data = [])
+    public function __construct(Template\Context $context, FormKey $formKey, Log $logger, array $data = [])
     {
         parent::__construct($context, $data);
 
+        $this->formKey = $formKey;
         $this->logger = $logger;
-        $this->store = $this->_storeManager->getStore();
     }
 
     /**
@@ -46,11 +44,16 @@ class Cart extends Template
     public function getUpdaterUrl()
     {
         try {
-            return $this->store->getUrl(self::EMAIL_UPDATER_URL, ['_secure' => $this->store->isCurrentlySecure()]);
+            return $this->_storeManager
+                ->getStore()
+                ->getUrl(
+                    self::EMAIL_UPDATER_URL,
+                    ['_secure' => $this->_storeManager->getStore()->isCurrentlySecure()]
+                );
         } catch (Exception $e) {
             $this->logger->logError(__METHOD__, $e);
+            return '';
         }
-        return '';
     }
 
     /**
@@ -58,11 +61,26 @@ class Cart extends Template
      */
     public function isOkToProceed()
     {
-        $isEnabled = (boolean) $this->store->getConfig(Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED);
-        $acDelayPeriod = (int) $this->store->getConfig(
-            Config::CONFIG_APSIS_ONE_EVENTS_REGISTER_ABANDONED_CART_AFTER_DURATION
-        );
+        try {
+            return (boolean) $this->_storeManager->getStore()->getConfig(
+                Config::EVENTS_REGISTER_ABANDONED_CART_AFTER_DURATION
+            );
+        } catch (Exception $e) {
+            $this->logger->logError(__METHOD__, $e);
+            return false;
+        }
+    }
 
-        return ($isEnabled && $acDelayPeriod);
+    /**
+     * @return string
+     */
+    public function getKey()
+    {
+        try {
+            return $this->formKey->getFormKey();
+        } catch (Exception $e) {
+            $this->logger->logError(__METHOD__, $e);
+            return '';
+        }
     }
 }

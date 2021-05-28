@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Observer\Subscriber;
 
+use Apsis\One\Model\Profile as ProfileModel;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Profile;
 use Exception;
@@ -27,18 +28,14 @@ class Remove implements ObserverInterface
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param Profile $profileService
      */
-    public function __construct(
-        ApsisCoreHelper $apsisCoreHelper,
-        Profile $profileService
-    ) {
+    public function __construct(ApsisCoreHelper $apsisCoreHelper, Profile $profileService)
+    {
         $this->profileService = $profileService;
         $this->apsisCoreHelper = $apsisCoreHelper;
     }
 
     /**
-     * @param Observer $observer
-     *
-     * @return $this
+     * @inheritdoc
      */
     public function execute(Observer $observer)
     {
@@ -48,11 +45,12 @@ class Remove implements ObserverInterface
 
             if ($account && $profile = $this->profileService->findProfileForSubscriber($subscriber)) {
                 $this->apsisCoreHelper->log(__METHOD__);
-                $this->profileService->handleSubscriberDeleteForProfile($profile);
+                $this->profileService->handleDeleteOperationByType($profile, ProfileModel::TYPE_SUBSCRIBER);
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
+
         return $this;
     }
 }

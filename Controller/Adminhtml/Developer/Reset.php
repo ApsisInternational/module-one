@@ -4,8 +4,6 @@ namespace Apsis\One\Controller\Adminhtml\Developer;
 
 use Magento\Backend\App\AbstractAction;
 use Magento\Backend\App\Action\Context;
-use Magento\Framework\App\ResponseInterface;
-use Magento\Framework\Controller\ResultInterface;
 use Apsis\One\Model\Developer;
 
 class Reset extends AbstractAction
@@ -37,7 +35,7 @@ class Reset extends AbstractAction
     }
 
     /**
-     * @return ResponseInterface|ResultInterface|void
+     * @inheritdoc
      */
     public function execute()
     {

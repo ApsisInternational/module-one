@@ -62,8 +62,8 @@ class Profile extends AbstractModel
         self::SYNC_STATUS_NA => 'N/A',
     ];
 
-    const IS_FLAGGED = 1;
-    const NO_FLAGGED = 0;
+    const IS_FLAG = 1;
+    const NO_FLAG = 0;
 
     const TYPE_CUSTOMER = 'customer';
     const TYPE_SUBSCRIBER = 'subscriber';

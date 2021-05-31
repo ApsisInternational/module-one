@@ -45,7 +45,12 @@ class InstallData implements InstallDataInterface
         $installer->startSetup();
 
         /** Remove old config */
-        $this->profileResource->deleteAllModuleConfig($this->logHelper);
+        $configStatus = $this->profileResource->deleteAllModuleConfig($this->logHelper);
+        if ($configStatus) {
+            $this->logHelper->log('All configs are deleted, if existed.');
+        } else {
+            $this->logHelper->log('Unable to delete some configurations.');
+        }
 
         /** Populate apsis profile table */
         $this->populateApsisProfileTable($installer);
@@ -62,30 +67,14 @@ class InstallData implements InstallDataInterface
 
         $apsisProfileTable = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
         $installer->getConnection()->truncateTable($apsisProfileTable);
-        $magentoSubscriberTable = $installer->getTable('newsletter_subscriber');
+        $this->logHelper->log("Table $apsisProfileTable truncated, if existed.");
 
-        //Fetch customers to profile table
-        $this->profileResource->fetchAndPopulateCustomers(
-            $installer->getConnection(),
-            $installer->getTable('customer_entity'),
-            $apsisProfileTable,
-            $this->logHelper
-        );
-
-        //Fetch subscribers to profile table
-        $this->profileResource->fetchAndPopulateSubscribers(
-            $installer->getConnection(),
-            $magentoSubscriberTable,
-            $apsisProfileTable,
-            $this->logHelper
-        );
-
-        //Update customers with profile id in profile table
-        $this->profileResource->updateCustomerProfiles(
-            $installer->getConnection(),
-            $magentoSubscriberTable,
-            $apsisProfileTable,
-            $this->logHelper
-        );
+        //Populate table with Customers and Subscribers
+        $populateStatus = $this->profileResource->populateProfilesTable($this->logHelper);
+        if ($populateStatus) {
+            $this->logHelper->log('Profile table is populated with customer and subscribers.');
+        } else {
+            $this->logHelper->log('Unable to complete populate Profile table action.');
+        }
     }
 }

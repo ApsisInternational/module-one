@@ -74,71 +74,87 @@ class Profile extends AbstractDb implements ResourceInterface
     }
 
     /**
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param ApsisLogHelper $apsisHelper
      * @param array $storeIds
-     * @param array $ids
+     * @param array $profileIds
      * @param int $status
      * @param array $isEntityTypeCond
+     * @param bool $secondUpdate
      */
     public function resetProfiles(
-        ApsisCoreHelper $apsisCoreHelper,
+        ApsisLogHelper $apsisHelper,
         array $storeIds = [],
-        array $ids = [],
+        array $profileIds = [],
         int $status = ApsisProfile::SYNC_STATUS_PENDING,
-        array $isEntityTypeCond = []
+        array $isEntityTypeCond = [],
+        bool $secondUpdate = false
     ) {
         try {
+            // Update Profile type Customer
             $this->updateCustomerSyncStatus(
                 [],
                 $status,
-                $apsisCoreHelper,
+                $apsisHelper,
                 '',
                 $storeIds,
-                $ids,
+                $profileIds,
                ['error_message' => ''],
                 $isEntityTypeCond
             );
 
+            // Update Profile type Subscriber
             $this->updateSubscribersSyncStatus(
                 [],
                 $status,
-                $apsisCoreHelper,
+                $apsisHelper,
                 '',
                 $storeIds,
-                $ids,
+                $profileIds,
                 ['error_message' => ''],
-                $isEntityTypeCond
+                $isEntityTypeCond,
+                false
             );
+
+            //Change all Profiles status to 5 if Profile is_[PROFILE_TYPE] is 0
+            if ($secondUpdate) {
+                $this->resetProfiles(
+                    $apsisHelper,
+                    $storeIds,
+                    $profileIds,
+                    ApsisProfile::SYNC_STATUS_NA,
+                    ['condition' => 'is_', 'value' => ApsisProfile::NO_FLAG]
+                );
+            }
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e);
+            $apsisHelper->logError(__METHOD__, $e);
         }
     }
 
     /**
      * @param array $subscriberIds
      * @param int $status
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param ApsisLogHelper $apsisHelper
      * @param string $msg
      * @param array $storeIds
      * @param array $profileIds
      * @param array $bind
      * @param array $isEntityTypeCond
-     *
-     * @return int
+     * @param bool $secondUpdate
      */
     public function updateSubscribersSyncStatus(
         array $subscriberIds,
         int $status,
-        ApsisCoreHelper $apsisCoreHelper,
+        ApsisLogHelper $apsisHelper,
         string $msg = '',
         array $storeIds = [],
         array $profileIds = [],
         array $bind = [],
-        array $isEntityTypeCond = []
+        array $isEntityTypeCond = [],
+        bool $secondUpdate = true
     ) {
         try {
-            return $this->updateProfilSyncStatus(
-                $apsisCoreHelper,
+            $this->updateProfilSyncStatus(
+                $apsisHelper,
                 $status,
                 ApsisProfile::TYPE_SUBSCRIBER,
                 $subscriberIds,
@@ -148,16 +164,31 @@ class Profile extends AbstractDb implements ResourceInterface
                 $bind,
                 $isEntityTypeCond
             );
+
+            //Reset subscriber status to 5, if not a subscriber
+            if ($secondUpdate) {
+                $this->updateSubscribersSyncStatus(
+                    $subscriberIds,
+                    ApsisProfile::SYNC_STATUS_NA,
+                    $apsisHelper,
+                    '',
+                    [],
+                    [],
+                    ['error_message' => ''],
+                    ['condition' => 'is_', 'value' => ApsisProfile::NO_FLAG],
+                    false
+                );
+            }
+
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e);
-            return 0;
+            $apsisHelper->logError(__METHOD__, $e);
         }
     }
 
     /**
      * @param array $customerIds
      * @param int $status
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param ApsisLogHelper $apsisHelper
      * @param string $msg
      * @param array $storeIds
      * @param array $profileIds
@@ -169,7 +200,7 @@ class Profile extends AbstractDb implements ResourceInterface
     public function updateCustomerSyncStatus(
         array $customerIds,
         int $status,
-        ApsisCoreHelper $apsisCoreHelper,
+        ApsisLogHelper $apsisHelper,
         string $msg = '',
         array $storeIds = [],
         array $profileIds = [],
@@ -178,7 +209,7 @@ class Profile extends AbstractDb implements ResourceInterface
     ) {
         try {
             return $this->updateProfilSyncStatus(
-                $apsisCoreHelper,
+                $apsisHelper,
                 $status,
                 ApsisProfile::TYPE_CUSTOMER,
                 $customerIds,
@@ -189,13 +220,13 @@ class Profile extends AbstractDb implements ResourceInterface
                 $isEntityTypeCond
             );
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e);
+            $apsisHelper->logError(__METHOD__, $e);
             return 0;
         }
     }
 
     /**
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param ApsisLogHelper $apsisHelper
      * @param int $status
      * @param string $profileType
      * @param array $entityIds
@@ -208,7 +239,7 @@ class Profile extends AbstractDb implements ResourceInterface
      * @return int
      */
     private function updateProfilSyncStatus(
-        ApsisCoreHelper $apsisCoreHelper,
+        ApsisLogHelper $apsisHelper,
         int $status,
         string $profileType,
         array $entityIds = [],
@@ -259,7 +290,7 @@ class Profile extends AbstractDb implements ResourceInterface
 
             return $this->getConnection()->update($this->getMainTable(), $bind, $where);
         } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e);
+            $apsisHelper->logError(__METHOD__, $e);
             return 0;
         }
     }
@@ -719,18 +750,24 @@ class Profile extends AbstractDb implements ResourceInterface
     {
         try {
             $magentoSubscriberTable = $this->getTable('newsletter_subscriber');
+
+            //Fetch customers to profile table
             $this->fetchAndPopulateCustomers(
                 $this->getConnection(),
                 $this->getTable('customer_entity'),
                 $this->getMainTable(),
                 $apsisLogHelper
             );
+
+            //Fetch subscribers to profile table
             $this->fetchAndPopulateSubscribers(
                 $this->getConnection(),
                 $magentoSubscriberTable,
                 $this->getMainTable(),
                 $apsisLogHelper
             );
+
+            //Update customers with profile id in profile table
             $this->updateCustomerProfiles(
                 $this->getConnection(),
                 $magentoSubscriberTable,

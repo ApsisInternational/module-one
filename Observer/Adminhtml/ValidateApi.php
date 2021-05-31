@@ -65,9 +65,8 @@ class ValidateApi implements ObserverInterface
             $groups = $this->request->getPost('groups');
 
             //Need to remove toke configs for current context if set to inherit parent's context.
-            if (isset($groups['oauth']['fields']['id']['inherit']) ||
-                isset($groups['oauth']['fields']['secret']['inherit'])
-            ) {
+            if ($this->apsisCoreHelper->isInheritConfig($groups)) {
+
                 if (in_array($scope['context_scope'], [ScopeInterface::SCOPE_STORES, ScopeInterface::SCOPE_WEBSITES])) {
                     $this->disableAccountAndRemoveConfig($scope, true);
                 }
@@ -79,6 +78,7 @@ class ValidateApi implements ObserverInterface
                 $this->disableAccountAndRemoveConfig($scope);
                 return $this;
             }
+
         } catch (Exception $e) {
             $this->disableAccountAndRemoveConfig($scope);
             $this->apsisCoreHelper->logError(__METHOD__, $e);

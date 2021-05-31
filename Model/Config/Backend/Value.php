@@ -6,23 +6,40 @@ use Apsis\One\Model\Service\Config;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Profile as ProfileService;
 use Magento\Framework\App\Cache\TypeListInterface;
+use Magento\Framework\App\Config\Data\ProcessorInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Value as ConfigValue;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Data\Collection\AbstractDb;
+use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Apsis\One\Model\ResourceModel\Event;
-use Exception;
 use Apsis\One\Model\Event as EventModel;
+use Exception;
 
-class Value extends ConfigValue
+class Value extends ConfigValue implements ProcessorInterface
 {
     const REGISTRY_NAME_FOR_STATUS_CHECK = 'apsis_config_status_check';
     const REGISTRY_NAME_FOR_HOST_REACHABLE_CHECK = 'apsis_config_host_reachable_check';
     const REGISTRY_NAME_FOR_OLD_VALUE = 'apsis_config_old_value';
+
+    const SUCCESS = 1;
+    const FAIL = 2;
+
+    const MSG_NOT_ENABLE_ACCOUNT = 'Cant save configurations, account is not enabled. Reverted to default value';
+    const MSG_SECTION_RESET = 'Partial reset from section mapping change';
+    const MSG_SECTION_CHANGE = 'User changed section';
+    const MSG_SUCCESS_ACCOUNT = 'API credentials are valid and Magento KeySpace exist';
+    const MSG_FAIL_HOST_FILE_UPLOAD = 'Profile sync is disabled and will not work until host for URL is whitelisted';
+    const MSG_FAIL_NO_REGION = 'Region is not set in accounts. Please go to account section';
+    const MSG_ACCOUNT_CHANGE = 'User changed API credentials. Sending full reset request.';
+    const MSG_ACCOUNT_RESET = 'Full reset from API credentials change';
+    const MSG_ACCOUNT_INHERIT = 'Config set to inherit value. Passed to observer to handle change request';
+    const MSG_UPDATED = "Updated %d historical events to sync";
 
     const EVENT_HISTORICAL_DURATION = [
         Config::EVENTS_HISTORICAL_ORDER_EVENTS_DURATION => EventModel::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER,
@@ -57,6 +74,11 @@ class Value extends ConfigValue
     private $eventResource;
 
     /**
+     * @var EncryptorInterface
+     */
+    private $_encryptor;
+
+    /**
      * Value constructor.
      *
      * @param Context $context
@@ -68,6 +90,7 @@ class Value extends ConfigValue
      * @param ProfileService $profileService
      * @param RequestInterface $request
      * @param Event $eventResource
+     * @param EncryptorInterface $encryptor
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      */
@@ -81,75 +104,203 @@ class Value extends ConfigValue
         ProfileService $profileService,
         RequestInterface $request,
         Event $eventResource,
+        EncryptorInterface $encryptor,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null
     ) {
+        $this->_encryptor = $encryptor;
         $this->eventResource = $eventResource;
         $this->profileService = $profileService;
         $this->apsisCoreHelper = $apsisLogHelper;
         $this->messageManager = $messageManager;
         $this->request = $request;
-        parent::__construct(
-            $context,
-            $registry,
-            $config,
-            $cacheTypeList,
-            $resource,
-            $resourceCollection
-        );
+        parent::__construct($context, $registry, $config, $cacheTypeList, $resource, $resourceCollection);
     }
 
     /**
      * @inheritdoc
      */
-    public function beforeSave()
+    public function __sleep()
+    {
+        $properties = parent::__sleep();
+
+        //If secret config
+        if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
+            return array_diff($properties, ['_encryptor']);
+        }
+
+        //All other configs
+        return $properties;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function __wakeup()
+    {
+        parent::__wakeup();
+
+        //If secret config
+        if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
+            $this->_encryptor = ObjectManager::getInstance()->get(EncryptorInterface::class);
+        }
+    }
+
+    /**
+     * @return $this|void
+     */
+    protected function _afterLoad()
+    {
+        //If secret config
+        if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
+
+            if (strlen($decrypted = $this->processValue((string) $this->getValue()))) {
+                $this->setValue($decrypted);
+            }
+
+            return;
+        }
+
+        //All other configs
+        return parent::_afterLoad();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function processValue($value)
+    {
+        //If secret config
+        if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET && ! empty($value)) {
+            return $this->_encryptor->decrypt($value);
+        }
+
+        return $value;
+    }
+
+    /**
+     * @return int
+     */
+    private function isAccountConfigThenAssertBeforeSave()
     {
         //Account config
         if (in_array($this->getPath(), Config::CONFIG_PATHS_ACCOUNT)) {
+            $groups = $this->request->getPost('groups');
 
             //Already validated and success. Let the value be saved in DB
-            if ($this->assertRegistryStatus(1)) {
-                return parent::beforeSave();
-            }
+            //Assert inherit configs. Save value in DB, Observer will remove token configs for this context
+            if ($this->assertRegistryStatus(self::SUCCESS) || $this->apsisCoreHelper->isInheritConfig($groups)) {
 
-            //No need for validation, observer will remove token config for this context
-            $groups = $this->request->getPost('groups');
-            if (isset($groups['oauth']['fields']['id']['inherit']) ||
-                isset($groups['oauth']['fields']['secret']['inherit'])
-            ) {
-                return parent::beforeSave();
+                //If secret config
+                if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
+
+                    // Success and need to run beforeSave for secret config only
+                    return 1;
+                } else { //All other account configs
+
+                    // Save old value to log in afterSave in case old value does not exist in afterSave
+                    $this->registerOldValue();
+
+                    // Success and need to let parent process config
+                    return 2;
+                }
+
+            } elseif ($this->assertRegistryStatus(self::FAIL)) {
+
+                //Already validated and failed. Do not let the value saved in DB
+                $this->_dataSaveAllowed = false;
+
+                //If secret config
+                if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
+
+                    // Failure from secret config, return void
+                    return 3;
+
+                } else { //All other account configs
+
+                    // Failure from other account configs then return $this
+                    return 4;
+
+                }
             }
         }
 
-        //Already validated and failure. Do not let the value saved in DB
-        if ($this->assertRegistryStatus(2)) {
+        //Nothing
+        return 0;
+    }
+
+    /**
+     * @return bool
+     */
+    private function isConfigOtherThenAccountThenAssertBeforeSave()
+    {
+        //If failed flag exist then do not let save config in DB
+        if ($this->assertRegistryStatus(self::FAIL)) {
             $this->_dataSaveAllowed = false;
-            return $this;
+            return false;
         }
 
-        //Validate account enabled for all config other then account config. If not enabled, do not save value in DB
-        $isAccountEnabled = $this->apsisCoreHelper
-            ->isEnabled($this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT, $this->getScopeId());
+        $scope = $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
+        $isAccountEnabled = $this->apsisCoreHelper->isEnabled($scope, $this->getScopeId());
+
+        //Validate account enabled for all config other then account config.
         if (! $isAccountEnabled && ! in_array($this->getPath(), Config::CONFIG_PATHS_ACCOUNT)) {
-            $this->setRegistryStatus(2);
-            $this->messageManager
-                ->addWarningMessage("Cant save config, account is not enabled. Reverted to default value");
+
+            //If not enabled, do not save value in DB
             $this->_dataSaveAllowed = false;
-            return $this;
+            $this->setRegistryStatus(self::FAIL);
+
+            //Message for admin user
+            $this->messageManager->addWarningMessage(self::MSG_NOT_ENABLE_ACCOUNT);
+
+            return false;
         }
 
-        //Event sync config, validate host reachable for file upload api endpoint. If false, do not save value in DB
+        //Event sync config, validate host reachable for file upload api endpoint.
         if (in_array($this->getPath(), Config::CONFIG_PATHS_SYNCS) && ! $this->isFileUploadHostReachable()) {
+
+            //If false, do not save value in DB
             $this->_dataSaveAllowed = false;
+
+            return false;
+        }
+
+        // Save old value to log in afterSave in case old value does not exist in afterSave
+        $this->registerOldValue();
+
+        //All good at this point
+        return true;
+    }
+
+    /**
+     * @return $this|void
+     */
+    public function beforeSave()
+    {
+        //Account config assertions
+        $check = $this->isAccountConfigThenAssertBeforeSave();
+        if ($check === 1) { // Success and need to run beforeSave for secret config only
+
+            //Save secret account config
+            $this->accountSecretBeforeSave();
+            return;
+
+        } elseif ($check === 2) { // Success and need to let parent process config
+
+            //Save all other account configs
+            return parent::beforeSave();
+
+        } elseif ($check === 3) { // Failure from secret config, return void
+            return;
+        } elseif ($check === 4) { // Failure from other account configs, return $this
             return $this;
         }
 
-        //Save old config in registry to be used later on in logs
-        $this->_registry->unregister(self::REGISTRY_NAME_FOR_OLD_VALUE);
-        $this->_registry->register(
-            self::REGISTRY_NAME_FOR_OLD_VALUE,
-            $this->getOldValue()? $this->getOldValue() : $this->getValue(), true
-        );
+        //All configs other than account
+        $check = $this->isConfigOtherThenAccountThenAssertBeforeSave();
+        if (! $check) {
+            return $this;
+        }
 
         //At this point, it means to let model save value in DB
         return parent::beforeSave();
@@ -160,22 +311,33 @@ class Value extends ConfigValue
      */
     public function afterSave()
     {
+        //Flag exist
+        if ($this->assertRegistryStatus(self::FAIL)) {
+            return $this;
+        }
+
         //Value changed, determined by the model
         if ($this->isValueChanged()) {
 
-            //Account config
-            $check = $this->isAccountConfigThenEvaluate();
-            if ($check === true) {
+            //Account configs
+            $check = $this->isAccountConfigThenEvaluateAfterSave();
+
+            if ($check === true) { // Success
+
+                //Let parent process config
                 return parent::afterSave();
-            } elseif ($check === false) {
+
+            } elseif ($check === false) { // Failure
+
+                // Do not let parent process config
                 return $this;
             }
 
             //Section config
-            $this->isSectionConfigThenEvaluate();
+            $this->isSectionConfigThenEvaluateAfterSave();
 
             //Event historical config
-            $this->isEventHistoricalConfigThenEvaluate();
+            $this->isEventHistoricalConfigThenEvaluateAfterSave();
 
             //Log value change
             $this->log(__METHOD__);
@@ -186,22 +348,118 @@ class Value extends ConfigValue
     }
 
     /**
-     * Process function for changing status of historical pending to pending for inclusion in the sync process.
+     * @inheritdoc
      */
-    private function isEventHistoricalConfigThenEvaluate()
+    public function afterDelete()
     {
-        if (in_array($this->getPath(), array_keys(self::EVENT_HISTORICAL_DURATION)) &&
-            $this->getValue() && ! empty($storeIdArr = $this->apsisCoreHelper->getAllStoreIds())
-        ) {
+        $this->log(__METHOD__);
+        return parent::afterDelete();
+    }
+
+    /**
+     * Specific just for secret value
+     *
+     * @return void
+     */
+    public function accountSecretBeforeSave()
+    {
+        $this->_dataSaveAllowed = false;
+
+        $encrypted = $this->getValueForSecretConfig((string) $this->getValue());
+        if ($encrypted !== null) {
+            $this->_dataSaveAllowed = true;
+
+            if (strlen($encrypted)) {
+                $this->setValue($encrypted);
+            }
+        }
+    }
+
+    /**
+     * @param string $value
+     *
+     * @return string|null
+     */
+    private function getValueForSecretConfig(string $value)
+    {
+        // don't save value, if an obscured value was received.
+        //This indicates that data was not changed.
+        if (! preg_match('/^\*+$/', $value) && ! empty($value)) {
+            return $this->_encryptor->encrypt($value);
+        } elseif (empty($value)) {
+            return '';
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array $groups
+     *
+     * @return false|string
+     */
+    private function getSecretValue(array $groups)
+    {
+        //If secret config
+        if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
+            return $this->processValue($this->getValue());
+        }
+
+        $secret = (string) $groups['oauth']['fields']['secret']['value'] ?? false;
+        if (empty($secret)) {
+            return false;
+        }
+
+        if ($this->getValueForSecretConfig($secret)) {
+            if (empty($secret)) {
+                return false;
+            }
+
+            return $secret;
+        }
+
+        return false;
+    }
+
+    /**
+     * Save old config in registry to be used later on in logs
+     *
+     * @return void
+     */
+    private function registerOldValue()
+    {
+        //If secret config, do not log it. Log only a placeholder text.
+        if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
+            $oldValue = 'Encrypted value';
+        } else {
+            $oldValue = $this->getOldValue()? $this->getOldValue() : $this->getValue();
+        }
+
+        $this->_registry->unregister(self::REGISTRY_NAME_FOR_OLD_VALUE);
+        $this->_registry->register(self::REGISTRY_NAME_FOR_OLD_VALUE, $oldValue, true);
+    }
+
+    /**
+     * Process function for changing status of historical pending events.
+     * Change to pending status for inclusion in the sync process.
+     */
+    private function isEventHistoricalConfigThenEvaluateAfterSave()
+    {
+        $historyConfigs = array_keys(self::EVENT_HISTORICAL_DURATION);
+        $storeIdArr = $this->apsisCoreHelper->getStoreIdsBasedOnScope();
+
+        if (in_array($this->getPath(), $historyConfigs) && $this->getValue() && ! empty($storeIdArr)) {
+
             $status = $this->eventResource->setPendingStatusOnHistoricalPendingEvents(
                 $this->apsisCoreHelper,
                 $this->getValue(),
                 self::EVENT_HISTORICAL_DURATION[$this->getPath()],
                 $storeIdArr
             );
+
             if ($status) {
                 $info = [
-                    'Message' => "Updated $status historical events to sync.",
+                    'Message' => sprintf(self::MSG_UPDATED, $status),
                     'Event type' => self::EVENT_HISTORICAL_DURATION[$this->getPath()],
                     'Store Ids' => implode(', ', $storeIdArr)
                 ];
@@ -213,39 +471,48 @@ class Value extends ConfigValue
     /**
      * Partial reset, reset all configs other then account, as well as events and profiles
      */
-    private function isSectionConfigThenEvaluate()
+    private function isSectionConfigThenEvaluateAfterSave()
     {
-        if ($this->getPath() == Config::MAPPINGS_SECTION_SECTION && $this->getOldValue()) {
-            $this->profileService->resetRequest(
-                'Partial reset from section mapping change',
-                [Config::MAPPINGS_SECTION_SECTION]
-            );
-            $this->setRegistryStatus(2);
-            $this->apsisCoreHelper->log('User changed section.');
+        if ($this->getPath() == Config::MAPPINGS_SECTION_SECTION) {
+
+            if ($this->getOldValue()) { // If section was mapped before
+
+                // At this point, section value has changed. Send partial reset request
+                $this->profileService->resetRequest(self::MSG_SECTION_RESET, [Config::MAPPINGS_SECTION_SECTION]);
+                $this->apsisCoreHelper->log(self::MSG_SECTION_CHANGE);
+
+                //Set this key so other configs (will get default values) from same page do not get save.
+                $this->setRegistryStatus(self::FAIL);
+            }
         }
     }
 
     /**
      * @return bool|null
      */
-    private function isAccountConfigThenEvaluate()
+    private function isAccountConfigThenEvaluateAfterSave()
     {
         if (in_array($this->getPath(), Config::CONFIG_PATHS_ACCOUNT)) {
 
             //Already validated and success. No need to do it again.
-            if ($this->assertRegistryStatus(1, __METHOD__)) {
+            if ($this->assertRegistryStatus(self::SUCCESS)) {
                 return true;
             }
 
-            //Always Remove old config, reset Profiles and Events
-            $this->profileService->resetRequest('Full reset from API credentials change');
+            //If already exist an old value for account. Log it
+            if ($this->getOldValue()) {
+                $this->apsisCoreHelper->log(self::MSG_ACCOUNT_CHANGE);
+
+                //Always Remove old config, reset Profiles and Events
+                $this->profileService->resetRequest(self::MSG_ACCOUNT_RESET);
+            }
+
+            $groups = $this->request->getPost('groups');
 
             //No need for validation, observer will remove token config for this context
-            $groups = $this->request->getPost('groups');
-            if (isset($groups['oauth']['fields']['id']['inherit']) ||
-                isset($groups['oauth']['fields']['secret']['inherit'])
-            ) {
-                $this->log(__METHOD__);
+            if ($this->apsisCoreHelper->isInheritConfig($groups)) {
+                $this->log(self::MSG_ACCOUNT_INHERIT);
+
                 return true;
             }
 
@@ -256,7 +523,8 @@ class Value extends ConfigValue
 
             //It's a fail if anyone of these are empty
             if (empty($id) || empty($secret) || empty($region)) {
-                $this->setRegistryStatus(2);
+                $this->setRegistryStatus(self::FAIL);
+
                 return false;
             }
 
@@ -265,58 +533,28 @@ class Value extends ConfigValue
 
             //Determine success or fail
             $msg = $this->apsisCoreHelper->isApiCredentialsValid($id, $secret, $region, $scope, $this->getScopeId());
-            if ($msg === EncryptedValue::SUCCESS_MESSAGE) {
-                $this->apsisCoreHelper->log(EncryptedValue::SUCCESS_MESSAGE);
-                $this->messageManager->addSuccessMessage(__(EncryptedValue::SUCCESS_MESSAGE));
-                $this->setRegistryStatus(1);
+
+            if ($msg === self::MSG_SUCCESS_ACCOUNT) { // Success
+
+                //Success message for admin
+                $this->messageManager->addSuccessMessage(__(self::MSG_SUCCESS_ACCOUNT));
+                $this->log(self::MSG_SUCCESS_ACCOUNT);
+                $this->setRegistryStatus(self::SUCCESS);
+
                 return true;
-            } else {
+
+            } else { // Failure
+
+                //Failure message for admin
                 $this->messageManager->addWarningMessage(__($msg));
-                $this->setRegistryStatus(2);
+                $this->setRegistryStatus(self::FAIL);
+
                 return false;
             }
         }
+
+        //Nothing
         return null;
-    }
-
-    /**
-     * @param array $groups
-     *
-     * @return false|string
-     */
-    private function getSecretValue(array $groups)
-    {
-        $secret = (string) $groups['oauth']['fields']['secret']['value'] ?? false;
-        if (empty($secret)) {
-            return false;
-        }
-
-        if (! preg_match('/^\*+$/', $secret)) {
-            if (empty($secret)) {
-                return false;
-            }
-            return $secret;
-        }
-
-        return false;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function afterDelete()
-    {
-        //Log
-        $info = [
-            'Scope' => $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            'Scope Id' => $this->getScopeId(),
-            'Config Path' => $this->getPath(),
-            'Old Value' => $this->getOldValue(),
-            'New Value' => null
-        ];
-        $this->apsisCoreHelper->debug(__METHOD__, $info);
-
-        return parent::afterDelete();
     }
 
     /**
@@ -325,29 +563,23 @@ class Value extends ConfigValue
     private function isFileUploadHostReachable()
     {
         // If 1 then already checked and is a success. Return true
-        if ($this->_registry->registry(self::REGISTRY_NAME_FOR_HOST_REACHABLE_CHECK) === 1) {
+        if ($this->assertRegistryReachableCheck(self::SUCCESS)) {
             return true;
         }
 
         // If 2 then already checked and is an error. Return false
-        if ($this->_registry->registry(self::REGISTRY_NAME_FOR_HOST_REACHABLE_CHECK) === 2) {
+        if ($this->assertRegistryReachableCheck(self::FAIL)) {
             return false;
         }
 
-        $region = $this->apsisCoreHelper->getConfigValue(
-            Config::ACCOUNTS_OAUTH_REGION,
-            $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            $this->getScopeId()
-        );
+        $scope = $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
+        $region = $this->apsisCoreHelper->getConfigValue(Config::ACCOUNTS_OAUTH_REGION, $scope, $this->getScopeId());
 
         if (empty($region)) {
-            $msg = 'Region is not set in accounts. Please go to account section.';
-            $this->apsisCoreHelper->log($msg);
-            $this->messageManager->addWarningMessage(__($msg));
+            $this->apsisCoreHelper->log(self::MSG_FAIL_NO_REGION);
+            $this->messageManager->addWarningMessage(__(self::MSG_FAIL_NO_REGION));
 
-            //Set registry key, 2 = error
-            $this->_registry->unregister(self::REGISTRY_NAME_FOR_HOST_REACHABLE_CHECK);
-            $this->_registry->register(self::REGISTRY_NAME_FOR_HOST_REACHABLE_CHECK, 2, true);
+            $this->setRegistryReachableCheck( self::FAIL);
 
             return false;
         }
@@ -356,21 +588,14 @@ class Value extends ConfigValue
             $this->apsisCoreHelper->validateIsUrlReachable($this->apsisCoreHelper->buildFileUploadHostName($region));
 
             //Set registry key, 1 = success and tried
-            $this->_registry->unregister(self::REGISTRY_NAME_FOR_HOST_REACHABLE_CHECK);
-            $this->_registry->register(self::REGISTRY_NAME_FOR_HOST_REACHABLE_CHECK, 1, true);
+            $this->setRegistryReachableCheck( self::SUCCESS);
 
             return true;
         } catch (Exception $e) {
-            //Log it
             $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->messageManager->addWarningMessage(__($e->getMessage() . ' .' . self::MSG_FAIL_HOST_FILE_UPLOAD));
 
-            //Add to message
-            $msg = '. Profile sync is disabled and will not work until host for URL is whitelisted.';
-            $this->messageManager->addWarningMessage(__($e->getMessage() . $msg));
-
-            //Set registry key, 2 = error
-            $this->_registry->unregister(self::REGISTRY_NAME_FOR_HOST_REACHABLE_CHECK);
-            $this->_registry->register(self::REGISTRY_NAME_FOR_HOST_REACHABLE_CHECK, 2, true);
+            $this->setRegistryReachableCheck( self::FAIL);
 
             return false;
         }
@@ -378,32 +603,52 @@ class Value extends ConfigValue
 
     /**
      * @param int $check
-     * @param string $method
      *
      * @return bool
      */
-    public function assertRegistryStatus(int $check, string $method = '')
+    public function assertRegistryReachableCheck(int $check)
     {
-        $assert = $this->_registry->registry(Value::REGISTRY_NAME_FOR_STATUS_CHECK) === $check;
-        if ($assert && strlen($method)) {
-            $this->log($method);
-        }
-        return $assert;
+        return $this->_registry->registry(self::REGISTRY_NAME_FOR_STATUS_CHECK) === $check;
     }
 
     /**
      * @param int $value
+     *
+     * @return void
      */
-    private function setRegistryStatus(int $value)
+    private function setRegistryReachableCheck(int $value)
     {
-        $this->_registry->unregister(Value::REGISTRY_NAME_FOR_STATUS_CHECK);
-        $this->_registry->register(Value::REGISTRY_NAME_FOR_STATUS_CHECK, $value, true);
+        $this->_registry->unregister(self::REGISTRY_NAME_FOR_HOST_REACHABLE_CHECK);
+        $this->_registry->register(self::REGISTRY_NAME_FOR_HOST_REACHABLE_CHECK, $value, true);
     }
 
     /**
-     * @param string $method
+     * @param int $check
+     *
+     * @return bool
      */
-    private function log(string $method)
+    public function assertRegistryStatus(int $check)
+    {
+        return $this->_registry->registry(self::REGISTRY_NAME_FOR_STATUS_CHECK) === $check;
+    }
+
+    /**
+     * @param int $value
+     *
+     * @return void
+     */
+    private function setRegistryStatus(int $value)
+    {
+        $this->_registry->unregister(self::REGISTRY_NAME_FOR_STATUS_CHECK);
+        $this->_registry->register(self::REGISTRY_NAME_FOR_STATUS_CHECK, $value, true);
+    }
+
+    /**
+     * @param string $msg
+     *
+     * @return void
+     */
+    private function log(string $msg)
     {
         $info = [
             'Scope' => $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
@@ -413,6 +658,6 @@ class Value extends ConfigValue
                 $this->_registry->registry(self::REGISTRY_NAME_FOR_OLD_VALUE) : $this->getOldValue(),
             'New Value' => $this->getValue()
         ];
-        $this->apsisCoreHelper->debug($method, $info);
+        $this->apsisCoreHelper->debug($msg, $info);
     }
 }

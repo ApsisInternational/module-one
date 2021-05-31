@@ -8,7 +8,6 @@ use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Event as EventResourceModel;
 use Apsis\One\Model\ResourceModel\Event\Collection as EventCollection;
 use Apsis\One\Model\ResourceModel\Event\CollectionFactory as EventCollectionFactory;
-use Apsis\One\Model\ResourceModel\Profile as ProfileResourceModel;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
@@ -68,11 +67,6 @@ class Events implements SyncInterface
     private $eventResourceModel;
 
     /**
-     * @var ProfileResourceModel
-     */
-    private $profileResourceModel;
-
-    /**
      * @var ApsisDateHelper
      */
     private $apsisDateHelper;
@@ -118,27 +112,27 @@ class Events implements SyncInterface
     /**
      * @var string
      */
-    private $keySpaceDiscriminator = '';
+    private $keySpace = '';
 
     /**
      * @var string
      */
-    private $sectionDiscriminator = '';
+    private $section = '';
 
     /**
      * @var string
      */
-    private $mappedEmailAttribute = '';
+    private $emailAttribute = '';
 
     /**
      * @var string
      */
-    private $mappedProfileKeyAttribute = '';
+    private $profileKeyAttribute = '';
 
     /**
      * @var array
      */
-    private $attributesArrWithVersionId = [];
+    private $attributeVerIds = [];
 
     /**
      * Profiles constructor.
@@ -146,18 +140,15 @@ class Events implements SyncInterface
      * @param EventCollectionFactory $eventCollectionFactory
      * @param ProfileCollectionFactory $profileCollectionFactory
      * @param EventResourceModel $eventResourceModel
-     * @param ProfileResourceModel $profileResourceModel
      * @param ApsisDateHelper $apsisDateHelper
      */
     public function __construct(
         EventCollectionFactory $eventCollectionFactory,
         ProfileCollectionFactory $profileCollectionFactory,
         EventResourceModel $eventResourceModel,
-        ProfileResourceModel $profileResourceModel,
         ApsisDateHelper $apsisDateHelper
     ) {
         $this->apsisDateHelper = $apsisDateHelper;
-        $this->profileResourceModel = $profileResourceModel;
         $this->eventResourceModel = $eventResourceModel;
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->eventCollectionFactory = $eventCollectionFactory;
@@ -169,40 +160,59 @@ class Events implements SyncInterface
     public function process(ApsisCoreHelper $apsisCoreHelper)
     {
         $this->apsisCoreHelper = $apsisCoreHelper;
-        $stores = $this->apsisCoreHelper->getStores();
-        foreach ($stores as $store) {
+
+        foreach ($this->apsisCoreHelper->getStores() as $store) {
             try {
-                $this->sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
+
+                if (! $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId())) {
+                    continue;
+                }
+
+                $this->section = $this->apsisCoreHelper->getStoreConfig(
                     $store,
                     ApsisConfigHelper::MAPPINGS_SECTION_SECTION
                 );
-                $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
-                $this->mappedEmailAttribute = $this->apsisCoreHelper->getStoreConfig(
+                $this->emailAttribute = $this->apsisCoreHelper->getStoreConfig(
                     $store,
                     ApsisConfigHelper::MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
                 );
-                $this->mappedProfileKeyAttribute = $this->apsisCoreHelper->getStoreConfig(
+                $this->profileKeyAttribute = $this->apsisCoreHelper->getStoreConfig(
                     $store,
                     ApsisConfigHelper::MAPPINGS_CUSTOMER_SUBSCRIBER_PROFILE_KEY
                 );
+                $this->keySpace = $this->apsisCoreHelper->getKeySpaceDiscriminator($this->section);
 
-                if ($this->sectionDiscriminator && $client && $this->mappedEmailAttribute) {
-                    $this->attributesArrWithVersionId = $this->apsisCoreHelper
-                        ->getAttributesArrWithVersionId($client, $this->sectionDiscriminator);
-                    $this->keySpaceDiscriminator = $this->apsisCoreHelper
-                        ->getKeySpaceDiscriminator($this->sectionDiscriminator);
-                    $this->mapEventVersionIds($client);
-                    $eventCollection = $this->eventCollectionFactory->create()
-                        ->getPendingEventsByStore($store->getId(), self::COLLECTION_LIMIT);
-
-                    if ($eventCollection->getSize() &&
-                        $this->isMinimumEventsMapped() &&
-                        $this->mappedEmailAttribute &&
-                        isset($this->attributesArrWithVersionId[$this->mappedEmailAttribute])
-                    ) {
-                        $this->processEventCollection($client, $eventCollection, $store);
-                    }
+                // Validate all things compulsory
+                if (! $this->section || ! $this->emailAttribute || ! $this->profileKeyAttribute || ! $this->keySpace) {
+                    continue;
                 }
+
+                $eventCollection = $this->eventCollectionFactory->create()
+                    ->getPendingEventsByStore($store->getId(), self::COLLECTION_LIMIT);
+                if (! $eventCollection->getSize()) {
+                    continue;
+                }
+
+                $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
+                if (! $client) {
+                    continue;
+                }
+
+                // Validate we have all necessary attribute version ids
+                $this->attributeVerIds = $this->apsisCoreHelper->getAttributeVersionIds($client, $this->section);
+                if (empty($this->attributeVerIds) || ! isset($this->attributeVerIds[$this->emailAttribute])) {
+                    continue;
+                }
+
+                // Validate we have all necessary event version ids
+                $this->mapEventVersionIds($client);
+                if (empty($this->eventsVersionMapping) || ! $this->isMinimumEventsMapped()) {
+                    continue;
+                }
+
+                //At this point proceed for actual batching of events to sync
+                $this->processEventCollection($client, $eventCollection, $store);
+
             } catch (Exception $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);
                 $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
@@ -229,7 +239,7 @@ class Events implements SyncInterface
      */
     private function mapEventVersionIds(Client $client)
     {
-        $eventDefinition = $client->getEvents($this->sectionDiscriminator);
+        $eventDefinition = $client->getEvents($this->section);
         if ($eventDefinition && isset($eventDefinition->items)) {
             foreach ($eventDefinition->items as $item) {
                 if (! array_key_exists($item->discriminator, $this->eventsVersionMapping)) {
@@ -290,45 +300,47 @@ class Events implements SyncInterface
                         $groupedEventArray[] = $eventData;
                     }
                 }
-
-                if (! empty($groupedEventArray)) {
-                    $status = $client->addEventsToProfile(
-                        $this->keySpaceDiscriminator,
-                        $profile->getIntegrationUid(),
-                        $this->sectionDiscriminator,
-                        $groupedEventArray
-                    );
-
-                    if ($status === false) {
-                        $this->apsisCoreHelper->log(
-                            __METHOD__ . ': Unable to post events for store id ' . $store->getId() .
-                            ' profile ' . $profile->getId()
-                        );
-                        continue;
-                    } elseif (is_string($status)) {
-                        $this->eventResourceModel
-                            ->updateSyncStatus(
-                                array_keys($events),
-                                Profile::SYNC_STATUS_FAILED,
-                                $this->apsisCoreHelper,
-                                $status
-                            );
-                        continue;
-                    }
-
-                    $info = [
-                        'Profile Id' => $profile->getId(),
-                        'Store Id' => $store->getId(),
-                        'Total Synced' => count($groupedEventArray)
-                    ];
-                    $this->apsisCoreHelper->debug(__METHOD__, $info);
-
-                    $this->eventResourceModel->updateSyncStatus(
-                        array_keys($events),
-                        Profile::SYNC_STATUS_SYNCED,
-                        $this->apsisCoreHelper
-                    );
+                if (empty($groupedEventArray)) {
+                    continue;
                 }
+
+                $status = $client->addEventsToProfile(
+                    $this->keySpace,
+                    $profile->getIntegrationUid(),
+                    $this->section,
+                    $groupedEventArray
+                );
+
+                if ($status === false) {
+                    $this->apsisCoreHelper->log(
+                        __METHOD__ . ': Unable to post events for store id ' . $store->getId() .
+                        ' profile ' . $profile->getId()
+                    );
+                    continue;
+                } elseif (is_string($status)) {
+                    $this->eventResourceModel
+                        ->updateSyncStatus(
+                            array_keys($events),
+                            Profile::SYNC_STATUS_FAILED,
+                            $this->apsisCoreHelper,
+                            $status
+                        );
+                    continue;
+                }
+
+                $info = [
+                    'Profile Id' => $profile->getId(),
+                    'Store Id' => $store->getId(),
+                    'Total Synced' => count($groupedEventArray)
+                ];
+                $this->apsisCoreHelper->debug(__METHOD__, $info);
+
+                $this->eventResourceModel->updateSyncStatus(
+                    array_keys($events),
+                    Profile::SYNC_STATUS_SYNCED,
+                    $this->apsisCoreHelper
+                );
+
             } catch (Exception $e) {
                 $this->apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
@@ -424,15 +436,15 @@ class Events implements SyncInterface
      */
     private function syncProfileForEvent(Client $client, Profile $profile)
     {
-        $attributesToSync[$this->attributesArrWithVersionId[$this->mappedEmailAttribute]] = $profile->getEmail();
-        if (isset($this->attributesArrWithVersionId[$this->mappedProfileKeyAttribute])) {
-            $attributesToSync[$this->attributesArrWithVersionId[$this->mappedProfileKeyAttribute]]
+        $attributesToSync[$this->attributeVerIds[$this->emailAttribute]] = $profile->getEmail();
+        if (isset($this->attributeVerIds[$this->profileKeyAttribute])) {
+            $attributesToSync[$this->attributeVerIds[$this->profileKeyAttribute]]
                 = $profile->getIntegrationUid();
         }
         return $client->addAttributesToProfile(
-            $this->keySpaceDiscriminator,
+            $this->keySpace,
             $profile->getIntegrationUid(),
-            $this->sectionDiscriminator,
+            $this->section,
             $attributesToSync
         );
     }

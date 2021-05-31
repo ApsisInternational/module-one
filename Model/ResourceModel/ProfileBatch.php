@@ -47,7 +47,9 @@ class ProfileBatch extends AbstractDb implements ResourceInterface
                 ]
             ];
             $status = $this->getConnection()->delete($this->getMainTable(), $where);
-            $apsisCoreHelper->log(__METHOD__, [$status]);
+            if ($status) {
+                $apsisCoreHelper->log(__METHOD__, [$status]);
+            }
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }

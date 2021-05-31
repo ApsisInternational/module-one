@@ -19,6 +19,18 @@ use stdClass;
 
 class Batch implements ProfileSyncInterface
 {
+    const STATUS_QUEUED = 'queued';
+    const STATUS_IN_PROGRESS = 'in_progress';
+    const STATUS_WAITING_FILE = 'waiting_for_file';
+    const STATUS_COMPLETED = 'completed';
+    const STATUS_ERROR = 'error';
+
+    const STATUS_TO_CHECK_IF_EXPIRED = [self::STATUS_QUEUED, self::STATUS_IN_PROGRESS, self::STATUS_WAITING_FILE];
+
+    const MSG_STUCK_EXPIRED = 'Expired, stuck in processing state for 1 day';
+    const MSG_EXPIRED = 'File upload time expired';
+    const MSG_ERROR_FAILED = 'Import failed with returned "error" status';
+
     /**
      * @var ProfileBatchFactory
      */
@@ -50,16 +62,6 @@ class Batch implements ProfileSyncInterface
     private $apsisDateHelper;
 
     /**
-     * @var int
-     */
-    private $importCountInProcessingStatus;
-
-    /**
-     * @var array
-     */
-    private $statusToCheckIfExpired = ['queued', 'in_progress', 'waiting_for_file'];
-
-    /**
      * Batch constructor.
      *
      * @param ProfileBatchFactory $profileBatchFactory
@@ -89,18 +91,20 @@ class Batch implements ProfileSyncInterface
     {
         try {
             $this->apsisCoreHelper = $apsisCoreHelper;
-            $this->importCountInProcessingStatus = 0;
 
-            $apiClient = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
             $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
                 $store,
                 ApsisConfigHelper::MAPPINGS_SECTION_SECTION
             );
 
-            if ($apiClient && $sectionDiscriminator) {
-                $this->handleProcessingCollectionForStore($apiClient, $store, $sectionDiscriminator);
-                $this->handlePendingCollectionForStore($apiClient, $store, $sectionDiscriminator);
+            // Validate all things compulsory
+            if (! $sectionDiscriminator) {
+                return;
             }
+
+            $this->handleProcessingCollectionForStore($store, $sectionDiscriminator);
+            $this->handlePendingCollectionForStore($store, $sectionDiscriminator);
+
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -108,40 +112,79 @@ class Batch implements ProfileSyncInterface
 
     /**
      * @param StoreInterface $store
-     * @param Client $apiClient
-     * @param string $sectionDiscriminator
+     * @param string $section
      */
-    private function handlePendingCollectionForStore(
-        Client $apiClient,
-        StoreInterface $store,
-        string $sectionDiscriminator
-    ) {
+    private function handlePendingCollectionForStore(StoreInterface $store, string $section)
+    {
         $collection = $this->profileBatchFactory
             ->create()
             ->getPendingBatchItemsForStore($store->getId());
+        if (! $collection->getSize()) {
+            return;
+        }
 
-        if ($collection->getSize()) {
-            foreach ($collection as $item) {
-                try {
-                    if ($this->importCountInProcessingStatus >= ProfileBatch::PENDING_LIMIT) {
+
+        $apiClient = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
+        if (! $apiClient) {
+            return;
+        }
+
+        foreach ($collection as $item) {
+            try {
+                if ($apiClient->getImportCountInProcessingStatus() >= Client::MAX_PRE_FILE_IMPORT_API_LIMIT) {
+                    return;
+                }
+
+                $jsonMappings = (array) $this->apsisCoreHelper->unserialize($item->getJsonMappings());
+                $result = $apiClient->initializeProfileImport($section, $jsonMappings);
+
+                if ($result === false || $result === null) {
+                    $this->apsisCoreHelper->log(
+                        __METHOD__ . ': Unable to initialise import for Store ' . $store->getCode() .
+                        ' Item ' . $item->getId() . '. Integration will try again in next cron run.'
+                    );
+
+                    continue;
+
+                } elseif (is_string($result)) {
+                    $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $result);
+                    $this->updateProfilesStatus(
+                        $item,
+                        Profile::SYNC_STATUS_FAILED,
+                        'Batch id: ' . $item->getId() . ' - ' . $result
+                    );
+
+                    continue;
+                }
+
+                if ($result && isset($result->import_id)) {
+                    try {
+                        $this->apsisCoreHelper->validateIsUrlReachable($result->file_upload_url);
+                    } catch (Exception $e) {
+                        $this->apsisCoreHelper->logError(__METHOD__, $e);
+
+                        $this->apsisCoreHelper->disableProfileSync(ScopeInterface::SCOPE_STORES, $store->getId());
                         return;
                     }
 
-                    $result = $apiClient->initializeProfileImport(
-                        $sectionDiscriminator,
-                        (array) $this->apsisCoreHelper->unserialize($item->getJsonMappings())
+                    $item->setImportId($result->import_id)
+                        ->setFileUploadExpiresAt($result->file_upload_url_expires_at);
+
+                    $status = $apiClient->uploadFileForProfileImport(
+                        $result->file_upload_url,
+                        (array) $result->file_upload_body,
+                        $item->getFilePath()
                     );
 
-                    if ($result === false || $result === null) {
+                    if ($status === false) {
                         $this->apsisCoreHelper->log(
-                            __METHOD__ . ': Unable to initialise import for Store ' . $store->getCode() .
-                            ' Item ' . $item->getId() . '. Integration will try again in next cron run.'
+                            __METHOD__ . ': Unable to upload file for Store ' . $store->getCode() .
+                            ' Item ' . $item->getId()
                         );
 
                         continue;
-
-                    } elseif (is_string($result)) {
-                        $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $result);
+                    } elseif (is_string($status)) {
+                        $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $status);
                         $this->updateProfilesStatus(
                             $item,
                             Profile::SYNC_STATUS_FAILED,
@@ -151,103 +194,67 @@ class Batch implements ProfileSyncInterface
                         continue;
                     }
 
-                    if ($result && isset($result->import_id)) {
-                        try {
-                            $this->apsisCoreHelper->validateIsUrlReachable($result->file_upload_url);
-                        } catch (Exception $e) {
-                            $this->apsisCoreHelper->logError(__METHOD__, $e);
-
-                            $this->apsisCoreHelper->disableProfileSync(ScopeInterface::SCOPE_STORES, $store->getId());
-                            return;
-                        }
-
-                        $item->setImportId($result->import_id)
-                            ->setFileUploadExpiresAt($result->file_upload_url_expires_at);
-
-                        $status = $apiClient->uploadFileForProfileImport(
-                            $result->file_upload_url,
-                            (array) $result->file_upload_body,
-                            $item->getFilePath()
-                        );
-
-                        if ($status === false) {
-                            $this->apsisCoreHelper->log(
-                                __METHOD__ . ': Unable to upload file for Store ' . $store->getCode() .
-                                ' Item ' . $item->getId()
-                            );
-
-                            continue;
-                        } elseif (is_string($status)) {
-                            $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $status);
-                            $this->updateProfilesStatus(
-                                $item,
-                                Profile::SYNC_STATUS_FAILED,
-                                'Batch id: ' . $item->getId() . ' - ' . $result
-                            );
-
-                            continue;
-                        }
-
-                        $this->importCountInProcessingStatus += 1;
-                        $this->updateItem($item, ProfileBatch::SYNC_STATUS_PROCESSING);
-                    }
-                } catch (Exception $e) {
-                    $this->apsisCoreHelper->logError(__METHOD__, $e);
-                    $this->apsisCoreHelper->log(__METHOD__ . ': Skipped batch item :' . $item->getId());
-                    continue;
+                    $apiClient->countImportCountInProcessingStatus();
+                    $this->updateItem($item, ProfileBatch::SYNC_STATUS_PROCESSING);
                 }
+            } catch (Exception $e) {
+                $this->apsisCoreHelper->logError(__METHOD__, $e);
+                $this->apsisCoreHelper->log(__METHOD__ . ': Skipped batch item :' . $item->getId());
+                continue;
             }
         }
     }
 
     /**
      * @param StoreInterface $store
-     * @param Client $apiClient
-     * @param string $sectionDiscriminator
+     * @param string $section
      */
-    private function handleProcessingCollectionForStore(
-        Client $apiClient,
-        StoreInterface $store,
-        string $sectionDiscriminator
-    ) {
+    private function handleProcessingCollectionForStore(StoreInterface $store, string $section)
+    {
         $collection = $this->profileBatchFactory
             ->create()
             ->getProcessingBatchItemsForStore($store->getId());
+        if (! $collection->getSize()) {
+            return;
+        }
 
-        if ($collection->getSize()) {
-            $this->importCountInProcessingStatus = $collection->getSize();
 
-            foreach ($collection as $item) {
-                try {
-                    $result = $apiClient->getImportStatus($sectionDiscriminator, $item->getImportId());
-                    if ($result === false) {
-                        $this->apsisCoreHelper->log(
-                            __METHOD__ . ': Unable to get import status for Store ' . $store->getCode() .
-                            ' Item ' . $item->getId()
-                        );
+        $apiClient = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
+        if (! $apiClient) {
+            return;
+        }
 
-                        continue;
-                    }
+        $apiClient->setImportCountInProcessingStatus($collection->getSize());
+        foreach ($collection as $item) {
+            try {
+                $result = $apiClient->getImportStatus($section, $item->getImportId());
+                if ($result === false) {
+                    $this->apsisCoreHelper->log(
+                        __METHOD__ . ': Unable to get import status for Store ' . $store->getCode() .
+                        ' Item ' . $item->getId()
+                    );
 
-                    if (is_string($result)) {
-                        $this->updateItem($item, ProfileBatch::SYNC_STATUS_ERROR, $result);
-                        $this->updateProfilesStatus(
-                            $item,
-                            Profile::SYNC_STATUS_FAILED,
-                            'Batch id: ' . $item->getId() . ' - ' . $result
-                        );
-
-                        continue;
-                    }
-
-                    if ($result && isset($result->result)) {
-                        $this->processImportStatus($store, $result, $item);
-                    }
-                } catch (Exception $e) {
-                    $this->apsisCoreHelper->logError(__METHOD__, $e);
-                    $this->apsisCoreHelper->log(__METHOD__ . ': Skipped batch item :' . $item->getId());
                     continue;
                 }
+
+                if (is_string($result)) {
+                    $this->updateItem($item, ProfileBatch::SYNC_STATUS_ERROR, $result);
+                    $this->updateProfilesStatus(
+                        $item,
+                        Profile::SYNC_STATUS_FAILED,
+                        'Batch id: ' . $item->getId() . ' - ' . $result
+                    );
+
+                    continue;
+                }
+
+                if ($result && isset($result->result)) {
+                    $this->processImportStatus($apiClient, $result, $item);
+                }
+            } catch (Exception $e) {
+                $this->apsisCoreHelper->logError(__METHOD__, $e);
+                $this->apsisCoreHelper->log(__METHOD__ . ': Skipped batch item :' . $item->getId());
+                continue;
             }
         }
     }
@@ -303,18 +310,6 @@ class Batch implements ProfileSyncInterface
                     $this->apsisCoreHelper,
                     $msg
                 );
-
-                //Reset subscriber status to 5, if not a subscriber
-                $this->profileResource->updateSubscribersSyncStatus(
-                    $ids,
-                    Profile::SYNC_STATUS_NA,
-                    $this->apsisCoreHelper,
-                    '',
-                    [],
-                    [],
-                    ['error_message' => ''],
-                    ['condition' => 'is_', 'value' => Profile::NO_FLAGGED]
-                );
             }
 
             $info = [
@@ -331,36 +326,43 @@ class Batch implements ProfileSyncInterface
     }
 
     /**
-     * @param StoreInterface $store
+     * @param Client $apiClient
      * @param stdClass $result
      * @param ProfileBatch $item
      */
-    private function processImportStatus(StoreInterface $store, stdClass $result, ProfileBatch $item)
+    private function processImportStatus(Client $apiClient, stdClass $result, ProfileBatch $item)
     {
         try {
-            if ($result->result->status === 'completed') {
+            if ($result->result->status === self::STATUS_COMPLETED) {
+
                 $this->updateProfilesStatus($item, Profile::SYNC_STATUS_SYNCED);
                 $this->updateItem($item, ProfileBatch::SYNC_STATUS_COMPLETED);
-                $this->importCountInProcessingStatus -= 1;
-            } elseif ($result->result->status === 'error') {
-                $msg = 'Import failed with returned "error" status';
-                $this->updateProfilesStatus($item, Profile::SYNC_STATUS_FAILED, $msg);
-                $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $msg);
-                $this->importCountInProcessingStatus -= 1;
-            } elseif ($result->result->status === 'waiting_for_file' && $item->getFileUploadExpiresAt() &&
+                $apiClient->countImportCountInProcessingStatus(false);
+
+            } elseif ($result->result->status === self::STATUS_ERROR) {
+
+                $this->updateProfilesStatus($item, Profile::SYNC_STATUS_FAILED, self::MSG_ERROR_FAILED);
+                $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, self::MSG_ERROR_FAILED);
+                $apiClient->countImportCountInProcessingStatus(false);
+
+            } elseif ($result->result->status === self::STATUS_WAITING_FILE &&
+                $item->getFileUploadExpiresAt() &&
                 $this->apsisDateHelper->isExpired($item->getFileUploadExpiresAt())
             ) {
-                $msg = 'File upload time expired';
+
                 $this->updateProfilesStatus($item, Profile::SYNC_STATUS_PENDING);
-                $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $msg);
-                $this->importCountInProcessingStatus -= 1;
-            } elseif (in_array($result->result->status, $this->statusToCheckIfExpired)) {
+                $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, self::MSG_EXPIRED);
+                $apiClient->countImportCountInProcessingStatus(false);
+
+            } elseif (in_array($result->result->status, self::STATUS_TO_CHECK_IF_EXPIRED)) {
+
                 $inputDateTime = $this->apsisDateHelper->getFormattedDateTimeWithAddedInterval($item->getUpdatedAt());
                 if ($inputDateTime && $this->apsisDateHelper->isExpired($inputDateTime)) {
-                    $msg = 'Expired. Stuck in processing state for 1 day';
-                    $this->updateItem($item, ProfileBatch::SYNC_STATUS_ERROR, $msg);
+
+                    $this->updateItem($item, ProfileBatch::SYNC_STATUS_ERROR, self::MSG_STUCK_EXPIRED);
                     $this->updateProfilesStatus($item, Profile::SYNC_STATUS_PENDING);
-                    $this->importCountInProcessingStatus -= 1;
+                    $apiClient->countImportCountInProcessingStatus(false);
+
                 }
             }
         } catch (Exception $e) {

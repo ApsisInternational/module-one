@@ -28,6 +28,7 @@ class Config
     const CONFIG_PATHS_ACCOUNT = [
         self::ACCOUNTS_OAUTH_ENABLED,
         self::ACCOUNTS_OAUTH_ID,
+        self::ACCOUNTS_OAUTH_SECRET,
         self::ACCOUNTS_OAUTH_REGION,
         self::ACCOUNTS_OAUTH_TOKEN,
         self::ACCOUNTS_OAUTH_TOKEN_EXPIRE

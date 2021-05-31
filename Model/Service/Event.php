@@ -404,7 +404,7 @@ class Event
      *
      * @return int
      */
-    public function fullResetEvents(string $from, array $storeIds)
+    public function resetEvents(string $from, array $storeIds)
     {
         $info = [
             'From' => $from,

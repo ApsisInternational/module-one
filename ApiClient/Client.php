@@ -6,10 +6,60 @@ use Exception;
 
 class Client extends Rest
 {
+    const MAX_PRE_FILE_IMPORT_API_LIMIT = 3;
+
     /**
      * @var array
      */
     private $cacheContainer = [];
+
+    /**
+     * @var int
+     */
+    private $importCountInProcessingStatus;
+
+    /**
+     * Client constructor.
+     */
+    public function __construct()
+    {
+        $this->importCountInProcessingStatus = 0;
+    }
+
+    /**
+     * @return int
+     */
+    public function getImportCountInProcessingStatus()
+    {
+        return $this->importCountInProcessingStatus;
+    }
+
+    /**
+     * @param int $num
+     *
+     * @return $this
+     */
+    public function setImportCountInProcessingStatus(int $num)
+    {
+        $this->importCountInProcessingStatus = $num;
+        return $this;
+    }
+
+    /**
+     * @param bool $add
+     *
+     * @return int
+     */
+    public function countImportCountInProcessingStatus(bool $add = true)
+    {
+        if ($add) {
+            $this->importCountInProcessingStatus += 1;
+        } elseif ($this->importCountInProcessingStatus > 0) {
+            $this->importCountInProcessingStatus -= 1;
+        }
+
+        return $this->importCountInProcessingStatus;
+    }
 
     /**
      * @param string $key

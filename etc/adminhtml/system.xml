@@ -49,7 +49,7 @@
                        showInStore="1">
                     <label>Client Secret</label>
                     <validate>required-entry no-whitespace</validate>
-                    <backend_model>Apsis\One\Model\Config\Backend\EncryptedValue</backend_model>
+                    <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
                     <depends>
                         <field id="enabled">1</field>
                     </depends>
@@ -490,7 +490,7 @@
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
                 </field>
                 <field id="order_historical_event_duration" translate="label" type="select" sortOrder="70" showInDefault="1"
-                       showInWebsite="0" showInStore="0">
+                       showInWebsite="1" showInStore="1">
                     <label>Sync Past Events: Duration</label>
                     <source_model>Apsis\One\Model\Config\Source\System\PastEvents</source_model>
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
@@ -507,7 +507,7 @@
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
                 </field>
                 <field id="cart_historical_event_duration" translate="label" type="select" sortOrder="100" showInDefault="1"
-                       showInWebsite="0" showInStore="0">
+                       showInWebsite="1" showInStore="1">
                     <label>Sync Past Events: Duration</label>
                     <source_model>Apsis\One\Model\Config\Source\System\PastEvents</source_model>
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
@@ -524,7 +524,7 @@
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
                 </field>
                 <field id="review_historical_event_duration" translate="label" type="select" sortOrder="130" showInDefault="1"
-                       showInWebsite="0" showInStore="0">
+                       showInWebsite="1" showInStore="1">
                     <label>Sync Past Events: Duration</label>
                     <source_model>Apsis\One\Model\Config\Source\System\PastEvents</source_model>
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
@@ -541,7 +541,7 @@
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
                 </field>
                 <field id="wishlist_historical_event_duration" translate="label" type="select" sortOrder="160" showInDefault="1"
-                       showInWebsite="0" showInStore="0">
+                       showInWebsite="1" showInStore="1">
                     <label>Sync Past Events: Duration</label>
                     <source_model>Apsis\One\Model\Config\Source\System\PastEvents</source_model>
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>

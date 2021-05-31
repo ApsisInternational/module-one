@@ -64,6 +64,14 @@ class Block extends Template
     }
 
     /**
+     * @return string
+     */
+    public function getResetUrl()
+    {
+        return $this->escapeUrl($this->_urlBuilder->getUrl('apsis_one/developer/reset'));
+    }
+
+    /**
      * Get selected scope in admin
      *
      * @return array

@@ -40,17 +40,19 @@ class Find implements SyncInterface
                         $store,
                         ApsisConfigHelper::EVENTS_REGISTER_ABANDONED_CART_AFTER_DURATION
                     );
+                    if (! $isEnabled || ! $acDelayPeriod) {
+                        continue;
+                    }
 
-                    if ($isEnabled && $acDelayPeriod) {
-                        $quoteCollection = $this->abandonedSub
-                            ->getQuoteCollectionByStore($store, $acDelayPeriod, $apsisCoreHelper);
-                        if ($quoteCollection && $quoteCollection->getSize()) {
-                            $this->abandonedSub->aggregateCartDataFromStoreCollection(
-                                $quoteCollection,
-                                $apsisCoreHelper,
-                                $store->getId()
-                            );
-                        }
+
+                    $quoteCollection = $this->abandonedSub
+                        ->getQuoteCollectionByStore($store, $acDelayPeriod, $apsisCoreHelper);
+                    if ($quoteCollection && $quoteCollection->getSize()) {
+                        $this->abandonedSub->aggregateCartDataFromStoreCollection(
+                            $quoteCollection,
+                            $apsisCoreHelper,
+                            $store->getId()
+                        );
                     }
                 } catch (Exception $e) {
                     $apsisCoreHelper->logError(__METHOD__, $e);

@@ -35,13 +35,13 @@ class UpgradeData implements UpgradeDataInterface
         Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW => 'apsis_one_events/events/review_history_done_flag',
         Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST => 'apsis_one_events/events/wishlist_history_done_flag'
     ];
-
     const PRE_220_HISTORICAL_EVENT_TIMESTAMPS = [
         'apsis_one_events/events/cart_event_duration_timestamp',
         'apsis_one_events/events/order_event_duration_timestamp',
         'apsis_one_events/events/review_event_duration_timestamp',
         'apsis_one_events/events/wishlist_event_duration_timestamp'
     ];
+    const PRE_220_REDUNDANT_CRON_JOB = 'apsis_one_find_historical_events';
 
     /**
      * @var Registry
@@ -180,13 +180,13 @@ class UpgradeData implements UpgradeDataInterface
     {
         $this->apsisCoreHelper->log(__METHOD__);
 
-        //Set status to N/A for Profile type if given type for Profile is 0
+        //Set status to 5 for each Profile type (for all Profiles) if given Profile type has is_[PROFILE_TYPE] = 0
         $this->profileResource->resetProfiles(
             $this->apsisCoreHelper,
             [],
             [],
             Profile::SYNC_STATUS_NA,
-            ['condition' => 'is_', 'value' => Profile::NO_FLAGGED]
+            ['condition' => 'is_', 'value' => Profile::NO_FLAG]
         );
 
         //Remove all ui bookmarks belonging to module to force rebuild new ui bookmarks
@@ -212,6 +212,14 @@ class UpgradeData implements UpgradeDataInterface
         }
         $info = ['Removed configs.' => array_values($configs)];
         $this->apsisCoreHelper->debug(__METHOD__, $info);
+
+        //Removed redundant cron job.
+        $setup->getConnection()->delete(
+            $setup->getTable('cron_schedule'),
+            $setup->getConnection()->quoteInto('job_code = ?', self::PRE_220_REDUNDANT_CRON_JOB)
+        );
+        $info = ['Removed redundant cron job.' => self::PRE_220_REDUNDANT_CRON_JOB];
+        $this->apsisCoreHelper->debug(__METHOD__, $info);
     }
 
     /**
@@ -233,7 +241,7 @@ class UpgradeData implements UpgradeDataInterface
                 );
             }
 
-            //Reset all profile to re-sync if it has failed sync status
+            //Reset all profiles to re-sync if it has failed sync status
             $this->profileResource->resetProfiles(
                 $this->apsisCoreHelper,
                 [],

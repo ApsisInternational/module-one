@@ -104,7 +104,7 @@ class Subscription extends Action
                     $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED)
                         ->setSubscriberStoreId($subscriber->getStoreId())
                         ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE)
-                        ->setIsSubscriber(ProfileModel::NO_FLAGGED)
+                        ->setIsSubscriber(ProfileModel::NO_FLAG)
                         ->setErrorMessage('');
                     $this->profileResource->save($profile);
 

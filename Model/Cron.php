@@ -83,7 +83,8 @@ class Cron
      */
     public function cleanup()
     {
-        if ($this->checkIfJobAlreadyRan('apsis_one_cleanup')) {
+        $isEnabled = $this->coreHelper->isEnabled(ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 0);
+        if ($this->checkIfJobAlreadyRan('apsis_one_cleanup') || ! $isEnabled) {
             return;
         }
 

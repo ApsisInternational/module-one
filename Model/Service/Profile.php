@@ -210,7 +210,7 @@ class Profile
 
             //If attribute version id array is empty, return false
             if (empty($attributesArrWithVersionId =
-                $this->apsisCoreHelper->getAttributesArrWithVersionId($apiClient, $sectionDiscriminator))
+                $this->apsisCoreHelper->getAttributeVersionIds($apiClient, $sectionDiscriminator))
             ) {
                 return false;
             }
@@ -323,7 +323,7 @@ class Profile
                 $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED)
                     ->setSubscriberStoreId($subscriber->getStoreId())
                     ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
-                    ->setIsSubscriber(ProfileModel::NO_FLAGGED)
+                    ->setIsSubscriber(ProfileModel::NO_FLAG)
                     ->setErrorMessage('');
                 $this->profileResource->save($profile);
 
@@ -343,7 +343,7 @@ class Profile
                 $profile->setSubscriberId($subscriber->getSubscriberId())
                     ->setSubscriberStoreId($subscriber->getStoreId())
                     ->setSubscriberStatus(Subscriber::STATUS_SUBSCRIBED)
-                    ->setIsSubscriber(ProfileModel::IS_FLAGGED)
+                    ->setIsSubscriber(ProfileModel::IS_FLAG)
                     ->setErrorMessage('');
                 $this->profileResource->save($profile);
 
@@ -371,7 +371,7 @@ class Profile
             $profile->setStoreId($customer->getStoreId())
                 ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
                 ->setCustomerId($customer->getEntityId())
-                ->setIsCustomer(ProfileModel::IS_FLAGGED)
+                ->setIsCustomer(ProfileModel::IS_FLAG)
                 ->setErrorMessage('');
             $this->profileResource->save($profile);
 
@@ -428,7 +428,7 @@ class Profile
                     ->setStoreId($storeId)
                     ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_NA)
                     ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
-                    ->setIsCustomer(ProfileModel::IS_FLAGGED);
+                    ->setIsCustomer(ProfileModel::IS_FLAG);
             }
 
             if ($subscriberId) {
@@ -437,7 +437,7 @@ class Profile
                     ->setSubscriberStatus(Subscriber::STATUS_SUBSCRIBED)
                     ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_PENDING)
                     ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_NA)
-                    ->setIsSubscriber(ProfileModel::IS_FLAGGED);
+                    ->setIsSubscriber(ProfileModel::IS_FLAG);
             }
 
             $this->profileResource->save($profile);
@@ -619,7 +619,7 @@ class Profile
             if ($type == ProfileModel::TYPE_CUSTOMER) {
                 $profile->setCustomerId(null)
                     ->setStoreId(null)
-                    ->setIsCustomer(ProfileModel::NO_FLAGGED)
+                    ->setIsCustomer(ProfileModel::NO_FLAG)
                     ->setCustomerSyncStatus(ProfileModel::SYNC_STATUS_NA);
 
                 $attributes = $this->apsisConfigHelper->getCustomerAttributeMapping($store, false);
@@ -629,7 +629,7 @@ class Profile
             if ($type == ProfileModel::TYPE_SUBSCRIBER) {
                 $profile->setSubscriberId(null)
                     ->setSubscriberStoreId(null)
-                    ->setIsSubscriber(ProfileModel::NO_FLAGGED)
+                    ->setIsSubscriber(ProfileModel::NO_FLAG)
                     ->setSubscriberStatus(null)
                     ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_NA);
 
@@ -662,7 +662,7 @@ class Profile
         ProfileModel $profile
     ) {
         $status = false;
-        $attributesArrWithVersionId = $this->apsisCoreHelper->getAttributesArrWithVersionId(
+        $attributesArrWithVersionId = $this->apsisCoreHelper->getAttributeVersionIds(
             $client,
             $section
         );
@@ -776,7 +776,7 @@ class Profile
                 $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId())
             ) {
                 $attributesArrWithVersionId = $this->apsisCoreHelper
-                    ->getAttributesArrWithVersionId($client, $sectionDiscriminator);
+                    ->getAttributeVersionIds($client, $sectionDiscriminator);
                 $mappedEmailAttribute = $this->apsisCoreHelper->getStoreConfig(
                     $store,
                     ApsisConfigHelper::MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
@@ -916,8 +916,8 @@ class Profile
             $this->apsisCoreHelper->debug(__METHOD__, ['From' => $from]);
 
             if (! empty($storeIds = $this->apsisCoreHelper->getStoreIdsBasedOnScope())) {
-                $this->fullResetProfiles($from, $storeIds);
-                $this->eventService->fullResetEvents($from, $storeIds);
+                $this->resetProfiles($from, $storeIds);
+                $this->eventService->resetEvents($from, $storeIds);
             }
             $this->removeAllConfigExceptAccountConfig($from, $extra);
             $this->apsisCoreHelper->cleanCache();
@@ -966,17 +966,19 @@ class Profile
     /**
      * @param string $from
      * @param array $storeIds
+     * @param array $profileIds
      */
-    public function fullResetProfiles(string $from, array $storeIds)
+    public function resetProfiles(string $from, array $storeIds, array $profileIds = [])
     {
         try {
-            $this->profileResource->resetProfiles($this->apsisCoreHelper, $storeIds, []);
+            //Reset Profiles to status Pending
             $this->profileResource->resetProfiles(
                 $this->apsisCoreHelper,
                 $storeIds,
+                $profileIds,
+                ProfileModel::SYNC_STATUS_PENDING,
                 [],
-                ProfileModel::SYNC_STATUS_NA,
-                ['condition' => 'is_', 'value' => ProfileModel::NO_FLAGGED]
+                true
             );
 
             $info = [

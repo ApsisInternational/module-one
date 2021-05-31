@@ -58,7 +58,9 @@ class Abandoned extends AbstractDb implements ResourceInterface
                 $this->getMainTable(),
                 ["created_at < DATE_SUB(NOW(), INTERVAL ? DAY)" => $day]
             );
-            $apsisCoreHelper->log(__METHOD__, [$status]);
+            if ($status) {
+                $apsisCoreHelper->log(__METHOD__, [$status]);
+            }
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }

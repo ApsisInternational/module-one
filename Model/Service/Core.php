@@ -5,7 +5,7 @@ namespace Apsis\One\Model\Service;
 use Apsis\One\ApiClient\Client;
 use Apsis\One\ApiClient\ClientFactory;
 use Apsis\One\Logger\Logger;
-use Apsis\One\Model\Config\Backend\EncryptedValue;
+use Apsis\One\Model\Config\Backend\Value;
 use Apsis\One\Model\Config\Source\System\Region;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
@@ -807,17 +807,8 @@ class Core extends ApsisLogHelper
             return $this->getAllStoreIdsFromWebsite($websiteId);
         }
 
-        try {
-            if ($id = $this->storeManager->getDefaultStoreView()->getId()) {
-                $this->log("Scope is default. Returning default store id: $id.");
-                return [$id];
-            }
-        } catch (Exception $e) {
-            $this->log('Unable to get store id. See error.');
-            $this->logError(__METHOD__, $e);
-        }
-
-        return [];
+        //Scope is default. Returning all store ids.
+        return $this->getAllStoreIds();
     }
 
     /**
@@ -836,12 +827,15 @@ class Core extends ApsisLogHelper
     public function getKeySpaceDiscriminator(string $sectionDiscriminator)
     {
         try {
-            $hash = substr(md5($sectionDiscriminator), 0, 8);
-            return "com.apsis1.integrations.keyspaces.$hash.magento";
+            if (strlen($sectionDiscriminator)) {
+                $hash = substr(md5($sectionDiscriminator), 0, 8);
+                return "com.apsis1.integrations.keyspaces.$hash.magento";
+            }
         } catch (Exception $e) {
             $this->logError(__METHOD__, $e);
-            return '';
         }
+
+        return '';
     }
 
     /**
@@ -850,7 +844,7 @@ class Core extends ApsisLogHelper
      *
      * @return array
      */
-    public function getAttributesArrWithVersionId(Client $client, string $sectionDiscriminator)
+    public function getAttributeVersionIds(Client $client, string $sectionDiscriminator)
     {
         $attributesArr = [];
 
@@ -1003,7 +997,7 @@ class Core extends ApsisLogHelper
             //Validate api credential validity for integration
             $check = $this->validateApiCredentials($id, $secret, $region, $scope, $scopeId);
             if ($check === true) {
-                return EncryptedValue::SUCCESS_MESSAGE;
+                return Value::MSG_SUCCESS_ACCOUNT;
             } else {
                 $this->debug($check);
                 return $check;
@@ -1045,5 +1039,18 @@ class Core extends ApsisLogHelper
             $this->logError(__METHOD__, $e);
             return 'Something went wrong, please check exception logs.';
         }
+    }
+
+    /**
+     * @param array $groups
+     *
+     * @return bool
+     */
+    public function isInheritConfig(array $groups)
+    {
+        $isInheritId = isset($groups['oauth']['fields']['id']['inherit']);
+        $isInheritSecret = isset($groups['oauth']['fields']['secret']['inherit']);
+
+        return $isInheritId || $isInheritSecret;
     }
 }

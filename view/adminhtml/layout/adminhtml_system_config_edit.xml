@@ -9,8 +9,9 @@
         <referenceBlock name="after.body.start">
             <block
                 class="Apsis\One\Block\Adminhtml\Block"
-                name="apsis_topic_limiter"
+                name="apsis_config"
                 template="Apsis_One::config.phtml"
+                cacheable="false"
             />
         </referenceBlock>
     </body>

@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Model;
 
+use Apsis\One\ApiClient\Client;
 use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Model\AbstractModel;
@@ -49,8 +50,7 @@ class ProfileBatch extends AbstractModel
     const SYNC_STATUS_FAILED = 3;
     const SYNC_STATUS_ERROR = 4;
 
-    const PROCESSING_LIMIT = 20;
-    const PENDING_LIMIT = 3;
+    const MAX_POST_IMPORT_STATUS_LIMIT = 20;
 
     /**
      * @var DateTime
@@ -173,7 +173,7 @@ class ProfileBatch extends AbstractModel
         return $this->getBatchItemCollectionForStoreByStatus(
             $storeId,
             self::SYNC_STATUS_PENDING,
-            self::PENDING_LIMIT
+            Client::MAX_PRE_FILE_IMPORT_API_LIMIT
         );
     }
 
@@ -187,7 +187,7 @@ class ProfileBatch extends AbstractModel
         return $this->getBatchItemCollectionForStoreByStatus(
             $storeId,
             self::SYNC_STATUS_PROCESSING,
-            self::PROCESSING_LIMIT
+            self::MAX_POST_IMPORT_STATUS_LIMIT
         );
     }
 

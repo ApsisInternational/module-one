@@ -24,19 +24,23 @@
         const MSG_SAVE = '<span style="color:red"> Save Config </span>';
         const MSG_DATA = ' and all Profiles & Events will be set to re-sync. ';
         const END = 'This action is irreversible.';
-        const MSG_P_RESET = MSG_SAVE + 'will trigger partial reset. All configurations except account will be removed '
-        const MSG_F_RESET = MSG_SAVE + 'will trigger full reset. All configurations will be removed '
+        const MSG_P_RESET = MSG_SAVE + 'will trigger partial reset. All configurations except account will be removed ';
+        const MSG_F_RESET = 'will trigger full reset. All configurations will be removed ';
+        const MSG_F_RESET_CONFIG = MSG_SAVE + MSG_F_RESET;
+        const MSG_ACTION = 'This action ';
         const MSG_PRODUCTION = BR + 'Strictly for testing on stage environment only. Not recommended on Production' +
             ' environment.';
         const MSG_VALUE_CHANGE = 'Changing this configuration will has certain consequences. ';
-        const MSG_SECTION_VALUE_CHANGE = P_TAG_OPEN + MSG_VALUE_CHANGE + MSG_P_RESET + MSG_DATA + P_TAG_CLOSE + MSG_INFO;
-        const MSG_ACCOUNT_VALUE_CHANGE = P_TAG_OPEN + MSG_VALUE_CHANGE + MSG_F_RESET + MSG_DATA + P_TAG_CLOSE + MSG_INFO;
+        const MSG_SECTION_VALUE_CHANGE = P_TAG_OPEN + MSG_VALUE_CHANGE + MSG_P_RESET + MSG_DATA + P_TAG_CLOSE
+            + MSG_INFO;
+        const MSG_ACCOUNT_VALUE_CHANGE = P_TAG_OPEN + MSG_VALUE_CHANGE + MSG_F_RESET_CONFIG + MSG_DATA + P_TAG_CLOSE
+            + MSG_INFO;
         const MSG_SECTION_CONFIRMED_SAVE = P_TAG_OPEN + MSG_P_RESET + MSG_DATA + END + MSG_CONFIRM + P_TAG_CLOSE
             + MSG_INFO;
-        const MSG_ACCOUNT_CONFIRMED_SAVE = P_TAG_OPEN + MSG_F_RESET + MSG_DATA + END + MSG_CONFIRM + P_TAG_CLOSE
+        const MSG_ACCOUNT_CONFIRMED_SAVE = P_TAG_OPEN + MSG_F_RESET_CONFIG + MSG_DATA + END + MSG_CONFIRM + P_TAG_CLOSE
             + MSG_INFO;
-        const MSG_DEV_RESET = P_TAG_OPEN + MSG_F_RESET + MSG_DATA + MSG_PRODUCTION + MSG_CONFIRM + P_TAG_CLOSE
-            + MSG_INFO;
+        const MSG_DEV_RESET = P_TAG_OPEN + MSG_ACTION + MSG_F_RESET + MSG_DATA + P_TAG_CLOSE + P_TAG_OPEN
+            + MSG_PRODUCTION + MSG_CONFIRM + P_TAG_CLOSE + MSG_INFO;
 
         var isWarned = false;
         var isConfirmedOk = false;

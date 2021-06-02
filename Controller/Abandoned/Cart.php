@@ -65,10 +65,7 @@ class Cart extends Action
     {
         //Validate http method against allowed one.
         if ('GET' !== $_SERVER['REQUEST_METHOD']) {
-            $msg = $_SERVER['REQUEST_METHOD'] . ': method not allowed to this endpoint.';
-            $resultJson = $this->resultJsonFactory->create()
-                ->setData(['httpCode' => 405, 'message' => $msg]);
-            return $this->sendResponse($resultJson, 405);
+            return $this->sendResponse($this->resultRaw, 405);
         }
 
         $token = (string) $this->getRequest()->getParam('token');
@@ -93,12 +90,10 @@ class Cart extends Action
     {
         $output = $this->getRequest()->getParam('output');
         switch ($output) {
-            case 'json':
-                return $this->renderJson($cart);
             case 'html':
                 return $this->renderHtml($cart);
             default:
-                return $this->sendResponse($this->resultRaw, 204);
+                return $this->renderJson($cart);
         }
     }
 

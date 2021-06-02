@@ -74,7 +74,7 @@ class ValidateApi implements ObserverInterface
                 return $this;
             }
 
-            if ($this->registry->registry(Value::REGISTRY_NAME_FOR_STATUS_CHECK) === 2) {
+            if ($this->registry->registry(Value::REGISTRY_NAME_FOR_STATUS_CHECK) === Value::FAIL) {
                 $this->disableAccountAndRemoveConfig($scope);
                 return $this;
             }
@@ -82,7 +82,7 @@ class ValidateApi implements ObserverInterface
         } catch (Exception $e) {
             $this->disableAccountAndRemoveConfig($scope);
             $this->apsisCoreHelper->logError(__METHOD__, $e);
-            $this->messageManager->addWarningMessage(__('Unable Something went wrong, please check exception logs.'));
+            $this->messageManager->addWarningMessage(__('Something went wrong, please check logs.'));
         }
 
         return $this;

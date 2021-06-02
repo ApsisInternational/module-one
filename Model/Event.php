@@ -108,14 +108,16 @@ class Event extends AbstractModel
      */
     public function afterDelete()
     {
-        //Log it
-        $info = [
-            'Message' => 'Confirmed delete.',
-            'Entity Id' => $this->getId(),
-            'Profile Table Id' => $this->getProfileId(),
-            'Store Id' => $this->getStoreId()
-        ];
-        $this->logger->debug(__METHOD__, $info);
+        if ($this->isDeleted()) {
+            //Log it
+            $info = [
+                'Message' => 'Confirmed delete.',
+                'Entity Id' => $this->getId(),
+                'Profile Table Id' => $this->getProfileId(),
+                'Store Id' => $this->getStoreId()
+            ];
+            $this->logger->debug(__METHOD__, $info);
+        }
 
         return parent::afterDelete();
     }

@@ -32,6 +32,25 @@ class Block extends Template
     /**
      * @return bool
      */
+    public function isProfileDeleteEnabled()
+    {
+        try {
+            $scope = $this->getSelectedScopeInAdmin();
+            return (bool) $this->_scopeConfig->getValue(
+                Config::PROFILE_SYNC_DELETE_ENABLED,
+                $scope['context_scope'],
+                $scope['context_scope_id']
+            );
+        } catch (Exception $e) {
+            $this->apsisLogHelper->logError(__METHOD__, $e);
+            //Default value
+            return true;
+        }
+    }
+
+    /**
+     * @return bool
+     */
     public function isSectionAlreadyMapped(){
         try {
             $scope = $this->getSelectedScopeInAdmin();
@@ -52,11 +71,23 @@ class Block extends Template
     public function isAccountAlreadyConfigured(){
         try {
             $scope = $this->getSelectedScopeInAdmin();
-            return (bool) $this->_scopeConfig->getValue(
+            $idMapped = (bool) $this->_scopeConfig->getValue(
                 Config::ACCOUNTS_OAUTH_ID,
                 $scope['context_scope'],
                 $scope['context_scope_id']
             );
+            $secretMapped = (bool) $this->_scopeConfig->getValue(
+                Config::ACCOUNTS_OAUTH_SECRET,
+                $scope['context_scope'],
+                $scope['context_scope_id']
+            );
+            $regionMapped = (bool) $this->_scopeConfig->getValue(
+                Config::ACCOUNTS_OAUTH_REGION,
+                $scope['context_scope'],
+                $scope['context_scope_id']
+            );
+
+            return $idMapped && $secretMapped && $regionMapped;
         } catch (Exception $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
             return false;

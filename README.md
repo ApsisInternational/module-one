@@ -43,3 +43,8 @@ You are welcome to contribute to our APSIS One integration module for Magento 2.
 - Report a bug: Create a [GitHub issue](https://github.com/ApsisInternational/module-one/issues/new) including detailed description, steps to reproduce issue, Magento version including edition and module version number.
 - Fix a bug: Please clone our [Develop branch](https://github.com/ApsisInternational/module-one/tree/develop) to include your changes and submit your Pull Request.
 - To request a feature: Please contact us through [support](https://www.apsis.com/services/support)
+
+## Internal Docs
+- [Attributes Definition](https://docs.google.com/document/d/1Oyr2-hy-8WzILVUXrec5qZ50mcF2EYCFrGQniF1tYBs/)
+- [Events Definition](https://docs.google.com/document/d/1BqLGaFxIfeaqOCMapfjUCy_49u9WxpywAk_1EqNtckg/)  
+- [Endpoints Definition](https://docs.google.com/document/d/1vyhZceOLvbzrWtbCIRnTMwEZEJ8D6sANMi0mL7DY-Mw/)

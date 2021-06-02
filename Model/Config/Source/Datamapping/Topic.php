@@ -30,15 +30,15 @@ class Topic implements OptionSourceInterface
     public function toOptionArray()
     {
         try {
-            $section = $this->apsisCoreHelper->getMappedValueFromSelectedScope(
-                ApsisConfigHelper::MAPPINGS_SECTION_SECTION
-            );
+            $section = $this->apsisCoreHelper
+                ->getMappedValueFromSelectedScope(ApsisConfigHelper::MAPPINGS_SECTION_SECTION);
+            if (! $section) {
+                return [];
+            }
+
             $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
-            $apiClient = $this->apsisCoreHelper->getApiClient(
-                $scope['context_scope'],
-                $scope['context_scope_id']
-            );
-            if (! $apiClient || ! $section) {
+            $apiClient = $this->apsisCoreHelper->getApiClient($scope['context_scope'], $scope['context_scope_id']);
+            if (! $apiClient) {
                 return [];
             }
 

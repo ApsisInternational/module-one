@@ -722,6 +722,17 @@ class Profile
     {
         try {
             $storeId = $profile->getStoreId() ? $profile->getStoreId() : $profile->getSubscriberStoreId();
+            $isDeleteEnabled = $this->apsisCoreHelper->getConfigValue(
+                ApsisConfigHelper::PROFILE_SYNC_DELETE_ENABLED,
+                ScopeInterface::SCOPE_STORES,
+                $storeId
+            );
+
+            // Only delete if enabled otherwise ignore
+            if (! $isDeleteEnabled) {
+                return;
+            }
+
             $sectionDiscriminator = $this->apsisCoreHelper->getConfigValue(
                 ApsisConfigHelper::MAPPINGS_SECTION_SECTION,
                 ScopeInterface::SCOPE_STORES,

@@ -92,7 +92,12 @@
                 <order_status>pending,processing,complete</order_status>
                 <subscriber_batch_size>5000</subscriber_batch_size>
                 <customer_batch_size>1000</customer_batch_size>
+                <delete_enabled>1</delete_enabled>
             </profile_sync>
+            <tracking>
+                <enabled>0</enabled>
+                <script></script>
+            </tracking>
             <developer_settings>
                 <cleanup_after>30</cleanup_after>
                 <cron_schedule_profile_sync>*/5 * * * *</cron_schedule_profile_sync>

@@ -149,17 +149,19 @@ class Profile extends AbstractModel
     public function afterDelete()
     {
         try {
-            //Send delete request to One
-            $this->profileService->deleteProfileFromOne($this);
+            if ($this->isDeleted()) {
+                //Send delete request to One
+                $this->profileService->deleteProfileFromOne($this);
 
-            //Log it
-            $info = [
-                'Message' => 'Profile removed from integration table.',
-                'Entity Id' => $this->getId(),
-                'Store Id' => $this->getStoreId() ? $this->getStoreId() : $this->getSubscriberStoreId(),
-                'Profile Id' => $this->getIntegrationUid()
-            ];
-            $this->logger->debug(__METHOD__, $info);
+                //Log it
+                $info = [
+                    'Message' => 'Profile removed from integration table.',
+                    'Entity Id' => $this->getId(),
+                    'Store Id' => $this->getStoreId() ? $this->getStoreId() : $this->getSubscriberStoreId(),
+                    'Profile Id' => $this->getIntegrationUid()
+                ];
+                $this->logger->debug(__METHOD__, $info);
+            }
         } catch (Exception $e) {
             $this->logger->logError(__METHOD__, $e);
         }

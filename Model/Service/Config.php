@@ -147,6 +147,7 @@ class Config
     const PROFILE_SYNC_ORDER_STATUSES = 'apsis_one_configuration/profile_sync/order_status';
     const PROFILE_SYNC_SUBSCRIBER_BATCH_SIZE = 'apsis_one_configuration/profile_sync/subscriber_batch_size';
     const PROFILE_SYNC_CUSTOMER_BATCH_SIZE = 'apsis_one_configuration/profile_sync/customer_batch_size';
+    const PROFILE_SYNC_DELETE_ENABLED = 'apsis_one_configuration/profile_sync/delete_enabled';
 
     /** Developer settings */
     const DEVELOPER_SETTING_SECTION = 'apsis_one_configuration/developer_settings';

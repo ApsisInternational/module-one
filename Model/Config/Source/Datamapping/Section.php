@@ -32,6 +32,11 @@ class Section implements OptionSourceInterface
 
         try {
             $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
+
+            if (! $this->apsisCoreHelper->isEnabled($scope['context_scope'], $scope['context_scope_id'])) {
+                return [];
+            }
+
             $apiClient = $this->apsisCoreHelper->getApiClient(
                 $scope['context_scope'],
                 $scope['context_scope_id']

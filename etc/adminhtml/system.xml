@@ -593,6 +593,12 @@
                     <label>Customer Sync Size</label>
                     <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
                 </field>
+                <field id="delete_enabled" translate="label" type="select" sortOrder="40" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Delete Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <backend_model>Apsis\One\Model\Config\Backend\Value</backend_model>
+                </field>
             </group>
             <group id="tracking" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Tracking</label>

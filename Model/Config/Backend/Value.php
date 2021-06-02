@@ -39,6 +39,7 @@ class Value extends ConfigValue implements ProcessorInterface
     const MSG_ACCOUNT_CHANGE = 'User changed API credentials. Sending full reset request.';
     const MSG_ACCOUNT_RESET = 'Full reset from API credentials change';
     const MSG_ACCOUNT_INHERIT = 'Config set to inherit value. Passed to observer to handle change request';
+    const MSG_ACCOUNT_MISSING = 'Not all configs exist for validation';
     const MSG_UPDATED = "Updated %d historical events to sync";
 
     const EVENT_HISTORICAL_DURATION = [
@@ -318,20 +319,8 @@ class Value extends ConfigValue implements ProcessorInterface
 
         //Value changed, determined by the model
         if ($this->isValueChanged()) {
-
             //Account configs
-            $check = $this->isAccountConfigThenEvaluateAfterSave();
-
-            if ($check === true) { // Success
-
-                //Let parent process config
-                return parent::afterSave();
-
-            } elseif ($check === false) { // Failure
-
-                // Do not let parent process config
-                return $this;
-            }
+            $this->isAccountConfigThenEvaluateAfterSave();
 
             //Section config
             $this->isSectionConfigThenEvaluateAfterSave();
@@ -343,7 +332,6 @@ class Value extends ConfigValue implements ProcessorInterface
             $this->log(__METHOD__);
         }
 
-        //At this point, it means to let model save value in DB
         return parent::afterSave();
     }
 
@@ -396,29 +384,44 @@ class Value extends ConfigValue implements ProcessorInterface
     /**
      * @param array $groups
      *
-     * @return false|string
+     * @return string
      */
     private function getSecretValue(array $groups)
     {
+        $fromDb = false;
+
         //If secret config
         if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
-            return $this->processValue($this->getValue());
-        }
 
-        $secret = (string) $groups['oauth']['fields']['secret']['value'] ?? false;
-        if (empty($secret)) {
-            return false;
-        }
+            $result = $this->getValueForSecretConfig($this->getValue());
 
-        if ($this->getValueForSecretConfig($secret)) {
-            if (empty($secret)) {
-                return false;
+            if (strlen($result)) {
+                return $this->processValue($result);
+            } elseif ($result === null) {
+                $fromDb = true;
             }
 
-            return $secret;
+            //All other account config
+        } elseif (isset($groups['oauth']['fields']['secret']['value'])) {
+
+            $secret = $groups['oauth']['fields']['secret']['value'];
+            $result = $this->getValueForSecretConfig($secret);
+
+            if (strlen($result)) {
+                return $this->processValue($secret);
+            } elseif ($result === null) {
+                $fromDb = true;
+            }
         }
 
-        return false;
+        if ($fromDb) {
+            return (string) $this->apsisCoreHelper->getClientSecret(
+                $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                $this->getScopeId()
+            );
+        }
+
+        return '';
     }
 
     /**
@@ -475,11 +478,12 @@ class Value extends ConfigValue implements ProcessorInterface
     {
         if ($this->getPath() == Config::MAPPINGS_SECTION_SECTION) {
 
-            if ($this->getOldValue()) { // If section was mapped before
+            // If section was mapped before
+            if ($this->getOldValue()) {
 
                 // At this point, section value has changed. Send partial reset request
-                $this->profileService->resetRequest(self::MSG_SECTION_RESET, [Config::MAPPINGS_SECTION_SECTION]);
                 $this->apsisCoreHelper->log(self::MSG_SECTION_CHANGE);
+                $this->profileService->resetRequest(self::MSG_SECTION_RESET, [Config::MAPPINGS_SECTION_SECTION]);
 
                 //Set this key so other configs (will get default values) from same page do not get save.
                 $this->setRegistryStatus(self::FAIL);
@@ -488,73 +492,80 @@ class Value extends ConfigValue implements ProcessorInterface
     }
 
     /**
-     * @return bool|null
+     * @return void
      */
     private function isAccountConfigThenEvaluateAfterSave()
     {
         if (in_array($this->getPath(), Config::CONFIG_PATHS_ACCOUNT)) {
-
-            //Already validated and success. No need to do it again.
-            if ($this->assertRegistryStatus(self::SUCCESS)) {
-                return true;
-            }
-
-            //If already exist an old value for account. Log it
-            if ($this->getOldValue()) {
-                $this->apsisCoreHelper->log(self::MSG_ACCOUNT_CHANGE);
-
-                //Always Remove old config, reset Profiles and Events
-                $this->profileService->resetRequest(self::MSG_ACCOUNT_RESET);
-            }
-
             $groups = $this->request->getPost('groups');
 
             //No need for validation, observer will remove token config for this context
             if ($this->apsisCoreHelper->isInheritConfig($groups)) {
                 $this->log(self::MSG_ACCOUNT_INHERIT);
-
-                return true;
+                return;
             }
 
-            //Obtained all required values to validate api
-            $id = $groups['oauth']['fields']['id']['value'] ?? false;
+            //Already validated and success. No need to do it again.
+            if ($this->assertRegistryStatus(self::SUCCESS)) {
+                return;
+            }
+
             $secret = $this->getSecretValue($groups);
-            $region = $groups['oauth']['fields']['region']['value'] ?? false;
+
+            // Enabled account config
+            if ($this->getPath() == Config::ACCOUNTS_OAUTH_ENABLED) {
+
+                //If account is being disabled
+                if ($this->getOldValue() && empty($this->getValue())) {
+                    $this->setRegistryStatus(self::SUCCESS);
+                    return;
+                }
+
+                // Other account configs
+            } else {
+
+                $old = $this->getOldValue();
+                $new = $this->getValue();
+
+                // If config is secret
+                if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
+                    $old = $this->processValue($old);
+                    $new = $secret;
+                }
+
+
+                //If already exist an old value and not same as new value. log it and perform full reset
+                if ($old && $new && $old != $new) {
+                    $this->apsisCoreHelper->log(self::MSG_ACCOUNT_CHANGE);
+                    $this->profileService->resetRequest(self::MSG_ACCOUNT_RESET);
+                }
+            }
 
             //It's a fail if anyone of these are empty
-            if (empty($id) || empty($secret) || empty($region)) {
+            if (! $this->isCompulsoryConfigExistForValidation($groups) || empty($secret)) {
+                $this->messageManager->addWarningMessage(__(self::MSG_ACCOUNT_MISSING));
+                $this->apsisCoreHelper->log(self::MSG_ACCOUNT_MISSING);
                 $this->setRegistryStatus(self::FAIL);
 
-                return false;
+                return;
             }
 
-            //Get scope, if none found then it is default
+            $id = $groups['oauth']['fields']['id']['value'];
+            $region = $groups['oauth']['fields']['region']['value'];
             $scope = $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
 
-            //Determine success or fail
             $msg = $this->apsisCoreHelper->isApiCredentialsValid($id, $secret, $region, $scope, $this->getScopeId());
 
-            if ($msg === self::MSG_SUCCESS_ACCOUNT) { // Success
-
-                //Success message for admin
+            //Determine success or fail
+            if ($msg === self::MSG_SUCCESS_ACCOUNT) {
                 $this->messageManager->addSuccessMessage(__(self::MSG_SUCCESS_ACCOUNT));
                 $this->log(self::MSG_SUCCESS_ACCOUNT);
                 $this->setRegistryStatus(self::SUCCESS);
-
-                return true;
-
-            } else { // Failure
-
-                //Failure message for admin
+            } else {
                 $this->messageManager->addWarningMessage(__($msg));
                 $this->setRegistryStatus(self::FAIL);
-
-                return false;
             }
         }
-
-        //Nothing
-        return null;
     }
 
     /**
@@ -650,14 +661,34 @@ class Value extends ConfigValue implements ProcessorInterface
      */
     private function log(string $msg)
     {
+        $oldValue = ($this->getOldValue() == $this->getValue()) ?
+            $this->_registry->registry(self::REGISTRY_NAME_FOR_OLD_VALUE) : $this->getOldValue();
+        $newValue = $this->getValue();
+
+        if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
+            $oldValue = $newValue = 'Encrypted value';
+        }
+
         $info = [
             'Scope' => $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
             'Scope Id' => $this->getScopeId(),
             'Config Path' => $this->getPath(),
-            'Old Value' => ($this->getOldValue() == $this->getValue()) ?
-                $this->_registry->registry(self::REGISTRY_NAME_FOR_OLD_VALUE) : $this->getOldValue(),
-            'New Value' => $this->getValue()
+            'Old Value' => $oldValue,
+            'New Value' => $newValue
         ];
         $this->apsisCoreHelper->debug($msg, $info);
+    }
+
+    /**
+     * @param array $groups
+     *
+     * @return bool
+     */
+    private function isCompulsoryConfigExistForValidation(array $groups)
+    {
+        return isset($groups['oauth']['fields']['id']['value']) &&
+            isset($groups['oauth']['fields']['region']['value']) &&
+            ! empty($groups['oauth']['fields']['id']['value']) &&
+            ! empty($groups['oauth']['fields']['region']['value']);
     }
 }

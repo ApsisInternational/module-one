@@ -380,7 +380,7 @@ class Core extends ApsisLogHelper
      *
      * @return string
      */
-    private function getClientSecret(string $contextScope, int $scopeId)
+    public function getClientSecret(string $contextScope, int $scopeId)
     {
         $value = $this->getConfigValue(ApsisConfigHelper::ACCOUNTS_OAUTH_SECRET, $contextScope, $scopeId);
         return $this->encryptor->decrypt($value);

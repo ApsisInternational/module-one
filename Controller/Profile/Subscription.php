@@ -77,8 +77,7 @@ class Subscription extends Action
         try {
             //Validate http method against allowed one.
             if ('PATCH' !== $_SERVER['REQUEST_METHOD']) {
-                $msg = $_SERVER['REQUEST_METHOD'] . ': method not allowed to this endpoint.';
-                return $this->sendResponse( 405, json_encode(['httpCode' => 405, 'message' => $msg]));
+                return $this->sendResponse( 405);
             }
 
             if (empty($key = (string) $this->getRequest()->getHeader('authorization')) ||
@@ -92,7 +91,7 @@ class Subscription extends Action
                 return $this->sendResponse(400);
             }
 
-            if (! $profile = $this->validateId($params)) {
+            if (! $profile = $this->getProfile($params)) {
                 return $this->sendResponse(404);
             }
 
@@ -125,10 +124,10 @@ class Subscription extends Action
                 }
             }
 
-            return $this->sendResponse(200, 'No change made to profile subscription.');
+            return $this->sendResponse(200);
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
-            return $this->sendResponse(500, $e->getMessage());
+            return $this->sendResponse(500);
         }
     }
 
@@ -181,20 +180,16 @@ class Subscription extends Action
 
     /**
      * @param int $code
-     * @param string $body
      *
      * @return ResponseInterface
      */
-    private function sendResponse(int $code, string $body = '')
+    private function sendResponse(int $code)
     {
         $this->getResponse()
             ->setHttpResponseCode($code)
             ->setHeader('Pragma', 'public', true)
             ->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0', true)
             ->setHeader('Content-Type', 'application/json', true);
-        if (strlen($body)) {
-            $this->getResponse()->setBody($body);
-        }
         return $this->getResponse();
     }
 
@@ -213,7 +208,7 @@ class Subscription extends Action
      *
      * @return ProfileModel|bool
      */
-    private function validateId(array $params)
+    private function getProfile(array $params)
     {
         return $this->profileCollectionFactory->create()
             ->loadByIntegrationId($this->escaper->escapeHtml($params['PK']));

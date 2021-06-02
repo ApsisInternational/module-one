@@ -5,7 +5,6 @@ namespace Apsis\One\Model\Cart;
 use Apsis\One\Model\Service\Product as ProductServiceProvider;
 use Exception;
 use Magento\Framework\App\Area;
-use Magento\Framework\Pricing\Helper\Data;
 use Magento\Quote\Model\Quote\Item;
 use Magento\Store\Model\App\EmulationFactory;
 use Magento\Quote\Model\Quote;
@@ -20,11 +19,6 @@ class Content
      * @var ProductServiceProvider
      */
     private $productServiceProvider;
-
-    /**
-     * @var Data
-     */
-    private $priceHelper;
 
     /**
      * @var EmulationFactory
@@ -50,14 +44,12 @@ class Content
      * Content constructor.
      *
      * @param EmulationFactory $emulationFactory
-     * @param Data $priceHelper
      * @param CartTotalRepositoryInterface $cartTotalRepository
      * @param ApsisDateHelper $apsisDateHelper
      * @param ProductServiceProvider $productServiceProvider
      */
     public function __construct(
         EmulationFactory $emulationFactory,
-        Data $priceHelper,
         CartTotalRepositoryInterface $cartTotalRepository,
         ApsisDateHelper $apsisDateHelper,
         ProductServiceProvider $productServiceProvider
@@ -65,7 +57,6 @@ class Content
         $this->productServiceProvider = $productServiceProvider;
         $this->apsisDateHelper = $apsisDateHelper;
         $this->cartTotalRepository = $cartTotalRepository;
-        $this->priceHelper = $priceHelper;
         $this->emulationFactory = $emulationFactory;
     }
 
@@ -77,17 +68,19 @@ class Content
      */
     public function getCartData(Quote $quoteModel, ApsisCoreHelper $apsisCoreHelper)
     {
+        $cartData = [];
         $this->apsisCoreHelper = $apsisCoreHelper;
         $appEmulation = $this->emulationFactory->create();
-        $cartData = [];
+
         try {
             $appEmulation->startEnvironmentEmulation($quoteModel->getStoreId(), Area::AREA_FRONTEND, true);
             $cartData = $this->getMainCartData($quoteModel);
             $cartData['items'] = $this->getItemData($quoteModel->getAllVisibleItems());
         } catch (Exception $e) {
+            $appEmulation->stopEnvironmentEmulation();
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
-        $appEmulation->stopEnvironmentEmulation();
+
         return $cartData;
     }
 
@@ -100,6 +93,7 @@ class Content
     {
         try {
             $itemsData = [];
+
             /** @var Item $quoteItem */
             foreach ($quoteItems as $quoteItem) {
                 $itemsData[] = $this->getItemsData($quoteItem);
@@ -107,6 +101,7 @@ class Content
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
+
         return $itemsData;
     }
 
@@ -235,13 +230,16 @@ class Content
         $sortedOptions = [];
         try {
             $options = $item->getProduct()->getTypeInstance()->getOrderOptions($item->getProduct());
+
             if (isset($options['attributes_info']) || isset($options['options'])) {
                 $optionAttributes = [];
+
                 if (isset($options['attributes_info'])) {
                     $optionAttributes = $options['attributes_info'];
                 } elseif (isset($options['options'])) {
                     $optionAttributes = $options['options'];
                 }
+
                 $sortedOptions = $this->getConfigurableOptions($optionAttributes);
             } elseif (isset($options['bundle_options'])) {
                 $sortedOptions = $this->getBundleOptions($options);
@@ -260,6 +258,7 @@ class Content
     private function getConfigurableOptions(array $optionAttributes)
     {
         $sortedOptions = [];
+
         try {
             foreach ($optionAttributes as $attribute) {
                 $option['option_label'] = (string) $attribute['label'];
@@ -287,6 +286,7 @@ class Content
         try {
             foreach ($options['bundle_options'] as $attribute) {
                 $option['option_label'] = (string) $attribute['label'];
+
                 foreach ($attribute['value'] as $value) {
                     $values['title'] = (string) $value['title'];
                     $values['value'] = '';
@@ -294,11 +294,13 @@ class Content
                     $values['price'] = $this->apsisCoreHelper->round($value['price']);
                     $option['option_value'] = $values;
                 }
+
                 $sortedOptions[] = $option;
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
+
         return $sortedOptions;
     }
 }

@@ -31,21 +31,17 @@ class Data extends EventData implements EventDataInterface
     }
 
     /**
-     * @param AbstractModel $order
-     * @param ApsisCoreHelper $apsisCoreHelper
-     *
-     * @return array
+     * @inheritdoc
      */
-    public function getProcessedDataArr(AbstractModel $order, ApsisCoreHelper $apsisCoreHelper)
+    public function getProcessedDataArr(AbstractModel $model, ApsisCoreHelper $apsisCoreHelper)
     {
         try {
             $items = [];
-            /** @var Item $item */
-            foreach ($order->getAllVisibleItems() as $item) {
+            foreach ($model->getAllVisibleItems() as $item) {
                 try {
                     $product = $item->getProduct();
                     $items [] = [
-                        'orderId' => (int) $order->getEntityId(),
+                        'orderId' => (int) $model->getEntityId(),
                         'productId' => (int) $item->getProductId(),
                         'sku' => (string) $item->getSku(),
                         'name' => (string) $item->getName(),
@@ -62,20 +58,20 @@ class Data extends EventData implements EventDataInterface
             }
 
             return [
-                'orderId' => (int) $order->getEntityId(),
-                'incrementId' => (string) $order->getIncrementId(),
-                'customerId' => (int) $order->getCustomerId(),
+                'orderId' => (int) $model->getEntityId(),
+                'incrementId' => (string) $model->getIncrementId(),
+                'customerId' => (int) $model->getCustomerId(),
                 'subscriberId' => (int) $this->subscriberId,
-                'isGuest' => (boolean) $order->getCustomerIsGuest(),
-                'websiteName' => (string) $order->getStore()->getWebsite()->getName(),
-                'storeName' => (string) $order->getStore()->getName(),
-                'grandTotalAmount' => $apsisCoreHelper->round($order->getGrandTotal()),
-                'shippingAmount' => $apsisCoreHelper->round($order->getShippingAmount()),
-                'discountAmount' => $apsisCoreHelper->round($order->getDiscountAmount()),
-                'shippingMethodName' => (string) $order->getShippingDescription(),
-                'paymentMethodName' => (string) $order->getPayment()->getMethod(),
-                'itemsCount' => (int) $order->getTotalItemCount(),
-                'currencyCode' => (string) $order->getOrderCurrencyCode(),
+                'isGuest' => (boolean) $model->getCustomerIsGuest(),
+                'websiteName' => (string) $model->getStore()->getWebsite()->getName(),
+                'storeName' => (string) $model->getStore()->getName(),
+                'grandTotalAmount' => $apsisCoreHelper->round($model->getGrandTotal()),
+                'shippingAmount' => $apsisCoreHelper->round($model->getShippingAmount()),
+                'discountAmount' => $apsisCoreHelper->round($model->getDiscountAmount()),
+                'shippingMethodName' => (string) $model->getShippingDescription(),
+                'paymentMethodName' => (string) $model->getPayment()->getMethod(),
+                'itemsCount' => (int) $model->getTotalItemCount(),
+                'currencyCode' => (string) $model->getOrderCurrencyCode(),
                 'items' => $items
             ];
         } catch (Exception $e) {

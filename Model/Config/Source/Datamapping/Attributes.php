@@ -35,16 +35,15 @@ class Attributes implements OptionSourceInterface
     }
 
     /**
-     *  Attribute options
-     *
-     * @return array
+     * @inheritdoc
      */
     public function toOptionArray()
     {
-        $fields[] = ['value' => '', 'label' => __('-- Please Select --')];
+        $fields = [['value' => '', 'label' => __('-- Please Select --')]];
+
         try {
             $section = $this->apsisCoreHelper->getMappedValueFromSelectedScope(
-                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+                ApsisConfigHelper::MAPPINGS_SECTION_SECTION
             );
             if (! $section) {
                 return [];
@@ -59,9 +58,11 @@ class Attributes implements OptionSourceInterface
                     $scope['context_scope'],
                     $scope['context_scope_id']
                 );
+
                 if (! $apiClient) {
                     return [];
                 }
+
                 $attributes = $apiClient->getAttributes($section);
                 $this->registry->unregister(self::REGISTRY_NAME);
                 $this->registry->register(self::REGISTRY_NAME, $attributes, true);
@@ -77,6 +78,7 @@ class Attributes implements OptionSourceInterface
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
+
         return $fields;
     }
 }

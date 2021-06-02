@@ -12,7 +12,9 @@
             </action>
         </referenceBlock>
         <referenceContainer name="content">
-            <block class="Apsis\One\Block\Customer\Subscription" name="apsis_newsletter_subscription"
+            <block ifconfig="apsis_one_accounts/oauth/enabled"
+                   class="Apsis\One\Block\Customer\Subscription"
+                   name="apsis_newsletter_subscription"
                    template="Apsis_One::subscription.phtml" after="-" cacheable="false">
             </block>
         </referenceContainer>

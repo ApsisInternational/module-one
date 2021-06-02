@@ -58,18 +58,15 @@ class Reset extends Field
     }
 
     /**
-     * @param AbstractElement $element
-     *
-     * @return string
+     * @inheritdoc
      */
     public function _getElementHtml(AbstractElement $element)
     {
         try {
-            $resetUrl = $this->escapeUrl($this->_urlBuilder->getUrl('apsis_one/developer/reset'));
             $elm = $this->getLayout()
                 ->createBlock(Button::class)
+                ->setId('apsis_reset_button')
                 ->setType('button')
-                ->setOnClick("window.location.href='".$resetUrl."'")
                 ->setLabel($this->buttonLabel);
             if ($this->state->getMode() === State::MODE_PRODUCTION) {
                 $elm->setDisabled('disabled');

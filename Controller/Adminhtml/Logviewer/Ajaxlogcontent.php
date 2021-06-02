@@ -58,7 +58,7 @@ class Ajaxlogcontent extends Action
     }
 
     /**
-     * Ajax get log file content.
+     * @inheritdoc
      */
     public function execute()
     {
@@ -81,7 +81,7 @@ class Ajaxlogcontent extends Action
                 default:
                     $header = 'APSIS Log';
             }
-            $content = nl2br($this->escaper->escapeHtml($this->file->getLogFileContent($logFile)));
+            $content = $this->file->getLogFileContent($logFile);
         } catch (Exception $e) {
             $this->logHelper->logError(__METHOD__, $e);
             $content = $e->getMessage();

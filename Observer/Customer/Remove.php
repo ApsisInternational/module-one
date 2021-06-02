@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Observer\Customer;
 
+use Apsis\One\Model\Profile as ProfileModel;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Profile;
 use Exception;
@@ -27,17 +28,14 @@ class Remove implements ObserverInterface
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param Profile $profileService
      */
-    public function __construct(
-        ApsisCoreHelper $apsisCoreHelper,
-        Profile $profileService
-    ) {
+    public function __construct(ApsisCoreHelper $apsisCoreHelper, Profile $profileService)
+    {
         $this->profileService = $profileService;
         $this->apsisCoreHelper = $apsisCoreHelper;
     }
 
     /**
-     * @param Observer $observer
-     * @return $this
+     * @inheritdoc
      */
     public function execute(Observer $observer)
     {
@@ -46,7 +44,8 @@ class Remove implements ObserverInterface
             $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $customer->getStoreId());
 
             if ($account && $profile = $this->profileService->findProfileForCustomer($customer)) {
-                $this->profileService->handleCustomerDeleteForProfile($profile);
+                $this->apsisCoreHelper->log(__METHOD__);
+                $this->profileService->handleDeleteOperationByType($profile, ProfileModel::TYPE_CUSTOMER);
             }
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);

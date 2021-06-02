@@ -19,9 +19,7 @@ class ProfileBatch extends AbstractDb implements ResourceInterface
     }
 
     /**
-     * @param ApsisLogHelper $apsisLogHelper
-     *
-     * @return bool
+     * @inheritdoc
      */
     public function truncateTable(ApsisLogHelper $apsisLogHelper)
     {
@@ -35,8 +33,7 @@ class ProfileBatch extends AbstractDb implements ResourceInterface
     }
 
     /**
-     * @param int $day
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @inheritdoc
      */
     public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper)
     {
@@ -49,7 +46,10 @@ class ProfileBatch extends AbstractDb implements ResourceInterface
                     ProfileBatchModel::SYNC_STATUS_FAILED
                 ]
             ];
-            $this->getConnection()->delete($this->getMainTable(), $where);
+            $status = $this->getConnection()->delete($this->getMainTable(), $where);
+            if ($status) {
+                $apsisCoreHelper->log(__METHOD__, [$status]);
+            }
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }

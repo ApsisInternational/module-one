@@ -52,28 +52,25 @@ class Data extends EventData implements EventDataInterface
     }
 
     /**
-     * @param AbstractModel $reviewObject
-     * @param ApsisCoreHelper $apsisCoreHelper
-     *
-     * @return array
+     * @inheritdoc
      */
-    public function getProcessedDataArr(AbstractModel $reviewObject, ApsisCoreHelper $apsisCoreHelper)
+    public function getProcessedDataArr(AbstractModel $model, ApsisCoreHelper $apsisCoreHelper)
     {
         try {
-            $voteCollection = $this->voteCollectionFactory->create()->setReviewFilter($reviewObject->getReviewId());
+            $voteCollection = $this->voteCollectionFactory->create()->setReviewFilter($model->getReviewId());
             return [
-                'reviewId' => (int) $reviewObject->getReviewId(),
-                'customerId' => (int) $reviewObject->getCustomerId(),
-                'websiteName' => (string) $apsisCoreHelper->getWebsiteNameFromStoreId($reviewObject->getStoreId()),
-                'storeName' => (string) $apsisCoreHelper->getStoreNameFromId($reviewObject->getStoreId()),
-                'nickname' => (string) $reviewObject->getNickname(),
-                'reviewTitle' => (string) $reviewObject->getTitle(),
-                'reviewDetail' => (string) $reviewObject->getDetail(),
+                'reviewId' => (int) $model->getReviewId(),
+                'customerId' => (int) $model->getCustomerId(),
+                'websiteName' => (string) $apsisCoreHelper->getWebsiteNameFromStoreId($model->getStoreId()),
+                'storeName' => (string) $apsisCoreHelper->getStoreNameFromId($model->getStoreId()),
+                'nickname' => (string) $model->getNickname(),
+                'reviewTitle' => (string) $model->getTitle(),
+                'reviewDetail' => (string) $model->getDetail(),
                 'productId' => (int) $this->product->getId(),
                 'sku' => (string) $this->product->getSku(),
                 'name' => (string) $this->product->getName(),
                 'productUrl' => (string) $this->product->getProductUrl(),
-                'productReviewUrl' => (string) $reviewObject->getReviewUrl(),
+                'productReviewUrl' => (string) $model->getReviewUrl(),
                 'productImageUrl' => (string) $this->productServiceProvider->getProductImageUrl($this->product),
                 'catalogPriceAmount' => $apsisCoreHelper->round($this->product->getPrice()),
                 'ratingStarValue' => ($voteCollection->getSize()) ?

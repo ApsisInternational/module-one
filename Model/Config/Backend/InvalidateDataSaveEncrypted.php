@@ -48,11 +48,12 @@ class InvalidateDataSaveEncrypted extends Value
     }
 
     /**
-     * @return void
+     * @inheritdoc
      */
     public function beforeSave()
     {
         $this->_dataSaveAllowed = false;
+        return $this;
     }
 
     /**

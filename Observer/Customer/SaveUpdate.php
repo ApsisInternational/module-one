@@ -37,20 +37,15 @@ class SaveUpdate implements ObserverInterface
      * @param Registry $registry
      * @param Profile $profileService
      */
-    public function __construct(
-        ApsisCoreHelper $apsisCoreHelper,
-        Registry $registry,
-        Profile $profileService
-    ) {
+    public function __construct(ApsisCoreHelper $apsisCoreHelper, Registry $registry, Profile $profileService)
+    {
         $this->profileService = $profileService;
         $this->registry = $registry;
         $this->apsisCoreHelper = $apsisCoreHelper;
     }
 
     /**
-     * @param Observer $observer
-     *
-     * @return $this
+     * @inheritdoc
      */
     public function execute(Observer $observer)
     {

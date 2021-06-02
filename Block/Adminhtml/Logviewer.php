@@ -6,11 +6,6 @@ use Magento\Backend\Block\Widget\Container;
 use Apsis\One\Model\Service\File;
 use Magento\Backend\Block\Widget\Context;
 
-/**
- * Log viewer block
- *
- * @api
- */
 class Logviewer extends Container
 {
 
@@ -38,23 +33,13 @@ class Logviewer extends Container
     }
 
     /**
-     * @return void
+     * @inheritdoc
      */
     public function _construct()
     {
         $this->_controller = 'adminhtml_logviewer';
         $this->_headerText = __('Log Viewer');
         parent::_construct();
-    }
-
-    /**
-     * Get log file content
-     *
-     * @return string
-     */
-    public function getLogFileContent()
-    {
-        return nl2br($this->_escaper->escapeHtml($this->file->getLogFileContent()));
     }
 
     /**

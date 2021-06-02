@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Model\Sync;
 
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers;
 use Apsis\One\Model\Sync\Profiles\Customers;
@@ -44,28 +45,46 @@ class Profiles implements SyncInterface
     }
 
     /**
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @inheritdoc
      */
     public function process(ApsisCoreHelper $apsisCoreHelper)
     {
-        $stores = $apsisCoreHelper->getStores();
-        foreach ($stores as $store) {
+        foreach ($apsisCoreHelper->getStores() as $store) {
             try {
-                $account = $apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
-                if ($account) {
-                    $apsisCoreHelper->validateIsUrlReachable(
-                        $apsisCoreHelper->buildFileUploadHostName(
-                            $apsisCoreHelper->getRegion(ScopeInterface::SCOPE_STORES, $store->getId())
-                        )
-                    );
 
+                $account = $apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
+                if (! $account) {
+                    continue;
+                }
+
+                //Validate file upload url host reachable
+                $region = $apsisCoreHelper->getRegion(ScopeInterface::SCOPE_STORES, $store->getId());
+                $apsisCoreHelper->validateIsUrlReachable($apsisCoreHelper->buildFileUploadHostName($region));
+
+                //Start batch process for Subscribers
+                $subscriberSync = (boolean) $apsisCoreHelper
+                    ->getStoreConfig($store, ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENABLED);
+                if ($subscriberSync) {
                     $this->subscribers->processForStore($store, $apsisCoreHelper);
+                }
+
+                //Start batch process for Customers
+                $customerSync = (boolean) $apsisCoreHelper
+                    ->getStoreConfig($store, ApsisConfigHelper::SYNC_SETTING_CUSTOMER_ENABLED);
+                if ($customerSync) {
                     $this->customers->processForStore($store, $apsisCoreHelper);
+                }
+
+
+                //Start sync process for batch items (type Subscribers & Customers) in all states.
+                if ($subscriberSync || $customerSync) {
                     $this->batch->processForStore($store, $apsisCoreHelper);
                 }
+
             } catch (Exception $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);
                 $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
+
                 continue;
             }
         }

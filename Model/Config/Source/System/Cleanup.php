@@ -19,16 +19,16 @@ class Cleanup implements OptionSourceInterface
     protected $timeType = 'Days';
 
     /**
-     * @return array
+     * @inheritdoc
      */
     public function toOptionArray()
     {
-        //default data option
-        $interval[] = ['value' => 0, 'label' => __('Disable')];
+        $interval = [['value' => 0, 'label' => __('Disable')]];
 
         foreach ($this->days as $day) {
             $interval[] =  ['value' => $day, 'label' => __($day . ' ' . $this->timeType)];
         }
+
         return $interval;
     }
 }

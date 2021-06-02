@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Model;
 
+use Apsis\One\ApiClient\Client;
 use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Model\AbstractModel;
@@ -12,6 +13,7 @@ use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime;
 use Apsis\One\Model\ResourceModel\ProfileBatch\CollectionFactory as ProfileBatchCollectionFactory;
 use Apsis\One\Model\ResourceModel\ProfileBatch\Collection as ProfileBatchCollection;
+use Apsis\One\Model\Service\Log;
 
 /**
  * Class ProfileBatch
@@ -48,8 +50,7 @@ class ProfileBatch extends AbstractModel
     const SYNC_STATUS_FAILED = 3;
     const SYNC_STATUS_ERROR = 4;
 
-    const PROCESSING_LIMIT = 20;
-    const PENDING_LIMIT = 3;
+    const MAX_POST_IMPORT_STATUS_LIMIT = 20;
 
     /**
      * @var DateTime
@@ -67,6 +68,11 @@ class ProfileBatch extends AbstractModel
     private $profileBatchCollectionFactory;
 
     /**
+     * @var Log
+     */
+    private $logger;
+
+    /**
      * Subscriber constructor.
      *
      * @param Context $context
@@ -74,6 +80,7 @@ class ProfileBatch extends AbstractModel
      * @param DateTime $dateTime
      * @param ProfileBatchResource $profileBatchResource
      * @param ProfileBatchCollectionFactory $profileBatchCollectionFactory
+     * @param Log $logger
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -84,10 +91,12 @@ class ProfileBatch extends AbstractModel
         DateTime $dateTime,
         ProfileBatchResource $profileBatchResource,
         ProfileBatchCollectionFactory $profileBatchCollectionFactory,
+        Log $logger,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = []
     ) {
+        $this->logger = $logger;
         $this->profileBatchCollectionFactory = $profileBatchCollectionFactory;
         $this->dateTime = $dateTime;
         $this->profileBatchResource = $profileBatchResource;
@@ -101,7 +110,7 @@ class ProfileBatch extends AbstractModel
     }
 
     /**
-     * Constructor
+     * @inheritdoc
      */
     public function _construct()
     {
@@ -109,7 +118,25 @@ class ProfileBatch extends AbstractModel
     }
 
     /**
-     * @return $this
+     * @inheritdoc
+     */
+    public function afterDelete()
+    {
+        if ($this->isDeleted()) {
+            //Log it
+            $info = [
+                'Message' => 'Confirmed delete.',
+                'Entity Id' => $this->getId(),
+                'Store Id' => $this->getStoreId()
+            ];
+            $this->logger->debug(__METHOD__, $info);
+        }
+
+        return parent::afterDelete();
+    }
+
+    /**
+     * @inheritdoc
      */
     public function beforeSave()
     {
@@ -148,7 +175,7 @@ class ProfileBatch extends AbstractModel
         return $this->getBatchItemCollectionForStoreByStatus(
             $storeId,
             self::SYNC_STATUS_PENDING,
-            self::PENDING_LIMIT
+            Client::MAX_PRE_FILE_IMPORT_API_LIMIT
         );
     }
 
@@ -162,7 +189,7 @@ class ProfileBatch extends AbstractModel
         return $this->getBatchItemCollectionForStoreByStatus(
             $storeId,
             self::SYNC_STATUS_PROCESSING,
-            self::PROCESSING_LIMIT
+            self::MAX_POST_IMPORT_STATUS_LIMIT
         );
     }
 

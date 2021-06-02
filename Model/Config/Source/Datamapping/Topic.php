@@ -25,24 +25,21 @@ class Topic implements OptionSourceInterface
     }
 
     /**
-     *  Attribute options
-     *
-     * @return array
+     * @inheritdoc
      */
     public function toOptionArray()
     {
-        $options = [];
         try {
-            $section = $this->apsisCoreHelper->getMappedValueFromSelectedScope(
-                ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
-            );
+            $section = $this->apsisCoreHelper
+                ->getMappedValueFromSelectedScope(ApsisConfigHelper::MAPPINGS_SECTION_SECTION);
+            if (! $section) {
+                return [];
+            }
+
             $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
-            $apiClient = $this->apsisCoreHelper->getApiClient(
-                $scope['context_scope'],
-                $scope['context_scope_id']
-            );
-            if (! $apiClient || ! $section) {
-                return $options;
+            $apiClient = $this->apsisCoreHelper->getApiClient($scope['context_scope'], $scope['context_scope_id']);
+            if (! $apiClient) {
+                return [];
             }
 
             $consentLists = $apiClient->getConsentLists($section);
@@ -50,10 +47,11 @@ class Topic implements OptionSourceInterface
                 $this->apsisCoreHelper->log(
                     __METHOD__ . ': No consent list / topic found on section ' . $section . '. Try again later.'
                 );
-                return $options;
+                return [];
             }
 
-            $options[] = ['label' => __('--- Please select ---'), 'value' => ''];
+            $options = [['label' => __('--- Please select ---'), 'value' => '']];
+
             foreach ($consentLists->items as $consentList) {
                 $topics = $apiClient->getTopics($section, $consentList->discriminator);
                 if (! $topics || ! isset($topics->items)) {
@@ -68,14 +66,13 @@ class Topic implements OptionSourceInterface
                         'label' => $topic->name
                     ];
                 }
-                $options[] = [
-                    'label' => $consentList->name,
-                    'value' => $formattedTopics
-                ];
+
+                $options[] = ['label' => $consentList->name, 'value' => $formattedTopics];
             }
+            return $options;
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
+            return [];
         }
-        return $options;
     }
 }

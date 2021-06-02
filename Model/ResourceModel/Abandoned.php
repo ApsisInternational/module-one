@@ -10,7 +10,7 @@ use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 class Abandoned extends AbstractDb implements ResourceInterface
 {
     /**
-     * Initialize resource.
+     * @inheritdoc
      */
     public function _construct()
     {
@@ -35,9 +35,7 @@ class Abandoned extends AbstractDb implements ResourceInterface
     }
 
     /**
-     * @param ApsisLogHelper $apsisLogHelper
-     *
-     * @return bool
+     * @inheritdoc
      */
     public function truncateTable(ApsisLogHelper $apsisLogHelper)
     {
@@ -51,16 +49,18 @@ class Abandoned extends AbstractDb implements ResourceInterface
     }
 
     /**
-     * @param int $day
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @inheritdoc
      */
     public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper)
     {
         try {
-            $this->getConnection()->delete(
+            $status = $this->getConnection()->delete(
                 $this->getMainTable(),
                 ["created_at < DATE_SUB(NOW(), INTERVAL ? DAY)" => $day]
             );
+            if ($status) {
+                $apsisCoreHelper->log(__METHOD__, [$status]);
+            }
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }

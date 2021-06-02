@@ -2,44 +2,40 @@
 
 namespace Apsis\One\Block\Helper;
 
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Magento\Framework\Exception\NoSuchEntityException;
+use Apsis\One\Model\Service\Config;
+use Apsis\One\Model\Service\Log;
 use Magento\Framework\View\Element\Template;
-use Magento\Store\Api\Data\StoreInterface;
-use Magento\Store\Model\ScopeInterface;
+use Magento\Framework\Data\Form\FormKey;
+use Exception;
 
 class Cart extends Template
 {
     const EMAIL_UPDATER_URL = 'apsis/cart/updater';
 
     /**
-     * @var ApsisCoreHelper
+     * @var Log
      */
-    private $apsisCoreHelper;
+    private $logger;
 
     /**
-     * @var StoreInterface
+     * @var FormKey
      */
-    private $store;
+    private $formKey;
 
     /**
      * Cart constructor.
      *
      * @param Template\Context $context
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param FormKey $formKey
+     * @param Log $logger
      * @param array $data
-     *
-     * @throws NoSuchEntityException
      */
-    public function __construct(
-        Template\Context $context,
-        ApsisCoreHelper $apsisCoreHelper,
-        array $data = []
-    ) {
-        $this->apsisCoreHelper = $apsisCoreHelper;
+    public function __construct(Template\Context $context, FormKey $formKey, Log $logger, array $data = [])
+    {
         parent::__construct($context, $data);
-        $this->store = $this->_storeManager->getStore();
+
+        $this->formKey = $formKey;
+        $this->logger = $logger;
     }
 
     /**
@@ -47,7 +43,17 @@ class Cart extends Template
      */
     public function getUpdaterUrl()
     {
-        return $this->store->getUrl(self::EMAIL_UPDATER_URL, ['_secure' => $this->store->isCurrentlySecure()]);
+        try {
+            return $this->_storeManager
+                ->getStore()
+                ->getUrl(
+                    self::EMAIL_UPDATER_URL,
+                    ['_secure' => $this->_storeManager->getStore()->isCurrentlySecure()]
+                );
+        } catch (Exception $e) {
+            $this->logger->logError(__METHOD__, $e);
+            return '';
+        }
     }
 
     /**
@@ -55,11 +61,26 @@ class Cart extends Template
      */
     public function isOkToProceed()
     {
-        $isEnabled = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $this->store->getId());
-        $acDelayPeriod = $this->apsisCoreHelper->getStoreConfig(
-            $this->store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_REGISTER_ABANDONED_CART_AFTER_DURATION
-        );
-        return ($isEnabled && $acDelayPeriod);
+        try {
+            return (boolean) $this->_storeManager->getStore()->getConfig(
+                Config::EVENTS_REGISTER_ABANDONED_CART_AFTER_DURATION
+            );
+        } catch (Exception $e) {
+            $this->logger->logError(__METHOD__, $e);
+            return false;
+        }
+    }
+
+    /**
+     * @return string
+     */
+    public function getKey()
+    {
+        try {
+            return $this->formKey->getFormKey();
+        } catch (Exception $e) {
+            $this->logger->logError(__METHOD__, $e);
+            return '';
+        }
     }
 }

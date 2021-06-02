@@ -5,7 +5,6 @@ namespace Apsis\One\Model\Events\Historical\Carts;
 use Apsis\One\Model\Events\Historical\EventData;
 use Apsis\One\Model\Events\Historical\EventDataInterface;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Magento\Catalog\Model\Product;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item;
@@ -32,22 +31,18 @@ class Data extends EventData implements EventDataInterface
     }
 
     /**
-     * @param AbstractModel $cart
-     * @param ApsisCoreHelper $apsisCoreHelper
-     *
-     * @return array
+     * @inheritdoc
      */
-    public function getProcessedDataArr(AbstractModel $cart, ApsisCoreHelper $apsisCoreHelper)
+    public function getProcessedDataArr(AbstractModel $model, ApsisCoreHelper $apsisCoreHelper)
     {
         try {
-            /** @var Product $product */
             $product = $this->cartItem->getProduct();
             return [
-                'cartId' => (int) $cart->getId(),
-                'customerId' => (int) $cart->getCustomerId(),
-                'storeName' => (string) $cart->getStore()->getName(),
-                'websiteName' => (string) $cart->getStore()->getWebsite()->getName(),
-                'currencyCode' => (string) $cart->getQuoteCurrencyCode(),
+                'cartId' => (int) $model->getId(),
+                'customerId' => (int) $model->getCustomerId(),
+                'storeName' => (string) $model->getStore()->getName(),
+                'websiteName' => (string) $model->getStore()->getWebsite()->getName(),
+                'currencyCode' => (string) $model->getQuoteCurrencyCode(),
                 'productId' => (int) $this->cartItem->getProductId(),
                 'sku' => (string) $this->cartItem->getSku(),
                 'name' => (string) $this->cartItem->getName(),

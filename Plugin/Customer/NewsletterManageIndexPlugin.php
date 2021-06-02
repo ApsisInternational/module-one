@@ -80,15 +80,14 @@ class NewsletterManageIndexPlugin
      *
      * @return Http|HttpInterface
      */
-    public function aroundExecute(
-        Index $subject,
-        callable $proceed
-    ) {
+    public function aroundExecute(Index $subject, callable $proceed)
+    {
         if ($this->isOkToProceed()) {
             return $this->response->setRedirect(
                 $this->urlFactory->create()->getUrl(self::APSIS_NEWSLETTER_MANAGE_URL)
             );
         }
+
         return $proceed();
     }
 
@@ -104,22 +103,24 @@ class NewsletterManageIndexPlugin
         );
         $selectedConsentTopics = (string) $this->apsisCoreHelper->getStoreConfig(
             $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC
+            ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC
         );
         $syncEnabled = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED
+            ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENABLED
         );
-        /** @var Subscriber $subscriber */
         $subscriber = $this->subscriberFactory->create()->loadByCustomerId(
             $this->customerSession->getCustomerId()
         );
+
         $profileFound = ($subscriber->getId() && $subscriber->isSubscribed()) ?
             $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getSubscriberId()) : false;
+
         $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
             $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+            ApsisConfigHelper::MAPPINGS_SECTION_SECTION
         );
+
         return (
             $accountEnabled &&
             $syncEnabled &&

@@ -5,6 +5,7 @@ namespace Apsis\One\Model\Service;
 use Apsis\One\ApiClient\Client;
 use Apsis\One\ApiClient\ClientFactory;
 use Apsis\One\Logger\Logger;
+use Apsis\One\Model\Config\Backend\Value;
 use Apsis\One\Model\Config\Source\System\Region;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
@@ -17,9 +18,7 @@ use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ResourceInterface;
-use Magento\Framework\UrlInterface;
 use Magento\Store\Api\Data\StoreInterface;
-use Magento\Store\Api\Data\WebsiteInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use stdClass;
@@ -78,6 +77,11 @@ class Core extends ApsisLogHelper
     private $request;
 
     /**
+     * @var array
+     */
+    private $cachedClient = [];
+
+    /**
      * Core constructor.
      *
      * @param Logger $logger
@@ -114,10 +118,11 @@ class Core extends ApsisLogHelper
     }
 
     /**
-     * @param null|int $storeId
+     * @param int|null $storeId
+     *
      * @return bool|StoreInterface
      */
-    public function getStore($storeId = null)
+    public function getStore(int $storeId = null)
     {
         try {
             return $this->storeManager->getStore($storeId);
@@ -129,9 +134,10 @@ class Core extends ApsisLogHelper
 
     /**
      * @param null|int $storeId
+     *
      * @return string
      */
-    public function getStoreNameFromId($storeId = null)
+    public function getStoreNameFromId(int $storeId = null)
     {
         $store = $this->getStore($storeId);
         return ($store) ? $store->getName() : '';
@@ -139,9 +145,10 @@ class Core extends ApsisLogHelper
 
     /**
      * @param null|int $storeId
+     *
      * @return string
      */
-    public function getWebsiteNameFromStoreId($storeId = null)
+    public function getWebsiteNameFromStoreId(int $storeId = null)
     {
         try {
             $store = $this->getStore($storeId);
@@ -200,16 +207,29 @@ class Core extends ApsisLogHelper
      * @param string $path
      * @param string $value
      * @param string $contextScope
-     * @param int $contextScopeId
+     * @param int|null $contextScopeId
      */
     public function saveConfigValue(
         string $path,
         string $value,
         string $contextScope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-        $contextScopeId = 0
+        int $contextScopeId = null
     ) {
         try {
             $context = $this->getScopeForConfigUpdate($path, $contextScope, $contextScopeId);
+
+            $info = [
+                'Scope' => $context['scope'],
+                'Scope Id' => $context['id'],
+                'Config Path' => $path,
+                'Old Value' => $this->getConfigValue($path, $contextScope, $contextScopeId),
+                'New Value' => $value
+            ];
+            if (in_array($path, Config::CONFIG_PATHS_SECURE)) {
+                $info['Old Value'] = $info['New Value'] = 'An encrypted value.';
+            }
+            $this->debug(__METHOD__, $info);
+
             $this->writer->save($path, $value, $context['scope'], $context['id']);
         } catch (Exception $e) {
             $this->logError(__METHOD__, $e);
@@ -222,15 +242,33 @@ class Core extends ApsisLogHelper
      * @param string $path
      * @param string $contextScope
      * @param int $contextScopeId
+     * @param bool $isUpdate
      */
-    public function deleteConfigByScope(
-        string $path,
-        string $contextScope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-        $contextScopeId = 0
-    ) {
+    public function deleteConfigByScope(string $path, string $contextScope, int $contextScopeId, bool $isUpdate = true)
+    {
         try {
-            $context = $this->getScopeForConfigUpdate($path, $contextScope, $contextScopeId);
-            $this->writer->delete($path, $context['scope'], $context['id']);
+            if ($isUpdate) {
+                $context = $this->getScopeForConfigUpdate($path, $contextScope, $contextScopeId);
+                $scope = $context['scope'];
+                $id = $context['id'];
+            } else {
+                $scope = $contextScope;
+                $id = $contextScopeId;
+            }
+
+            $info = [
+                'Scope' => $scope,
+                'Scope Id' => $id,
+                'Config Path' => $path,
+                'Old Value' => $this->getConfigValue($path, $contextScope, $contextScopeId),
+                'New Value' => null
+            ];
+            if (in_array($path, Config::CONFIG_PATHS_SECURE)) {
+                $info['Old Value'] = 'An encrypted value';
+            }
+            $this->debug(__METHOD__, $info);
+
+            $this->writer->delete($path, $scope, $id);
         } catch (Exception $e) {
             $this->logError(__METHOD__, $e);
         }
@@ -245,13 +283,8 @@ class Core extends ApsisLogHelper
      */
     private function getScopeForConfigUpdate(string $path, string $contextScope, int $scopeId)
     {
-        if ($path == Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN ||
-            $path == Config::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE ||
-            $path == Config::CONFIG_APSIS_ONE_EVENTS_ORDER_HISTORY_DONE_FLAG ||
-            $path == Config::CONFIG_APSIS_ONE_EVENTS_QUOTE_HISTORY_DONE_FLAG ||
-            $path == Config::CONFIG_APSIS_ONE_EVENTS_REVIEW_HISTORY_DONE_FLAG ||
-            $path == Config::CONFIG_APSIS_ONE_EVENTS_WISHLIST_HISTORY_DONE_FLAG
-
+        if ($path == Config::ACCOUNTS_OAUTH_TOKEN ||
+            $path == Config::ACCOUNTS_OAUTH_TOKEN_EXPIRE
         ) {
             return $this->resolveContext($contextScope, $scopeId, $path);
         }
@@ -261,16 +294,13 @@ class Core extends ApsisLogHelper
 
     /**
      * @param string $path
+     *
      * @return mixed
      */
     public function getMappedValueFromSelectedScope(string $path)
     {
         $scope = $this->getSelectedScopeInAdmin();
-        return $this->getConfigValue(
-            $path,
-            $scope['context_scope'],
-            $scope['context_scope_id']
-        );
+        return $this->getConfigValue($path, $scope['context_scope'], $scope['context_scope_id']);
     }
 
     /**
@@ -294,7 +324,7 @@ class Core extends ApsisLogHelper
      * @param StoreInterface $store
      * @param string $path
      *
-     * @return mixed
+     * @return string|null
      */
     public function getStoreConfig(StoreInterface $store, string $path)
     {
@@ -326,30 +356,11 @@ class Core extends ApsisLogHelper
      * @param string $contextScope
      * @param int $scopeId
      *
-     * @return mixed
+     * @return string
      */
     public function getRegion(string $contextScope, int $scopeId)
     {
-        return $this->getConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_REGION,
-            $contextScope,
-            $scopeId
-        );
-    }
-
-    /**
-     * @param string $contextScope
-     * @param int $scopeId
-     *
-     * @return mixed
-     */
-    private function getClientId(string $contextScope, int $scopeId)
-    {
-        return $this->getConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID,
-            $contextScope,
-            $scopeId
-        );
+        return (string) $this->getConfigValue(ApsisConfigHelper::ACCOUNTS_OAUTH_REGION, $contextScope, $scopeId);
     }
 
     /**
@@ -358,13 +369,20 @@ class Core extends ApsisLogHelper
      *
      * @return string
      */
-    private function getClientSecret(string $contextScope, int $scopeId)
+    private function getClientId(string $contextScope, int $scopeId)
     {
-        $value = $this->getConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET,
-            $contextScope,
-            $scopeId
-        );
+        return (string) $this->getConfigValue(ApsisConfigHelper::ACCOUNTS_OAUTH_ID, $contextScope, $scopeId);
+    }
+
+    /**
+     * @param string $contextScope
+     * @param int $scopeId
+     *
+     * @return string
+     */
+    public function getClientSecret(string $contextScope, int $scopeId)
+    {
+        $value = $this->getConfigValue(ApsisConfigHelper::ACCOUNTS_OAUTH_SECRET, $contextScope, $scopeId);
         return $this->encryptor->decrypt($value);
     }
 
@@ -374,7 +392,7 @@ class Core extends ApsisLogHelper
     public function getSubscriptionEndpointKey()
     {
         $value = $this->getConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
+            ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
             ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
             0
         );
@@ -389,26 +407,22 @@ class Core extends ApsisLogHelper
      */
     public function isEnabled(string $contextScope, int $scopeId)
     {
-        return (boolean) $this->getConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED,
-            $contextScope,
-            $scopeId
-        );
+        return (boolean) $this->getConfigValue(ApsisConfigHelper::ACCOUNTS_OAUTH_ENABLED, $contextScope, $scopeId);
     }
 
     /**
      * @param Client $apiClient
      * @param string $contextScope
      * @param int $scopeId
-     * @param bool $bypassDb
+     * @param bool $bypass
      *
      * @return string
      */
-    private function getToken(Client $apiClient, string $contextScope, int $scopeId, bool $bypassDb = false)
+    private function getToken(Client $apiClient, string $contextScope, int $scopeId, bool $bypass = false)
     {
         $token = '';
         try {
-            if (! $bypassDb) {
+            if (! $bypass) {
                 $token = $this->getTokenFromDb($contextScope, $scopeId);
             }
 
@@ -417,6 +431,7 @@ class Core extends ApsisLogHelper
 
                 //Success in generating token
                 if ($response && isset($response->access_token)) {
+                    $this->debug('Token renewed', ['Context' => $contextScope, 'Id' => $scopeId]);
                     $this->saveTokenAndExpiry($contextScope, $scopeId, $response);
                     return (string) $response->access_token;
                 }
@@ -425,9 +440,11 @@ class Core extends ApsisLogHelper
                 if ($response && isset($response->status) &&
                     in_array($response->status, Client::HTTP_CODES_DISABLE_MODULE)
                 ) {
-                    $this->log(__METHOD__ . ' : Http code ' . $response->status . ' on generating token.');
-                    $this->disableAccountAndRemoveTokenConfig($contextScope, $scopeId);
-                    return '';
+                    $this->debug(__METHOD__, (array) $response);
+
+                    if (! $bypass) {
+                        $this->disableAccountAndRemoveTokenConfig(__METHOD__, $contextScope, $scopeId);
+                    }
                 }
             }
         } catch (Exception $e) {
@@ -445,19 +462,17 @@ class Core extends ApsisLogHelper
     private function getTokenFromDb(string $contextScope, int $scopeId)
     {
         $token = '';
-        $context = $this->resolveContext(
-            $contextScope,
-            $scopeId,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN
-        );
+        $context = $this->resolveContext($contextScope, $scopeId, ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN);
         $collection = $this->getDataCollectionByContextAndPath(
             $context['scope'],
             $context['id'],
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN
+            ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN
         );
+
         if ($collection->getSize()) {
             $token = $this->encryptor->decrypt($collection->getFirstItem()->getValue());
         }
+
         return $token;
     }
 
@@ -470,86 +485,69 @@ class Core extends ApsisLogHelper
     private function getTokenExpiryFromDb(string $contextScope, int $scopeId)
     {
         $expiryTime = '';
-        $context = $this->resolveContext(
-            $contextScope,
-            $scopeId,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE
-        );
+        $context = $this->resolveContext($contextScope, $scopeId,ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE);
 
         $collection = $this->getDataCollectionByContextAndPath(
             $context['scope'],
             $context['id'],
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE
+            ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE
         );
         if ($collection->getSize()) {
-            $expiryTime = $collection->getFirstItem()->getValue();
+            $expiryTime = (string) $collection->getFirstItem()->getValue();
         }
 
         return $expiryTime;
     }
 
     /**
+     * @param string $fromMethod
      * @param string $contextScope
      * @param int $scopeId
      */
-    public function disableAccountAndRemoveTokenConfig(string $contextScope, int $scopeId)
+    public function disableAccountAndRemoveTokenConfig(string $fromMethod, string $contextScope, int $scopeId)
     {
-        $this->log(__METHOD__);
+        $this->debug(__METHOD__, ['From' => $fromMethod]);
 
-        $this->removeTokenConfig($contextScope, $scopeId);
-        $this->disableAccountOnContext($contextScope, $scopeId);
-    }
+        //Remove token configs
+        $this->removeTokenConfig(__METHOD__, $contextScope, $scopeId);
 
-    /**
-     * @param string $contextScope
-     *
-     * @param int $contextScopeId
-     */
-    private function disableAccountOnContext(string $contextScope, int $contextScopeId)
-    {
-        $this->log(__METHOD__);
-
-        $this->saveConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED,
-            0,
-            $contextScope,
-            $contextScopeId
-        );
-        $this->deleteConfigByScope(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID,
-            $contextScope,
-            $contextScopeId
-        );
-        $this->deleteConfigByScope(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET,
-            $contextScope,
-            $contextScopeId
-        );
-        $this->deleteConfigByScope(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_REGION,
-            $contextScope,
-            $contextScopeId
-        );
+        //Remove account configs
+        if ($contextScope == ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {
+            $this->deleteConfigByScope(ApsisConfigHelper::ACCOUNTS_OAUTH_ENABLED, $contextScope, $scopeId);
+        } else {
+            $this->saveConfigValue(ApsisConfigHelper::ACCOUNTS_OAUTH_ENABLED, 0, $contextScope, $scopeId);
+        }
+        $this->deleteConfigByScope(ApsisConfigHelper::ACCOUNTS_OAUTH_ID, $contextScope, $scopeId);
+        $this->deleteConfigByScope(ApsisConfigHelper::ACCOUNTS_OAUTH_SECRET, $contextScope, $scopeId);
+        $this->deleteConfigByScope(ApsisConfigHelper::ACCOUNTS_OAUTH_REGION, $contextScope, $scopeId);
         $this->cleanCache();
     }
 
     /**
+     * @param string $fromMethod
      * @param string $contextScope
      * @param int $contextScopeId
+     * @param bool $isUpdate
      */
-    public function removeTokenConfig(string $contextScope, int $contextScopeId)
-    {
-        $this->log(__METHOD__);
+    public function removeTokenConfig(
+        string $fromMethod,
+        string $contextScope,
+        int $contextScopeId,
+        bool $isUpdate = true
+    ) {
+        $this->debug(__METHOD__, ['From' => $fromMethod]);
 
         $this->deleteConfigByScope(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
+            ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN,
             $contextScope,
-            $contextScopeId
+            $contextScopeId,
+            $isUpdate
         );
         $this->deleteConfigByScope(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE,
+            ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE,
             $contextScope,
-            $contextScopeId
+            $contextScopeId,
+            $isUpdate
         );
     }
 
@@ -563,21 +561,29 @@ class Core extends ApsisLogHelper
     {
         $expiryTime = $this->getTokenExpiryFromDb($contextScope, $scopeId);
 
-        if (empty($expiryTime)) {
-            return true;
-        }
-
         $nowTime = $this->apsisDateHelper->getDateTimeFromTimeAndTimeZone()
             ->add($this->apsisDateHelper->getDateIntervalFromIntervalSpec('PT15M'))
             ->format('Y-m-d H:i:s');
 
-        return ($nowTime > $expiryTime);
+        $check = ($nowTime > $expiryTime);
+
+        if ($check) {
+            $info = [
+                'Scope' => $contextScope,
+                'Scope Id' => $scopeId,
+                'Is Expired/Empty' => true,
+                'Last Expiry DateTime' => $expiryTime
+            ];
+            $this->debug(__METHOD__, $info);
+        }
+
+        return $check;
     }
 
     /**
      * @param string $contextScope
      * @param int $scopeId
-     * @param bool $bypassDb
+     * @param bool $bypass
      * @param string $region
      * @param string $clientId
      * @param string $clientSecret
@@ -587,12 +593,12 @@ class Core extends ApsisLogHelper
     public function getApiClient(
         string $contextScope,
         int $scopeId,
-        bool $bypassDb = false,
+        bool $bypass = false,
         string $region = '',
         string $clientId = '',
         string $clientSecret = ''
     ) {
-        if (! $bypassDb) {
+        if (! $bypass) {
             if (! $this->isEnabled($contextScope, $scopeId)) {
                 return false;
             }
@@ -608,15 +614,22 @@ class Core extends ApsisLogHelper
             if (empty($region)) {
                 $region = $this->getRegion($contextScope, $scopeId);
             }
+        }
 
-            if (empty($clientId) || empty($clientSecret) || empty($region)) {
-                $this->log(__METHOD__ . ' : Missing client credentials.');
-                $this->disableAccountAndRemoveTokenConfig($contextScope, $scopeId);
-                return false;
-            }
-        } elseif (empty($clientId) || empty($clientSecret) || empty($region)) {
-            $this->log(__METHOD__ . ' : Missing client credentials given $bypassDb variable.');
+        if (empty($clientId) || empty($clientSecret) || empty($region)) {
+            $this->log(__METHOD__ . ' : Missing client credentials.');
+
+            $this->disableAccountAndRemoveTokenConfig(__METHOD__, $contextScope, $scopeId);
             return false;
+        }
+
+        //Return cached apiClient object. As long as bypass is not true and token is not expired.
+        if (! $bypass && ! $this->isTokenExpired($contextScope, $scopeId) && isset($this->cachedClient[$clientId])) {
+            if ((bool) getenv('APSIS_DEVELOPER')) {
+                $this->debug("apiClient from cache.", ['Client Id' => $clientId, 'Scope Id' => $scopeId]);
+            }
+
+            return $this->cachedClient[$clientId];
         }
 
         $apiClient = $this->apiClientFactory->create()
@@ -624,13 +637,14 @@ class Core extends ApsisLogHelper
             ->setClientCredentials($clientId, $clientSecret)
             ->setHelper($this);
 
-        $token = $this->getToken($apiClient, $contextScope, $scopeId, $bypassDb);
+        $token = $this->getToken($apiClient, $contextScope, $scopeId, $bypass);
 
         if (empty($token)) {
             return false;
         }
 
-        return $apiClient->setToken($token);
+        $apiClient->setToken($token);
+        return $this->cachedClient[$clientId] = $apiClient;
     }
 
     /**
@@ -641,7 +655,7 @@ class Core extends ApsisLogHelper
     private function saveTokenAndExpiry(string $contextScope, int $scopeId, stdClass $request)
     {
         $this->saveConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
+            ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN,
             $this->encryptor->encrypt($request->access_token),
             $contextScope,
             $scopeId
@@ -654,7 +668,7 @@ class Core extends ApsisLogHelper
             ->format('Y-m-d H:i:s');
 
         $this->saveConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE,
+            ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE,
             $time,
             $contextScope,
             $scopeId
@@ -756,25 +770,13 @@ class Core extends ApsisLogHelper
     public function getAllStoreIds(bool $withDefault = false)
     {
         $storeIds = [];
+
         $stores = $this->getStores($withDefault);
         foreach ($stores as $store) {
             $storeIds[] = $store->getId();
         }
-        return $storeIds;
-    }
 
-    /**
-     * @param false $withDefault
-     * @return array|WebsiteInterface[]
-     */
-    public function getAllWebsites($withDefault = false)
-    {
-        try {
-            return $this->storeManager->getWebsites($withDefault);
-        } catch (Exception $e) {
-            $this->logError(__METHOD__, $e);
-            return [];
-        }
+        return $storeIds;
     }
 
     /**
@@ -805,7 +807,8 @@ class Core extends ApsisLogHelper
             return $this->getAllStoreIdsFromWebsite($websiteId);
         }
 
-        return [];
+        //Scope is default. Returning all store ids.
+        return $this->getAllStoreIds();
     }
 
     /**
@@ -824,12 +827,15 @@ class Core extends ApsisLogHelper
     public function getKeySpaceDiscriminator(string $sectionDiscriminator)
     {
         try {
-            $hash = substr(md5($sectionDiscriminator), 0, 8);
-            return "com.apsis1.integrations.keyspaces.$hash.magento";
+            if (strlen($sectionDiscriminator)) {
+                $hash = substr(md5($sectionDiscriminator), 0, 8);
+                return "com.apsis1.integrations.keyspaces.$hash.magento";
+            }
         } catch (Exception $e) {
             $this->logError(__METHOD__, $e);
-            return '';
         }
+
+        return '';
     }
 
     /**
@@ -838,9 +844,10 @@ class Core extends ApsisLogHelper
      *
      * @return array
      */
-    public function getAttributesArrWithVersionId(Client $client, string $sectionDiscriminator)
+    public function getAttributeVersionIds(Client $client, string $sectionDiscriminator)
     {
         $attributesArr = [];
+
         $attributes = $client->getAttributes($sectionDiscriminator);
         if ($attributes && isset($attributes->items)) {
             foreach ($attributes->items as $attribute) {
@@ -852,23 +859,8 @@ class Core extends ApsisLogHelper
                 }
             }
         }
-        return $attributesArr;
-    }
 
-    /**
-     * @return string
-     */
-    public function generateBaseUrlForDynamicContent()
-    {
-        try {
-            $website = $this->storeManager->getWebsite($this->request->getParam('website', 0));
-            $defaultGroup = $website->getDefaultGroup();
-            $store =  (! $defaultGroup) ? null : $defaultGroup->getDefaultStore();
-            return $this->storeManager->getStore($store)->getBaseUrl(UrlInterface::URL_TYPE_LINK);
-        } catch (Exception $e) {
-            $this->logError(__METHOD__, $e);
-            return '';
-        }
+        return $attributesArr;
     }
 
     /**
@@ -936,9 +928,11 @@ class Core extends ApsisLogHelper
     public function buildHostName(string $region)
     {
         $tld = self::PRODUCTION_TLD;
+
         if ($region === Region::REGION_STAGE) {
             $tld = self::STAGE_TLD;
         }
+
         return sprintf('https://%s.apsis.%s', $region, $tld);
     }
 
@@ -950,9 +944,11 @@ class Core extends ApsisLogHelper
     public function buildFileUploadHostName(string $region)
     {
         $url = self::EU_FILE_UPLOAD_URL;
+
         if ($region === Region::REGION_APAC) {
             $url = self::APAC_FILE_UPLOAD_URL;
         }
+
         return $url;
     }
 
@@ -964,17 +960,97 @@ class Core extends ApsisLogHelper
     public function disableProfileSync(string $scope, int $scopeId)
     {
         $this->saveConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED,
+            ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENABLED,
             0,
             $scope,
             $scopeId
         );
         $this->saveConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED,
+            ApsisConfigHelper::SYNC_SETTING_CUSTOMER_ENABLED,
             0,
             $scope,
             $scopeId
         );
         $this->log('Profile sync disabled.');
+    }
+
+    /**
+     * @param string $id
+     * @param string $secret
+     * @param string $region
+     * @param string $scope
+     * @param string $scopeId
+     *
+     * @return string
+     */
+    public function isApiCredentialsValid(string $id, string $secret, string $region, string $scope, string $scopeId)
+    {
+        try {
+            //Validate api host is reachable
+            try {
+                $this->validateIsUrlReachable($this->buildHostName($region));
+            } catch (Exception $e) {
+                $this->logError(__METHOD__, $e);
+                return $e->getMessage() . '. Cannot enable account. Host for URL must be whitelisted first.';
+            }
+
+            //Validate api credential validity for integration
+            $check = $this->validateApiCredentials($id, $secret, $region, $scope, $scopeId);
+            if ($check === true) {
+                return Value::MSG_SUCCESS_ACCOUNT;
+            } else {
+                $this->debug($check);
+                return $check;
+            }
+        } catch (Exception $e) {
+            $this->logError(__METHOD__, $e);
+            return 'Something went wrong, please check exception logs.';
+        }
+    }
+
+    /**
+     * @param string $id
+     * @param string $secret
+     * @param string $region
+     * @param string $scope
+     * @param string $scopeId
+     *
+     * @return bool|string
+     */
+    private function validateApiCredentials(string $id, string $secret, string $region, string $scope, string $scopeId)
+    {
+        try {
+            $client = $this->getApiClient($scope, $scopeId, true, $region, $id, $secret);
+
+            if (empty($client)) {
+                return 'Unable to generate access token. Authorization has been denied for this request.';
+            } else {
+                $keySpaces = $client->getKeySpaces();
+                if (is_object($keySpaces) && isset($keySpaces->items)) {
+                    foreach ($keySpaces->items as $item) {
+                        if (strpos($item->discriminator, 'magento') !== false) {
+                            return true;
+                        }
+                    }
+                }
+                return 'API credentials are invalid for this integration. Magento keySpace does not exist.';
+            }
+        } catch (Exception $e) {
+            $this->logError(__METHOD__, $e);
+            return 'Something went wrong, please check exception logs.';
+        }
+    }
+
+    /**
+     * @param array $groups
+     *
+     * @return bool
+     */
+    public function isInheritConfig(array $groups)
+    {
+        $isInheritId = isset($groups['oauth']['fields']['id']['inherit']);
+        $isInheritSecret = isset($groups['oauth']['fields']['secret']['inherit']);
+
+        return $isInheritId || $isInheritSecret;
     }
 }

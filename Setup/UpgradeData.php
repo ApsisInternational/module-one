@@ -3,6 +3,8 @@
 namespace Apsis\One\Setup;
 
 use Apsis\One\Model\Config\Source\System\Region;
+use Apsis\One\Model\Event;
+use Apsis\One\Model\Events\Historical;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
@@ -13,7 +15,9 @@ use Magento\Authorization\Model\RoleFactory;
 use Magento\Authorization\Model\RulesFactory;
 use Magento\Authorization\Model\Acl\Role\Group as RoleGroup;
 use Magento\Authorization\Model\UserContextInterface;
+use Magento\Framework\App\Area;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\State;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Math\Random;
 use Magento\Framework\Registry;
@@ -25,6 +29,20 @@ use Magento\Store\Model\ScopeInterface;
 
 class UpgradeData implements UpgradeDataInterface
 {
+    const PRE_220_HISTORICAL_EVENT_DONE_CONFIGS = [
+        Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART => 'apsis_one_events/events/quote_history_done_flag',
+        Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER => 'apsis_one_events/events/order_history_done_flag',
+        Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW => 'apsis_one_events/events/review_history_done_flag',
+        Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST => 'apsis_one_events/events/wishlist_history_done_flag'
+    ];
+    const PRE_220_HISTORICAL_EVENT_TIMESTAMPS = [
+        'apsis_one_events/events/cart_event_duration_timestamp',
+        'apsis_one_events/events/order_event_duration_timestamp',
+        'apsis_one_events/events/review_event_duration_timestamp',
+        'apsis_one_events/events/wishlist_event_duration_timestamp'
+    ];
+    const PRE_220_REDUNDANT_CRON_JOB = 'apsis_one_find_historical_events';
+
     /**
      * @var Registry
      */
@@ -66,6 +84,16 @@ class UpgradeData implements UpgradeDataInterface
     private $rulesFactory;
 
     /**
+     * @var Historical
+     */
+    private $historicalEvents;
+
+    /**
+     * @var State
+     */
+    private $appState;
+
+    /**
      * UpgradeData constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -76,6 +104,8 @@ class UpgradeData implements UpgradeDataInterface
      * @param EventResource $eventResource
      * @param RoleFactory $roleFactory
      * @param RulesFactory $rulesFactory
+     * @param Historical $historicalEvents
+     * @param State $appState
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -85,8 +115,12 @@ class UpgradeData implements UpgradeDataInterface
         ProfileResource $profileResource,
         EventResource $eventResource,
         RoleFactory $roleFactory,
-        RulesFactory $rulesFactory
+        RulesFactory $rulesFactory,
+        Historical $historicalEvents,
+        State $appState
     ) {
+        $this->appState = $appState;
+        $this->historicalEvents = $historicalEvents;
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->random = $random;
         $this->encryptor = $encryptor;
@@ -105,22 +139,87 @@ class UpgradeData implements UpgradeDataInterface
     {
         $this->apsisCoreHelper->log(__METHOD__);
         $setup->startSetup();
+
+        try {
+            $this->appState->setAreaCode(Area::AREA_GLOBAL);
+        } catch (Exception $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
+        }
+
         if (version_compare($context->getVersion(), '1.2.0', '<')) {
             $this->upgradeOneTwoZero($setup);
         }
+
         if (version_compare($context->getVersion(), '1.5.0', '<')) {
             $this->upgradeOneFiveZero($setup);
         }
+
         if (version_compare($context->getVersion(), '1.9.0', '<')) {
             $this->upgradeOneNineZero($setup);
         }
+
         if (version_compare($context->getVersion(), '1.9.4', '<')) {
             $this->upgradeOneNineFour($setup);
         }
+
         if (version_compare($context->getVersion(), '1.9.5', '<')) {
             $this->upgradeOneNineFive($setup);
         }
+
+        if (version_compare($context->getVersion(), '2.0.0', '<')) {
+            $this->upgradeTwoZeroZero($setup);
+        }
+
         $setup->endSetup();
+    }
+
+    /**
+     * @param ModuleDataSetupInterface $setup
+     */
+    private function upgradeTwoZeroZero(ModuleDataSetupInterface $setup)
+    {
+        $this->apsisCoreHelper->log(__METHOD__);
+
+        //Set status to 5 for each Profile type (for all Profiles) if given Profile type has is_[PROFILE_TYPE] = 0
+        $this->profileResource->resetProfiles(
+            $this->apsisCoreHelper,
+            [],
+            [],
+            Profile::SYNC_STATUS_NA,
+            ['condition' => 'is_', 'value' => Profile::NO_FLAG]
+        );
+
+        //Remove all ui bookmarks belonging to module to force rebuild new ui bookmarks
+        $grids = ['apsis_abandoned_grid', 'apsis_event_grid', 'apsis_profile_grid'];
+        $setup->getConnection()->delete(
+            $setup->getTable('ui_bookmark'),
+            $setup->getConnection()->quoteInto('namespace in (?)', $grids)
+        );
+
+        //Fetch historical events
+        $this->historicalEvents->process($this->apsisCoreHelper);
+
+        //Remove redundant configs
+        $configs = array_merge(
+            array_values(self::PRE_220_HISTORICAL_EVENT_DONE_CONFIGS),
+            self::PRE_220_HISTORICAL_EVENT_TIMESTAMPS
+        );
+        foreach ($configs as $config) {
+            $setup->getConnection()->delete(
+                $setup->getTable('core_config_data'),
+                $setup->getConnection()->quoteInto('path = ?', $config)
+            );
+        }
+        $info = ['Removed configs.' => array_values($configs)];
+        $this->apsisCoreHelper->debug(__METHOD__, $info);
+
+        //Removed redundant cron job.
+        $setup->getConnection()->delete(
+            $setup->getTable('cron_schedule'),
+            $setup->getConnection()->quoteInto('job_code = ?', self::PRE_220_REDUNDANT_CRON_JOB)
+        );
+        $info = ['Removed redundant cron job.' => self::PRE_220_REDUNDANT_CRON_JOB];
+        $this->apsisCoreHelper->debug(__METHOD__, $info);
     }
 
     /**
@@ -132,8 +231,8 @@ class UpgradeData implements UpgradeDataInterface
         try {
             //Remove both token and token expiry for force regeneration of token
             $configs = [
-                ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN,
-                ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE
+                ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN,
+                ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE
             ];
             foreach ($configs as $config) {
                 $setup->getConnection()->delete(
@@ -142,11 +241,17 @@ class UpgradeData implements UpgradeDataInterface
                 );
             }
 
-            //Reset all profile & events to re-sync with failed error
-            $whereC = $setup->getConnection()->quoteInto('customer_sync_status = ?', Profile::SYNC_STATUS_FAILED);
-            $whereS = $setup->getConnection()->quoteInto('subscriber_sync_status = ?', Profile::SYNC_STATUS_FAILED);
+            //Reset all profiles to re-sync if it has failed sync status
+            $this->profileResource->resetProfiles(
+                $this->apsisCoreHelper,
+                [],
+                [],
+                Profile::SYNC_STATUS_PENDING,
+                ['condition' => '_sync_status', 'value' => Profile::SYNC_STATUS_FAILED]
+            );
+
+            //Reset all events to re-sync if it has failed sync status
             $whereE = $setup->getConnection()->quoteInto('status = ?', Profile::SYNC_STATUS_FAILED);
-            $this->profileResource->resetProfiles($this->apsisCoreHelper, [], [], [$whereC . ' OR ' . $whereS]);
             $this->eventResource->resetEvents($this->apsisCoreHelper, [], [], [$whereE]);
 
             //Create Role for APSIS Support
@@ -173,6 +278,8 @@ class UpgradeData implements UpgradeDataInterface
                 ->setRoleId($role->getId())
                 ->setResources($resource)
                 ->saveRel();
+
+            $this->apsisCoreHelper->log('User Role created: "APSIS Support Agent"');
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -190,7 +297,8 @@ class UpgradeData implements UpgradeDataInterface
                 $this->profileResource->updateSubscriberStoreId(
                     $setup->getConnection(),
                     $setup->getTable('newsletter_subscriber'),
-                    $setup->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE)
+                    $setup->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
+                    $this->apsisCoreHelper
                 );
             }
         } catch (Exception $e) {
@@ -207,15 +315,15 @@ class UpgradeData implements UpgradeDataInterface
         try {
             foreach ($this->apsisCoreHelper->getStores(true) as $store) {
                 $oldValue = (string) $store
-                    ->getConfig(ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC);
+                    ->getConfig(ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC);
                 if (strlen($oldValue) && ! empty($topics = explode(',', $oldValue)) && count($topics)) {
                     $scopeArray = $this->apsisCoreHelper->resolveContext(
                         ScopeInterface::SCOPE_STORES,
                         $store->getId(),
-                        ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC
+                        ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC
                     );
                     $this->apsisCoreHelper->saveConfigValue(
-                        ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC,
+                        ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC,
                         $topics[0],
                         $scopeArray['scope'],
                         $scopeArray['id']
@@ -252,7 +360,7 @@ class UpgradeData implements UpgradeDataInterface
                 );
             } else {
                 $value = $this->apsisCoreHelper->getConfigValue(
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
+                    ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
                     ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                     0
                 );
@@ -260,7 +368,7 @@ class UpgradeData implements UpgradeDataInterface
             if (strlen($value)) {
                 //Encrypt and save in new path
                 $this->apsisCoreHelper->saveConfigValue(
-                    ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
+                    ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
                     $this->encryptor->encrypt($value),
                     ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                     0
@@ -279,11 +387,11 @@ class UpgradeData implements UpgradeDataInterface
         $this->apsisCoreHelper->log(__METHOD__);
         $this->generateGlobalKey();
         foreach ($this->apsisCoreHelper->getStores(true) as $store) {
-            $topics = (string) $store->getConfig(ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC);
+            $topics = (string) $store->getConfig(ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC);
             $scopeArray = $this->apsisCoreHelper->resolveContext(
                 ScopeInterface::SCOPE_STORES,
                 $store->getId(),
-                ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC
+                ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC
             );
 
             if (strlen($topics)) {
@@ -311,7 +419,7 @@ class UpgradeData implements UpgradeDataInterface
     {
         try {
             $this->apsisCoreHelper->saveConfigValue(
-                ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
+                ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
                 $this->random->getRandomString(32),
                 ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                 0
@@ -327,7 +435,7 @@ class UpgradeData implements UpgradeDataInterface
     private function addRegion(array $scopeArray)
     {
         $this->apsisCoreHelper->saveConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_REGION,
+            ApsisConfigHelper::ACCOUNTS_OAUTH_REGION,
             Region::REGION_EU,
             $scopeArray['scope'],
             $scopeArray['id']
@@ -362,7 +470,7 @@ class UpgradeData implements UpgradeDataInterface
     private function updateConsentListTopicData(string $topics, array $scopeArray)
     {
         $this->apsisCoreHelper->saveConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC,
+            ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC,
             $this->getUpdatedConsentData($topics),
             $scopeArray['scope'],
             $scopeArray['id']

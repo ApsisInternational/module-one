@@ -16,7 +16,7 @@
                 <subscriber_enabled>0</subscriber_enabled>
                 <subscriber_consent_topic></subscriber_consent_topic>
                 <additional_consent_topic></additional_consent_topic>
-                <customer_enabled>1</customer_enabled>
+                <customer_enabled>0</customer_enabled>
             </sync>
         </apsis_one_sync>
         <apsis_one_events>
@@ -92,12 +92,16 @@
                 <order_status>pending,processing,complete</order_status>
                 <subscriber_batch_size>5000</subscriber_batch_size>
                 <customer_batch_size>1000</customer_batch_size>
+                <delete_enabled>1</delete_enabled>
             </profile_sync>
+            <tracking>
+                <enabled>0</enabled>
+                <script></script>
+            </tracking>
             <developer_settings>
                 <cleanup_after>30</cleanup_after>
                 <cron_schedule_profile_sync>*/5 * * * *</cron_schedule_profile_sync>
                 <cron_schedule_events_sync>*/5 * * * *</cron_schedule_events_sync>
-                <cron_schedule_historical_events>0 0 * * *</cron_schedule_historical_events>
             </developer_settings>
         </apsis_one_configuration>
     </default>

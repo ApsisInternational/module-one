@@ -9,204 +9,157 @@ use Magento\Store\Model\ScopeInterface;
 
 class Config
 {
+    const MODULE_VERSION = '2.0.0';
+
+    const CONFIG_PATHS_SECURE = [
+        self::ACCOUNTS_OAUTH_ID,
+        self::ACCOUNTS_OAUTH_SECRET,
+        self::ACCOUNTS_OAUTH_TOKEN,
+        self::SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY
+    ];
+
+    const CONFIG_PATHS_SYNCS = [
+        self::SYNC_SETTING_CUSTOMER_ENABLED,
+        self::SYNC_SETTING_SUBSCRIBER_ENABLED.
+        self::SYNC_SETTING_SUBSCRIBER_TOPIC,
+        self::SYNC_SETTING_ADDITIONAL_TOPIC
+    ];
+
+    const CONFIG_PATHS_ACCOUNT = [
+        self::ACCOUNTS_OAUTH_ENABLED,
+        self::ACCOUNTS_OAUTH_ID,
+        self::ACCOUNTS_OAUTH_SECRET,
+        self::ACCOUNTS_OAUTH_REGION,
+        self::ACCOUNTS_OAUTH_TOKEN,
+        self::ACCOUNTS_OAUTH_TOKEN_EXPIRE
+    ];
+
     /**
      * Accounts section
      */
     /** OAUTH */
-    const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_GROUP = 'apsis_one_accounts/oauth';
-    const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ENABLED = 'apsis_one_accounts/oauth/enabled';
-    const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_ID = 'apsis_one_accounts/oauth/id';
-    const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_SECRET = 'apsis_one_accounts/oauth/secret';
-    const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_REGION = 'apsis_one_accounts/oauth/region';
-    const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN = 'apsis_one_accounts/oauth/token';
-    const CONFIG_APSIS_ONE_ACCOUNTS_OAUTH_TOKEN_EXPIRE = 'apsis_one_accounts/oauth/token_expire';
-    const CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY = 'apsis_one_accounts/subscription/key';
+    const ACCOUNTS_OAUTH_GROUP = 'apsis_one_accounts/oauth';
+    const ACCOUNTS_OAUTH_ENABLED = 'apsis_one_accounts/oauth/enabled';
+    const ACCOUNTS_OAUTH_ID = 'apsis_one_accounts/oauth/id';
+    const ACCOUNTS_OAUTH_SECRET = 'apsis_one_accounts/oauth/secret';
+    const ACCOUNTS_OAUTH_REGION = 'apsis_one_accounts/oauth/region';
+    const ACCOUNTS_OAUTH_TOKEN = 'apsis_one_accounts/oauth/token';
+    const ACCOUNTS_OAUTH_TOKEN_EXPIRE = 'apsis_one_accounts/oauth/token_expire';
+    const SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY = 'apsis_one_accounts/subscription/key';
 
     /**
      * Data mapping section
      */
-    /** Section & data mappings */
-    const CONFIG_APSIS_ONE_MAPPINGS_SECTION_GROUP = 'apsis_one_mappings/section_mapping';
-    const CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION = 'apsis_one_mappings/section_mapping/section';
-    /** Customer/Subscriber common attributes */
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_GROUP
-        = 'apsis_one_mappings/customer_subscriber_common_attribute';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_PROFILE_KEY
-        = 'apsis_one_mappings/customer_subscriber_common_attribute/profile_key';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_WEBSITE_ID
-        = 'apsis_one_mappings/customer_subscriber_common_attribute/website_id';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_STORE_ID
-        = 'apsis_one_mappings/customer_subscriber_common_attribute/store_id';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_WEBSITE_NAME
-        = 'apsis_one_mappings/customer_subscriber_common_attribute/website_name';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_STORE_NAME
-        = 'apsis_one_mappings/customer_subscriber_common_attribute/store_name';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
-        = 'apsis_one_mappings/customer_subscriber_common_attribute/email';
+
+    /** Section */
+    const MAPPINGS_SECTION_GROUP = 'apsis_one_mappings/section_mapping';
+    const MAPPINGS_SECTION_SECTION = 'apsis_one_mappings/section_mapping/section';
+
+    /** Customer/Subscriber common */
+    const MAPPINGS_CUSTOMER_SUBSCRIBER_GROUP = 'apsis_one_mappings/customer_subscriber_common_attribute';
+    const MAPPINGS_CUSTOMER_SUBSCRIBER_PROFILE_KEY =
+        'apsis_one_mappings/customer_subscriber_common_attribute/profile_key';
+    const MAPPINGS_CUSTOMER_SUBSCRIBER_WEBSITE_ID =
+        'apsis_one_mappings/customer_subscriber_common_attribute/website_id';
+    const MAPPINGS_CUSTOMER_SUBSCRIBER_STORE_ID = 'apsis_one_mappings/customer_subscriber_common_attribute/store_id';
+    const MAPPINGS_CUSTOMER_SUBSCRIBER_WEBSITE_NAME =
+        'apsis_one_mappings/customer_subscriber_common_attribute/website_name';
+    const MAPPINGS_CUSTOMER_SUBSCRIBER_STORE_NAME =
+        'apsis_one_mappings/customer_subscriber_common_attribute/store_name';
+    const MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL = 'apsis_one_mappings/customer_subscriber_common_attribute/email';
+
     /** Subscriber attributes */
-    const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_GROUP = 'apsis_one_mappings/subscriber_attribute';
-    const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_ID = 'apsis_one_mappings/subscriber_attribute/subscriber_id';
-    const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_STATUS = 'apsis_one_mappings/subscriber_attribute/subscriber_status';
-    const CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_STATUS_CHANGE_AT
+    const MAPPINGS_SUBSCRIBER_GROUP = 'apsis_one_mappings/subscriber_attribute';
+    const MAPPINGS_SUBSCRIBER_ID = 'apsis_one_mappings/subscriber_attribute/subscriber_id';
+    const MAPPINGS_SUBSCRIBER_STATUS = 'apsis_one_mappings/subscriber_attribute/subscriber_status';
+    const MAPPINGS_SUBSCRIBER_STATUS_CHANGE_AT
         = 'apsis_one_mappings/subscriber_attribute/change_status_at';
+
     /** Customer attributes */
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_GROUP = 'apsis_one_mappings/customer_attribute';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_TITLE = 'apsis_one_mappings/customer_attribute/title';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_ID = 'apsis_one_mappings/customer_attribute/customer_id';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_FIRST_NAME = 'apsis_one_mappings/customer_attribute/first_name';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_NAME = 'apsis_one_mappings/customer_attribute/last_name';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DOB = 'apsis_one_mappings/customer_attribute/dob';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_GENDER = 'apsis_one_mappings/customer_attribute/gender';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_CREATED_AT = 'apsis_one_mappings/customer_attribute/created_at';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_LOGGED_IN_DATE
-        = 'apsis_one_mappings/customer_attribute/last_logged_date';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_CUSTOMER_GROUP = 'apsis_one_mappings/customer_attribute/customer_group';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_REVIEW_COUNT = 'apsis_one_mappings/customer_attribute/review_count';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_REVIEW_DATE
-        = 'apsis_one_mappings/customer_attribute/last_review_date';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_ADDRESS_LINE_1
-        = 'apsis_one_mappings/customer_attribute/billing_address_1';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_ADDRESS_LINE_2
-        = 'apsis_one_mappings/customer_attribute/billing_address_2';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_CITY = 'apsis_one_mappings/customer_attribute/billing_city';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_STATE = 'apsis_one_mappings/customer_attribute/billing_state';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_COUNTRY = 'apsis_one_mappings/customer_attribute/billing_country';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_POSTCODE
-        = 'apsis_one_mappings/customer_attribute/billing_postcode';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_TELEPHONE
-        = 'apsis_one_mappings/customer_attribute/billing_telephone';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_COMPANY = 'apsis_one_mappings/customer_attribute/billing_company';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_ADDRESS_1
-        = 'apsis_one_mappings/customer_attribute/delivery_address_1';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_ADDRESS_2
-        = 'apsis_one_mappings/customer_attribute/delivery_address_2';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_CITY = 'apsis_one_mappings/customer_attribute/delivery_city';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_STATE = 'apsis_one_mappings/customer_attribute/delivery_state';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_COUNTRY
-        = 'apsis_one_mappings/customer_attribute/delivery_country';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_POSTCODE
-        = 'apsis_one_mappings/customer_attribute/delivery_postcode';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_TELEPHONE
-        = 'apsis_one_mappings/customer_attribute/delivery_telephone';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_COMPANY
-        = 'apsis_one_mappings/customer_attribute/delivery_company';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_PURCHASE_DATE
-        = 'apsis_one_mappings/customer_attribute/last_order_date';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_TOTAL_NUMBER_OF_ORDERS
-        = 'apsis_one_mappings/customer_attribute/number_of_orders';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_AVERAGE_ORDER_VALUE
-        = 'apsis_one_mappings/customer_attribute/average_order_value';
-    const CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_TOTAL_SPEND = 'apsis_one_mappings/customer_attribute/total_spend';
+    const MAPPINGS_CUSTOMER_GROUP = 'apsis_one_mappings/customer_attribute';
+    const MAPPINGS_CUSTOMER_TITLE = 'apsis_one_mappings/customer_attribute/title';
+    const MAPPINGS_CUSTOMER_ID = 'apsis_one_mappings/customer_attribute/customer_id';
+    const MAPPINGS_CUSTOMER_FIRST_NAME = 'apsis_one_mappings/customer_attribute/first_name';
+    const MAPPINGS_CUSTOMER_LAST_NAME = 'apsis_one_mappings/customer_attribute/last_name';
+    const MAPPINGS_CUSTOMER_DOB = 'apsis_one_mappings/customer_attribute/dob';
+    const MAPPINGS_CUSTOMER_GENDER = 'apsis_one_mappings/customer_attribute/gender';
+    const MAPPINGS_CUSTOMER_CREATED_AT = 'apsis_one_mappings/customer_attribute/created_at';
+    const MAPPINGS_CUSTOMER_LAST_LOGGED_IN_DATE = 'apsis_one_mappings/customer_attribute/last_logged_date';
+    const MAPPINGS_CUSTOMER_CUSTOMER_GROUP = 'apsis_one_mappings/customer_attribute/customer_group';
+    const MAPPINGS_CUSTOMER_REVIEW_COUNT = 'apsis_one_mappings/customer_attribute/review_count';
+    const MAPPINGS_CUSTOMER_LAST_REVIEW_DATE = 'apsis_one_mappings/customer_attribute/last_review_date';
+    const MAPPINGS_CUSTOMER_BILLING_ADDRESS_LINE_1 = 'apsis_one_mappings/customer_attribute/billing_address_1';
+    const MAPPINGS_CUSTOMER_BILLING_ADDRESS_LINE_2 = 'apsis_one_mappings/customer_attribute/billing_address_2';
+    const MAPPINGS_CUSTOMER_BILLING_CITY = 'apsis_one_mappings/customer_attribute/billing_city';
+    const MAPPINGS_CUSTOMER_BILLING_STATE = 'apsis_one_mappings/customer_attribute/billing_state';
+    const MAPPINGS_CUSTOMER_BILLING_COUNTRY = 'apsis_one_mappings/customer_attribute/billing_country';
+    const MAPPINGS_CUSTOMER_BILLING_POSTCODE = 'apsis_one_mappings/customer_attribute/billing_postcode';
+    const MAPPINGS_CUSTOMER_BILLING_TELEPHONE = 'apsis_one_mappings/customer_attribute/billing_telephone';
+    const MAPPINGS_CUSTOMER_BILLING_COMPANY = 'apsis_one_mappings/customer_attribute/billing_company';
+    const MAPPINGS_CUSTOMER_DELIVERY_ADDRESS_1 = 'apsis_one_mappings/customer_attribute/delivery_address_1';
+    const MAPPINGS_CUSTOMER_DELIVERY_ADDRESS_2 = 'apsis_one_mappings/customer_attribute/delivery_address_2';
+    const MAPPINGS_CUSTOMER_DELIVERY_CITY = 'apsis_one_mappings/customer_attribute/delivery_city';
+    const MAPPINGS_CUSTOMER_DELIVERY_STATE = 'apsis_one_mappings/customer_attribute/delivery_state';
+    const MAPPINGS_CUSTOMER_DELIVERY_COUNTRY = 'apsis_one_mappings/customer_attribute/delivery_country';
+    const MAPPINGS_CUSTOMER_DELIVERY_POSTCODE = 'apsis_one_mappings/customer_attribute/delivery_postcode';
+    const MAPPINGS_CUSTOMER_DELIVERY_TELEPHONE = 'apsis_one_mappings/customer_attribute/delivery_telephone';
+    const MAPPINGS_CUSTOMER_DELIVERY_COMPANY = 'apsis_one_mappings/customer_attribute/delivery_company';
+    const MAPPINGS_CUSTOMER_LAST_PURCHASE_DATE = 'apsis_one_mappings/customer_attribute/last_order_date';
+    const MAPPINGS_CUSTOMER_TOTAL_NUMBER_OF_ORDERS = 'apsis_one_mappings/customer_attribute/number_of_orders';
+    const MAPPINGS_CUSTOMER_AVERAGE_ORDER_VALUE = 'apsis_one_mappings/customer_attribute/average_order_value';
+    const MAPPINGS_CUSTOMER_TOTAL_SPEND = 'apsis_one_mappings/customer_attribute/total_spend';
 
     /**
-     * Sync settings
+     * Profile sync section
      */
-    const CONFIG_APSIS_ONE_SYNC_SETTING_GROUP = 'apsis_one_sync/sync';
-    const CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED = 'apsis_one_sync/sync/subscriber_enabled';
-    const CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC = 'apsis_one_sync/sync/subscriber_consent_topic';
-    const CONFIG_APSIS_ONE_SYNC_SETTING_ADDITIONAL_TOPIC = 'apsis_one_sync/sync/additional_consent_topic';
-    const CONFIG_APSIS_ONE_SYNC_SETTING_CUSTOMER_ENABLED = 'apsis_one_sync/sync/customer_enabled';
+    const SYNC_SETTING_GROUP = 'apsis_one_sync/sync';
+    const SYNC_SETTING_SUBSCRIBER_ENABLED = 'apsis_one_sync/sync/subscriber_enabled';
+    const SYNC_SETTING_SUBSCRIBER_TOPIC = 'apsis_one_sync/sync/subscriber_consent_topic';
+    const SYNC_SETTING_ADDITIONAL_TOPIC = 'apsis_one_sync/sync/additional_consent_topic';
+    const SYNC_SETTING_CUSTOMER_ENABLED = 'apsis_one_sync/sync/customer_enabled';
 
     /**
-     * Events section
+     * Events sync section
      */
-    const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_GROUP = 'apsis_one_events/events';
-    const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_LOGIN = 'apsis_one_events/events/login';
-    const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_ORDER = 'apsis_one_events/events/order';
-    const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_REVIEW = 'apsis_one_events/events/review';
-    const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_WISHLIST = 'apsis_one_events/events/wishlist';
-    const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_UNSUBSCRIBE = 'apsis_one_events/events/unsubscribe';
-    const CONFIG_APSIS_ONE_EVENTS_SUBSCRIBER_2_CUSTOMER = 'apsis_one_events/events/subscriber_2_customer';
-    const CONFIG_APSIS_ONE_EVENTS_CUSTOMER_2_SUBSCRIBER = 'apsis_one_events/events/customer_2_subscriber';
-    const CONFIG_APSIS_ONE_EVENTS_PRODUCT_CARTED = 'apsis_one_events/events/product_carted';
-    const CONFIG_APSIS_ONE_EVENTS_ORDER_HISTORY_DONE_FLAG = 'apsis_one_events/events/order_history_done_flag';
-    const CONFIG_APSIS_ONE_EVENTS_QUOTE_HISTORY_DONE_FLAG = 'apsis_one_events/events/quote_history_done_flag';
-    const CONFIG_APSIS_ONE_EVENTS_REVIEW_HISTORY_DONE_FLAG = 'apsis_one_events/events/review_history_done_flag';
-    const CONFIG_APSIS_ONE_EVENTS_WISHLIST_HISTORY_DONE_FLAG = 'apsis_one_events/events/wishlist_history_done_flag';
-    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_ORDER_EVENTS_DURATION =
-        'apsis_one_events/events/order_historical_event_duration';
-    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_CART_EVENTS_DURATION =
-        'apsis_one_events/events/cart_historical_event_duration';
-    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_REVIEW_EVENTS_DURATION =
-        'apsis_one_events/events/review_historical_event_duration';
-    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_WISHLIST_EVENTS_DURATION =
-        'apsis_one_events/events/wishlist_historical_event_duration';
-    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_CART_DURATION_TIMESTAMP =
-        'apsis_one_events/events/cart_event_duration_timestamp';
-    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_ORDER_DURATION_TIMESTAMP =
-        'apsis_one_events/events/order_event_duration_timestamp';
-    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_REVIEW_DURATION_TIMESTAMP =
-        'apsis_one_events/events/review_event_duration_timestamp';
-    const CONFIG_APSIS_ONE_EVENTS_HISTORICAL_WISHLIST_DURATION_TIMESTAMP =
-        'apsis_one_events/events/wishlist_event_duration_timestamp';
-    const CONFIG_APSIS_ONE_EVENTS_REGISTER_ABANDONED_CART_AFTER_DURATION =
-        'apsis_one_events/events/abandoned_cart_duration_after';
+    const EVENTS_CUSTOMER_GROUP = 'apsis_one_events/events';
+    const EVENTS_CUSTOMER_LOGIN = 'apsis_one_events/events/login';
+    const EVENTS_CUSTOMER_ORDER = 'apsis_one_events/events/order';
+    const EVENTS_CUSTOMER_REVIEW = 'apsis_one_events/events/review';
+    const EVENTS_CUSTOMER_WISHLIST = 'apsis_one_events/events/wishlist';
+    const EVENTS_SUBSCRIBER_UNSUBSCRIBE = 'apsis_one_events/events/unsubscribe';
+    const EVENTS_SUBSCRIBER_2_CUSTOMER = 'apsis_one_events/events/subscriber_2_customer';
+    const EVENTS_CUSTOMER_2_SUBSCRIBER = 'apsis_one_events/events/customer_2_subscriber';
+    const EVENTS_PRODUCT_CARTED = 'apsis_one_events/events/product_carted';
+
+    const EVENTS_HISTORICAL_ORDER_EVENTS_DURATION = 'apsis_one_events/events/order_historical_event_duration';
+    const EVENTS_HISTORICAL_CART_EVENTS_DURATION = 'apsis_one_events/events/cart_historical_event_duration';
+    const EVENTS_HISTORICAL_REVIEW_EVENTS_DURATION = 'apsis_one_events/events/review_historical_event_duration';
+    const EVENTS_HISTORICAL_WISHLIST_EVENTS_DURATION = 'apsis_one_events/events/wishlist_historical_event_duration';
+
+    const EVENTS_REGISTER_ABANDONED_CART_AFTER_DURATION = 'apsis_one_events/events/abandoned_cart_duration_after';
 
     /**
      * Configuration section
      */
-    /** Profile Sync */
-    const CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_SECTION = 'apsis_one_configuration/profile_sync';
-    const CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_ORDER_STATUSES
-        = 'apsis_one_configuration/profile_sync/order_status';
-    const CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_SUBSCRIBER_BATCH_SIZE
-        = 'apsis_one_configuration/profile_sync/subscriber_batch_size';
-    const CONFIG_APSIS_ONE_CONFIGURATION_PROFILE_SYNC_CUSTOMER_BATCH_SIZE
-        = 'apsis_one_configuration/profile_sync/customer_batch_size';
-    /** Developer settings */
-    const CONFIG_APSIS_ONE_CONFIGURATION_DEVELOPER_SETTING_SECTION = 'apsis_one_configuration/developer_settings';
-    const CONFIG_APSIS_ONE_CONFIGURATION_DEVELOPER_SETTING_CLEANUP_AFTER =
-        'apsis_one_configuration/developer_settings/cleanup_after';
-    /** Tracking Script */
-    const CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_SECTION = 'apsis_one_configuration/tracking';
-    const CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_ENABLED = 'apsis_one_configuration/tracking/enabled';
-    const CONFIG_APSIS_ONE_CONFIGURATION_TRACKING_SCRIPT = 'apsis_one_configuration/tracking/script';
 
-    const SUBSCRIBER_ATTRIBUTE_LIST = [
-        self::CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_ID,
-        self::CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_STATUS,
-        self::CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_STATUS_CHANGE_AT
-    ];
-    const CUSTOMER_ATTRIBUTE_LIST = [
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_ADDRESS_LINE_1,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_ADDRESS_LINE_2,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_CITY,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_COMPANY,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_COUNTRY,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_POSTCODE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_STATE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_BILLING_TELEPHONE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_ADDRESS_1,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_ADDRESS_2,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_CITY,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_COMPANY,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_COUNTRY,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_POSTCODE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_STATE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DELIVERY_TELEPHONE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_CREATED_AT,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_CUSTOMER_GROUP,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_LOGGED_IN_DATE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_NAME,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_PURCHASE_DATE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_LAST_REVIEW_DATE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_TITLE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_AVERAGE_ORDER_VALUE,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_ID,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_GENDER,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_TOTAL_NUMBER_OF_ORDERS,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_TOTAL_SPEND,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_REVIEW_COUNT,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_DOB,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_FIRST_NAME
-    ];
-    const COMMON_ATTRIBUTE_LIST = [
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_STORE_ID,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_STORE_NAME,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_WEBSITE_ID,
-        self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_WEBSITE_NAME
-    ];
+    /** Profile Sync */
+    const PROFILE_SYNC_SECTION = 'apsis_one_configuration/profile_sync';
+    const PROFILE_SYNC_ORDER_STATUSES = 'apsis_one_configuration/profile_sync/order_status';
+    const PROFILE_SYNC_SUBSCRIBER_BATCH_SIZE = 'apsis_one_configuration/profile_sync/subscriber_batch_size';
+    const PROFILE_SYNC_CUSTOMER_BATCH_SIZE = 'apsis_one_configuration/profile_sync/customer_batch_size';
+    const PROFILE_SYNC_DELETE_ENABLED = 'apsis_one_configuration/profile_sync/delete_enabled';
+
+    /** Developer settings */
+    const DEVELOPER_SETTING_SECTION = 'apsis_one_configuration/developer_settings';
+    const DEVELOPER_SETTING_CLEANUP_AFTER = 'apsis_one_configuration/developer_settings/cleanup_after';
+    const DEVELOPER_PROFILE_CRON = 'apsis_one_configuration/developer_settings/cron_schedule_profile_sync';
+    const DEVELOPER_EVENT_CRON = 'apsis_one_configuration/developer_settings/cron_schedule_events_sync';
+    const DEVELOPER_HISTORY_CRON = 'apsis_one_configuration/developer_settings/cron_schedule_historical_events';
+
+    /** Tracking Script */
+    const TRACKING_SECTION = 'apsis_one_configuration/tracking';
+    const TRACKING_ENABLED = 'apsis_one_configuration/tracking/enabled';
+    const TRACKING_SCRIPT = 'apsis_one_configuration/tracking/script';
 
     /**
      * @var ScopeConfigInterface
@@ -231,7 +184,7 @@ class Config
      */
     public function getSubscriberAttributeMapping(StoreInterface $store, bool $withCommon = true)
     {
-        $subscriberMapping = $this->getConfigMappingsByPath($store, self::CONFIG_APSIS_ONE_MAPPINGS_SUBSCRIBER_GROUP);
+        $subscriberMapping = $this->getConfigMappingsByPath($store, self::MAPPINGS_SUBSCRIBER_GROUP);
         if ($withCommon) {
             $commonMapping = $this->getCommonAttributeMapping($store);
             return array_merge($subscriberMapping, $commonMapping);
@@ -247,7 +200,7 @@ class Config
      */
     public function getCustomerAttributeMapping(StoreInterface $store, bool $withCommon = true)
     {
-        $customerMapping = $this->getConfigMappingsByPath($store, self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_GROUP);
+        $customerMapping = $this->getConfigMappingsByPath($store, self::MAPPINGS_CUSTOMER_GROUP);
         if ($withCommon) {
             $commonMapping = $this->getCommonAttributeMapping($store);
             return array_merge($customerMapping, $commonMapping);
@@ -261,7 +214,7 @@ class Config
      */
     private function getCommonAttributeMapping(StoreInterface $store)
     {
-        return $this->getConfigMappingsByPath($store, self::CONFIG_APSIS_ONE_MAPPINGS_CUSTOMER_SUBSCRIBER_GROUP);
+        return $this->getConfigMappingsByPath($store, self::MAPPINGS_CUSTOMER_SUBSCRIBER_GROUP);
     }
 
     /**

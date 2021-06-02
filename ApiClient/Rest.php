@@ -66,7 +66,7 @@ abstract class Rest
     protected $responseBody;
 
     /**
-     * @var string|array
+     * @var array
      */
     protected $responseInfo;
 
@@ -86,7 +86,7 @@ abstract class Rest
     protected function execute()
     {
         $this->responseBody = null;
-        $this->responseInfo = null;
+        $this->responseInfo = [];
         $this->curlError = '';
         $ch = curl_init();
         try {
@@ -107,11 +107,12 @@ abstract class Rest
                     $this->executeDelete($ch);
                     break;
                 default:
-                    $this->helper->debug(__METHOD__ . ' : Current verb (' . $this->verb . ') is an invalid REST verb.');
+                    $this->curlError = __METHOD__ . ' : Current verb (' . $this->verb . ') is an invalid REST verb.';
                     curl_close($ch);
             }
         } catch (Exception $e) {
             curl_close($ch);
+            $this->curlError = $e->getMessage();
             $this->helper->logError(__METHOD__, $e);
         }
         return $this->responseBody;
@@ -209,8 +210,10 @@ abstract class Rest
     {
         $this->setCurlOpts($ch, $headers);
         $this->responseBody = $this->helper->unserialize(curl_exec($ch));
-        $this->responseInfo = curl_getinfo($ch);
         $this->curlError = curl_error($ch);
+        if (empty($this->curlError)) {
+            $this->responseInfo = curl_getinfo($ch);
+        }
         curl_close($ch);
     }
 
@@ -254,22 +257,10 @@ abstract class Rest
         curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
         curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $this->verb);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
         if (isset($this->token)) {
             $headers[] = 'Authorization: Bearer ' . $this->token;
         }
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    }
-
-    /**
-     * Get response info.
-     *
-     * @return string|array
-     */
-    protected function getResponseInfo()
-    {
-        return $this->responseInfo;
     }
 
     /**
@@ -355,6 +346,16 @@ abstract class Rest
         if (strlen($this->curlError)) {
             $this->helper->log(__METHOD__ . ': CURL ERROR: ' . $this->curlError);
             return false;
+        }
+
+        if ((bool) getenv('APSIS_DEVELOPER') && ! empty($this->responseInfo)) {
+            $info = [
+                'Method' => $method,
+                'Request time in seconds' => $this->responseInfo['total_time'],
+                'Endpoint URL' => $this->responseInfo['url'],
+                'Http code' => $this->responseInfo['http_code']
+            ];
+            $this->helper->debug('CURL Transfer', $info);
         }
 
         if (isset($response->status) && isset($response->detail)) {

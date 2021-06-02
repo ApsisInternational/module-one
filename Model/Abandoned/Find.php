@@ -32,20 +32,27 @@ class Find implements SyncInterface
     {
         try {
             $stores = $apsisCoreHelper->getStores();
+
             foreach ($stores as $store) {
                 try {
                     $isEnabled = $apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
                     $acDelayPeriod = $apsisCoreHelper->getStoreConfig(
                         $store,
-                        ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_REGISTER_ABANDONED_CART_AFTER_DURATION
+                        ApsisConfigHelper::EVENTS_REGISTER_ABANDONED_CART_AFTER_DURATION
                     );
-                    if ($isEnabled && $acDelayPeriod) {
-                        $quoteCollection = $this->abandonedSub
-                            ->getQuoteCollectionByStore($store, $acDelayPeriod, $apsisCoreHelper);
-                        if ($quoteCollection && $quoteCollection->getSize()) {
-                            $this->abandonedSub
-                                ->aggregateCartDataFromStoreCollection($quoteCollection, $apsisCoreHelper);
-                        }
+                    if (! $isEnabled || ! $acDelayPeriod) {
+                        continue;
+                    }
+
+
+                    $quoteCollection = $this->abandonedSub
+                        ->getQuoteCollectionByStore($store, $acDelayPeriod, $apsisCoreHelper);
+                    if ($quoteCollection && $quoteCollection->getSize()) {
+                        $this->abandonedSub->aggregateCartDataFromStoreCollection(
+                            $quoteCollection,
+                            $apsisCoreHelper,
+                            $store->getId()
+                        );
                     }
                 } catch (Exception $e) {
                     $apsisCoreHelper->logError(__METHOD__, $e);

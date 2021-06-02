@@ -12,7 +12,7 @@ interface ProfileDataInterface
      * @param AbstractModel $model
      * @param ApsisCoreHelper $apsisCoreHelper
      *
-     * @return mixed
+     * @return $this
      */
     public function setModelData(array $mappingHash, AbstractModel $model, ApsisCoreHelper $apsisCoreHelper);
 

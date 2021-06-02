@@ -23,26 +23,20 @@ class OrderStatus implements OptionSourceInterface
     }
 
     /**
-     * @return array
+     * @inheritdoc
      */
     public function toOptionArray()
     {
+        $options = [['label' => __('-- Please Select --'), 'value' => '0']];
+
         $statuses = $this->status->toOptionArray();
 
         if (! empty($statuses) && empty($statuses[0]['value'])) {
             array_shift($statuses);
         }
 
-        $options[] = [
-            'label' => __('-- Please Select --'),
-            'value' => '0',
-        ];
-
         foreach ($statuses as $status) {
-            $options[] = [
-                'value' => $status['value'],
-                'label' => __($status['label']),
-            ];
+            $options[] = ['value' => $status['value'], 'label' => __($status['label']),];
         }
 
         return $options;

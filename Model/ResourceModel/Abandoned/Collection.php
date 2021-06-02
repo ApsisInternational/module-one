@@ -10,12 +10,12 @@ use Apsis\One\Model\Abandoned;
 class Collection extends AbstractCollection
 {
     /**
-     * @var string
+     * @inheritdoc
      */
     protected $_idFieldName = 'id';
 
     /**
-     * Initialize resource collection.
+     * @inheritdoc
      */
     public function _construct()
     {

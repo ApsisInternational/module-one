@@ -45,26 +45,28 @@ class Data extends EventData implements EventDataInterface
         Product $product,
         ApsisCoreHelper $apsisCoreHelper
     ) {
-        $this->store = $wishlist->getStore();
-        $this->wishlistItem = $item;
-        $this->product = $product;
-        return $this->getProcessedDataArr($wishlist, $apsisCoreHelper);
+        try {
+            $this->store = $store;
+            $this->wishlistItem = $item;
+            $this->product = $product;
+            return $this->getProcessedDataArr($wishlist, $apsisCoreHelper);
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
+            return [];
+        }
     }
 
     /**
-     * @param AbstractModel $wishlist
-     * @param ApsisCoreHelper $apsisCoreHelper
-     *
-     * @return array
+     * @inheritdoc
      */
-    public function getProcessedDataArr(AbstractModel $wishlist, ApsisCoreHelper $apsisCoreHelper)
+    public function getProcessedDataArr(AbstractModel $model, ApsisCoreHelper $apsisCoreHelper)
     {
         try {
             return [
-                'wishlistId' => (int)$wishlist->getId(),
+                'wishlistId' => (int)$model->getId(),
                 'wishlistItemId' => (int)$this->wishlistItem->getId(),
-                'wishlistName' => (string)$wishlist->getName(),
-                'customerId' => (int)$wishlist->getCustomerId(),
+                'wishlistName' => (string)$model->getName(),
+                'customerId' => (int)$model->getCustomerId(),
                 'websiteName' => (string)$apsisCoreHelper->getWebsiteNameFromStoreId($this->store->getId()),
                 'storeName' => (string)$apsisCoreHelper->getStoreNameFromId($this->store->getId()),
                 'productId' => (int)$this->product->getId(),

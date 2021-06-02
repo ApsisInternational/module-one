@@ -7,19 +7,13 @@ use Magento\Framework\Data\OptionSourceInterface;
 class IsStatus implements OptionSourceInterface
 {
     /**
-     * @return array
+     * @inheritdoc
      */
     public function toOptionArray()
     {
         return [
-            [
-                'value' => '0',
-                'label' => __('No')
-            ],
-            [
-                'value' => '1',
-                'label' => __('Yes'),
-            ]
+            ['value' => '0', 'label' => __('No')],
+            ['value' => '1', 'label' => __('Yes'),]
         ];
     }
 }

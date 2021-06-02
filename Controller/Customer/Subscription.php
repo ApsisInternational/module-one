@@ -14,8 +14,6 @@ use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Model\Session;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\App\ResponseInterface;
-use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
@@ -86,7 +84,7 @@ class Subscription extends Action
     }
 
     /**
-     * @return ResponseInterface|ResultInterface
+     * @inheritdoc
      */
     public function execute()
     {
@@ -172,9 +170,11 @@ class Subscription extends Action
 
         $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
             $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_MAPPINGS_SECTION_SECTION
+            ApsisConfigHelper::MAPPINGS_SECTION_SECTION
         );
         $consent = explode('|', $consent);
+
+        //If to subscribe
         if ($subscribe) {
             $result = $client->subscribeProfileToTopic(
                 $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator),
@@ -183,7 +183,20 @@ class Subscription extends Action
                 $consent[0],
                 $consent[1]
             );
+
+            if (isset($result->id)) {
+                $info = [
+                    'Action' => 'subscribeProfileToTopic',
+                    'Profile Id' => $profile->getIntegrationUid(),
+                    'Section' => $sectionDiscriminator,
+                    'Consent List' => $consent[0],
+                    'Topic' => $consent[1]
+                ];
+                $this->apsisCoreHelper->debug(__METHOD__, $info);
+            }
         }
+
+        //Create consent
         $result = $client->createConsent(
             Profile::EMAIL_CHANNEL_DISCRIMINATOR,
             $profile->getEmail(),
@@ -192,6 +205,19 @@ class Subscription extends Action
             $consent[1],
             $type
         );
+
+        if ($result === null) {
+            $info = [
+                'Action' => 'createConsent',
+                'Consent Type' => $type,
+                'Profile Id' => $profile->getIntegrationUid(),
+                'Section' => $sectionDiscriminator,
+                'Consent List' => $consent[0],
+                'Topic' => $consent[1]
+            ];
+            $this->apsisCoreHelper->debug(__METHOD__, $info);
+        }
+
         return ($result === false || is_string($result)) ? false : true;
     }
 

@@ -7,7 +7,7 @@ use Magento\Framework\Data\OptionSourceInterface;
 class PastEvents implements OptionSourceInterface
 {
     /**
-     * @return array
+     * @inheritdoc
      */
     public function toOptionArray()
     {

@@ -2,14 +2,13 @@
 
 namespace Apsis\One\Controller\Adminhtml\Profile;
 
+use Apsis\One\Model\Profile;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Profile as ProfileService;
 use Exception;
-use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultFactory;
-use Magento\Framework\Controller\ResultInterface;
 use Magento\Ui\Component\MassAction\Filter;
 use Magento\Backend\App\Action;
-use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Magento\Backend\App\Action\Context;
 use Magento\Backend\Model\View\Result\Redirect;
@@ -22,11 +21,6 @@ class MassReset extends Action
      * @see _isAllowed()
      */
     const ADMIN_RESOURCE = 'Apsis_One::profile';
-
-    /**
-     * @var ProfileResource
-     */
-    public $profileResource;
 
     /**
      * @var ProfileCollectionFactory
@@ -44,30 +38,35 @@ class MassReset extends Action
     private $apsisCoreHelper;
 
     /**
+     * @var ProfileService
+     */
+    private $profileService;
+
+    /**
      * MassDelete constructor.
      *
      * @param Context $context
      * @param ApsisCoreHelper $apsisLogHelper
-     * @param ProfileResource $subscriberResource
      * @param Filter $filter
+     * @param ProfileService $profileService
      * @param ProfileCollectionFactory $subscriberCollectionFactory
      */
     public function __construct(
         Context $context,
         ApsisCoreHelper $apsisLogHelper,
-        ProfileResource $subscriberResource,
         Filter $filter,
+        ProfileService $profileService,
         ProfileCollectionFactory $subscriberCollectionFactory
     ) {
+        $this->profileService = $profileService;
         $this->apsisCoreHelper = $apsisLogHelper;
         $this->filter = $filter;
         $this->profileCollectionFactory = $subscriberCollectionFactory;
-        $this->profileResource = $subscriberResource;
         parent::__construct($context);
     }
 
     /**
-     * @return Redirect|ResponseInterface|ResultInterface
+     * @inheritdoc
      */
     public function execute()
     {
@@ -77,12 +76,18 @@ class MassReset extends Action
             $collection = $this->profileCollectionFactory->create();
             $collection = $this->filter->getCollection($collection);
             $collectionSize = $collection->getSize();
-            $this->profileResource->resetProfiles($this->apsisCoreHelper, [], $collection->getAllIds());
+
+            $profileIds = $collection->getAllIds();
+            $this->profileService->resetProfiles(__METHOD__, [], $profileIds);
+
             $this->messageManager->addSuccessMessage(__('A total of %1 record(s) have been reset.', $collectionSize));
+
         } catch (Exception $e) {
+
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             $this->messageManager->addErrorMessage(__('An error happen during execution. Please check logs'));
         }
+
         return $resultRedirect->setPath('*/*/');
     }
 }

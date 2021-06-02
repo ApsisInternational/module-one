@@ -19,17 +19,16 @@ class Intervalminute implements OptionSourceInterface
     protected $timeType = 'Minute';
 
     /**
-     * Abandoned cart minutes options.
-     *
-     * @return array
+     * @inheritdoc
      */
     public function toOptionArray()
     {
-        //default data option
-        $interval[] = ['value' => 0, 'label' => __('Disable')];
+        $interval = [['value' => 0, 'label' => __('Disable')]];
+
         foreach ($this->times as $time) {
             $interval[] =  ['value' => $time, 'label' => __($time . ' ' . $this->timeType)];
         }
+
         return $interval;
     }
 }

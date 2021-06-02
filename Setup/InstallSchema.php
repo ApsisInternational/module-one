@@ -39,14 +39,16 @@ class InstallSchema implements InstallSchemaInterface
         $installer = $setup;
         $installer->startSetup();
 
-        // Create entities tables
-        /** Profile */
+        // Create Profile table
         $this->createApsisProfileTable($installer);
-        /** Profile Batch*/
+
+        // Create Profile Batch table
         $this->createApsisProfileBatchTable($installer);
-        /** Events */
+
+        // Create Event table
         $this->createApsisEventTable($installer);
-        /** Abandoned Carts */
+
+        // Create AC table
         $this->createApsisAbandonedTable($installer);
 
         $installer->endSetup();

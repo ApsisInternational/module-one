@@ -9,12 +9,12 @@ use Magento\Cron\Model\ResourceModel\Schedule as ScheduleResource;
 class Collection extends AbstractCollection
 {
     /**
-     * @var string
+     * @inheritdoc
      */
     protected $_idFieldName = 'schedule_id';
 
     /**
-     * Initialize resource collection
+     * @inheritdoc
      */
     public function _construct()
     {

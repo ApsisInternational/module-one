@@ -2,21 +2,22 @@
 
 namespace Apsis\One\Model;
 
+use Apsis\One\Model\Events\Historical;
 use Apsis\One\Model\ResourceModel\Abandoned;
 use Apsis\One\Model\ResourceModel\Event;
 use Apsis\One\Model\ResourceModel\Profile;
 use Apsis\One\Model\ResourceModel\ProfileBatch;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
-use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Profile as ApsisProfile;
 use Exception;
-use Magento\Config\Model\ResourceModel\Config as configResource;
 
 class Developer
 {
     /**
-     * @var ApsisLogHelper
+     * @var ApsisCoreHelper
      */
-    private $apsisLogHelper;
+    private $apsisHelper;
 
     /**
      * @var ProfileBatch
@@ -39,34 +40,34 @@ class Developer
     private $abandoned;
 
     /**
-     * @var configResource
+     * @var Historical
      */
-    private $configResource;
+    private $historicalEvents;
 
     /**
      * Developer constructor.
      *
-     * @param ApsisLogHelper $apsisLogHelper
+     * @param ApsisCoreHelper $apsisHelper
      * @param ProfileBatch $profileBatch
      * @param Profile $profile
      * @param Event $event
-     * @param configResource $configResource
+     * @param Historical $historicalEvents
      * @param Abandoned $abandoned
      */
     public function __construct(
-        ApsisLogHelper $apsisLogHelper,
+        ApsisCoreHelper $apsisHelper,
         ProfileBatch $profileBatch,
         Profile $profile,
         Event $event,
-        configResource $configResource,
+        Historical $historicalEvents,
         Abandoned $abandoned
     ) {
+        $this->historicalEvents = $historicalEvents;
         $this->abandoned = $abandoned;
-        $this->apsisLogHelper = $apsisLogHelper;
+        $this->apsisHelper = $apsisHelper;
         $this->profileBatch = $profileBatch;
         $this->profile = $profile;
         $this->event = $event;
-        $this->configResource = $configResource;
     }
 
     /**
@@ -74,33 +75,68 @@ class Developer
      */
     public function resetModule()
     {
-        return (
-            $this->profileBatch->truncateTable($this->apsisLogHelper) &&
-            $this->event->truncateTable($this->apsisLogHelper) &&
-            $this->abandoned->truncateTable($this->apsisLogHelper) &&
-            $this->profile->truncateTable($this->apsisLogHelper) &&
-            $this->profile->populateProfilesTable($this->apsisLogHelper) &&
-            $this->deleteAllModuleConfig(
-                sprintf("and path != '%s'", ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY)
-            )
-        );
+        try {
+            $this->apsisHelper->log('Module full reset is requested from "RESET" button.');
+
+            $truncateStatus = $this->truncateAllTables();
+            if ($truncateStatus) {
+                $this->apsisHelper->log('All tables truncated');
+            } else {
+                $this->apsisHelper->log('Unable to truncate some tables.');
+            }
+
+            $configStatus = $this->profile->deleteAllModuleConfig(
+                $this->apsisHelper,
+                sprintf("AND path != '%s'", ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY)
+            );
+            if ($configStatus) {
+                $this->apsisHelper->log('All configs other then key deleted.');
+            } else {
+                $this->apsisHelper->log('Unable to delete some configurations.');
+            }
+
+            $populateStatus = $this->profile->populateProfilesTable($this->apsisHelper);
+            //Set status to 5 for each Profile type (for all Profiles) if given Profile type has is_[PROFILE_TYPE] = 0
+            $this->profile->resetProfiles(
+                $this->apsisHelper,
+                [],
+                [],
+                ApsisProfile::SYNC_STATUS_NA,
+                ['condition' => 'is_', 'value' => ApsisProfile::NO_FLAG]
+            );
+            if ($populateStatus) {
+                $this->apsisHelper->log('Profile table is populated with customers and subscribers.');
+            } else {
+                $this->apsisHelper->log('Unable to complete populate Profile table action.');
+            }
+
+            //Fetch historical events
+            $this->historicalEvents->process($this->apsisHelper);
+            $this->apsisHelper->log('Historical events are fetched for all stores.');
+
+            if ($configStatus && $truncateStatus && $populateStatus) {
+                $this->apsisHelper->log('Module full reset request is complete.');
+                return true;
+            } else {
+                $this->apsisHelper->log('Unable to perform some actions from full reset request.');
+                return false;
+            }
+        } catch (Exception $e) {
+            $this->apsisHelper->logError(__METHOD__, $e);
+            return false;
+        }
     }
 
     /**
-     * @param string $andCondition
-     *
      * @return bool
      */
-    public function deleteAllModuleConfig(string $andCondition = '')
+    private function truncateAllTables()
     {
-        try {
-            $connection = $this->configResource->getConnection();
-            $connection->delete($this->configResource->getMainTable(), "path like 'apsis_one%' $andCondition");
-            $this->apsisLogHelper->cleanCache();
-            return true;
-        } catch (Exception $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e);
-            return false;
-        }
+        return (
+            $this->profile->truncateTable($this->apsisHelper) &&
+            $this->profileBatch->truncateTable($this->apsisHelper) &&
+            $this->event->truncateTable($this->apsisHelper) &&
+            $this->abandoned->truncateTable($this->apsisHelper)
+        );
     }
 }

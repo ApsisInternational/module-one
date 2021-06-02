@@ -11,7 +11,6 @@ use Exception;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\ResponseInterface;
-use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Escaper;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
@@ -71,11 +70,16 @@ class Subscription extends Action
     }
 
     /**
-     * @return ResponseInterface|ResultInterface
+     * @inheritdoc
      */
     public function execute()
     {
         try {
+            //Validate http method against allowed one.
+            if ('PATCH' !== $_SERVER['REQUEST_METHOD']) {
+                return $this->sendResponse( 405);
+            }
+
             if (empty($key = (string) $this->getRequest()->getHeader('authorization')) ||
                 ! $this->authenticateKey($key)
             ) {
@@ -87,30 +91,43 @@ class Subscription extends Action
                 return $this->sendResponse(400);
             }
 
-            if (! $profile = $this->validateId($params)) {
+            if (! $profile = $this->getProfile($params)) {
                 return $this->sendResponse(404);
             }
 
             if ($profile->getSubscriberId() && $this->isTopicMatchedWithConfigTopic($profile, $params)) {
                 $subscriber = $this->subscriberFactory->create()->load($profile->getSubscriberId());
                 if ($subscriber->getId()) {
+
                     //Set subscriber status
                     $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED)
                         ->setSubscriberStoreId($subscriber->getStoreId())
                         ->setSubscriberSyncStatus(ProfileModel::SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE)
-                        ->setIsSubscriber(ProfileModel::NO_FLAGGED)
+                        ->setIsSubscriber(ProfileModel::NO_FLAG)
                         ->setErrorMessage('');
                     $this->profileResource->save($profile);
+
                     //Unsubscribe from Magento
                     $subscriber->unsubscribe();
+
+                    //Log it
+                    $info = [
+                        'Request' => 'opt-out from JUSTIN',
+                        'Profile Id' => $profile->getId(),
+                        'Subscriber Id' => $profile->getSubscriberId(),
+                        'Store Id' => $subscriber->getStoreId()
+                    ];
+                    $this->apsisCoreHelper->debug(__METHOD__, $info);
+
+                    //Send success response
                     return $this->sendResponse(204);
                 }
             }
 
-            return $this->sendResponse(200, 'No change made to profile subscription.');
+            return $this->sendResponse(200);
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
-            return $this->sendResponse(500, $e->getMessage());
+            return $this->sendResponse(500);
         }
     }
 
@@ -137,7 +154,7 @@ class Subscription extends Action
     private function isTopicMatchedWithConfigTopic(ProfileModel $profile, array $params)
     {
         $isSyncEnabled = (string) $this->apsisCoreHelper->getConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_ENABLED,
+            ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENABLED,
             ScopeInterface::SCOPE_STORES,
             ($profile->getSubscriberStoreId()) ? $profile->getSubscriberStoreId() : $profile->getStoreId()
         );
@@ -146,7 +163,7 @@ class Subscription extends Action
         }
 
         $selectedTopicInConfig = (string) $this->apsisCoreHelper->getConfigValue(
-            ApsisConfigHelper::CONFIG_APSIS_ONE_SYNC_SETTING_SUBSCRIBER_TOPIC,
+            ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC,
             ScopeInterface::SCOPE_STORES,
             ($profile->getSubscriberStoreId()) ? $profile->getSubscriberStoreId() : $profile->getStoreId()
         );
@@ -163,20 +180,16 @@ class Subscription extends Action
 
     /**
      * @param int $code
-     * @param string $body
      *
      * @return ResponseInterface
      */
-    private function sendResponse(int $code, string $body = '')
+    private function sendResponse(int $code)
     {
         $this->getResponse()
             ->setHttpResponseCode($code)
             ->setHeader('Pragma', 'public', true)
-            ->setHeader('Cache-Control', 'must-revalidate, post-check=0, pre-check=0', true)
-            ->setHeader('Content-type', 'text/html; charset=UTF-8', true);
-        if (strlen($body)) {
-            $this->getResponse()->setBody($body);
-        }
+            ->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0', true)
+            ->setHeader('Content-Type', 'application/json', true);
         return $this->getResponse();
     }
 
@@ -195,7 +208,7 @@ class Subscription extends Action
      *
      * @return ProfileModel|bool
      */
-    private function validateId(array $params)
+    private function getProfile(array $params)
     {
         return $this->profileCollectionFactory->create()
             ->loadByIntegrationId($this->escaper->escapeHtml($params['PK']));

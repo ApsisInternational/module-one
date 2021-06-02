@@ -4,12 +4,13 @@ namespace Apsis\One\Model\ResourceModel;
 
 use Apsis\One\Model\Profile as ApsisProfile;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Apsis\One\Model\Profile;
 use Exception;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Magento\Framework\Model\ResourceModel\Db\Context;
 use Magento\Framework\Stdlib\DateTime;
+use Apsis\One\Model\Event as EventModel;
 
 class Event extends AbstractDb implements ResourceInterface
 {
@@ -19,23 +20,31 @@ class Event extends AbstractDb implements ResourceInterface
     private $dateTime;
 
     /**
+     * @var ApsisDateHelper
+     */
+    private $apsisDateHelper;
+
+    /**
      * Event constructor.
      *
      * @param Context $context
      * @param DateTime $dateTime
+     * @param ApsisDateHelper $apsisDateHelper
      * @param null $connectionName
      */
     public function __construct(
         Context $context,
         DateTime $dateTime,
+        ApsisDateHelper $apsisDateHelper,
         $connectionName = null
     ) {
+        $this->apsisDateHelper = $apsisDateHelper;
         $this->dateTime = $dateTime;
         parent::__construct($context, $connectionName);
     }
 
     /**
-     * Initialize resource.
+     * @inheritdoc
      */
     public function _construct()
     {
@@ -114,26 +123,15 @@ class Event extends AbstractDb implements ResourceInterface
     }
 
     /**
-     * @param int $day
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @inheritdoc
      */
     public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper)
     {
-        try {
-            $where = [
-                "updated_at < DATE_SUB(NOW(), INTERVAL ? DAY)" => $day,
-                "status IN(?)" => [Profile::SYNC_STATUS_SYNCED, Profile::SYNC_STATUS_FAILED]
-            ];
-            $this->getConnection()->delete($this->getMainTable(), $where);
-        } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e);
-        }
+        // Not needed for profiles
     }
 
     /**
-     * @param ApsisLogHelper $apsisLogHelper
-     *
-     * @return bool
+     * @inheritdoc
      */
     public function truncateTable(ApsisLogHelper $apsisLogHelper)
     {
@@ -167,6 +165,7 @@ class Event extends AbstractDb implements ResourceInterface
             if (! empty($ids)) {
                 $where["id IN (?)"] = $ids;
             }
+            $where["status != ?"] = EventModel::SYNC_STATUS_PENDING_HISTORICAL;
             $bind = [
                 'status' => ApsisProfile::SYNC_STATUS_PENDING,
                 'error_message' => '',
@@ -180,6 +179,108 @@ class Event extends AbstractDb implements ResourceInterface
         } catch (Exception $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return 0;
+        }
+    }
+
+    /**
+     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param int $configDuration
+     * @param int $eventType
+     * @param array $storeIds
+     *
+     * @return int
+     */
+    public function setPendingStatusOnHistoricalPendingEvents(
+        ApsisCoreHelper $apsisCoreHelper,
+        int $configDuration,
+        int $eventType,
+        array $storeIds
+    ) {
+        try {
+            $period = $this->getPeriod($apsisCoreHelper, $configDuration);
+            if (empty($period)) {
+                return 0;
+            }
+
+            $bind = [
+                'status' => ApsisProfile::SYNC_STATUS_PENDING,
+                'error_message' => '',
+                'updated_at' => $this->dateTime->formatDate(true)
+            ];
+            $where = [
+                'status = ?' => EventModel::SYNC_STATUS_PENDING_HISTORICAL,
+                'event_type = ?' => $eventType,
+                'store_id in (?)' => $storeIds,
+                'created_at >= ?' => $period['from'],
+                'created_at <= ?' => $period['to']
+            ];
+            $apsisCoreHelper->debug(__METHOD__, ['Duration' => $period]);
+
+            return $this->getConnection()->update($this->getMainTable(), $bind, $where);
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
+            return 0;
+        }
+    }
+
+    /**
+     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param int $configDuration
+     *
+     * @return array
+     */
+    private function getPeriod(ApsisCoreHelper $apsisCoreHelper, int $configDuration)
+    {
+        try {
+            $to = $this->getToDatestamp($apsisCoreHelper);
+            if (empty($to)) {
+                return [];
+            }
+
+            $from = $this->getFromDatestamp($configDuration, $apsisCoreHelper);
+            if (empty($from)) {
+                return [];
+            }
+
+            return ['from' => $from, 'to' => $to];
+
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
+            return [];
+        }
+    }
+
+    /**
+     * @param int $pastEventsDuration
+     * @param ApsisCoreHelper $apsisCoreHelper
+     *
+     * @return string
+     */
+    private function getFromDatestamp(int $pastEventsDuration, ApsisCoreHelper $apsisCoreHelper)
+    {
+        try {
+            return $this->apsisDateHelper->getDateTimeFromTime()
+                ->sub($this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('P%sM', $pastEventsDuration)))
+                ->format('Y-m-d H:i:s');
+
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
+            return '';
+        }
+    }
+
+    /**
+     * @param ApsisCoreHelper $apsisCoreHelper
+     *
+     * @return string
+     */
+    private function getToDatestamp(ApsisCoreHelper $apsisCoreHelper)
+    {
+        try {
+            return $this->apsisDateHelper->getDateTimeFromTime()->format('Y-m-d H:i:s');
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
+            return '';
         }
     }
 }

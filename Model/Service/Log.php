@@ -39,52 +39,74 @@ class Log
     }
 
     /**
-     * @param string $classMethodName
-     * @param Exception $e
-     * @param array $extra
-     */
-    public function logError(string $classMethodName, Exception $e, array $extra = [])
-    {
-        $this->error($this->getStringForLog($classMethodName, $e->getMessage(), $e->getTraceAsString()), $extra);
-    }
-
-    /**
-     * INFO (200): Interesting events.
-     *
      * @param string $message
      * @param array $extra
      */
-    public function log(string $message, $extra = [])
+    public function log(string $message, array $extra = [])
     {
-        $this->logger->info($this->addModuleVersionToMessage($message), $extra);
+        $this->logger->info($this->addModuleVersionToMessage("Message : $message"), $extra);
     }
 
     /**
-     * DEBUG (100): Detailed debug information.
-     *
      * @param string $message
      * @param array $response
      * @param array $extra
      */
     public function debug(string $message, array $response = [], array $extra = [])
     {
-        $msg = $this->getStringForLog($message, (string) json_encode($response, JSON_PRETTY_PRINT), '');
-        $this->logger->debug($this->addModuleVersionToMessage($msg), $extra);
+        $this->logger->debug($this->getStringForLog(['Message' => $message, 'Information' => $response]), $extra);
     }
 
     /**
-     * ERROR (400): Runtime errors.
-     *
+     * @param string $classMethodName
+     * @param Exception $e
+     * @param array $extra
+     */
+    public function logError(string $classMethodName, Exception $e, array $extra = [])
+    {
+        $info = [
+            'Method' => $classMethodName,
+            'Exception' => $e->getMessage(),
+            'Trace' => str_replace(PHP_EOL, PHP_EOL . "        ", PHP_EOL . $e->getTraceAsString())
+        ];
+        $this->error($this->getStringForLog($info), $extra);
+    }
+
+    /**
      * @param string $message
      * @param array $extra
      */
-    public function error(string $message, $extra = [])
+    public function error(string $message, array $extra = [])
     {
         $this->logger->error($this->addModuleVersionToMessage($message), $extra);
     }
 
+
     /**
-     * @param string|int|float|bool|array|null $data
+     * @param array $info
+     *
+     * @return string
+     */
+    private function getStringForLog(array $info)
+    {
+        return stripcslashes($this->addModuleVersionToMessage(json_encode($info, JSON_PRETTY_PRINT)));
+    }
+
+    /**
+     * @param string $message
+     *
+     * @return string
+     */
+    private function addModuleVersionToMessage(string $message)
+    {
+        $version = $this->moduleResource->getDbVersion('Apsis_One');
+        $version = ($version) ?: Config::MODULE_VERSION;
+        return '(Module v' . $version . ') ' . $message;
+    }
+
+    /**
+     * @param mixed $data
+     *
      * @return string|bool
      */
     public function serialize($data)
@@ -93,7 +115,7 @@ class Log
             return json_encode($data);
         } catch (Exception $e) {
             $this->logError(__METHOD__, $e);
-            return '{}';
+            return '[]';
         }
     }
 
@@ -115,35 +137,9 @@ class Log
     /**
      * Invalidate cache by type
      * Clean scopeCodeResolver
-     *
-     * @return void
      */
     public function cleanCache()
     {
         $this->scopeConfig->clean();
-    }
-
-    /**
-     * @param string $functionName
-     * @param string $text
-     * @param string $trace
-     *
-     * @return string
-     */
-    private function getStringForLog(string $functionName, string $text, string $trace)
-    {
-        $string = ' - Class & Method: ' . $functionName . ' - Message: ' . $text;
-        return strlen($trace) ? $string . PHP_EOL . $trace : $string;
-    }
-
-    /**
-     * @param string $message
-     *
-     * @return string
-     */
-    private function addModuleVersionToMessage(string $message)
-    {
-
-        return '(v' . $this->moduleResource->getDbVersion('Apsis_One') . ') ' . $message;
     }
 }

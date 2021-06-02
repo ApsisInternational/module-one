@@ -10,6 +10,9 @@ use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime;
+use Apsis\One\Model\Service\Log;
+use Apsis\One\Model\Service\Profile as ProfileService;
+use Exception;
 
 /**
  * Class Profile
@@ -48,9 +51,27 @@ class Profile extends AbstractModel
     const SYNC_STATUS_SYNCED = 2;
     const SYNC_STATUS_FAILED = 3;
     const SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE = 4;
+    const SYNC_STATUS_NA = 5;
 
-    const IS_FLAGGED = 1;
-    const NO_FLAGGED = 0;
+    const STATUS_TEXT_MAP = [
+        self::SYNC_STATUS_PENDING => 'Pending',
+        self::SYNC_STATUS_BATCHED => 'Batched',
+        self::SYNC_STATUS_SYNCED => 'Synced',
+        self::SYNC_STATUS_FAILED => 'Failed',
+        self::SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE => 'Pending Update',
+        self::SYNC_STATUS_NA => 'N/A',
+    ];
+
+    const IS_FLAG = 1;
+    const NO_FLAG = 0;
+
+    const TYPE_CUSTOMER = 'customer';
+    const TYPE_SUBSCRIBER = 'subscriber';
+
+    const PROFILE_TYPE_TEXT_MAP = [
+        ProfileBatch::BATCH_TYPE_CUSTOMER => self::TYPE_CUSTOMER,
+        ProfileBatch::BATCH_TYPE_SUBSCRIBER => self::TYPE_SUBSCRIBER
+    ];
 
     const INTEGRATION_KEYSPACE = 'integration_uid';
     const EMAIL_FIELD = 'email';
@@ -68,12 +89,24 @@ class Profile extends AbstractModel
     private $expressionFactory;
 
     /**
+     * @var Log
+     */
+    private $logger;
+
+    /**
+     * @var ProfileService
+     */
+    private $profileService;
+
+    /**
      * Subscriber constructor.
      *
      * @param Context $context
      * @param Registry $registry
      * @param DateTime $dateTime
      * @param ExpressionFactory $expressionFactory
+     * @param Log $logger
+     * @param ProfileService $profileService
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -83,10 +116,14 @@ class Profile extends AbstractModel
         Registry $registry,
         DateTime $dateTime,
         ExpressionFactory $expressionFactory,
+        Log $logger,
+        ProfileService $profileService,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = []
     ) {
+        $this->profileService = $profileService;
+        $this->logger = $logger;
         $this->expressionFactory = $expressionFactory;
         $this->dateTime = $dateTime;
         parent::__construct(
@@ -99,7 +136,7 @@ class Profile extends AbstractModel
     }
 
     /**
-     * Constructor
+     * @inheritdoc
      */
     public function _construct()
     {
@@ -107,7 +144,33 @@ class Profile extends AbstractModel
     }
 
     /**
-     * @return $this
+     * @inheritdoc
+     */
+    public function afterDelete()
+    {
+        try {
+            if ($this->isDeleted()) {
+                //Send delete request to One
+                $this->profileService->deleteProfileFromOne($this);
+
+                //Log it
+                $info = [
+                    'Message' => 'Profile removed from integration table.',
+                    'Entity Id' => $this->getId(),
+                    'Store Id' => $this->getStoreId() ? $this->getStoreId() : $this->getSubscriberStoreId(),
+                    'Profile Id' => $this->getIntegrationUid()
+                ];
+                $this->logger->debug(__METHOD__, $info);
+            }
+        } catch (Exception $e) {
+            $this->logger->logError(__METHOD__, $e);
+        }
+
+        return parent::afterDelete();
+    }
+
+    /**
+     * @inheritdoc
      */
     public function beforeSave()
     {

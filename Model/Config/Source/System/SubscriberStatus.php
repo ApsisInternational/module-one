@@ -8,7 +8,7 @@ use Magento\Newsletter\Model\Subscriber;
 class SubscriberStatus implements OptionSourceInterface
 {
     /**
-     * @return array
+     * @inheritdoc
      */
     public function toOptionArray()
     {

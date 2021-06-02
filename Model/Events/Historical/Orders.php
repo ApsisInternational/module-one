@@ -5,7 +5,6 @@ namespace Apsis\One\Model\Events\Historical;
 use Apsis\One\Model\Events\Historical\Event as HistoricalEvent;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile\Collection as ProfileCollection;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Store\Api\Data\StoreInterface;
@@ -44,46 +43,46 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
     }
 
     /**
-     * @param StoreInterface $store
-     * @param ApsisCoreHelper $apsisCoreHelper
-     * @param ProfileCollection $profileCollection
-     * @param array $duration
+     * @inheritdoc
      */
     public function fetchForStore(
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper,
         ProfileCollection $profileCollection,
-        array $duration
+        array $duration,
+        array $profileCollectionArray
     ) {
-        if ((boolean) $apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_CUSTOMER_ORDER
-        )) {
-            try {
-                if (! empty($profileCollectionArray
-                        = $this->getFormattedProfileCollection($profileCollection, $apsisCoreHelper)) &&
-                    ! empty($orderCollection = $this->getOrderCollection(
-                        $apsisCoreHelper,
-                        $store,
-                        array_keys($profileCollectionArray),
-                        $duration
-                    ))
-                ) {
-                    $eventsToRegister = $this->getEventsToRegister(
-                        $apsisCoreHelper,
-                        $orderCollection,
-                        $profileCollectionArray
-                    );
-                    $this->registerEvents(
-                        $eventsToRegister,
-                        $apsisCoreHelper,
-                        $store,
-                        ApsisConfigHelper::CONFIG_APSIS_ONE_EVENTS_ORDER_HISTORY_DONE_FLAG
-                    );
-                }
-            } catch (Exception $e) {
-                $apsisCoreHelper->logError(__METHOD__, $e);
+        try {
+            if (empty($profileCollectionArray)) {
+                return;
             }
+
+            $orderCollection = $this->getOrderCollection(
+                $apsisCoreHelper,
+                $store,
+                array_keys($profileCollectionArray),
+                $duration
+            );
+            if (empty($orderCollection)) {
+                return;
+            }
+
+            $eventsToRegister = $this->getEventsToRegister(
+                $apsisCoreHelper,
+                $orderCollection,
+                $profileCollectionArray
+            );
+
+            $status = $this->registerEvents($eventsToRegister, $apsisCoreHelper);
+            if ($status) {
+                $info = [
+                    'Total Events Inserted' => $status,
+                    'Store Id' => $store->getId()
+                ];
+                $apsisCoreHelper->debug(__METHOD__, $info);
+            }
+        } catch (Exception $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -100,6 +99,7 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
         array $profileCollectionArray
     ) {
         $eventsToRegister = [];
+
         /** @var Order $order */
         foreach ($orderCollection as $order) {
             try {
@@ -109,9 +109,11 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
                         $apsisCoreHelper,
                         (int) $profileCollectionArray[$order->getCustomerEmail()]->getSubscriberId()
                     );
+
                     if (! empty($mainData) && ! empty($mainData['items'])) {
                         $subData = $mainData['items'];
                         unset($mainData['items']);
+
                         $eventDataForEvent = $this->getEventData(
                             $order->getStoreId(),
                             $profileCollectionArray[$order->getCustomerEmail()],
@@ -121,9 +123,11 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
                             $apsisCoreHelper,
                             $apsisCoreHelper->serialize($subData)
                         );
+
                         if (! empty($eventDataForEvent)) {
                             $eventsToRegister[] = $eventDataForEvent;
                         }
+
                     }
                 }
             } catch (Exception $e) {
@@ -157,26 +161,5 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
-    }
-
-    /**
-     * @param ProfileCollection $profileCollection
-     * @param ApsisCoreHelper $apsisCoreHelper
-     *
-     * @return array
-     */
-    protected function getFormattedProfileCollection(
-        ProfileCollection $profileCollection,
-        ApsisCoreHelper $apsisCoreHelper
-    ) {
-        $formattedProfileCollectionArray = [];
-        try {
-            foreach ($profileCollection as $profile) {
-                $formattedProfileCollectionArray[$profile->getEmail()] = $profile;
-            }
-        } catch (Exception $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e);
-        }
-        return $formattedProfileCollectionArray;
     }
 }

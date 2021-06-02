@@ -10,12 +10,12 @@ use Apsis\One\Model\Profile;
 class Collection extends AbstractCollection
 {
     /**
-     * @var string
+     * @inheritdoc
      */
     protected $_idFieldName = 'id';
 
     /**
-     * Initialize resource collection.
+     * @inheritdoc
      */
     public function _construct()
     {
@@ -25,7 +25,7 @@ class Collection extends AbstractCollection
     /**
      * @param int $customerId
      *
-     * @return bool|DataObject|Profile
+     * @return bool|DataObject
      */
     public function loadByCustomerId(int $customerId)
     {

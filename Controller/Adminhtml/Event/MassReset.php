@@ -11,8 +11,6 @@ use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Event\CollectionFactory as EventCollectionFactory;
 use Magento\Backend\App\Action\Context;
 use Magento\Backend\Model\View\Result\Redirect;
-use Magento\Framework\App\ResponseInterface;
-use Magento\Framework\Controller\ResultInterface;
 
 class MassReset extends Action
 {
@@ -67,7 +65,7 @@ class MassReset extends Action
     }
 
     /**
-     * @return Redirect|ResponseInterface|ResultInterface
+     * @inheritdoc
      */
     public function execute()
     {
@@ -76,7 +74,13 @@ class MassReset extends Action
         try {
             $collection = $this->filter->getCollection($this->eventCollectionFactory->create());
             $collectionSize = $collection->getSize();
-            $this->eventResource->resetEvents($this->apsisCoreHelper, [], $collection->getAllIds());
+            $ids = $collection->getAllIds();
+            $this->eventResource->resetEvents($this->apsisCoreHelper, [], $ids);
+
+            $this->apsisCoreHelper->debug(
+                __METHOD__,
+                ['Total Reset' => $collectionSize, 'Event Ids' => implode(", ", $ids)]
+            );
             $this->messageManager->addSuccessMessage(__('A total of %1 record(s) have been reset.', $collectionSize));
         } catch (Exception $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);

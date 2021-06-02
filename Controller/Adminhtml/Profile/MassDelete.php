@@ -4,9 +4,7 @@ namespace Apsis\One\Controller\Adminhtml\Profile;
 
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Exception;
-use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultFactory;
-use Magento\Framework\Controller\ResultInterface;
 use Magento\Ui\Component\MassAction\Filter;
 use Magento\Backend\App\Action;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
@@ -67,7 +65,7 @@ class MassDelete extends Action
     }
 
     /**
-     * @return Redirect|ResponseInterface|ResultInterface
+     * @inheritdoc
      */
     public function execute()
     {
@@ -76,9 +74,16 @@ class MassDelete extends Action
         try {
             $collection = $this->filter->getCollection($this->profileCollectionFactory->create());
             $collectionSize = $collection->getSize();
+            $ids = $collection->getAllIds();
+
             foreach ($collection as $item) {
                 $this->profileResource->delete($item);
             }
+
+            $this->apsisLogHelper->debug(
+                __METHOD__,
+                ['Total Deleted' => $collectionSize, 'Profile Ids' => implode(", ", $ids)]
+            );
             $this->messageManager->addSuccessMessage(__('A total of %1 record(s) have been deleted.', $collectionSize));
         } catch (Exception $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);

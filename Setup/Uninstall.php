@@ -3,6 +3,8 @@
 namespace Apsis\One\Setup;
 
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Magento\Authorization\Model\Acl\Role\Group as RoleGroup;
+use Magento\Authorization\Model\UserContextInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Magento\Framework\Setup\UninstallInterface;
@@ -50,5 +52,15 @@ class Uninstall implements UninstallInterface
 
         //Remove all module config
         $setup->getConnection()->delete($setup->getTable('core_config_data'), "path like 'apsis_one%'");
+
+        //Remove role created by the module
+        $setup->getConnection()->delete(
+            $setup->getTable('authorization_role'),
+            [
+                'role_name = ?' => 'APSIS Support Agent',
+                'user_type = ?' => UserContextInterface::USER_TYPE_ADMIN,
+                'role_type = ?' => RoleGroup::ROLE_TYPE
+            ]
+        );
     }
 }

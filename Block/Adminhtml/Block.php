@@ -6,7 +6,7 @@ use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\View\Element\Template;
 use Apsis\One\Model\Service\Config;
-use Exception;
+use Throwable;
 use Magento\Store\Model\ScopeInterface;
 
 class Block extends Template
@@ -41,7 +41,7 @@ class Block extends Template
                 $scope['context_scope'],
                 $scope['context_scope_id']
             );
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
             //Default value
             return true;
@@ -59,7 +59,7 @@ class Block extends Template
                 $scope['context_scope'],
                 $scope['context_scope_id']
             );
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
             return false;
         }
@@ -88,7 +88,7 @@ class Block extends Template
             );
 
             return $idMapped && $secretMapped && $regionMapped;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
             return false;
         }

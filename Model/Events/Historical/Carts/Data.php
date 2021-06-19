@@ -8,7 +8,7 @@ use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item;
-use Exception;
+use Throwable;
 
 class Data extends EventData implements EventDataInterface
 {
@@ -26,8 +26,13 @@ class Data extends EventData implements EventDataInterface
      */
     public function getDataArr(Quote $cart, Item $item, ApsisCoreHelper $apsisCoreHelper)
     {
-        $this->cartItem = $item;
-        return $this->getProcessedDataArr($cart, $apsisCoreHelper);
+        try {
+            $this->cartItem = $item;
+            return $this->getProcessedDataArr($cart, $apsisCoreHelper);
+        } catch (Throwable $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
+            return [];
+        }
     }
 
     /**
@@ -46,14 +51,15 @@ class Data extends EventData implements EventDataInterface
                 'productId' => (int) $this->cartItem->getProductId(),
                 'sku' => (string) $this->cartItem->getSku(),
                 'name' => (string) $this->cartItem->getName(),
-                'productUrl' => (string) $product->getProductUrl(),
-                'productImageUrl' => (string) $this->productServiceProvider->getProductImageUrl($product),
+                'productUrl' => ($product && $product->getId())? (string) $product->getProductUrl() : '',
+                'productImageUrl' => ($product && $product->getId())?
+                    (string) $this->productServiceProvider->getProductImageUrl($product) : '',
                 'qtyOrdered' => (float) $this->cartItem->getQty() ? $this->cartItem->getQty() :
                     ($this->cartItem->getQtyOrdered() ? $this->cartItem->getQtyOrdered() : 1),
                 'priceAmount' => $apsisCoreHelper->round($this->cartItem->getPrice()),
                 'rowTotalAmount' => $apsisCoreHelper->round($this->cartItem->getRowTotal()),
             ];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }

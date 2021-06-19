@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Block;
 
-use Exception;
+use Throwable;
 use Magento\Framework\DataObject;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Magento\Framework\View\Element\Template;
@@ -72,7 +72,7 @@ class Cart extends Template
             if (isset($obj->items) && is_array($obj->items)) {
                 return $this->getItemsWithLimitApplied($obj->items);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
         }
         return [];
@@ -94,7 +94,7 @@ class Cart extends Template
             if (count($items) > $limit) {
                 return array_splice($items, 0, $limit);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
         }
         return $items;
@@ -110,7 +110,7 @@ class Cart extends Template
         try {
             $storeId = $this->cart->getStoreId();
             return $this->priceHelper->currencyByStore($value, $storeId, true, false);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
         }
         return $value;
@@ -125,7 +125,7 @@ class Cart extends Template
         try {
             $storeId = $this->cart->getStoreId();
             return $this->_storeManager->getStore($storeId)->getUrl(self::APSIS_CART_HANDLE_ENDPOINT, $params);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
             return $this->getUrl(self::APSIS_CART_HANDLE_ENDPOINT, $params);
         }

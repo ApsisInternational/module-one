@@ -4,7 +4,6 @@ namespace Apsis\One\Model;
 
 use Apsis\One\ApiClient\Client;
 use Magento\Framework\Data\Collection\AbstractDb;
-use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Model\AbstractModel;
 use Apsis\One\Model\ResourceModel\ProfileBatch as ProfileBatchResource;
 use Magento\Framework\Model\Context;
@@ -14,6 +13,7 @@ use Magento\Framework\Stdlib\DateTime;
 use Apsis\One\Model\ResourceModel\ProfileBatch\CollectionFactory as ProfileBatchCollectionFactory;
 use Apsis\One\Model\ResourceModel\ProfileBatch\Collection as ProfileBatchCollection;
 use Apsis\One\Model\Service\Log;
+use Throwable;
 
 /**
  * Class ProfileBatch
@@ -151,18 +151,20 @@ class ProfileBatch extends AbstractModel
      * @param int $type
      * @param string $ids
      * @param string $jsonMappings
-     *
-     * @throws AlreadyExistsException
      */
     public function registerBatchItem(int $storeId, string $filePath, int $type, string $ids, string $jsonMappings)
     {
-        $this->setStoreId($storeId)
-            ->setFilePath($filePath)
-            ->setJsonMappings($jsonMappings)
-            ->setBatchType($type)
-            ->setEntityIds($ids)
-            ->setSyncStatus(self::SYNC_STATUS_PENDING);
-        $this->profileBatchResource->save($this);
+        try {
+            $this->setStoreId($storeId)
+                ->setFilePath($filePath)
+                ->setJsonMappings($jsonMappings)
+                ->setBatchType($type)
+                ->setEntityIds($ids)
+                ->setSyncStatus(self::SYNC_STATUS_PENDING);
+            $this->profileBatchResource->save($this);
+        } catch (Throwable $e) {
+            $this->logger->logError(__METHOD__, $e);
+        }
     }
 
     /**

@@ -10,7 +10,7 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Wishlist\Model\Item as WishlistItem;
 use Magento\Wishlist\Model\Wishlist;
 use Apsis\One\Model\Events\Historical\EventData;
-use Exception;
+use Throwable;
 
 class Data extends EventData implements EventDataInterface
 {
@@ -46,11 +46,15 @@ class Data extends EventData implements EventDataInterface
         ApsisCoreHelper $apsisCoreHelper
     ) {
         try {
+            if (! $product->getId()) {
+                return [];
+            }
+
             $this->store = $store;
             $this->wishlistItem = $item;
             $this->product = $product;
             return $this->getProcessedDataArr($wishlist, $apsisCoreHelper);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
@@ -78,7 +82,7 @@ class Data extends EventData implements EventDataInterface
                 'qty' => (float)$this->wishlistItem->getQty(),
                 'currencyCode' => (string)$this->store->getCurrentCurrencyCode(),
             ];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }

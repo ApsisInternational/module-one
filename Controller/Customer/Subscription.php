@@ -8,7 +8,7 @@ use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers;
 use Apsis\One\Plugin\Customer\NewsletterManageIndexPlugin;
-use Exception;
+use Throwable;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Model\Session;
@@ -117,7 +117,7 @@ class Subscription extends Action
                 return $this->_redirect(NewsletterManageIndexPlugin::APSIS_NEWSLETTER_MANAGE_URL);
             }
             return $this->_redirect(self::MAGENTO_NEWSLETTER_MANAGE_URL);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             $this->messageManager->addErrorMessage(__('An error occurred while saving your subscription topics.'));
             return $this->_redirect(self::MAGENTO_NEWSLETTER_MANAGE_URL);
@@ -244,7 +244,7 @@ class Subscription extends Action
                 } else {
                     $this->updateForCustomerWithoutExtensionAttributes($isSubscribedParam, $customer);
                 }
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $this->apsisCoreHelper->logError(__METHOD__, $e);
                 $this->messageManager->addError(__('Something went wrong while saving your subscription.'));
             }
@@ -276,7 +276,7 @@ class Subscription extends Action
                 $this->subscriberFactory->create()->unsubscribeCustomerById($customerId);
                 $this->messageManager->addSuccess(__('We have removed your newsletter subscription.'));
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             $this->messageManager->addError(__('Something went wrong while saving your subscription.'));
         }
@@ -297,7 +297,7 @@ class Subscription extends Action
                 $this->subscriberFactory->create()->unsubscribeCustomerById($customer->getId());
                 $this->messageManager->addSuccess(__('We removed the subscription.'));
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             $this->messageManager->addError(__('Something went wrong while saving your subscription.'));
         }

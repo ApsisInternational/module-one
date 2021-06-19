@@ -6,7 +6,7 @@ use Apsis\One\Model\Profile as ApsisProfile;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Apsis\One\Model\Sql\ExpressionFactory;
-use Exception;
+use Throwable;
 use Magento\Customer\Model\ResourceModel\Customer\Collection;
 use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
 use Magento\Framework\DB\Adapter\AdapterInterface;
@@ -125,7 +125,7 @@ class Profile extends AbstractDb implements ResourceInterface
                     ['condition' => 'is_', 'value' => ApsisProfile::NO_FLAG]
                 );
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisHelper->logError(__METHOD__, $e);
         }
     }
@@ -180,7 +180,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 );
             }
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisHelper->logError(__METHOD__, $e);
         }
     }
@@ -219,7 +219,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 $bind,
                 $isEntityTypeCond
             );
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisHelper->logError(__METHOD__, $e);
             return 0;
         }
@@ -289,7 +289,7 @@ class Profile extends AbstractDb implements ResourceInterface
             //$apsisCoreHelper->debug(__METHOD__, [$bind, $where]);
 
             return $this->getConnection()->update($this->getMainTable(), $bind, $where);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisHelper->logError(__METHOD__, $e);
             return 0;
         }
@@ -339,7 +339,7 @@ class Profile extends AbstractDb implements ResourceInterface
             );
 
             return $customerCollection;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
@@ -410,7 +410,7 @@ class Profile extends AbstractDb implements ResourceInterface
                     'left',
                     $storeId
                 );
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return $customerCollection;
         }
@@ -485,7 +485,7 @@ class Profile extends AbstractDb implements ResourceInterface
                     'left',
                     $storeId
                 );
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return $customerCollection;
         }
@@ -536,7 +536,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 );
             }
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $orderArray;
@@ -565,7 +565,7 @@ class Profile extends AbstractDb implements ResourceInterface
                     )"]
                 ),
             ];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return ['last_order_date' => ''];
         }
@@ -603,7 +603,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 false
             );
             $connection->query($sqlQuery);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisLogHelper->logError(__METHOD__, $e);
         }
     }
@@ -652,7 +652,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 false
             );
             $connection->query($sqlQuery);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisLogHelper->logError(__METHOD__, $e);
         }
     }
@@ -686,7 +686,7 @@ class Profile extends AbstractDb implements ResourceInterface
 
             $sqlQuery = $select->crossUpdateFromSelect(['profile' => $apsisTable]);
             $connection->query($sqlQuery);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisLogHelper->logError(__METHOD__, $e);
         }
     }
@@ -718,7 +718,7 @@ class Profile extends AbstractDb implements ResourceInterface
 
             $sqlQuery = $select->crossUpdateFromSelect(['profile' => $apsisTable]);
             $connection->query($sqlQuery);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisLogHelper->logError(__METHOD__, $e);
         }
     }
@@ -735,7 +735,7 @@ class Profile extends AbstractDb implements ResourceInterface
             $this->getConnection()->truncateTable($this->getMainTable());
             $this->getConnection()->query('SET FOREIGN_KEY_CHECKS = 1');
             return true;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisLogHelper->logError(__METHOD__, $e);
             return false;
         }
@@ -775,7 +775,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 $apsisLogHelper
             );
             return true;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisLogHelper->logError(__METHOD__, $e);
             return false;
         }
@@ -802,7 +802,7 @@ class Profile extends AbstractDb implements ResourceInterface
             $connection->delete($this->getTable('core_config_data'), "path LIKE 'apsis_one%' $andCondition");
             $apsisHelper->cleanCache();
             return true;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisHelper->logError(__METHOD__, $e);
             return false;
         }

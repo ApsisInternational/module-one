@@ -5,7 +5,7 @@ namespace Apsis\One\Model\Abandoned;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\SyncInterface;
-use Exception;
+use Throwable;
 use Magento\Store\Model\ScopeInterface;
 
 class Find implements SyncInterface
@@ -54,13 +54,13 @@ class Find implements SyncInterface
                             $store->getId()
                         );
                     }
-                } catch (Exception $e) {
+                } catch (Throwable $e) {
                     $apsisCoreHelper->logError(__METHOD__, $e);
                     $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
                     continue;
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }
     }

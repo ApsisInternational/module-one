@@ -10,7 +10,7 @@ use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollection
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers;
-use Exception;
+use Throwable;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Stdlib\Cookie\PhpCookieManagerFactory;
@@ -178,7 +178,7 @@ class Profile
                     ]
                 ];
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $keySpacesToMerge;
@@ -247,7 +247,7 @@ class Profile
                     $attributesToSync
                 ) === null);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return false;
@@ -279,7 +279,7 @@ class Profile
                 $info = ['Name' => self::APSIS_WEB_COOKIE_NAME, 'Value' => $keySpacesToMerge[1]['profile_key']];
                 $this->apsisCoreHelper->debug(__METHOD__, $info);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -303,7 +303,7 @@ class Profile
                     $domain = sprintf('.%s.%s', $SLD, $TLD);
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $domain;
@@ -348,7 +348,7 @@ class Profile
                 $this->profileResource->save($profile);
 
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -375,7 +375,7 @@ class Profile
                 ->setErrorMessage('');
             $this->profileResource->save($profile);
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -441,7 +441,7 @@ class Profile
             }
 
             $this->profileResource->save($profile);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -470,7 +470,7 @@ class Profile
                     return $foundSubscriberType;
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 
@@ -591,7 +591,7 @@ class Profile
                 );
             }
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -642,7 +642,7 @@ class Profile
             //Save profile
             $this->profileResource->save($profile);
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -709,7 +709,7 @@ class Profile
                     return $found;
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return false;
@@ -754,7 +754,7 @@ class Profile
                     $this->apsisCoreHelper->debug(__METHOD__, $info);
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -829,7 +829,7 @@ class Profile
                     }
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -873,7 +873,7 @@ class Profile
                 $this->apsisCoreHelper->debug(__METHOD__, $info);
             }
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -910,7 +910,7 @@ class Profile
                     Subscribers::CONSENT_TYPE_OPT_OUT
                 );
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -932,7 +932,7 @@ class Profile
             }
             $this->removeAllConfigExceptAccountConfig($from, $extra);
             $this->apsisCoreHelper->cleanCache();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -997,7 +997,7 @@ class Profile
                 'Store Ids' => empty($stores = implode(", ", $storeIds)) ? 'Default Scope' : $stores
             ];
             $this->apsisCoreHelper->debug(__METHOD__, $info);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }

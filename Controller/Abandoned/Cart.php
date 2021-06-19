@@ -5,7 +5,7 @@ namespace Apsis\One\Controller\Abandoned;
 use Apsis\One\Model\Service\Cart as ApsisCartHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Apsis\One\Block\Cart as CartBlock;
-use Exception;
+use Throwable;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\Raw;
@@ -117,7 +117,7 @@ class Cart extends Action
                 ->setContents($html);
 
             return $this->sendResponse($this->resultRaw, 200);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
             return $this->sendResponse($this->resultRaw, 500);
         }
@@ -135,7 +135,7 @@ class Cart extends Action
                 ->create()
                 ->setJsonData('[' . $cart->getCartData() . ']');
             return $this->sendResponse($resultJson, 200);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
             return $this->sendResponse($this->resultRaw, 500);
         }

@@ -9,7 +9,7 @@ use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Store\Api\Data\StoreInterface;
 use Apsis\One\Model\Events\Historical\Orders\Data as OrderData;
-use Exception;
+use Throwable;
 use Apsis\One\Model\Event;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
 use Magento\Sales\Model\ResourceModel\Order\Collection as OrderCollection;
@@ -81,7 +81,7 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
                 ];
                 $apsisCoreHelper->debug(__METHOD__, $info);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -130,7 +130,7 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
 
                     }
                 }
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
             }
@@ -157,7 +157,7 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
                 ->addFieldToFilter('main_table.store_id', $store->getId())
                 ->addFieldToFilter('main_table.customer_email', ['in' => $emails])
                 ->addFieldToFilter('main_table.created_at', $duration);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }

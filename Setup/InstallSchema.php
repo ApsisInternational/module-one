@@ -8,7 +8,7 @@ use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Framework\DB\Ddl\Table;
-use Zend_Db_Exception;
+use Throwable;
 
 class InstallSchema implements InstallSchemaInterface
 {
@@ -30,69 +30,80 @@ class InstallSchema implements InstallSchemaInterface
     /**
      * @param SchemaSetupInterface $setup
      * @param ModuleContextInterface $context
-     *
-     * @throws Zend_Db_Exception
      */
     public function install(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {
-        $this->logHelper->log(__METHOD__);
-        $installer = $setup;
-        $installer->startSetup();
+        try {
+            $this->logHelper->log(__METHOD__);
+            $setup->startSetup();
 
-        // Create Profile table
-        $this->createApsisProfileTable($installer);
+            // Create Profile table
+            $this->createApsisProfileTable($setup);
 
-        // Create Profile Batch table
-        $this->createApsisProfileBatchTable($installer);
+            // Create Profile Batch table
+            $this->createApsisProfileBatchTable($setup);
 
-        // Create Event table
-        $this->createApsisEventTable($installer);
+            // Create Event table
+            $this->createApsisEventTable($setup);
 
-        // Create AC table
-        $this->createApsisAbandonedTable($installer);
-
-        $installer->endSetup();
+            // Create AC table
+            $this->createApsisAbandonedTable($setup);
+        } catch (Throwable $e) {
+            $setup->endSetup();
+            $this->logHelper->logError(__METHOD__, $e);
+        }
     }
 
     /**
      * @param SchemaSetupInterface $installer
-     * @throws Zend_Db_Exception
      */
     private function createApsisAbandonedTable(SchemaSetupInterface $installer)
     {
-        $this->logHelper->log(__METHOD__);
-        $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_ABANDONED_TABLE);
+        try {
+            $this->logHelper->log(__METHOD__);
 
-        $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
-        $table = $this->addColumnsToApsisAbandonedTable($table);
-        $table = $this->addIndexesToApsisAbandonedTable($installer, $table);
-        $table = $this->addForeignKeysToAbandonedTable($installer, $table);
+            $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_ABANDONED_TABLE);
+            $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
 
-        $table->setComment('Apsis Abandoned Carts');
-        $installer->getConnection()->createTable($table);
+            if ($table) {
+                $table = $this->addColumnsToApsisAbandonedTable($table);
+            }
+            if ($table) {
+                $table = $this->addIndexesToApsisAbandonedTable($installer, $table);
+            }
+            if ($table) {
+                $table = $this->addForeignKeysToAbandonedTable($installer, $table);
+            }
+
+            if ($table) {
+                $table->setComment('Apsis Abandoned Carts');
+                $installer->getConnection()->createTable($table);
+            }
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
+        }
     }
 
     /**
      * @param Table $table
      *
-     * @return Table
-     *
-     * @throws Zend_Db_Exception
+     * @return Table|false
      */
     private function addColumnsToApsisAbandonedTable(Table $table)
     {
-        return $table->addColumn(
-            'id',
-            Table::TYPE_INTEGER,
-            null,
-            [
-                'primary' => true,
-                'identity' => true,
-                'unsigned' => true,
-                'nullable' => false
-            ],
-            'Primary Key'
-        )
+        try {
+            return $table->addColumn(
+                'id',
+                Table::TYPE_INTEGER,
+                null,
+                [
+                    'primary' => true,
+                    'identity' => true,
+                    'unsigned' => true,
+                    'nullable' => false
+                ],
+                'Primary Key'
+            )
             ->addColumn(
                 'quote_id',
                 Table::TYPE_INTEGER,
@@ -149,125 +160,144 @@ class InstallSchema implements InstallSchemaInterface
                 [],
                 'Created At'
             );
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
+            return false;
+        }
     }
 
     /**
      * @param SchemaSetupInterface $installer
      * @param Table $table
      *
-     * @return Table
-     *
-     * @throws Zend_Db_Exception
+     * @return Table|false
      */
     private function addIndexesToApsisAbandonedTable(SchemaSetupInterface $installer, Table $table)
     {
-        $tableName = $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
-        $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
-            ->addIndex($installer->getIdxName($tableName, ['quote_id']), ['quote_id'])
-            ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
-            ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
-            ->addIndex($installer->getIdxName($tableName, ['customer_email']), ['customer_email'])
-            ->addIndex($installer->getIdxName($tableName, ['created_at']), ['created_at']);
-        return $table;
+        try {
+            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
+            return $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
+                ->addIndex($installer->getIdxName($tableName, ['quote_id']), ['quote_id'])
+                ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
+                ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
+                ->addIndex($installer->getIdxName($tableName, ['customer_email']), ['customer_email'])
+                ->addIndex($installer->getIdxName($tableName, ['created_at']), ['created_at']);
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
+            return false;
+        }
     }
 
     /**
      * @param SchemaSetupInterface $installer
      * @param Table $table
      *
-     * @return Table
-     *
-     * @throws Zend_Db_Exception
+     * @return Table|false
      */
     private function addForeignKeysToAbandonedTable(SchemaSetupInterface $installer, Table $table)
     {
-        return $table->addForeignKey(
-            $installer->getFkName(
-                ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+        try {
+            return $table->addForeignKey(
+                $installer->getFkName(
+                    ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+                    'store_id',
+                    $installer->getTable('store'),
+                    'store_id'
+                ),
                 'store_id',
                 $installer->getTable('store'),
-                'store_id'
-            ),
-            'store_id',
-            $installer->getTable('store'),
-            'store_id',
-            Table::ACTION_CASCADE
-        )->addForeignKey(
-            $installer->getFkName(
-                ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+                'store_id',
+                Table::ACTION_CASCADE
+            )->addForeignKey(
+                $installer->getFkName(
+                    ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+                    'customer_id',
+                    $installer->getTable('customer_entity'),
+                    'entity_id'
+                ),
                 'customer_id',
                 $installer->getTable('customer_entity'),
-                'entity_id'
-            ),
-            'customer_id',
-            $installer->getTable('customer_entity'),
-            'entity_id',
-            Table::ACTION_CASCADE
-        )->addForeignKey(
-            $installer->getFkName(
-                ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+                'entity_id',
+                Table::ACTION_CASCADE
+            )->addForeignKey(
+                $installer->getFkName(
+                    ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+                    'quote_id',
+                    $installer->getTable('quote'),
+                    'entity_id'
+                ),
                 'quote_id',
                 $installer->getTable('quote'),
-                'entity_id'
-            ),
-            'quote_id',
-            $installer->getTable('quote'),
-            'entity_id',
-            Table::ACTION_CASCADE
-        )->addForeignKey(
-            $installer->getFkName(
-                ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+                'entity_id',
+                Table::ACTION_CASCADE
+            )->addForeignKey(
+                $installer->getFkName(
+                    ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+                    'profile_id',
+                    $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
+                    'id'
+                ),
                 'profile_id',
                 $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
-                'id'
-            ),
-            'profile_id',
-            $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
-            'id',
-            Table::ACTION_CASCADE
-        );
+                'id',
+                Table::ACTION_CASCADE
+            );
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
+            return false;
+        }
     }
 
     /**
      * @param SchemaSetupInterface $installer
-     *
-     * @throws Zend_Db_Exception
      */
     private function createApsisEventTable(SchemaSetupInterface $installer)
     {
-        $this->logHelper->log(__METHOD__);
-        $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_EVENT_TABLE);
+        try {
+            $this->logHelper->log(__METHOD__);
 
-        $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_EVENT_TABLE);
-        $table = $this->addColumnsToApsisEventTable($table);
-        $table = $this->addIndexesToApsisEventTable($installer, $table);
-        $table = $this->addForeignKeysToEventTable($installer, $table);
+            $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_EVENT_TABLE);
+            $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_EVENT_TABLE);
 
-        $table->setComment('Apsis Events');
-        $installer->getConnection()->createTable($table);
+            if ($table) {
+                $table = $this->addColumnsToApsisEventTable($table);
+            }
+            if ($table) {
+                $table = $this->addIndexesToApsisEventTable($installer, $table);
+            }
+            if ($table) {
+                $table = $this->addForeignKeysToEventTable($installer, $table);
+            }
+
+            if ($table) {
+                $table->setComment('Apsis Events');
+                $installer->getConnection()->createTable($table);
+            }
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
+        }
     }
 
     /**
      * @param Table $table
      *
-     * @return Table
-     *
-     * @throws Zend_Db_Exception
+     * @return Table|false
      */
     private function addColumnsToApsisEventTable(Table $table)
     {
-        return $table->addColumn(
-            'id',
-            Table::TYPE_INTEGER,
-            10,
-            [
-                'primary' => true,
-                'identity' => true,
-                'unsigned' => true,
-                'nullable' => false
-            ],
-            'Primary Key'
-        )
+        try {
+            return $table->addColumn(
+                'id',
+                Table::TYPE_INTEGER,
+                10,
+                [
+                    'primary' => true,
+                    'identity' => true,
+                    'unsigned' => true,
+                    'nullable' => false
+                ],
+                'Primary Key'
+            )
             ->addColumn(
                 'event_type',
                 Table::TYPE_SMALLINT,
@@ -352,107 +382,126 @@ class InstallSchema implements InstallSchemaInterface
                 [],
                 'Update Time'
             );
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
+            return false;
+        }
     }
 
     /**
      * @param SchemaSetupInterface $installer
      * @param Table $table
      *
-     * @return Table
-     *
-     * @throws Zend_Db_Exception
+     * @return Table|false
      */
     private function addIndexesToApsisEventTable(SchemaSetupInterface $installer, Table $table)
     {
-        $tableName = $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE);
-        $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
-            ->addIndex($installer->getIdxName($tableName, ['profile_id']), ['profile_id'])
-            ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
-            ->addIndex($installer->getIdxName($tableName, ['subscriber_id']), ['subscriber_id'])
-            ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
-            ->addIndex($installer->getIdxName($tableName, ['event_type']), ['event_type'])
-            ->addIndex($installer->getIdxName($tableName, ['status']), ['status'])
-            ->addIndex($installer->getIdxName($tableName, ['email']), ['email'])
-            ->addIndex($installer->getIdxName($tableName, ['created_at']), ['created_at'])
-            ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
-        return $table;
+        try {
+            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE);
+            return $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
+                ->addIndex($installer->getIdxName($tableName, ['profile_id']), ['profile_id'])
+                ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
+                ->addIndex($installer->getIdxName($tableName, ['subscriber_id']), ['subscriber_id'])
+                ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
+                ->addIndex($installer->getIdxName($tableName, ['event_type']), ['event_type'])
+                ->addIndex($installer->getIdxName($tableName, ['status']), ['status'])
+                ->addIndex($installer->getIdxName($tableName, ['email']), ['email'])
+                ->addIndex($installer->getIdxName($tableName, ['created_at']), ['created_at'])
+                ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
+            return false;
+        }
     }
 
     /**
      * @param SchemaSetupInterface $installer
      * @param Table $table
      *
-     * @return Table
-     *
-     * @throws Zend_Db_Exception
+     * @return Table|false
      */
     private function addForeignKeysToEventTable(SchemaSetupInterface $installer, Table $table)
     {
-        return $table->addForeignKey(
-            $installer->getFkName(
-                ApsisCoreHelper::APSIS_EVENT_TABLE,
+        try {
+            return $table->addForeignKey(
+                $installer->getFkName(
+                    ApsisCoreHelper::APSIS_EVENT_TABLE,
+                    'store_id',
+                    $installer->getTable('store'),
+                    'store_id'
+                ),
                 'store_id',
                 $installer->getTable('store'),
-                'store_id'
-            ),
-            'store_id',
-            $installer->getTable('store'),
-            'store_id',
-            Table::ACTION_CASCADE
-        )->addForeignKey(
-            $installer->getFkName(
-                ApsisCoreHelper::APSIS_EVENT_TABLE,
+                'store_id',
+                Table::ACTION_CASCADE
+            )->addForeignKey(
+                $installer->getFkName(
+                    ApsisCoreHelper::APSIS_EVENT_TABLE,
+                    'profile_id',
+                    $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
+                    'id'
+                ),
                 'profile_id',
                 $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
-                'id'
-            ),
-            'profile_id',
-            $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
-            'id',
-            Table::ACTION_CASCADE
-        );
+                'id',
+                Table::ACTION_CASCADE
+            );
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
+            return false;
+        }
     }
 
     /**
      * @param SchemaSetupInterface $installer
-     *
-     * @throws Zend_Db_Exception
      */
     private function createApsisProfileBatchTable(SchemaSetupInterface $installer)
     {
-        $this->logHelper->log(__METHOD__);
-        $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE);
+        try {
+            $this->logHelper->log(__METHOD__);
 
-        $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE);
-        $table = $this->addColumnsToApsisProfileBatchTable($table);
-        $table = $this->addIndexesToApsisProfileBatchTable($installer, $table);
-        $table = $this->addForeignKeysToProfileBatchTable($installer, $table);
+            $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE);
+            $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE);
 
-        $table->setComment('Apsis Profile Batch');
-        $installer->getConnection()->createTable($table);
+            if ($table) {
+                $table = $this->addColumnsToApsisProfileBatchTable($table);
+            }
+            if ($table) {
+                $table = $this->addIndexesToApsisProfileBatchTable($installer, $table);
+            }
+            if ($table) {
+                $table = $this->addForeignKeysToProfileBatchTable($installer, $table);
+            }
+
+            if ($table) {
+                $table->setComment('Apsis Profile Batch');
+                $installer->getConnection()->createTable($table);
+            }
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
+        }
     }
 
     /**
      * @param Table $table
      *
-     * @return Table
-     *
-     * @throws Zend_Db_Exception
+     * @return Table|false
      */
     private function addColumnsToApsisProfileBatchTable(Table $table)
     {
-        return $table->addColumn(
-            'id',
-            Table::TYPE_INTEGER,
-            10,
-            [
-                'primary' => true,
-                'identity' => true,
-                'unsigned' => true,
-                'nullable' => false
-            ],
-            'Primary Key'
-        )
+        try {
+            return $table->addColumn(
+                'id',
+                Table::TYPE_INTEGER,
+                10,
+                [
+                    'primary' => true,
+                    'identity' => true,
+                    'unsigned' => true,
+                    'nullable' => false
+                ],
+                'Primary Key'
+            )
             ->addColumn(
                 'import_id',
                 Table::TYPE_TEXT,
@@ -523,90 +572,106 @@ class InstallSchema implements InstallSchemaInterface
                 [],
                 'Last Update Time'
             );
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
+            return false;
+        }
     }
 
     /**
      * @param SchemaSetupInterface $installer
      * @param Table $table
      *
-     * @return Table
-     *
-     * @throws Zend_Db_Exception
+     * @return Table|false
      */
     private function addIndexesToApsisProfileBatchTable(SchemaSetupInterface $installer, Table $table)
     {
-        $tableName = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE);
-        $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
-            ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
-            ->addIndex($installer->getIdxName($tableName, ['sync_status']), ['sync_status'])
-            ->addIndex($installer->getIdxName($tableName, ['batch_type']), ['batch_type'])
-            ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
-        return $table;
+        try {
+            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE);
+            return $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
+                ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
+                ->addIndex($installer->getIdxName($tableName, ['sync_status']), ['sync_status'])
+                ->addIndex($installer->getIdxName($tableName, ['batch_type']), ['batch_type'])
+                ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
+            return false;
+        }
     }
 
     /**
      * @param SchemaSetupInterface $installer
      * @param Table $table
      *
-     * @return Table
-     *
-     * @throws Zend_Db_Exception
+     * @return Table|false
      */
     private function addForeignKeysToProfileBatchTable(SchemaSetupInterface $installer, Table $table)
     {
-        return $table->addForeignKey(
-            $installer->getFkName(
-                ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE,
+        try {
+            return $table->addForeignKey(
+                $installer->getFkName(
+                    ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE,
+                    'store_id',
+                    $installer->getTable('store'),
+                    'store_id'
+                ),
                 'store_id',
                 $installer->getTable('store'),
-                'store_id'
-            ),
-            'store_id',
-            $installer->getTable('store'),
-            'store_id',
-            Table::ACTION_CASCADE
-        );
+                'store_id',
+                Table::ACTION_CASCADE
+            );
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
+            return false;
+        }
     }
 
     /**
      * @param SchemaSetupInterface $installer
-     *
-     * @throws Zend_Db_Exception
      */
     private function createApsisProfileTable(SchemaSetupInterface $installer)
     {
-        $this->logHelper->log(__METHOD__);
-        $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_PROFILE_TABLE);
+        try {
+            $this->logHelper->log(__METHOD__);
 
-        $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
-        $table = $this->addColumnsToApsisProfileTable($table);
-        $table = $this->addIndexesToApsisProfileTable($installer, $table);
+            $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_PROFILE_TABLE);
+            $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
 
-        $table->setComment('Apsis Profiles');
-        $installer->getConnection()->createTable($table);
+            if ($table) {
+                $table = $this->addColumnsToApsisProfileTable($table);
+            }
+            if ($table) {
+                $table = $this->addIndexesToApsisProfileTable($installer, $table);
+            }
+            if ($table) {
+                $table->setComment('Apsis Profiles');
+                $installer->getConnection()->createTable($table);
+            }
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
+        }
     }
 
     /**
      * @param Table $table
      *
-     * @return Table
-     *
-     * @throws Zend_Db_Exception
+     * @return Table|false
      */
     private function addColumnsToApsisProfileTable(Table $table)
     {
-        return $table->addColumn(
-            'id',
-            Table::TYPE_INTEGER,
-            10,
-            [
-                'primary' => true,
-                'identity' => true,
-                'unsigned' => true,
-                'nullable' => false
-            ],
-            'Primary Key'
-        )
+        try {
+            return $table->addColumn(
+                'id',
+                Table::TYPE_INTEGER,
+                10,
+                [
+                    'primary' => true,
+                    'identity' => true,
+                    'unsigned' => true,
+                    'nullable' => false
+                ],
+                'Primary Key'
+            )
             ->addColumn(
                 'integration_uid',
                 Table::TYPE_TEXT,
@@ -698,32 +763,38 @@ class InstallSchema implements InstallSchemaInterface
                 [],
                 'Last Update Time'
             );
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
+            return false;
+        }
     }
 
     /**
      * @param SchemaSetupInterface $installer
      * @param Table $table
      *
-     * @return Table
-     *
-     * @throws Zend_Db_Exception
+     * @return Table|false
      */
     private function addIndexesToApsisProfileTable(SchemaSetupInterface $installer, Table $table)
     {
-        $tableName = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
-        $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
-            ->addIndex($installer->getIdxName($tableName, ['subscriber_status']), ['subscriber_status'])
-            ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
-            ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
-            ->addIndex($installer->getIdxName($tableName, ['subscriber_store_id']), ['subscriber_store_id'])
-            ->addIndex($installer->getIdxName($tableName, ['subscriber_id']), ['subscriber_id'])
-            ->addIndex($installer->getIdxName($tableName, ['subscriber_sync_status']), ['subscriber_sync_status'])
-            ->addIndex($installer->getIdxName($tableName, ['customer_sync_status']), ['customer_sync_status'])
-            ->addIndex($installer->getIdxName($tableName, ['is_subscriber']), ['is_subscriber'])
-            ->addIndex($installer->getIdxName($tableName, ['is_customer']), ['is_customer'])
-            ->addIndex($installer->getIdxName($tableName, ['email']), ['email'])
-            ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
-        return $table;
+        try {
+            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
+            return $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
+                ->addIndex($installer->getIdxName($tableName, ['subscriber_status']), ['subscriber_status'])
+                ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
+                ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
+                ->addIndex($installer->getIdxName($tableName, ['subscriber_store_id']), ['subscriber_store_id'])
+                ->addIndex($installer->getIdxName($tableName, ['subscriber_id']), ['subscriber_id'])
+                ->addIndex($installer->getIdxName($tableName, ['subscriber_sync_status']), ['subscriber_sync_status'])
+                ->addIndex($installer->getIdxName($tableName, ['customer_sync_status']), ['customer_sync_status'])
+                ->addIndex($installer->getIdxName($tableName, ['is_subscriber']), ['is_subscriber'])
+                ->addIndex($installer->getIdxName($tableName, ['is_customer']), ['is_customer'])
+                ->addIndex($installer->getIdxName($tableName, ['email']), ['email'])
+                ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
+            return false;
+        }
     }
 
     /**
@@ -732,11 +803,13 @@ class InstallSchema implements InstallSchemaInterface
      */
     private function dropTableIfExists(SchemaSetupInterface $installer, string $tableName)
     {
-        $tableName = $installer->getTable($tableName);
-        if ($installer->getConnection()->isTableExists($installer->getTable($tableName))) {
-            $installer->getConnection()->dropTable(
-                $installer->getTable($tableName)
-            );
+        try {
+            $tableName = $installer->getTable($tableName);
+            if ($installer->getConnection()->isTableExists($tableName)) {
+                $installer->getConnection()->dropTable($tableName);
+            }
+        } catch (Throwable $e) {
+            $this->logHelper->logError(__METHOD__, $e);
         }
     }
 }

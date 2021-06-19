@@ -4,7 +4,7 @@ namespace Apsis\One\Observer\Customer;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Profile;
-use Exception;
+use Throwable;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -52,6 +52,9 @@ class SaveUpdate implements ObserverInterface
         try {
             /** @var Customer $customer */
             $customer = $observer->getEvent()->getCustomer();
+            if (empty($customer) || ! $customer->getEmail() || ! $customer->getId() || ! $customer->getStoreId()) {
+                return $this;
+            }
 
             $emailReg = $this->registry->registry($customer->getEmail() . self::REGISTRY_NAME);
             if ($emailReg) {
@@ -71,7 +74,7 @@ class SaveUpdate implements ObserverInterface
                     $this->profileService->updateProfileForCustomer($customer, $profile);
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $this;

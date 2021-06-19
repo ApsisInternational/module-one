@@ -3,7 +3,7 @@
 namespace Apsis\One\Controller\Adminhtml\Event;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Exception;
+use Throwable;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Ui\Component\MassAction\Filter;
 use Magento\Backend\App\Action;
@@ -82,7 +82,7 @@ class MassReset extends Action
                 ['Total Reset' => $collectionSize, 'Event Ids' => implode(", ", $ids)]
             );
             $this->messageManager->addSuccessMessage(__('A total of %1 record(s) have been reset.', $collectionSize));
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             $this->messageManager->addErrorMessage(__('An error happen during execution. Please check logs'));
         }

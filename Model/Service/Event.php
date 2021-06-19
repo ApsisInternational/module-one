@@ -16,7 +16,7 @@ use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Model\Logger as CustomerLogger;
 use Apsis\One\Model\Event as EventModel;
 use Apsis\One\Model\EventFactory as EventModelFactory;
-use Exception;
+use Throwable;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Registry;
 use Magento\Newsletter\Model\Subscriber;
@@ -306,6 +306,10 @@ class Event
     ) {
         /** @var Product $product */
         $product = $observer->getEvent()->getProduct();
+        if (empty($product)) {
+            return;
+        }
+
         /** @var WishlistItem $item */
         $item = $observer->getEvent()->getItem();
         $eventData = $this->wishlistData->getDataArr($wishlist, $store, $item, $product, $this->apsisCoreHelper);
@@ -380,7 +384,7 @@ class Event
                 $eventModel->setSubEventData($this->apsisCoreHelper->serialize($subEventData));
             }
             $this->eventResource->save($eventModel);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }

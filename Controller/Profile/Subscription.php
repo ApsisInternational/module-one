@@ -7,7 +7,7 @@ use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Exception;
+use Throwable;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\ResponseInterface;
@@ -125,7 +125,7 @@ class Subscription extends Action
             }
 
             return $this->sendResponse(200);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             return $this->sendResponse(500);
         }

@@ -7,7 +7,7 @@ use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers;
 use Apsis\One\Model\Sync\Profiles\Customers;
 use Apsis\One\Model\Sync\Profiles\Batch;
-use Exception;
+use Throwable;
 use Magento\Store\Model\ScopeInterface;
 
 class Profiles implements SyncInterface
@@ -81,7 +81,7 @@ class Profiles implements SyncInterface
                     $this->batch->processForStore($store, $apsisCoreHelper);
                 }
 
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);
                 $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
 

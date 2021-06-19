@@ -12,7 +12,7 @@ use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Service\File as ApsisFileHelper;
-use Exception;
+use Throwable;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use stdClass;
@@ -105,7 +105,7 @@ class Batch implements ProfileSyncInterface
             $this->handleProcessingCollectionForStore($store, $sectionDiscriminator);
             $this->handlePendingCollectionForStore($store, $sectionDiscriminator);
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -160,7 +160,7 @@ class Batch implements ProfileSyncInterface
                 if ($result && isset($result->import_id)) {
                     try {
                         $this->apsisCoreHelper->validateIsUrlReachable($result->file_upload_url);
-                    } catch (Exception $e) {
+                    } catch (Throwable $e) {
                         $this->apsisCoreHelper->logError(__METHOD__, $e);
 
                         $this->apsisCoreHelper->disableProfileSync(ScopeInterface::SCOPE_STORES, $store->getId());
@@ -197,7 +197,7 @@ class Batch implements ProfileSyncInterface
                     $apiClient->countImportCountInProcessingStatus();
                     $this->updateItem($item, ProfileBatch::SYNC_STATUS_PROCESSING);
                 }
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $this->apsisCoreHelper->logError(__METHOD__, $e);
                 $this->apsisCoreHelper->log(__METHOD__ . ': Skipped batch item :' . $item->getId());
                 continue;
@@ -251,7 +251,7 @@ class Batch implements ProfileSyncInterface
                 if ($result && isset($result->result)) {
                     $this->processImportStatus($apiClient, $result, $item);
                 }
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $this->apsisCoreHelper->logError(__METHOD__, $e);
                 $this->apsisCoreHelper->log(__METHOD__ . ': Skipped batch item :' . $item->getId());
                 continue;
@@ -273,7 +273,7 @@ class Batch implements ProfileSyncInterface
 
         try {
             $this->profileBatchResource->save($item);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 
@@ -281,7 +281,7 @@ class Batch implements ProfileSyncInterface
             $status === ProfileBatch::SYNC_STATUS_ERROR) {
             try {
                 $this->apsisFileHelper->deleteFile($item->getFilePath());
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $this->apsisCoreHelper->logError(__METHOD__, $e);
             }
         }
@@ -320,7 +320,7 @@ class Batch implements ProfileSyncInterface
                 'Store Id' => $item->getStoreId()
             ];
             $this->apsisCoreHelper->debug(__METHOD__, $info);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -365,7 +365,7 @@ class Batch implements ProfileSyncInterface
 
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }

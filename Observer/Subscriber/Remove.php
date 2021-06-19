@@ -5,10 +5,11 @@ namespace Apsis\One\Observer\Subscriber;
 use Apsis\One\Model\Profile as ProfileModel;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Profile;
-use Exception;
+use Throwable;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Newsletter\Model\Subscriber;
 
 class Remove implements ObserverInterface
 {
@@ -40,14 +41,18 @@ class Remove implements ObserverInterface
     public function execute(Observer $observer)
     {
         try {
+            /** @var Subscriber $subscriber */
             $subscriber = $observer->getEvent()->getSubscriber();
-            $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $subscriber->getStoreId());
+            if (empty($subscriber) || ! $subscriber->getId() || ! $subscriber->getStoreId()) {
+                return $this;
+            }
 
+            $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $subscriber->getStoreId());
             if ($account && $profile = $this->profileService->findProfileForSubscriber($subscriber)) {
                 $this->apsisCoreHelper->log(__METHOD__);
                 $this->profileService->handleDeleteOperationByType($profile, ProfileModel::TYPE_SUBSCRIBER);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 

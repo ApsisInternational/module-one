@@ -3,7 +3,7 @@
 namespace Apsis\One\Controller\Adminhtml\Profile;
 
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Exception;
+use Throwable;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Ui\Component\MassAction\Filter;
 use Magento\Backend\App\Action;
@@ -85,7 +85,7 @@ class MassDelete extends Action
                 ['Total Deleted' => $collectionSize, 'Profile Ids' => implode(", ", $ids)]
             );
             $this->messageManager->addSuccessMessage(__('A total of %1 record(s) have been deleted.', $collectionSize));
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
             $this->messageManager->addErrorMessage(__('An error happen during execution. Please check logs'));
         }

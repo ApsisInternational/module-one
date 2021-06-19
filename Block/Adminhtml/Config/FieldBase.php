@@ -6,7 +6,7 @@ use Magento\Config\Block\System\Config\Form\Field;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Backend\Block\Template\Context;
 use Apsis\One\Model\Service\Log;
-use Exception;
+use Throwable;
 
 class FieldBase extends Field
 {
@@ -48,7 +48,7 @@ class FieldBase extends Field
             $defaultGroup = $website->getDefaultGroup();
             $store =  (! $defaultGroup) ? null : $defaultGroup->getDefaultStore();
             return $this->_storeManager->getStore($store)->getBaseUrl();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logger->logError(__METHOD__, $e);
             return '';
         }

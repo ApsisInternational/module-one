@@ -8,7 +8,7 @@ use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\Service\Event;
-use Exception;
+use Throwable;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Quote\Model\Quote\Item;
@@ -74,26 +74,33 @@ class AddProduct implements ObserverInterface
     {
         try {
             $cart = $this->checkoutSession->getQuote();
-            if ($cart->getCustomerIsGuest() || empty($cart->getCustomerId())) {
+            if (empty($cart) || $cart->getCustomerIsGuest() || ! $cart->getCustomerId() ||
+                ! $this->isOkToProceed($cart->getStore())
+            ) {
                 return $this;
             }
 
             /** @var Product $product */
             $product = $observer->getEvent()->getProduct();
+            if (empty($product) || ! $product->getId()) {
+                return $this;
+            }
 
             /** @var Item $item */
             $item = $cart->getItemByProduct($product);
+            if (empty($item) || ! $item->getId()) {
+                return $this;
+            }
 
             /** @var Profile $profile */
-            $profile = $this->profileCollectionFactory->create()
-                ->loadByCustomerId($cart->getCustomerId());
+            $profile = $this->profileCollectionFactory->create()->loadByCustomerId($cart->getCustomerId());
 
-            if ($this->isOkToProceed($cart->getStore()) && $profile && $item) {
+            if ($profile) {
                 $this->eventService->registerProductCartedEvent($cart, $item, $profile);
                 $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
                 $this->profileResource->save($profile);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 

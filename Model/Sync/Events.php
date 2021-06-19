@@ -12,7 +12,7 @@ use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollection
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
-use Exception;
+use Throwable;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use stdClass;
@@ -213,7 +213,7 @@ class Events implements SyncInterface
                 //At this point proceed for actual batching of events to sync
                 $this->processEventCollection($client, $eventCollection, $store);
 
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);
                 $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
                 continue;
@@ -341,7 +341,7 @@ class Events implements SyncInterface
                     $this->apsisCoreHelper
                 );
 
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $this->apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
             }

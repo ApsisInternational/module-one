@@ -3,7 +3,7 @@
 namespace Apsis\One\ApiClient;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Exception;
+use Throwable;
 use stdClass;
 
 /**
@@ -110,7 +110,7 @@ abstract class Rest
                     $this->curlError = __METHOD__ . ' : Current verb (' . $this->verb . ') is an invalid REST verb.';
                     curl_close($ch);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             curl_close($ch);
             $this->curlError = $e->getMessage();
             $this->helper->logError(__METHOD__, $e);

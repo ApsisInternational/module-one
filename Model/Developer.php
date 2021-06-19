@@ -10,7 +10,7 @@ use Apsis\One\Model\ResourceModel\ProfileBatch;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Profile as ApsisProfile;
-use Exception;
+use Throwable;
 
 class Developer
 {
@@ -121,7 +121,7 @@ class Developer
                 $this->apsisHelper->log('Unable to perform some actions from full reset request.');
                 return false;
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisHelper->logError(__METHOD__, $e);
             return false;
         }

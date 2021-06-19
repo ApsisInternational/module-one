@@ -10,7 +10,7 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Registry;
 use Magento\Store\Model\ScopeInterface;
-use Exception;
+use Throwable;
 
 class ValidateApi implements ObserverInterface
 {
@@ -79,7 +79,7 @@ class ValidateApi implements ObserverInterface
                 return $this;
             }
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->disableAccountAndRemoveConfig($scope);
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             $this->messageManager->addWarningMessage(__('Something went wrong, please check logs.'));

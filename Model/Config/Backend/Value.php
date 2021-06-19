@@ -19,7 +19,7 @@ use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Apsis\One\Model\ResourceModel\Event;
 use Apsis\One\Model\Event as EventModel;
-use Exception;
+use Throwable;
 
 class Value extends ConfigValue implements ProcessorInterface
 {
@@ -602,7 +602,7 @@ class Value extends ConfigValue implements ProcessorInterface
             $this->setRegistryReachableCheck( self::SUCCESS);
 
             return true;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             $this->messageManager->addWarningMessage(__($e->getMessage() . ' .' . self::MSG_FAIL_HOST_FILE_UPLOAD));
 

@@ -3,7 +3,7 @@
 namespace Apsis\One\Controller\Cart;
 
 use Apsis\One\Model\Service\Log;
-use Exception;
+use Throwable;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
@@ -71,7 +71,7 @@ class Updater extends Action
                 $quote->setCustomerEmail($email);
                 $this->quoteResource->save($quote);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->log->logError(__METHOD__, $e);
         }
     }

@@ -13,7 +13,7 @@ use Magento\Review\Model\ResourceModel\Review\CollectionFactory as ReviewCollect
 use Magento\Review\Model\ResourceModel\Review\Collection as ReviewCollection;
 use Magento\Review\Model\Review;
 use Apsis\One\Model\Sync\Profiles\ProfileDataInterface;
-use Exception;
+use Throwable;
 
 class Customer implements ProfileDataInterface
 {
@@ -564,7 +564,7 @@ class Customer implements ProfileDataInterface
                     );
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $formattedNumber;

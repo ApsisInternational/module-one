@@ -10,7 +10,7 @@ use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Exception;
+use Throwable;
 use Magento\Authorization\Model\RoleFactory;
 use Magento\Authorization\Model\RulesFactory;
 use Magento\Authorization\Model\Acl\Role\Group as RoleGroup;
@@ -137,40 +137,38 @@ class UpgradeData implements UpgradeDataInterface
      */
     public function upgrade(ModuleDataSetupInterface $setup, ModuleContextInterface $context)
     {
-        $this->apsisCoreHelper->log(__METHOD__);
-        $setup->startSetup();
-
         try {
+            $this->apsisCoreHelper->log(__METHOD__);
             $this->appState->setAreaCode(Area::AREA_GLOBAL);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 
-        if (version_compare($context->getVersion(), '1.2.0', '<')) {
-            $this->upgradeOneTwoZero($setup);
-        }
+        try {
+            $setup->startSetup();
 
-        if (version_compare($context->getVersion(), '1.5.0', '<')) {
-            $this->upgradeOneFiveZero($setup);
+            if (version_compare($context->getVersion(), '1.2.0', '<')) {
+                $this->upgradeOneTwoZero($setup);
+            }
+            if (version_compare($context->getVersion(), '1.5.0', '<')) {
+                $this->upgradeOneFiveZero($setup);
+            }
+            if (version_compare($context->getVersion(), '1.9.0', '<')) {
+                $this->upgradeOneNineZero($setup);
+            }
+            if (version_compare($context->getVersion(), '1.9.4', '<')) {
+                $this->upgradeOneNineFour($setup);
+            }
+            if (version_compare($context->getVersion(), '1.9.5', '<')) {
+                $this->upgradeOneNineFive($setup);
+            }
+            if (version_compare($context->getVersion(), '2.0.0', '<')) {
+                $this->upgradeTwoZeroZero($setup);
+            }
+        } catch (Throwable $e) {
+            $setup->endSetup();
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
-
-        if (version_compare($context->getVersion(), '1.9.0', '<')) {
-            $this->upgradeOneNineZero($setup);
-        }
-
-        if (version_compare($context->getVersion(), '1.9.4', '<')) {
-            $this->upgradeOneNineFour($setup);
-        }
-
-        if (version_compare($context->getVersion(), '1.9.5', '<')) {
-            $this->upgradeOneNineFive($setup);
-        }
-
-        if (version_compare($context->getVersion(), '2.0.0', '<')) {
-            $this->upgradeTwoZeroZero($setup);
-        }
-
-        $setup->endSetup();
     }
 
     /**
@@ -178,48 +176,52 @@ class UpgradeData implements UpgradeDataInterface
      */
     private function upgradeTwoZeroZero(ModuleDataSetupInterface $setup)
     {
-        $this->apsisCoreHelper->log(__METHOD__);
+        try {
+            $this->apsisCoreHelper->log(__METHOD__);
 
-        //Set status to 5 for each Profile type (for all Profiles) if given Profile type has is_[PROFILE_TYPE] = 0
-        $this->profileResource->resetProfiles(
-            $this->apsisCoreHelper,
-            [],
-            [],
-            Profile::SYNC_STATUS_NA,
-            ['condition' => 'is_', 'value' => Profile::NO_FLAG]
-        );
-
-        //Remove all ui bookmarks belonging to module to force rebuild new ui bookmarks
-        $grids = ['apsis_abandoned_grid', 'apsis_event_grid', 'apsis_profile_grid'];
-        $setup->getConnection()->delete(
-            $setup->getTable('ui_bookmark'),
-            $setup->getConnection()->quoteInto('namespace in (?)', $grids)
-        );
-
-        //Fetch historical events
-        $this->historicalEvents->process($this->apsisCoreHelper);
-
-        //Remove redundant configs
-        $configs = array_merge(
-            array_values(self::PRE_220_HISTORICAL_EVENT_DONE_CONFIGS),
-            self::PRE_220_HISTORICAL_EVENT_TIMESTAMPS
-        );
-        foreach ($configs as $config) {
-            $setup->getConnection()->delete(
-                $setup->getTable('core_config_data'),
-                $setup->getConnection()->quoteInto('path = ?', $config)
+            //Set status to 5 for each Profile type (for all Profiles) if given Profile type has is_[PROFILE_TYPE] = 0
+            $this->profileResource->resetProfiles(
+                $this->apsisCoreHelper,
+                [],
+                [],
+                Profile::SYNC_STATUS_NA,
+                ['condition' => 'is_', 'value' => Profile::NO_FLAG]
             );
-        }
-        $info = ['Removed configs.' => array_values($configs)];
-        $this->apsisCoreHelper->debug(__METHOD__, $info);
 
-        //Removed redundant cron job.
-        $setup->getConnection()->delete(
-            $setup->getTable('cron_schedule'),
-            $setup->getConnection()->quoteInto('job_code = ?', self::PRE_220_REDUNDANT_CRON_JOB)
-        );
-        $info = ['Removed redundant cron job.' => self::PRE_220_REDUNDANT_CRON_JOB];
-        $this->apsisCoreHelper->debug(__METHOD__, $info);
+            //Remove all ui bookmarks belonging to module to force rebuild new ui bookmarks
+            $grids = ['apsis_abandoned_grid', 'apsis_event_grid', 'apsis_profile_grid'];
+            $setup->getConnection()->delete(
+                $setup->getTable('ui_bookmark'),
+                $setup->getConnection()->quoteInto('namespace in (?)', $grids)
+            );
+
+            //Fetch historical events
+            $this->historicalEvents->process($this->apsisCoreHelper);
+
+            //Remove redundant configs
+            $configs = array_merge(
+                array_values(self::PRE_220_HISTORICAL_EVENT_DONE_CONFIGS),
+                self::PRE_220_HISTORICAL_EVENT_TIMESTAMPS
+            );
+            foreach ($configs as $config) {
+                $setup->getConnection()->delete(
+                    $setup->getTable('core_config_data'),
+                    $setup->getConnection()->quoteInto('path = ?', $config)
+                );
+            }
+            $info = ['Removed configs.' => array_values($configs)];
+            $this->apsisCoreHelper->debug(__METHOD__, $info);
+
+            //Removed redundant cron job.
+            $setup->getConnection()->delete(
+                $setup->getTable('cron_schedule'),
+                $setup->getConnection()->quoteInto('job_code = ?', self::PRE_220_REDUNDANT_CRON_JOB)
+            );
+            $info = ['Removed redundant cron job if existed.' => self::PRE_220_REDUNDANT_CRON_JOB];
+            $this->apsisCoreHelper->debug(__METHOD__, $info);
+        } catch (Throwable $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
+        }
     }
 
     /**
@@ -227,8 +229,9 @@ class UpgradeData implements UpgradeDataInterface
      */
     private function upgradeOneNineFive(ModuleDataSetupInterface $setup)
     {
-        $this->apsisCoreHelper->log(__METHOD__);
         try {
+            $this->apsisCoreHelper->log(__METHOD__);
+
             //Remove both token and token expiry for force regeneration of token
             $configs = [
                 ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN,
@@ -280,7 +283,7 @@ class UpgradeData implements UpgradeDataInterface
                 ->saveRel();
 
             $this->apsisCoreHelper->log('User Role created: "APSIS Support Agent"');
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -290,7 +293,6 @@ class UpgradeData implements UpgradeDataInterface
      */
     private function upgradeOneNineFour(ModuleDataSetupInterface $setup)
     {
-        $this->apsisCoreHelper->log(__METHOD__);
         try {
             $this->apsisCoreHelper->log(__METHOD__);
             if ($this->registry->registry(UpgradeSchema::REGISTRY_NAME)) {
@@ -301,7 +303,7 @@ class UpgradeData implements UpgradeDataInterface
                     $this->apsisCoreHelper
                 );
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -311,8 +313,8 @@ class UpgradeData implements UpgradeDataInterface
      */
     private function upgradeOneNineZero(ModuleDataSetupInterface $setup)
     {
-        $this->apsisCoreHelper->log(__METHOD__);
         try {
+            $this->apsisCoreHelper->log(__METHOD__);
             foreach ($this->apsisCoreHelper->getStores(true) as $store) {
                 $oldValue = (string) $store
                     ->getConfig(ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC);
@@ -331,7 +333,7 @@ class UpgradeData implements UpgradeDataInterface
                 }
                 $store->resetConfig();
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -341,8 +343,9 @@ class UpgradeData implements UpgradeDataInterface
      */
     private function upgradeOneFiveZero(ModuleDataSetupInterface $setup)
     {
-        $this->apsisCoreHelper->log(__METHOD__);
         try {
+            $this->apsisCoreHelper->log(__METHOD__);
+
             //Take value from older path
             $oldConfigPath = 'apsis_one_sync/sync/endpoint_key';
             $oldValue = $this->apsisCoreHelper->getConfigValue(
@@ -374,7 +377,7 @@ class UpgradeData implements UpgradeDataInterface
                     0
                 );
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -384,32 +387,36 @@ class UpgradeData implements UpgradeDataInterface
      */
     private function upgradeOneTwoZero(ModuleDataSetupInterface $setup)
     {
-        $this->apsisCoreHelper->log(__METHOD__);
-        $this->generateGlobalKey();
-        foreach ($this->apsisCoreHelper->getStores(true) as $store) {
-            $topics = (string) $store->getConfig(ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC);
-            $scopeArray = $this->apsisCoreHelper->resolveContext(
-                ScopeInterface::SCOPE_STORES,
-                $store->getId(),
-                ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC
+        try {
+            $this->apsisCoreHelper->log(__METHOD__);
+            $this->generateGlobalKey();
+            foreach ($this->apsisCoreHelper->getStores(true) as $store) {
+                $topics = (string) $store->getConfig(ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC);
+                $scopeArray = $this->apsisCoreHelper->resolveContext(
+                    ScopeInterface::SCOPE_STORES,
+                    $store->getId(),
+                    ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC
+                );
+
+                if (strlen($topics)) {
+                    $this->updateConsentListTopicData($topics, $scopeArray);
+                    $this->updateConsentForProfiles($setup, $topics);
+                }
+
+                if ($this->apsisCoreHelper->isEnabled($scopeArray['scope'], $scopeArray['id'])) {
+                    $this->addRegion($scopeArray);
+                }
+
+                $store->resetConfig();
+            }
+            //Remove AC token mapping
+            $setup->getConnection()->delete(
+                $setup->getTable('core_config_data'),
+                "path='apsis_one_mappings/customer_attribute/ac_token'"
             );
-
-            if (strlen($topics)) {
-                $this->updateConsentListTopicData($topics, $scopeArray);
-                $this->updateConsentForProfiles($setup, $topics);
-            }
-
-            if ($this->apsisCoreHelper->isEnabled($scopeArray['scope'], $scopeArray['id'])) {
-                $this->addRegion($scopeArray);
-            }
-
-            $store->resetConfig();
+        } catch (Throwable $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
-        //Remove AC token mapping
-        $setup->getConnection()->delete(
-            $setup->getTable('core_config_data'),
-            "path='apsis_one_mappings/customer_attribute/ac_token'"
-        );
     }
 
     /**
@@ -424,7 +431,7 @@ class UpgradeData implements UpgradeDataInterface
                 ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                 0
             );
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -434,12 +441,16 @@ class UpgradeData implements UpgradeDataInterface
      */
     private function addRegion(array $scopeArray)
     {
-        $this->apsisCoreHelper->saveConfigValue(
-            ApsisConfigHelper::ACCOUNTS_OAUTH_REGION,
-            Region::REGION_EU,
-            $scopeArray['scope'],
-            $scopeArray['id']
-        );
+        try {
+            $this->apsisCoreHelper->saveConfigValue(
+                ApsisConfigHelper::ACCOUNTS_OAUTH_REGION,
+                Region::REGION_EU,
+                $scopeArray['scope'],
+                $scopeArray['id']
+            );
+        } catch (Throwable $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
+        }
     }
 
     /**
@@ -458,7 +469,7 @@ class UpgradeData implements UpgradeDataInterface
                     "subscriber_sync_status = ?" => Profile::SYNC_STATUS_SYNCED
                 ]
             );
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -469,12 +480,16 @@ class UpgradeData implements UpgradeDataInterface
      */
     private function updateConsentListTopicData(string $topics, array $scopeArray)
     {
-        $this->apsisCoreHelper->saveConfigValue(
-            ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC,
-            $this->getUpdatedConsentData($topics),
-            $scopeArray['scope'],
-            $scopeArray['id']
-        );
+        try {
+            $this->apsisCoreHelper->saveConfigValue(
+                ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC,
+                $this->getUpdatedConsentData($topics),
+                $scopeArray['scope'],
+                $scopeArray['id']
+            );
+        } catch (Throwable $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
+        }
     }
 
     /**
@@ -494,7 +509,7 @@ class UpgradeData implements UpgradeDataInterface
                 }
                 $updatedConsents = implode(',', $consents);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $updatedConsents;

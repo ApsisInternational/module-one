@@ -3,7 +3,7 @@
 namespace Apsis\One\Model\ResourceModel;
 
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Exception;
+use Throwable;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\ProfileBatch as ProfileBatchModel;
@@ -26,7 +26,7 @@ class ProfileBatch extends AbstractDb implements ResourceInterface
         try {
             $this->getConnection()->truncateTable($this->getMainTable());
             return true;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisLogHelper->logError(__METHOD__, $e);
             return false;
         }
@@ -50,7 +50,7 @@ class ProfileBatch extends AbstractDb implements ResourceInterface
             if ($status) {
                 $apsisCoreHelper->log(__METHOD__, [$status]);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }
     }

@@ -5,7 +5,7 @@ namespace Apsis\One\Model\Sync\Profiles;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\ResourceModel\Profile\Collection;
-use Exception;
+use Throwable;
 use Magento\Customer\Model\Customer;
 use Magento\Store\Api\Data\StoreInterface;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
@@ -128,7 +128,7 @@ class Customers implements ProfileSyncInterface
 
             $this->batchCustomersForStore($store, $collection, $mappings, $attributesArrWithVersionId);
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -145,14 +145,14 @@ class Customers implements ProfileSyncInterface
             foreach ($salesData as $column => $value) {
                 try {
                     $customer->setData($column, $value);
-                } catch (Exception $e) {
+                } catch (Throwable $e) {
                     $this->apsisCoreHelper->logError(__METHOD__, $e);
                     $this->apsisCoreHelper->log(__METHOD__ . ' Skipped for Customer id: ' . $customer->getId());
 
                     continue;
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $customer;
@@ -217,7 +217,7 @@ class Customers implements ProfileSyncInterface
                         $this->apsisFileHelper->outputCSV($file, $customerData);
                         $customersToUpdate[] = $customer->getId();
                     }
-                } catch (Exception $e) {
+                } catch (Throwable $e) {
                     $this->apsisCoreHelper->logError(__METHOD__, $e);
                     $this->apsisCoreHelper->log(__METHOD__ . ': Skipped customer with id :' . $customer->getId());
 
@@ -249,7 +249,7 @@ class Customers implements ProfileSyncInterface
                 ];
                 $this->apsisCoreHelper->debug(__METHOD__, $info);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             if (! empty($customersToUpdate)) {
                 $this->apsisCoreHelper->log(__METHOD__ . ': Skipped customers with id :' .
@@ -271,7 +271,7 @@ class Customers implements ProfileSyncInterface
             $this->apsisFileHelper->outputCSV($file, $headers);
 
             return $file;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             return '';
         }
@@ -290,14 +290,14 @@ class Customers implements ProfileSyncInterface
             foreach ($collection as $item) {
                 try {
                     $integrationIdsArray[$item->getCustomerId()] = $item->getIntegrationUid();
-                } catch (Exception $e) {
+                } catch (Throwable $e) {
                     $this->apsisCoreHelper->logError(__METHOD__, $e);
                     $this->apsisCoreHelper->log(__METHOD__ . ' Skipped for Profile id: ' . $item->getId());
 
                     continue;
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 

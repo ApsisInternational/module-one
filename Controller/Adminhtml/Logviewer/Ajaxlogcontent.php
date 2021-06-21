@@ -4,7 +4,7 @@ namespace Apsis\One\Controller\Adminhtml\Logviewer;
 
 use Apsis\One\Model\Service\File;
 use Apsis\One\Model\Service\Log;
-use Exception;
+use Throwable;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\Escaper;
@@ -82,7 +82,7 @@ class Ajaxlogcontent extends Action
                     $header = 'APSIS Log';
             }
             $content = $this->file->getLogFileContent($logFile);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logHelper->logError(__METHOD__, $e);
             $content = $e->getMessage();
         }

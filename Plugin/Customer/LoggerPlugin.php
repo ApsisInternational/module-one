@@ -5,7 +5,7 @@ namespace Apsis\One\Plugin\Customer;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Exception;
+use Throwable;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Logger as CustomerLogger;
 use Magento\Store\Api\Data\StoreInterface;
@@ -97,7 +97,7 @@ class LoggerPlugin
                     $this->eventService->registerCustomerLoginEvent($logger, $customerId, $profile, $customer);
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 

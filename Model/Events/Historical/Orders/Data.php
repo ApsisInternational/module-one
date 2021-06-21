@@ -8,7 +8,7 @@ use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Item;
-use Exception;
+use Throwable;
 
 class Data extends EventData implements EventDataInterface
 {
@@ -26,8 +26,13 @@ class Data extends EventData implements EventDataInterface
      */
     public function getDataArr(Order $order, ApsisCoreHelper $apsisCoreHelper, int $subscriberId = 0)
     {
-        $this->subscriberId = $subscriberId;
-        return $this->getProcessedDataArr($order, $apsisCoreHelper);
+        try {
+            $this->subscriberId = $subscriberId;
+            return $this->getProcessedDataArr($order, $apsisCoreHelper);
+        } catch (Throwable $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
+            return [];
+        }
     }
 
     /**
@@ -45,13 +50,14 @@ class Data extends EventData implements EventDataInterface
                         'productId' => (int) $item->getProductId(),
                         'sku' => (string) $item->getSku(),
                         'name' => (string) $item->getName(),
-                        'productUrl' => (string) $product->getProductUrl(),
-                        'productImageUrl' => (string) $this->productServiceProvider->getProductImageUrl($product),
+                        'productUrl' => ($product && $product->getId())? (string) $product->getProductUrl() : '',
+                        'productImageUrl' => ($product && $product->getId())?
+                            (string) $this->productServiceProvider->getProductImageUrl($product) : '',
                         'qtyOrdered' => $apsisCoreHelper->round($item->getQtyOrdered()),
                         'priceAmount' => $apsisCoreHelper->round($item->getPrice()),
                         'rowTotalAmount' => $apsisCoreHelper->round($item->getRowTotal()),
                     ];
-                } catch (Exception $e) {
+                } catch (Throwable $e) {
                     $apsisCoreHelper->logError(__METHOD__, $e);
                     continue;
                 }
@@ -74,7 +80,7 @@ class Data extends EventData implements EventDataInterface
                 'currencyCode' => (string) $model->getOrderCurrencyCode(),
                 'items' => $items
             ];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }

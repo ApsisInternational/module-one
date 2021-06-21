@@ -6,7 +6,7 @@ use Apsis\One\Model\Events\Historical\Event as HistoricalEvent;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile\Collection as ProfileCollection;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Exception;
+use Throwable;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
@@ -81,7 +81,7 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
                 $apsisCoreHelper->debug(__METHOD__, $info);
             }
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -120,12 +120,12 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
                                 $eventsToRegister[] = $eventDataForEvent;
                             }
                         }
-                    } catch (Exception $e) {
+                    } catch (Throwable $e) {
                         $apsisCoreHelper->logError(__METHOD__, $e);
                         continue;
                     }
                 }
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
             }
@@ -152,7 +152,7 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
                 ->addFieldToFilter('main_table.store_id', $store->getId())
                 ->addFieldToFilter('main_table.customer_id', ['in' => $customerIds])
                 ->addFieldToFilter('main_table.created_at', $duration);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }

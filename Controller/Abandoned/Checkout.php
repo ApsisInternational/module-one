@@ -4,7 +4,7 @@ namespace Apsis\One\Controller\Abandoned;
 
 use Apsis\One\Model\Service\Cart as ApsisCartHelper;
 use Apsis\One\Model\Service\Log;
-use Exception;
+use Throwable;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
@@ -80,7 +80,7 @@ class Checkout extends Action
             }
 
             return $this->handleCartRebuildRequest($quoteModel, $ac);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->log->logError(__METHOD__, $e);
             return $this->_redirect('');
         }
@@ -116,7 +116,7 @@ class Checkout extends Action
             $this->log->debug(__METHOD__, $info);
 
             return $this->_redirect($quoteModel->getStore()->getUrl('checkout/cart'));
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->log->logError(__METHOD__, $e);
             return $this->_redirect('');
         }

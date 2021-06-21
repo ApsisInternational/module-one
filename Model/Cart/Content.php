@@ -3,7 +3,7 @@
 namespace Apsis\One\Model\Cart;
 
 use Apsis\One\Model\Service\Product as ProductServiceProvider;
-use Exception;
+use Throwable;
 use Magento\Framework\App\Area;
 use Magento\Quote\Model\Quote\Item;
 use Magento\Store\Model\App\EmulationFactory;
@@ -76,7 +76,7 @@ class Content
             $appEmulation->startEnvironmentEmulation($quoteModel->getStoreId(), Area::AREA_FRONTEND, true);
             $cartData = $this->getMainCartData($quoteModel);
             $cartData['items'] = $this->getItemData($quoteModel->getAllVisibleItems());
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $appEmulation->stopEnvironmentEmulation();
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -98,7 +98,7 @@ class Content
             foreach ($quoteItems as $quoteItem) {
                 $itemsData[] = $this->getItemsData($quoteItem);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 
@@ -137,7 +137,7 @@ class Content
                 'shipping_address' => $this->getAddress($quoteModel->getShippingAddress()),
                 'billing_address' => $this->getAddress($quoteModel->getBillingAddress()),
             ];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return [];
@@ -166,7 +166,7 @@ class Content
                 'country' => (string) $address->getCountry(),
                 'telephone' => (string) $address->getTelephone()
             ];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return [];
@@ -190,7 +190,7 @@ class Content
                 'middle_name' => (string) $quoteModel->getCustomerMiddlename(),
                 'last_name' => (string) $quoteModel->getCustomerLastname()
             ];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return [];
@@ -244,7 +244,7 @@ class Content
             } elseif (isset($options['bundle_options'])) {
                 $sortedOptions = $this->getBundleOptions($options);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $sortedOptions;
@@ -269,7 +269,7 @@ class Content
                 $option['option_value'] = $values;
                 $sortedOptions[] = $option;
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $sortedOptions;
@@ -297,7 +297,7 @@ class Content
 
                 $sortedOptions[] = $option;
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 

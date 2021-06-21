@@ -10,7 +10,7 @@ use Magento\Framework\Model\AbstractModel;
 use Magento\Review\Model\Review;
 use Magento\Review\Model\ResourceModel\Rating\Option\Vote\CollectionFactory as VoteCollectionFactory;
 use Apsis\One\Model\Events\Historical\EventDataInterface;
-use Exception;
+use Throwable;
 
 class Data extends EventData implements EventDataInterface
 {
@@ -47,8 +47,17 @@ class Data extends EventData implements EventDataInterface
      */
     public function getDataArr(Review $reviewObject, MagentoProduct $product, ApsisCoreHelper $apsisCoreHelper)
     {
-        $this->product = $product;
-        return $this->getProcessedDataArr($reviewObject, $apsisCoreHelper);
+        try {
+            if (! $product->getId()) {
+                return [];
+            }
+
+            $this->product = $product;
+            return $this->getProcessedDataArr($reviewObject, $apsisCoreHelper);
+        } catch (Throwable $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
+            return [];
+        }
     }
 
     /**
@@ -76,7 +85,7 @@ class Data extends EventData implements EventDataInterface
                 'ratingStarValue' => ($voteCollection->getSize()) ?
                     (int) $voteCollection->getFirstItem()->getValue() : 0
             ];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }

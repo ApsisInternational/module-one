@@ -6,7 +6,7 @@ use Apsis\One\Model\Event;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Sync\SyncInterface;
-use Exception;
+use Throwable;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Api\Data\StoreInterface;
@@ -119,7 +119,7 @@ class Historical implements SyncInterface
                 if ($profileCollection->getSize()) {
                     $this->runByType($store, $apsisCoreHelper, $profileCollection, $period);
                 }
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);
                 $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
                 $emulate->stopEnvironmentEmulation();
@@ -146,7 +146,7 @@ class Historical implements SyncInterface
                 'to' => $to->format('Y-m-d H:i:s'),
                 'date' => true
             ];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
@@ -217,7 +217,7 @@ class Historical implements SyncInterface
                     default:
                         $apsisCoreHelper->log(__METHOD__, ['Unsupported type.']);
                 }
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
             }
@@ -262,7 +262,7 @@ class Historical implements SyncInterface
             }
 
             return $done;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             //Worst case scenario, we do not want to create duplicate.
             return true;
@@ -301,7 +301,7 @@ class Historical implements SyncInterface
                 $formattedProfileCollectionArray[$index] = $profile;
             }
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }
 

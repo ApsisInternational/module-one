@@ -3,7 +3,7 @@
 namespace Apsis\One\Model\Config\Source\Datamapping;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Exception;
+use Throwable;
 use Magento\Framework\Data\OptionSourceInterface;
 
 class Section implements OptionSourceInterface
@@ -54,7 +54,7 @@ class Section implements OptionSourceInterface
             foreach ($request->items as $section) {
                 $fields[] = ['value' => $section->discriminator, 'label' => $section->name];
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 

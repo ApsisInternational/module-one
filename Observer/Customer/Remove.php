@@ -5,7 +5,7 @@ namespace Apsis\One\Observer\Customer;
 use Apsis\One\Model\Profile as ProfileModel;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Profile;
-use Exception;
+use Throwable;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -41,13 +41,16 @@ class Remove implements ObserverInterface
     {
         try {
             $customer = $observer->getEvent()->getCustomer();
-            $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $customer->getStoreId());
+            if (empty($customer) || ! $customer->getEmail() || ! $customer->getId() || ! $customer->getStoreId()) {
+                return $this;
+            }
 
+            $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $customer->getStoreId());
             if ($account && $profile = $this->profileService->findProfileForCustomer($customer)) {
                 $this->apsisCoreHelper->log(__METHOD__);
                 $this->profileService->handleDeleteOperationByType($profile, ProfileModel::TYPE_CUSTOMER);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $this;

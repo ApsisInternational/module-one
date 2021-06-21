@@ -6,7 +6,7 @@ use Apsis\One\Model\Service\Config;
 use Apsis\One\Model\Service\Log;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\Data\Form\FormKey;
-use Exception;
+use Throwable;
 
 class Cart extends Template
 {
@@ -50,7 +50,7 @@ class Cart extends Template
                     self::EMAIL_UPDATER_URL,
                     ['_secure' => $this->_storeManager->getStore()->isCurrentlySecure()]
                 );
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logger->logError(__METHOD__, $e);
             return '';
         }
@@ -65,7 +65,7 @@ class Cart extends Template
             return (boolean) $this->_storeManager->getStore()->getConfig(
                 Config::EVENTS_REGISTER_ABANDONED_CART_AFTER_DURATION
             );
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logger->logError(__METHOD__, $e);
             return false;
         }
@@ -78,7 +78,7 @@ class Cart extends Template
     {
         try {
             return $this->formKey->getFormKey();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logger->logError(__METHOD__, $e);
             return '';
         }

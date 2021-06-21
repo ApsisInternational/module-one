@@ -3,7 +3,7 @@
 namespace Apsis\One\Model\Service;
 
 use Apsis\One\Logger\Logger;
-use Exception;
+use Throwable;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Module\ResourceInterface;
 
@@ -59,14 +59,14 @@ class Log
 
     /**
      * @param string $classMethodName
-     * @param Exception $e
+     * @param Throwable $e
      * @param array $extra
      */
-    public function logError(string $classMethodName, Exception $e, array $extra = [])
+    public function logError(string $classMethodName, Throwable $e, array $extra = [])
     {
         $info = [
             'Method' => $classMethodName,
-            'Exception' => $e->getMessage(),
+            'Exception|Error' => $e->getMessage(),
             'Trace' => str_replace(PHP_EOL, PHP_EOL . "        ", PHP_EOL . $e->getTraceAsString())
         ];
         $this->error($this->getStringForLog($info), $extra);
@@ -113,7 +113,7 @@ class Log
     {
         try {
             return json_encode($data);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return '[]';
         }
@@ -128,7 +128,7 @@ class Log
     {
         try {
             return json_decode($string);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return [];
         }

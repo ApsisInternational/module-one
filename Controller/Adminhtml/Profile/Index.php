@@ -43,7 +43,7 @@ class Index extends AbstractAction
         $resultPage->setActiveMenu('Apsis_One::profile');
         $resultPage->addBreadcrumb(__('Profile'), __('Profile'));
         $resultPage->addBreadcrumb(__('Reports'), __('Reports'));
-        $resultPage->getConfig()->getTitle()->prepend(__('Profile Status Report'));
+        $resultPage->getConfig()->getTitle()->prepend(__('Profiles Status'));
         return $resultPage;
     }
 }

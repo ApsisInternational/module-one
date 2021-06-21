@@ -6,7 +6,7 @@ use Apsis\One\Model\Events\Historical\Event as HistoricalEvent;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile\Collection as ProfileCollection;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Exception;
+use Throwable;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Review\Model\ResourceModel\Review\CollectionFactory as ProductReviewCollectionFactory;
@@ -110,7 +110,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
                 ];
                 $apsisCoreHelper->debug(__METHOD__, $info);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -134,31 +134,33 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
         /** @var Review $review */
         foreach ($reviewCollection as $review) {
             try {
-                if (isset($profileCollectionArray[$review->getCustomerId()]) &&
-                    isset($productCollectionArray[$review->getEntityPkValue()])
+                if (empty($review = $this->reviewFactory->create()->load($review->getId())) ||
+                    empty($profile = $profileCollectionArray[$review->getCustomerId()]) ||
+                    empty($product = $productCollectionArray[$review->getEntityPkValue()])
                 ) {
-                    $review = $this->reviewFactory->create()->load($review->getId());
-                    $eventData = $this->eventData->getDataArr(
-                        $review,
-                        $productCollectionArray[$review->getEntityPkValue()],
+                    continue;
+                }
+
+                $eventData = $this->eventData->getDataArr(
+                    $review,
+                    $product,
+                    $apsisCoreHelper
+                );
+
+                if (! empty($eventData)) {
+                    $eventDataForEvent = $this->getEventData(
+                        $review->getStoreId(),
+                        $profile,
+                        Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW,
+                        $review->getCreatedAt(),
+                        $apsisCoreHelper->serialize($eventData),
                         $apsisCoreHelper
                     );
-
-                    if (! empty($eventData)) {
-                        $eventDataForEvent = $this->getEventData(
-                            $review->getStoreId(),
-                            $profileCollectionArray[$review->getCustomerId()],
-                            Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW,
-                            $review->getCreatedAt(),
-                            $apsisCoreHelper->serialize($eventData),
-                            $apsisCoreHelper
-                        );
-                        if (! empty($eventDataForEvent)) {
-                            $eventsToRegister[] = $eventDataForEvent;
-                        }
+                    if (! empty($eventDataForEvent)) {
+                        $eventsToRegister[] = $eventDataForEvent;
                     }
                 }
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
             }
@@ -192,7 +194,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
             foreach ($productCollection as $product) {
                 $productCollectionArray[$product->getId()] = $product;
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }
 
@@ -220,7 +222,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
                 ->addFieldToFilter('main_table.entity_id', 1)
                 ->addFieldToFilter('main_table.created_at', $duration)
                 ->addFieldToFilter('customer_id', ['in' => $customerIds]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }

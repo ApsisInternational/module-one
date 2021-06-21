@@ -12,7 +12,7 @@ use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime;
 use Apsis\One\Model\Service\Log;
 use Apsis\One\Model\Service\Profile as ProfileService;
-use Exception;
+use Throwable;
 
 /**
  * Class Profile
@@ -162,7 +162,7 @@ class Profile extends AbstractModel
                 ];
                 $this->logger->debug(__METHOD__, $info);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logger->logError(__METHOD__, $e);
         }
 

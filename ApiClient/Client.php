@@ -2,7 +2,7 @@
 
 namespace Apsis\One\ApiClient;
 
-use Exception;
+use Throwable;
 
 class Client extends Rest
 {
@@ -518,7 +518,7 @@ class Client extends Rest
                 $this->responseInfo = curl_getinfo($ch);
             }
             curl_close($ch);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             curl_close($ch);
             $this->curlError = $e->getMessage();
             $this->helper->logError(__METHOD__, $e);

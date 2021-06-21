@@ -11,7 +11,7 @@ use Magento\Framework\DataObject;
 use Magento\Framework\View\Element\Template;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Store\Model\ScopeInterface;
-use Exception;
+use Throwable;
 
 class Subscription extends Template
 {
@@ -119,7 +119,7 @@ class Subscription extends Template
             if (!empty($sortedTopicArr)) {
                 $this->customerSession->setPreUpdateConsents($sortedTopicArr);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 
@@ -175,7 +175,7 @@ class Subscription extends Template
                 }
             }
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 
@@ -220,7 +220,7 @@ class Subscription extends Template
                 $topicMappingsArr[$topicMapping[0]]['topics'][] = $topic;
             }
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 

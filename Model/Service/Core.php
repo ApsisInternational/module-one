@@ -10,7 +10,6 @@ use Apsis\One\Model\Config\Source\System\Region;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Exception;
 use Magento\Config\Model\ResourceModel\Config\Data\Collection as DataCollection;
 use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as DataCollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -22,6 +21,8 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use stdClass;
+use Exception;
+use Throwable;
 
 class Core extends ApsisLogHelper
 {
@@ -126,7 +127,7 @@ class Core extends ApsisLogHelper
     {
         try {
             return $this->storeManager->getStore($storeId);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return false;
         }
@@ -153,7 +154,7 @@ class Core extends ApsisLogHelper
         try {
             $store = $this->getStore($storeId);
             return ($store) ? $this->storeManager->getWebsite($store->getWebsiteId())->getName() : '';
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return '';
         }
@@ -195,7 +196,7 @@ class Core extends ApsisLogHelper
     {
         try {
             return $this->scopeConfig->getValue($path, $contextScope, $contextScopeId);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return null;
         }
@@ -231,7 +232,7 @@ class Core extends ApsisLogHelper
             $this->debug(__METHOD__, $info);
 
             $this->writer->save($path, $value, $context['scope'], $context['id']);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
         }
     }
@@ -269,7 +270,7 @@ class Core extends ApsisLogHelper
             $this->debug(__METHOD__, $info);
 
             $this->writer->delete($path, $scope, $id);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
         }
     }
@@ -314,7 +315,7 @@ class Core extends ApsisLogHelper
     {
         try {
             return $this->storeManager->getStores($withDefault);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return [];
         }
@@ -330,7 +331,7 @@ class Core extends ApsisLogHelper
     {
         try {
             return $store->getConfig($path);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return null;
         }
@@ -346,7 +347,7 @@ class Core extends ApsisLogHelper
     {
         try {
             return (float) round($price, $precision);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return 0.00;
         }
@@ -447,7 +448,7 @@ class Core extends ApsisLogHelper
                     }
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
         }
         return $token;
@@ -788,7 +789,7 @@ class Core extends ApsisLogHelper
     {
         try {
             return $this->storeManager->getWebsite($websiteId)->getStoreIds();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return [];
         }
@@ -831,7 +832,7 @@ class Core extends ApsisLogHelper
                 $hash = substr(md5($sectionDiscriminator), 0, 8);
                 return "com.apsis1.integrations.keyspaces.$hash.magento";
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
         }
 
@@ -900,7 +901,7 @@ class Core extends ApsisLogHelper
     /**
      * @param string $url
      *
-     * @throws Exception
+     * @throws Throwable
      */
     public function validateIsUrlReachable(string $url)
     {
@@ -989,7 +990,7 @@ class Core extends ApsisLogHelper
             //Validate api host is reachable
             try {
                 $this->validateIsUrlReachable($this->buildHostName($region));
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $this->logError(__METHOD__, $e);
                 return $e->getMessage() . '. Cannot enable account. Host for URL must be whitelisted first.';
             }
@@ -1002,9 +1003,9 @@ class Core extends ApsisLogHelper
                 $this->debug($check);
                 return $check;
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
-            return 'Something went wrong, please check exception logs.';
+            return 'Something went wrong, please check logs.';
         }
     }
 
@@ -1035,9 +1036,9 @@ class Core extends ApsisLogHelper
                 }
                 return 'API credentials are invalid for this integration. Magento keySpace does not exist.';
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
-            return 'Something went wrong, please check exception logs.';
+            return 'Something went wrong, please check logs.';
         }
     }
 

@@ -13,7 +13,7 @@ use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\File as ApsisFileHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers\SubscriberFactory as SubscriberDataFactory;
-use Exception;
+use Throwable;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
 use Magento\Newsletter\Model\Subscriber;
@@ -164,7 +164,7 @@ class Subscribers implements ProfileSyncInterface
                     $section
                 );
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -204,7 +204,7 @@ class Subscribers implements ProfileSyncInterface
                 $attributesArrWithVersionId,
                 $consentType
             );
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -283,7 +283,7 @@ class Subscribers implements ProfileSyncInterface
 
                         $this->apsisFileHelper->outputCSV($file, $subscriberData);
                         $subscribersToUpdate[] = $subscriber->getSubscriberId();
-                    } catch (Exception $e) {
+                    } catch (Throwable $e) {
                         $this->apsisCoreHelper->logError(__METHOD__, $e);
                         $this->apsisCoreHelper->log(__METHOD__ . ': Skipped subscriber with id :' .
                             $subscriber->getSubscriberId());
@@ -302,7 +302,7 @@ class Subscribers implements ProfileSyncInterface
                 $this->registerBatchItem($file, $store, $subscribersToUpdate, $jsonMappings);
             }
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
 
             if (! empty($subscribersToUpdate)) {
@@ -365,7 +365,7 @@ class Subscribers implements ProfileSyncInterface
             $this->apsisFileHelper->outputCSV($file, $headers);
 
             return $file;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             return '';
         }
@@ -426,7 +426,7 @@ class Subscribers implements ProfileSyncInterface
             ];
             $this->apsisCoreHelper->debug(__METHOD__, $info);
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }
@@ -456,7 +456,7 @@ class Subscribers implements ProfileSyncInterface
                 );
 
             return $collection;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }

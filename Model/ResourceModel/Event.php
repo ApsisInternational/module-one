@@ -6,7 +6,7 @@ use Apsis\One\Model\Profile as ApsisProfile;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Exception;
+use Throwable;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Magento\Framework\Model\ResourceModel\Db\Context;
 use Magento\Framework\Stdlib\DateTime;
@@ -62,7 +62,7 @@ class Event extends AbstractDb implements ResourceInterface
         try {
             $write = $this->getConnection();
             return $write->insertMultiple($this->getMainTable(), $events);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return 0;
         }
@@ -84,7 +84,7 @@ class Event extends AbstractDb implements ResourceInterface
                 ['email' => $newEmail],
                 $this->getConnection()->quoteInto('email = ?', $oldEmail)
             );
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return 0;
         }
@@ -116,7 +116,7 @@ class Event extends AbstractDb implements ResourceInterface
                 $bind,
                 ["id IN (?)" => $ids]
             );
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return 0;
         }
@@ -138,7 +138,7 @@ class Event extends AbstractDb implements ResourceInterface
         try {
             $this->getConnection()->truncateTable($this->getMainTable());
             return true;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisLogHelper->logError(__METHOD__, $e);
             return false;
         }
@@ -176,7 +176,7 @@ class Event extends AbstractDb implements ResourceInterface
                 $bind,
                 $where
             );
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return 0;
         }
@@ -217,7 +217,7 @@ class Event extends AbstractDb implements ResourceInterface
             $apsisCoreHelper->debug(__METHOD__, ['Duration' => $period]);
 
             return $this->getConnection()->update($this->getMainTable(), $bind, $where);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return 0;
         }
@@ -244,7 +244,7 @@ class Event extends AbstractDb implements ResourceInterface
 
             return ['from' => $from, 'to' => $to];
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
@@ -263,7 +263,7 @@ class Event extends AbstractDb implements ResourceInterface
                 ->sub($this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('P%sM', $pastEventsDuration)))
                 ->format('Y-m-d H:i:s');
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return '';
         }
@@ -278,7 +278,7 @@ class Event extends AbstractDb implements ResourceInterface
     {
         try {
             return $this->apsisDateHelper->getDateTimeFromTime()->format('Y-m-d H:i:s');
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return '';
         }

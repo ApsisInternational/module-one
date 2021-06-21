@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Block;
 
-use Exception;
+use Throwable;
 use Magento\Framework\View\Element\Template;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
@@ -51,7 +51,7 @@ class Script extends Template
                 return $trackingTextConfig;
             }
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
         }
 

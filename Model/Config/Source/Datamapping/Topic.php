@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Model\Config\Source\Datamapping;
 
-use Exception;
+use Throwable;
 use Magento\Framework\Data\OptionSourceInterface;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
@@ -70,7 +70,7 @@ class Topic implements OptionSourceInterface
                 $options[] = ['label' => $consentList->name, 'value' => $formattedTopics];
             }
             return $options;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }

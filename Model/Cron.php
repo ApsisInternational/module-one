@@ -11,6 +11,7 @@ use Apsis\One\Model\Sync\Profiles;
 use Apsis\One\Model\Sync\Events;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Apsis\One\Model\Abandoned\Find;
+use Throwable;
 
 class Cron
 {
@@ -83,20 +84,24 @@ class Cron
      */
     public function cleanup()
     {
-        $isEnabled = $this->coreHelper->isEnabled(ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 0);
-        if ($this->checkIfJobAlreadyRan('apsis_one_cleanup') || ! $isEnabled) {
-            return;
-        }
+        try {
+            $isEnabled = $this->coreHelper->isEnabled(ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 0);
+            if ($this->checkIfJobAlreadyRan('apsis_one_cleanup') || ! $isEnabled) {
+                return;
+            }
 
-        $days = $this->coreHelper->getConfigValue(
-            ApsisConfigHelper::DEVELOPER_SETTING_CLEANUP_AFTER,
-            ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            0
-        );
+            $days = $this->coreHelper->getConfigValue(
+                ApsisConfigHelper::DEVELOPER_SETTING_CLEANUP_AFTER,
+                ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                0
+            );
 
-        if ($days) {
-            $this->abandonedResource->cleanupRecords($days, $this->coreHelper);
-            $this->profileBatchResource->cleanupRecords($days, $this->coreHelper);
+            if ($days) {
+                $this->abandonedResource->cleanupRecords($days, $this->coreHelper);
+                $this->profileBatchResource->cleanupRecords($days, $this->coreHelper);
+            }
+        } catch (Throwable $e) {
+            $this->coreHelper->logError(__METHOD__, $e);
         }
     }
 
@@ -105,11 +110,15 @@ class Cron
      */
     public function syncEvents()
     {
-        if ($this->checkIfJobAlreadyRan('apsis_one_sync_events')) {
-            return;
-        }
+        try {
+            if ($this->checkIfJobAlreadyRan('apsis_one_sync_events')) {
+                return;
+            }
 
-        $this->eventsSyncModel->process($this->coreHelper);
+            $this->eventsSyncModel->process($this->coreHelper);
+        } catch (Throwable $e) {
+            $this->coreHelper->logError(__METHOD__, $e);
+        }
     }
 
     /**
@@ -117,11 +126,15 @@ class Cron
      */
     public function syncProfiles()
     {
-        if ($this->checkIfJobAlreadyRan('apsis_one_sync_profiles')) {
-            return;
-        }
+        try {
+            if ($this->checkIfJobAlreadyRan('apsis_one_sync_profiles')) {
+                return;
+            }
 
-        $this->profileSyncModel->process($this->coreHelper);
+            $this->profileSyncModel->process($this->coreHelper);
+        } catch (Throwable $e) {
+            $this->coreHelper->logError(__METHOD__, $e);
+        }
     }
 
     /**
@@ -129,11 +142,15 @@ class Cron
      */
     public function findAbandonedCarts()
     {
-        if ($this->checkIfJobAlreadyRan('apsis_one_find_abandoned_carts')) {
-            return;
-        }
+        try {
+            if ($this->checkIfJobAlreadyRan('apsis_one_find_abandoned_carts')) {
+                return;
+            }
 
-        $this->abandonedFind->process($this->coreHelper);
+            $this->abandonedFind->process($this->coreHelper);
+        } catch (Throwable $e) {
+            $this->coreHelper->logError(__METHOD__, $e);
+        }
     }
 
     /**
@@ -143,33 +160,38 @@ class Cron
      */
     private function checkIfJobAlreadyRan(string $jobCode)
     {
-        $currentRunningJob = $this->cronCollectionFactory
-            ->create()
-            ->addFieldToFilter('job_code', $jobCode)
-            ->addFieldToFilter('status', 'running')
-            ->setPageSize(1);
+        try {
+            $currentRunningJob = $this->cronCollectionFactory
+                ->create()
+                ->addFieldToFilter('job_code', $jobCode)
+                ->addFieldToFilter('status', 'running')
+                ->setPageSize(1);
 
-        if (! $currentRunningJob->getSize() || empty($dateTime = $currentRunningJob->getFirstItem()->getScheduledAt())) {
+            if (! $currentRunningJob->getSize() || empty($dateTime = $currentRunningJob->getFirstItem()->getScheduledAt())) {
+                return false;
+            }
+
+            $jobAlreadyExecuted =  $this->cronCollectionFactory
+                ->create()
+                ->addFieldToFilter(
+                    'scheduled_at',
+                    $dateTime
+                )
+                ->addFieldToFilter('job_code', $jobCode)
+                ->addFieldToFilter(
+                    'status',
+                    ['in' => ['success', 'failed']]
+                );
+
+            $check = (boolean) ($jobAlreadyExecuted->getSize());
+            if ($check) {
+                $this->coreHelper->debug(__METHOD__, ['Job already ran.' => $jobCode]);
+            }
+
+            return $check;
+        } catch (Throwable $e) {
+            $this->coreHelper->logError(__METHOD__, $e);
             return false;
         }
-
-        $jobAlreadyExecuted =  $this->cronCollectionFactory
-            ->create()
-            ->addFieldToFilter(
-                'scheduled_at',
-                $dateTime
-            )
-            ->addFieldToFilter('job_code', $jobCode)
-            ->addFieldToFilter(
-                'status',
-                ['in' => ['success', 'failed']]
-            );
-
-        $check = (boolean) ($jobAlreadyExecuted->getSize());
-        if ($check) {
-            $this->coreHelper->debug(__METHOD__, ['Job already ran.' => $jobCode]);
-        }
-
-        return $check;
     }
 }

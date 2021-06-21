@@ -6,7 +6,7 @@ use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Event;
-use Exception;
+use Throwable;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface;
@@ -93,31 +93,33 @@ class Product implements ObserverInterface
         try {
             /** @var Review $reviewObject */
             $dataObject = $observer->getEvent()->getDataObject();
-            $reviewObject = $this->reviewFactory->create()->load($dataObject->getId());
+            if (empty($dataObject) || ! $dataObject->getId()) {
+                return $this;
+            }
 
-            if (empty($reviewObject->getCustomerId())) {
+            $reviewObject = $this->reviewFactory->create()->load($dataObject->getId());
+            if (empty($reviewObject) || ! $reviewObject->getCustomerId() ||
+                ! $reviewObject->getEntityPkValue() || ! $reviewObject->getStoreId() ||
+                ! $this->isOkToProceed($reviewObject->getStoreId() || ! $reviewObject->isApproved())
+            ) {
                 return $this;
             }
 
             /** @var MagentoProduct $product */
             $product = $this->getProductById($reviewObject->getEntityPkValue(), $reviewObject->getStoreId());
             $customer = $this->customerRepository->getById($reviewObject->getCustomerId());
-            if (empty($customer->getId())) {
+            if (empty($product) || ! $product->getId() || empty($customer) || ! $customer->getId()) {
                 return $this;
             }
 
             /** @var Profile $profile */
-            $profile = $this->profileCollectionFactory->create()
-                ->loadByCustomerId($customer->getId());
-
-            if ($customer && $product && $this->isOkToProceed($reviewObject->getStoreId()) && $profile &&
-                $reviewObject->isApproved()
-            ) {
+            $profile = $this->profileCollectionFactory->create()->loadByCustomerId($customer->getId());
+            if ($profile) {
                 $this->eventService->registerProductReviewEvent($reviewObject, $product, $profile, $customer);
                 $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
                 $this->profileResource->save($profile);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
         return $this;
@@ -150,7 +152,7 @@ class Product implements ObserverInterface
     {
         try {
             return $this->productRepository->getById($productId, false, $storeId);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             return false;
         }

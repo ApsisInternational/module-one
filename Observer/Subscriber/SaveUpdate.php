@@ -6,7 +6,8 @@ use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Profile;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Exception;
+use Magento\Newsletter\Model\Subscriber;
+use Throwable;
 use Magento\Store\Model\ScopeInterface;
 
 class SaveUpdate implements ObserverInterface
@@ -39,7 +40,12 @@ class SaveUpdate implements ObserverInterface
     public function execute(Observer $observer)
     {
         try {
+            /** @var Subscriber $subscriber */
             $subscriber = $observer->getEvent()->getSubscriber();
+            if (empty($subscriber) || ! $subscriber->getId() || ! $subscriber->getStoreId()) {
+                return $this;
+            }
+
             $store = $this->apsisCoreHelper->getStore($subscriber->getStoreId());
             $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
 
@@ -51,7 +57,7 @@ class SaveUpdate implements ObserverInterface
                     $this->profileService->updateProfileForSubscriber($subscriber, $profile, $store);
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 

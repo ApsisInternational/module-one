@@ -6,7 +6,7 @@ use Apsis\One\Model\Profile;
 use Apsis\One\Model\Event as EventModel;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Exception;
+use Throwable;
 use Magento\Framework\Stdlib\DateTime;
 
 class Event
@@ -60,7 +60,7 @@ class Event
                 'created_at' => $createdAt,
                 'updated_at' => $this->dateTime->formatDate(true)
             ];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }

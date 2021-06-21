@@ -43,7 +43,7 @@ class Index extends AbstractAction
         $resultPage->setActiveMenu('Apsis_One::abandoned');
         $resultPage->addBreadcrumb(__('Abandoned'), __('Abandoned'));
         $resultPage->addBreadcrumb(__('Reports'), __('Reports'));
-        $resultPage->getConfig()->getTitle()->prepend(__('Abandoned Cart Report'));
+        $resultPage->getConfig()->getTitle()->prepend(__('Abandoned Carts'));
         return $resultPage;
     }
 }

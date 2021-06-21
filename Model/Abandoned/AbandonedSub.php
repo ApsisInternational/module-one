@@ -10,7 +10,7 @@ use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
-use Exception;
+use Throwable;
 use Magento\Framework\App\Area;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Newsletter\Model\SubscriberFactory;
@@ -129,7 +129,7 @@ class AbandonedSub
                 ->addFieldToFilter('customer_email', ['notnull' => true])
                 ->addFieldToFilter('main_table.store_id', $store->getId())
                 ->addFieldToFilter('main_table.updated_at', $updated);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return false;
         }
@@ -189,7 +189,7 @@ class AbandonedSub
                         ];
                     }
                 }
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
             }
@@ -230,7 +230,7 @@ class AbandonedSub
             $appEmulation->startEnvironmentEmulation($quote->getStoreId(), Area::AREA_FRONTEND, true);
             $subscriber = $this->subscriberFactory->create()->loadByEmail($quote->getCustomerEmail());
             $appEmulation->stopEnvironmentEmulation();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $appEmulation->stopEnvironmentEmulation();
             $apsisCoreHelper->logError(__METHOD__, $e);
             return false;
@@ -283,7 +283,7 @@ class AbandonedSub
                 'token' => $uuid,
                 'items' => $items
             ];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }

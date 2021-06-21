@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Block\Adminhtml\Config\Developer;
 
-use Exception;
+use Throwable;
 use Magento\Backend\Block\Widget\Button;
 use Magento\Config\Block\System\Config\Form\Field;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
@@ -72,7 +72,7 @@ class Reset extends Field
                 $elm->setDisabled('disabled');
             }
             return $elm->toHtml();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
             return parent::_getElementHtml($element);
         }

@@ -43,7 +43,7 @@ class Index extends AbstractAction
         $resultPage->setActiveMenu('Apsis_One::event');
         $resultPage->addBreadcrumb(__('Event'), __('Event'));
         $resultPage->addBreadcrumb(__('Reports'), __('Reports'));
-        $resultPage->getConfig()->getTitle()->prepend(__('Registered Event Report'));
+        $resultPage->getConfig()->getTitle()->prepend(__('Registered Events'));
         return $resultPage;
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Model\Service;
 
-use Exception;
+use Throwable;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Filesystem\Directory\WriteFactory;
 use Magento\Framework\Filesystem\Directory\Write;
@@ -25,7 +25,7 @@ class File
      * @param DirectoryList $directoryList
      * @param WriteFactory $write
      *
-     * @throws Exception
+     * @throws Throwable
      */
     public function __construct(
         DirectoryList $directoryList,
@@ -38,7 +38,7 @@ class File
     /**
      * @return string
      *
-     * @throws Exception
+     * @throws Throwable
      */
     private function getOutputFolder()
     {
@@ -50,7 +50,7 @@ class File
      *
      * @return string
      *
-     * @throws Exception
+     * @throws Throwable
      */
     public function getFilePath(string $filename)
     {
@@ -62,7 +62,7 @@ class File
      *
      * @return bool
      *
-     * @throws Exception
+     * @throws Throwable
      */
     public function deleteFile(string $filePath)
     {
@@ -73,7 +73,7 @@ class File
      * @param string $file
      * @param array $data
      *
-     * @throws Exception
+     * @throws Throwable
      */
     public function outputCSV($file, $data)
     {
@@ -131,7 +131,7 @@ class File
                 );
                 $this->write->getDriver()->fileClose($handle);
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $contents = $e->getMessage() . ' : File Name - ' . $filename;
         }
 

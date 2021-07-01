@@ -116,7 +116,6 @@ class Cart extends Action
 
             $this->resultRaw
                 ->setHeader('Content-Type', 'text/html; charset=UTF-8', true)
-                ->setHeader('Apsis-Content-Length', strlen($html) , true)
                 ->setContents($html);
 
             return $this->sendResponse($this->resultRaw, 200);
@@ -136,7 +135,6 @@ class Cart extends Action
         try {
             $resultJson = $this->resultJsonFactory
                 ->create()
-                ->setHeader('Apsis-Content-Length', strlen($cart->getCartData()) , true)
                 ->setJsonData('[' . $cart->getCartData() . ']');
             return $this->sendResponse($resultJson, 200);
         } catch (Throwable $e) {

@@ -16,6 +16,8 @@ use Magento\Framework\DataObject;
 
 class Cart extends Action
 {
+    const VALID_HTTP_METHODS = ['GET', 'HEAD'];
+
     /**
      * @var JsonFactory
      */
@@ -64,7 +66,7 @@ class Cart extends Action
     public function execute()
     {
         //Validate http method against allowed one.
-        if ('GET' !== $_SERVER['REQUEST_METHOD']) {
+        if (! in_array($_SERVER['REQUEST_METHOD'], self::VALID_HTTP_METHODS)) {
             return $this->sendResponse($this->resultRaw, 405);
         }
 
@@ -113,7 +115,8 @@ class Cart extends Action
                 ->toHtml();
 
             $this->resultRaw
-                ->setHeader('Content-type', 'text/html; charset=UTF-8', true)
+                ->setHeader('Content-Type', 'text/html; charset=UTF-8', true)
+                ->setHeader('Apsis-Content-Length', strlen($html) , true)
                 ->setContents($html);
 
             return $this->sendResponse($this->resultRaw, 200);
@@ -133,6 +136,7 @@ class Cart extends Action
         try {
             $resultJson = $this->resultJsonFactory
                 ->create()
+                ->setHeader('Apsis-Content-Length', strlen($cart->getCartData()) , true)
                 ->setJsonData('[' . $cart->getCartData() . ']');
             return $this->sendResponse($resultJson, 200);
         } catch (Throwable $e) {

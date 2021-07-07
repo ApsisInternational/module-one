@@ -17,6 +17,7 @@ use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ResourceInterface;
+use Magento\Framework\UrlInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
@@ -1053,5 +1054,37 @@ class Core extends ApsisLogHelper
         $isInheritSecret = isset($groups['oauth']['fields']['secret']['inherit']);
 
         return $isInheritId || $isInheritSecret;
+    }
+
+    /**
+     * @param int $storeId
+     *
+     * @return bool
+     */
+    public function isFrontUrlSecure(int $storeId)
+    {
+        try {
+            $store = $this->getStore($storeId);
+            return $store ? $store->isFrontUrlSecure() : false;
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return false;
+        }
+    }
+
+    /**
+     * @param int $storeId
+     *
+     * @return string
+     */
+    public function getBaseUrl(int $storeId)
+    {
+        try {
+            $store = $this->getStore($storeId);
+            return $store ? $store->getBaseUrl(UrlInterface::URL_TYPE_LINK, $this->isFrontUrlSecure($storeId)) : '';
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return '';
+        }
     }
 }

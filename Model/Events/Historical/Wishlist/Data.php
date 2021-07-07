@@ -25,11 +25,6 @@ class Data extends EventData implements EventDataInterface
     private $wishlistItem;
 
     /**
-     * @var Product
-     */
-    private $product;
-
-    /**
      * @param Wishlist $wishlist
      * @param StoreInterface $store
      * @param WishlistItem $item
@@ -46,14 +41,11 @@ class Data extends EventData implements EventDataInterface
         ApsisCoreHelper $apsisCoreHelper
     ) {
         try {
-            if (! $product->getId()) {
-                return [];
-            }
-
+            $this->apsisCoreHelper = $apsisCoreHelper;
             $this->store = $store;
             $this->wishlistItem = $item;
-            $this->product = $product;
-            return $this->getProcessedDataArr($wishlist, $apsisCoreHelper);
+            $this->fetchProduct($product);
+            return $this->getProcessedDataArr($wishlist);
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
@@ -63,7 +55,7 @@ class Data extends EventData implements EventDataInterface
     /**
      * @inheritdoc
      */
-    public function getProcessedDataArr(AbstractModel $model, ApsisCoreHelper $apsisCoreHelper)
+    protected function getProcessedDataArr(AbstractModel $model)
     {
         try {
             return [
@@ -71,19 +63,19 @@ class Data extends EventData implements EventDataInterface
                 'wishlistItemId' => (int)$this->wishlistItem->getId(),
                 'wishlistName' => (string)$model->getName(),
                 'customerId' => (int)$model->getCustomerId(),
-                'websiteName' => (string)$apsisCoreHelper->getWebsiteNameFromStoreId($this->store->getId()),
-                'storeName' => (string)$apsisCoreHelper->getStoreNameFromId($this->store->getId()),
-                'productId' => (int)$this->product->getId(),
-                'sku' => (string)$this->product->getSku(),
-                'name' => (string)$this->product->getName(),
-                'productUrl' => (string)$this->product->getProductUrl(),
-                'productImageUrl' => (string)$this->productServiceProvider->getProductImageUrl($this->product),
-                'catalogPriceAmount' => $apsisCoreHelper->round($this->product->getPrice()),
+                'websiteName' => (string)$this->apsisCoreHelper->getWebsiteNameFromStoreId($this->store->getId()),
+                'storeName' => (string)$this->apsisCoreHelper->getStoreNameFromId($this->store->getId()),
+                'productId' => (int)$this->wishlistItem->getProductId(),
+                'sku' => $this->isProductSet()? (string) $this->product->getSku() : '',
+                'name' => $this->isProductSet()? (string) $this->product->getName() : '',
+                'productUrl' => (string)$this->getProductUrl($this->store->getId()),
+                'productImageUrl' => (string)$this->getProductImageUrl($this->store->getId()),
+                'catalogPriceAmount' => (float)$this->apsisCoreHelper->round($this->product->getPrice()),
                 'qty' => (float)$this->wishlistItem->getQty(),
                 'currencyCode' => (string)$this->store->getCurrentCurrencyCode(),
             ];
         } catch (Throwable $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e);
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
     }

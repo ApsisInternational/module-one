@@ -105,7 +105,7 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
                 foreach ($items as $item) {
                     try {
                         if (isset($profileCollectionArray[$quote->getCustomerId()]) &&
-                            ! empty($eventData = $this->eventData->getDataArr($quote, $item, $apsisCoreHelper))
+                            ! empty($eventData = $this->eventData->getDataArr($quote, $item, $apsisCoreHelper, true))
                         ) {
                             $eventDataForEvent = $this->getEventData(
                                 $quote->getStoreId(),

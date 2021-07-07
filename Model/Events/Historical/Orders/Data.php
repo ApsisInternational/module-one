@@ -7,7 +7,6 @@ use Apsis\One\Model\Events\Historical\EventDataInterface;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Sales\Model\Order;
-use Magento\Sales\Model\Order\Item;
 use Throwable;
 
 class Data extends EventData implements EventDataInterface
@@ -27,8 +26,9 @@ class Data extends EventData implements EventDataInterface
     public function getDataArr(Order $order, ApsisCoreHelper $apsisCoreHelper, int $subscriberId = 0)
     {
         try {
+            $this->apsisCoreHelper = $apsisCoreHelper;
             $this->subscriberId = $subscriberId;
-            return $this->getProcessedDataArr($order, $apsisCoreHelper);
+            return $this->getProcessedDataArr($order);
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
@@ -38,27 +38,26 @@ class Data extends EventData implements EventDataInterface
     /**
      * @inheritdoc
      */
-    public function getProcessedDataArr(AbstractModel $model, ApsisCoreHelper $apsisCoreHelper)
+    protected function getProcessedDataArr(AbstractModel $model)
     {
         try {
             $items = [];
             foreach ($model->getAllVisibleItems() as $item) {
                 try {
-                    $product = $item->getProduct();
+                    $this->fetchProduct($item);
                     $items [] = [
                         'orderId' => (int) $model->getEntityId(),
                         'productId' => (int) $item->getProductId(),
                         'sku' => (string) $item->getSku(),
                         'name' => (string) $item->getName(),
-                        'productUrl' => ($product && $product->getId())? (string) $product->getProductUrl() : '',
-                        'productImageUrl' => ($product && $product->getId())?
-                            (string) $this->productServiceProvider->getProductImageUrl($product) : '',
-                        'qtyOrdered' => $apsisCoreHelper->round($item->getQtyOrdered()),
-                        'priceAmount' => $apsisCoreHelper->round($item->getPrice()),
-                        'rowTotalAmount' => $apsisCoreHelper->round($item->getRowTotal()),
+                        'productUrl' => (string) $this->getProductUrl($model->getStoreId()),
+                        'productImageUrl' => (string) $this->getProductImageUrl($model->getStoreId()),
+                        'qtyOrdered' => (float) $this->apsisCoreHelper->round($item->getQtyOrdered()),
+                        'priceAmount' => (float) $this->apsisCoreHelper->round($item->getPrice()),
+                        'rowTotalAmount' => (float) $this->apsisCoreHelper->round($item->getRowTotal()),
                     ];
                 } catch (Throwable $e) {
-                    $apsisCoreHelper->logError(__METHOD__, $e);
+                    $this->apsisCoreHelper->logError(__METHOD__, $e);
                     continue;
                 }
             }
@@ -71,9 +70,9 @@ class Data extends EventData implements EventDataInterface
                 'isGuest' => (boolean) $model->getCustomerIsGuest(),
                 'websiteName' => (string) $model->getStore()->getWebsite()->getName(),
                 'storeName' => (string) $model->getStore()->getName(),
-                'grandTotalAmount' => $apsisCoreHelper->round($model->getGrandTotal()),
-                'shippingAmount' => $apsisCoreHelper->round($model->getShippingAmount()),
-                'discountAmount' => $apsisCoreHelper->round($model->getDiscountAmount()),
+                'grandTotalAmount' => $this->apsisCoreHelper->round($model->getGrandTotal()),
+                'shippingAmount' => $this->apsisCoreHelper->round($model->getShippingAmount()),
+                'discountAmount' => $this->apsisCoreHelper->round($model->getDiscountAmount()),
                 'shippingMethodName' => (string) $model->getShippingDescription(),
                 'paymentMethodName' => (string) $model->getPayment()->getMethod(),
                 'itemsCount' => (int) $model->getTotalItemCount(),
@@ -81,7 +80,7 @@ class Data extends EventData implements EventDataInterface
                 'items' => $items
             ];
         } catch (Throwable $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e);
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
     }

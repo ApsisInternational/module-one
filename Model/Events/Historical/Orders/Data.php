@@ -5,6 +5,7 @@ namespace Apsis\One\Model\Events\Historical\Orders;
 use Apsis\One\Model\Events\Historical\EventData;
 use Apsis\One\Model\Events\Historical\EventDataInterface;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Magento\Catalog\Model\Product;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Sales\Model\Order;
 use Throwable;
@@ -44,7 +45,16 @@ class Data extends EventData implements EventDataInterface
             $items = [];
             foreach ($model->getAllVisibleItems() as $item) {
                 try {
-                    $this->fetchProduct($item);
+                    if ($item->getProductId()) {
+                        $product = $this->loadProduct($item->getProductId(), $model->getStoreId());
+                    }
+
+                    if (isset($product) && $product instanceof Product) {
+                        $this->fetchProduct($product);
+                    } else {
+                        $this->fetchProduct($item);
+                    }
+
                     $items [] = [
                         'orderId' => (int) $model->getEntityId(),
                         'productId' => (int) $item->getProductId(),

@@ -354,7 +354,7 @@ class Events implements SyncInterface
      */
     private function getEventArr(Event $event)
     {
-        $isSecure = $this->apsisCoreHelper->isSecureUrl($event->getStoreId());
+        $isSecure = $this->apsisCoreHelper->isFrontUrlSecure($event->getStoreId());
         $eventData = [];
         $createdAt = (string) $this->apsisDateHelper->formatDateForPlatformCompatibility(
             $event->getCreatedAt(),

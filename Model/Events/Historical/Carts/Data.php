@@ -37,16 +37,15 @@ class Data extends EventData implements EventDataInterface
      * @param Quote $cart
      * @param Item $item
      * @param ApsisCoreHelper $apsisCoreHelper
-     * @param bool $isCron
      *
      * @return array
      */
-    public function getDataArr(Quote $cart, Item $item, ApsisCoreHelper $apsisCoreHelper, bool $isCron = false)
+    public function getDataArr(Quote $cart, Item $item, ApsisCoreHelper $apsisCoreHelper)
     {
         try {
             $this->cartItem = $item;
 
-            if ($isCron && $item->getProductId()) {
+            if ($item->getProductId()) {
                 $product = $this->loadProduct($item->getProductId(), $cart->getStoreId());
             }
 

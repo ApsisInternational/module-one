@@ -354,6 +354,7 @@ class Events implements SyncInterface
      */
     private function getEventArr(Event $event)
     {
+        $isSecure = $this->apsisCoreHelper->isSecureUrl($event->getStoreId());
         $eventData = [];
         $createdAt = (string) $this->apsisDateHelper->formatDateForPlatformCompatibility(
             $event->getCreatedAt(),
@@ -371,7 +372,7 @@ class Events implements SyncInterface
             }
 
             $mainData = (array) $this->apsisCoreHelper->unserialize($event->getEventData());
-            $subData = (array) $this->apsisCoreHelper->unserialize($event->getSubEventData());
+            $subData = (array) $this->apsisCoreHelper->unserialize($this->getData($isSecure, $event->getSubEventData()));
             $eventData[] = [
                 'event_time' => $createdAt,
                 'version_id' => $this->eventsVersionMapping[$typeArray['main']],
@@ -395,11 +396,23 @@ class Events implements SyncInterface
             $eventData[] = [
                 'event_time' => $createdAt,
                 'version_id' => $this->eventsVersionMapping[$this->eventsDiscriminatorMapping[$event->getEventType()]],
-                'data' => (array) $this->apsisCoreHelper->unserialize($event->getEventData()),
+                'data' => (array) $this->apsisCoreHelper->unserialize($this->getData($isSecure, $event->getEventData())),
             ];
         }
 
         return $eventData;
+    }
+
+    /**
+     * @param bool $isSecure
+     * @param string $data
+     *
+     * @return string
+     */
+    private function getData(bool $isSecure, string $data)
+    {
+        $isSecureNeeded = $isSecure && str_contains($data, 'http:');
+        return $isSecureNeeded ? str_replace('http:', 'https:', $data) : $data;
     }
 
     /**

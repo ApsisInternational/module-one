@@ -1065,7 +1065,39 @@ class Core extends ApsisLogHelper
     {
         try {
             $store = $this->getStore($storeId);
-            return $store ? $store->isFrontUrlSecure() : false;
+            return $store instanceof StoreInterface && $store->isFrontUrlSecure();
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return false;
+        }
+    }
+
+    /**
+     * @param int $storeId
+     *
+     * @return bool
+     */
+    public function isCurrentlySecure(int $storeId)
+    {
+        try {
+            $store = $this->getStore($storeId);
+            return $store instanceof StoreInterface && $store->isCurrentlySecure();
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return false;
+        }
+    }
+
+    /**
+     * @param int $storeId
+     *
+     * @return bool
+     */
+    public function isSecureUrl(int $storeId)
+    {
+        try {
+            $store = $this->getStore($storeId);
+            return $store instanceof StoreInterface && $store->isCurrentlySecure() && $store->isFrontUrlSecure();
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return false;

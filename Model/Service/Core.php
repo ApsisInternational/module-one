@@ -16,6 +16,7 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
+use Magento\Framework\Module\ModuleListInterface;
 use Magento\Framework\Module\ResourceInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Store\Api\Data\StoreInterface;
@@ -96,6 +97,7 @@ class Core extends ApsisLogHelper
      * @param ApsisDateHelper $apsisDateHelper
      * @param RequestInterface $request
      * @param ResourceInterface $moduleResource
+     * @param ModuleListInterface $moduleList
      */
     public function __construct(
         Logger $logger,
@@ -107,7 +109,8 @@ class Core extends ApsisLogHelper
         DataCollectionFactory $dataCollectionFactory,
         ApsisDateHelper $apsisDateHelper,
         RequestInterface $request,
-        ResourceInterface $moduleResource
+        ResourceInterface $moduleResource,
+        ModuleListInterface $moduleList
     ) {
         $this->request = $request;
         $this->apsisDateHelper = $apsisDateHelper;
@@ -116,7 +119,7 @@ class Core extends ApsisLogHelper
         $this->writer = $writer;
         $this->encryptor = $encryptor;
         $this->storeManager = $storeManager;
-        parent::__construct($logger, $scopeConfig, $moduleResource);
+        parent::__construct($logger, $scopeConfig, $moduleResource, $moduleList);
     }
 
     /**

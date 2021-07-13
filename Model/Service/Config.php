@@ -9,8 +9,6 @@ use Magento\Store\Model\ScopeInterface;
 
 class Config
 {
-    const MODULE_VERSION = '2.0.1';
-
     const CONFIG_PATHS_SECURE = [
         self::ACCOUNTS_OAUTH_ID,
         self::ACCOUNTS_OAUTH_SECRET,

@@ -5,6 +5,7 @@ namespace Apsis\One\Model\Events\Historical\Reviews;
 use Apsis\One\Model\Events\Historical\EventData;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Product as ProductServiceProvider;
+use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product as MagentoProduct;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Review\Model\Review;
@@ -20,22 +21,19 @@ class Data extends EventData implements EventDataInterface
     private $voteCollectionFactory;
 
     /**
-     * @var MagentoProduct
-     */
-    private $product;
-
-    /**
      * Data constructor.
      *
      * @param ProductServiceProvider $productServiceProvider
+     * @param ProductRepositoryInterface $productRepository
      * @param VoteCollectionFactory $voteCollectionFactory
      */
     public function __construct(
         ProductServiceProvider $productServiceProvider,
+        ProductRepositoryInterface $productRepository,
         VoteCollectionFactory $voteCollectionFactory
     ) {
         $this->voteCollectionFactory = $voteCollectionFactory;
-        parent::__construct($productServiceProvider);
+        parent::__construct($productServiceProvider, $productRepository);
     }
 
     /**
@@ -48,12 +46,9 @@ class Data extends EventData implements EventDataInterface
     public function getDataArr(Review $reviewObject, MagentoProduct $product, ApsisCoreHelper $apsisCoreHelper)
     {
         try {
-            if (! $product->getId()) {
-                return [];
-            }
-
-            $this->product = $product;
-            return $this->getProcessedDataArr($reviewObject, $apsisCoreHelper);
+            $this->apsisCoreHelper = $apsisCoreHelper;
+            $this->fetchProduct($product);
+            return $this->getProcessedDataArr($reviewObject);
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
@@ -63,30 +58,31 @@ class Data extends EventData implements EventDataInterface
     /**
      * @inheritdoc
      */
-    public function getProcessedDataArr(AbstractModel $model, ApsisCoreHelper $apsisCoreHelper)
+    protected function getProcessedDataArr(AbstractModel $model)
     {
         try {
             $voteCollection = $this->voteCollectionFactory->create()->setReviewFilter($model->getReviewId());
             return [
                 'reviewId' => (int) $model->getReviewId(),
                 'customerId' => (int) $model->getCustomerId(),
-                'websiteName' => (string) $apsisCoreHelper->getWebsiteNameFromStoreId($model->getStoreId()),
-                'storeName' => (string) $apsisCoreHelper->getStoreNameFromId($model->getStoreId()),
+                'websiteName' => (string) $this->apsisCoreHelper->getWebsiteNameFromStoreId($model->getStoreId()),
+                'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($model->getStoreId()),
                 'nickname' => (string) $model->getNickname(),
                 'reviewTitle' => (string) $model->getTitle(),
                 'reviewDetail' => (string) $model->getDetail(),
-                'productId' => (int) $this->product->getId(),
-                'sku' => (string) $this->product->getSku(),
-                'name' => (string) $this->product->getName(),
-                'productUrl' => (string) $this->product->getProductUrl(),
-                'productReviewUrl' => (string) $model->getReviewUrl(),
-                'productImageUrl' => (string) $this->productServiceProvider->getProductImageUrl($this->product),
-                'catalogPriceAmount' => $apsisCoreHelper->round($this->product->getPrice()),
+                'productId' => $this->isProductSet() ? (int) $this->product->getId() : 0,
+                'sku' => $this->isProductSet() ? (string) $this->product->getSku() : '',
+                'name' => $this->isProductSet() ? (string) $this->product->getName() : '',
+                'productUrl' => (string) $this->getProductUrl($model->getStoreId()),
+                'productReviewUrl' => (string) $this->getProductReviewUrl($model->getStoreId()),
+                'productImageUrl' => (string) $this->getProductImageUrl($model->getStoreId()),
+                'catalogPriceAmount' => $this->isProductSet() ?
+                    (float) $this->apsisCoreHelper->round($this->product->getPrice()) : 0.00,
                 'ratingStarValue' => ($voteCollection->getSize()) ?
                     (int) $voteCollection->getFirstItem()->getValue() : 0
             ];
         } catch (Throwable $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e);
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
     }

@@ -2,7 +2,11 @@
 
 namespace Apsis\One\Model\Cart;
 
+use Apsis\One\Model\Events\Historical\EventData;
 use Apsis\One\Model\Service\Product as ProductServiceProvider;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product;
+use Magento\Framework\Model\AbstractModel;
 use Throwable;
 use Magento\Framework\App\Area;
 use Magento\Quote\Model\Quote\Item;
@@ -13,13 +17,8 @@ use Magento\Quote\Model\Quote\Address;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 
-class Content
+class Content extends EventData
 {
-    /**
-     * @var ProductServiceProvider
-     */
-    private $productServiceProvider;
-
     /**
      * @var EmulationFactory
      */
@@ -29,11 +28,6 @@ class Content
      * @var CartTotalRepositoryInterface
      */
     private $cartTotalRepository;
-
-    /**
-     * @var ApsisCoreHelper
-     */
-    private $apsisCoreHelper;
 
     /**
      * @var ApsisDateHelper
@@ -47,13 +41,16 @@ class Content
      * @param CartTotalRepositoryInterface $cartTotalRepository
      * @param ApsisDateHelper $apsisDateHelper
      * @param ProductServiceProvider $productServiceProvider
+     * @param ProductRepositoryInterface $productRepository
      */
     public function __construct(
         EmulationFactory $emulationFactory,
         CartTotalRepositoryInterface $cartTotalRepository,
         ApsisDateHelper $apsisDateHelper,
-        ProductServiceProvider $productServiceProvider
+        ProductServiceProvider $productServiceProvider,
+        ProductRepositoryInterface $productRepository
     ) {
+        parent::__construct($productServiceProvider, $productRepository);
         $this->productServiceProvider = $productServiceProvider;
         $this->apsisDateHelper = $apsisDateHelper;
         $this->cartTotalRepository = $cartTotalRepository;
@@ -74,10 +71,28 @@ class Content
 
         try {
             $appEmulation->startEnvironmentEmulation($quoteModel->getStoreId(), Area::AREA_FRONTEND, true);
-            $cartData = $this->getMainCartData($quoteModel);
-            $cartData['items'] = $this->getItemData($quoteModel->getAllVisibleItems());
+            $cartData = $this->getProcessedDataArr($quoteModel);
+            $appEmulation->stopEnvironmentEmulation();
         } catch (Throwable $e) {
             $appEmulation->stopEnvironmentEmulation();
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
+        }
+
+        return $cartData;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function getProcessedDataArr(AbstractModel $model)
+    {
+        $cartData = [];
+
+        try {
+            /** @var Quote $model */
+            $cartData = $this->getMainCartData($model);
+            $cartData['items'] = $this->getItemData($model->getAllVisibleItems());
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 
@@ -122,13 +137,13 @@ class Content
                     ->formatDateForPlatformCompatibility($quoteModel->getUpdatedAt()),
                 'store_name' => (string) $quoteModel->getStore()->getName(),
                 'website_name' => (string) $quoteModel->getStore()->getWebsite()->getName(),
-                'subtotal_amount' => $this->apsisCoreHelper->round($totals->getSubtotal()),
-                'grand_total_amount' => $this->apsisCoreHelper->round($quoteModel->getGrandTotal()),
-                'tax_amount' => $this->apsisCoreHelper->round($totals->getTaxAmount()),
-                'shipping_amount' => $this->apsisCoreHelper->round($totals->getShippingAmount()),
-                'discount_amount' => $this->apsisCoreHelper->round($totals->getDiscountAmount()),
-                'items_quantity' => $this->apsisCoreHelper->round($totals->getItemsQty()),
-                'items_count' => $this->apsisCoreHelper->round($quoteModel->getItemsCount()),
+                'subtotal_amount' => (float) $this->apsisCoreHelper->round($totals->getSubtotal()),
+                'grand_total_amount' => (float) $this->apsisCoreHelper->round($quoteModel->getGrandTotal()),
+                'tax_amount' => (float) $this->apsisCoreHelper->round($totals->getTaxAmount()),
+                'shipping_amount' => (float) $this->apsisCoreHelper->round($totals->getShippingAmount()),
+                'discount_amount' => (float) $this->apsisCoreHelper->round($totals->getDiscountAmount()),
+                'items_quantity' => (float) $this->apsisCoreHelper->round($totals->getItemsQty()),
+                'items_count' => (float) $this->apsisCoreHelper->round($quoteModel->getItemsCount()),
                 'payment_method_title' => (string) $quoteModel->getPayment()->getMethod(),
                 'shipping_method_title' => (string) $quoteModel->getShippingAddress()->getShippingDescription(),
                 'currency_code' => (string) $totals->getQuoteCurrencyCode(),
@@ -203,33 +218,49 @@ class Content
      */
     private function getItemsData(Item $quoteItem)
     {
-        $product = $quoteItem->getProduct();
-        return [
-            'product_id' => (int) $quoteItem->getProductId(),
-            'sku' => (string) $quoteItem->getSku(),
-            'name' => (string) $quoteItem->getName(),
-            'product_url' => (string) $product->getProductUrl(),
-            'product_image_url' => (string) $this->productServiceProvider->getProductImageUrl($product),
-            'qty_ordered' => (float) $quoteItem->getQty() ? $quoteItem->getQty() :
-                ($quoteItem->getQtyOrdered() ? $quoteItem->getQtyOrdered() : 1),
-            'price_amount' => $this->apsisCoreHelper->round($quoteItem->getPrice()),
-            'row_total_amount' => $this->apsisCoreHelper->round($quoteItem->getRowTotal()),
-            'tax_amount' => $this->apsisCoreHelper->round($quoteItem->getTaxAmount()),
-            'discount_amount' => $this->apsisCoreHelper->round($quoteItem->getTotalDiscountAmount()),
-            'product_options' => $this->getProductOptions($quoteItem)
-        ];
+        try {
+            if ($quoteItem->getProductId()) {
+                $product = $this->loadProduct($quoteItem->getProductId(), $quoteItem->getStoreId());
+            }
+
+            if (isset($product) && $product instanceof Product) {
+                $this->fetchProduct($product);
+            } else {
+                $this->fetchProduct($quoteItem);
+            }
+
+            return [
+                'product_id' => (int) $quoteItem->getProductId(),
+                'sku' => (string) $quoteItem->getSku(),
+                'name' => (string) $quoteItem->getName(),
+                'product_url' => (string) $this->getProductUrl($quoteItem->getStoreId()),
+                'product_image_url' => (string) $this->getProductImageUrl($quoteItem->getStoreId()),
+                'qty_ordered' => $quoteItem->getQty() ? (float) $quoteItem->getQty() :
+                    ($quoteItem->getQtyOrdered() ? (float) $quoteItem->getQtyOrdered() : 1),
+                'price_amount' => (float) $this->apsisCoreHelper->round($quoteItem->getPrice()),
+                'row_total_amount' => (float) $this->apsisCoreHelper->round($quoteItem->getRowTotal()),
+                'tax_amount' => (float) $this->apsisCoreHelper->round($quoteItem->getTaxAmount()),
+                'discount_amount' => (float) $this->apsisCoreHelper->round($quoteItem->getTotalDiscountAmount()),
+                'product_options' => $this->getProductOptions()
+            ];
+        } catch (Throwable $e) {
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            return [];
+        }
     }
 
     /**
-     * @param Item $item
-     *
      * @return array
      */
-    private function getProductOptions(Item $item)
+    private function getProductOptions()
     {
         $sortedOptions = [];
         try {
-            $options = $item->getProduct()->getTypeInstance()->getOrderOptions($item->getProduct());
+            if (! $this->product instanceof Product) {
+                return $sortedOptions;
+            }
+
+            $options = $this->product->getTypeInstance()->getOrderOptions($this->product);
 
             if (isset($options['attributes_info']) || isset($options['options'])) {
                 $optionAttributes = [];

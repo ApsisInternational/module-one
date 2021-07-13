@@ -16,7 +16,9 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
+use Magento\Framework\Module\ModuleListInterface;
 use Magento\Framework\Module\ResourceInterface;
+use Magento\Framework\UrlInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
@@ -95,6 +97,7 @@ class Core extends ApsisLogHelper
      * @param ApsisDateHelper $apsisDateHelper
      * @param RequestInterface $request
      * @param ResourceInterface $moduleResource
+     * @param ModuleListInterface $moduleList
      */
     public function __construct(
         Logger $logger,
@@ -106,7 +109,8 @@ class Core extends ApsisLogHelper
         DataCollectionFactory $dataCollectionFactory,
         ApsisDateHelper $apsisDateHelper,
         RequestInterface $request,
-        ResourceInterface $moduleResource
+        ResourceInterface $moduleResource,
+        ModuleListInterface $moduleList
     ) {
         $this->request = $request;
         $this->apsisDateHelper = $apsisDateHelper;
@@ -115,7 +119,7 @@ class Core extends ApsisLogHelper
         $this->writer = $writer;
         $this->encryptor = $encryptor;
         $this->storeManager = $storeManager;
-        parent::__construct($logger, $scopeConfig, $moduleResource);
+        parent::__construct($logger, $scopeConfig, $moduleResource, $moduleList);
     }
 
     /**
@@ -1053,5 +1057,69 @@ class Core extends ApsisLogHelper
         $isInheritSecret = isset($groups['oauth']['fields']['secret']['inherit']);
 
         return $isInheritId || $isInheritSecret;
+    }
+
+    /**
+     * @param int $storeId
+     *
+     * @return bool
+     */
+    public function isFrontUrlSecure(int $storeId)
+    {
+        try {
+            $store = $this->getStore($storeId);
+            return $store instanceof StoreInterface && $store->isFrontUrlSecure();
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return false;
+        }
+    }
+
+    /**
+     * @param int $storeId
+     *
+     * @return bool
+     */
+    public function isCurrentlySecure(int $storeId)
+    {
+        try {
+            $store = $this->getStore($storeId);
+            return $store instanceof StoreInterface && $store->isCurrentlySecure();
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return false;
+        }
+    }
+
+    /**
+     * @param int $storeId
+     *
+     * @return bool
+     */
+    public function isSecureUrl(int $storeId)
+    {
+        try {
+            $store = $this->getStore($storeId);
+            return $store instanceof StoreInterface && $store->isCurrentlySecure() && $store->isFrontUrlSecure();
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return false;
+        }
+    }
+
+    /**
+     * @param int $storeId
+     *
+     * @return string
+     */
+    public function getBaseUrl(int $storeId)
+    {
+        try {
+            $store = $this->getStore($storeId);
+            return $store ? $store->getBaseUrl(UrlInterface::URL_TYPE_LINK, $this->isFrontUrlSecure($storeId)) : '';
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return '';
+        }
     }
 }

@@ -3,12 +3,15 @@
 namespace Apsis\One\Model\Service;
 
 use Apsis\One\Logger\Logger;
+use Magento\Framework\Module\ModuleListInterface;
 use Throwable;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Module\ResourceInterface;
 
 class Log
 {
+    const MODULE_NAME = 'Apsis_One';
+
     /**
      * @var ScopeConfigInterface
      */
@@ -25,14 +28,25 @@ class Log
     private $moduleResource;
 
     /**
+     * @var ModuleListInterface
+     */
+    private $moduleList;
+
+    /**
      * Log constructor.
      *
      * @param Logger $logger
      * @param ScopeConfigInterface $scopeConfig
      * @param ResourceInterface $moduleResource
+     * @param ModuleListInterface $moduleList
      */
-    public function __construct(Logger $logger, ScopeConfigInterface $scopeConfig, ResourceInterface $moduleResource)
-    {
+    public function __construct(
+        Logger $logger,
+        ScopeConfigInterface $scopeConfig,
+        ResourceInterface $moduleResource,
+        ModuleListInterface $moduleList
+    ) {
+        $this->moduleList = $moduleList;
         $this->logger = $logger;
         $this->scopeConfig = $scopeConfig;
         $this->moduleResource = $moduleResource;
@@ -99,9 +113,7 @@ class Log
      */
     private function addModuleVersionToMessage(string $message)
     {
-        $version = $this->moduleResource->getDbVersion('Apsis_One');
-        $version = ($version) ?: Config::MODULE_VERSION;
-        return '(Module v' . $version . ') ' . $message;
+        return '(Module v' . $this->getCurrentVersion() . ') ' . $message;
     }
 
     /**
@@ -140,6 +152,32 @@ class Log
      */
     public function cleanCache()
     {
-        $this->scopeConfig->clean();
+        try {
+            $this->scopeConfig->clean();
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
+     * @return string
+     */
+    public function getCurrentVersion()
+    {
+        try {
+            $version = (string) $this->moduleResource->getDbVersion('Apsis_One');
+            if (strlen($version)) {
+                return $version;
+            }
+
+            $moduleInfo = $this->moduleList->getOne(self::MODULE_NAME);
+            if (is_array($moduleInfo) && ! empty($moduleInfo['setup_version'])) {
+                return (string) $moduleInfo['setup_version'];
+            }
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+        }
+
+        return 'unknown';
     }
 }

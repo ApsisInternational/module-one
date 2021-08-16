@@ -62,8 +62,9 @@ class InstallSchema implements InstallSchemaInterface
         try {
             $this->logHelper->log(__METHOD__);
 
-            $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_ABANDONED_TABLE);
-            $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
+            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
+            $this->dropTableIfExists($installer, $tableName);
+            $table = $installer->getConnection()->newTable($tableName);
 
             if ($table) {
                 $table = $this->addColumnsToApsisAbandonedTable($table);
@@ -199,7 +200,7 @@ class InstallSchema implements InstallSchemaInterface
         try {
             return $table->addForeignKey(
                 $installer->getFkName(
-                    ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+                    $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE),
                     'store_id',
                     $installer->getTable('store'),
                     'store_id'
@@ -210,7 +211,7 @@ class InstallSchema implements InstallSchemaInterface
                 Table::ACTION_CASCADE
             )->addForeignKey(
                 $installer->getFkName(
-                    ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+                    $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE),
                     'customer_id',
                     $installer->getTable('customer_entity'),
                     'entity_id'
@@ -221,7 +222,7 @@ class InstallSchema implements InstallSchemaInterface
                 Table::ACTION_CASCADE
             )->addForeignKey(
                 $installer->getFkName(
-                    ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+                    $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE),
                     'quote_id',
                     $installer->getTable('quote'),
                     'entity_id'
@@ -232,7 +233,7 @@ class InstallSchema implements InstallSchemaInterface
                 Table::ACTION_CASCADE
             )->addForeignKey(
                 $installer->getFkName(
-                    ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+                    $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE),
                     'profile_id',
                     $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
                     'id'
@@ -256,8 +257,9 @@ class InstallSchema implements InstallSchemaInterface
         try {
             $this->logHelper->log(__METHOD__);
 
-            $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_EVENT_TABLE);
-            $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_EVENT_TABLE);
+            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE);
+            $this->dropTableIfExists($installer, $tableName);
+            $table = $installer->getConnection()->newTable($tableName);
 
             if ($table) {
                 $table = $this->addColumnsToApsisEventTable($table);
@@ -425,7 +427,7 @@ class InstallSchema implements InstallSchemaInterface
         try {
             return $table->addForeignKey(
                 $installer->getFkName(
-                    ApsisCoreHelper::APSIS_EVENT_TABLE,
+                    $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE),
                     'store_id',
                     $installer->getTable('store'),
                     'store_id'
@@ -436,7 +438,7 @@ class InstallSchema implements InstallSchemaInterface
                 Table::ACTION_CASCADE
             )->addForeignKey(
                 $installer->getFkName(
-                    ApsisCoreHelper::APSIS_EVENT_TABLE,
+                    $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE),
                     'profile_id',
                     $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
                     'id'
@@ -460,8 +462,9 @@ class InstallSchema implements InstallSchemaInterface
         try {
             $this->logHelper->log(__METHOD__);
 
-            $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE);
-            $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE);
+            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE);
+            $this->dropTableIfExists($installer, $tableName);
+            $table = $installer->getConnection()->newTable($tableName);
 
             if ($table) {
                 $table = $this->addColumnsToApsisProfileBatchTable($table);
@@ -610,7 +613,7 @@ class InstallSchema implements InstallSchemaInterface
         try {
             return $table->addForeignKey(
                 $installer->getFkName(
-                    ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE,
+                    $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE),
                     'store_id',
                     $installer->getTable('store'),
                     'store_id'
@@ -634,8 +637,9 @@ class InstallSchema implements InstallSchemaInterface
         try {
             $this->logHelper->log(__METHOD__);
 
-            $this->dropTableIfExists($installer, ApsisCoreHelper::APSIS_PROFILE_TABLE);
-            $table = $installer->getConnection()->newTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
+            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
+            $this->dropTableIfExists($installer, $tableName);
+            $table = $installer->getConnection()->newTable($tableName);
 
             if ($table) {
                 $table = $this->addColumnsToApsisProfileTable($table);

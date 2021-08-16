@@ -217,7 +217,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $setup->getConnection()->dropForeignKey(
                 $setup->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE),
                 $setup->getFkName(
-                    ApsisCoreHelper::APSIS_ABANDONED_TABLE,
+                    $setup->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE),
                     'customer_id',
                     $setup->getTable('customer_entity'),
                     'entity_id'

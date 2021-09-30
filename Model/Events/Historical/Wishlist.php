@@ -16,7 +16,7 @@ use Magento\Wishlist\Model\ResourceModel\Item\CollectionFactory as WishlistItemC
 use Magento\Wishlist\Model\ResourceModel\Wishlist\CollectionFactory as WishlistCollectionFactory;
 use Magento\Wishlist\Model\Item as MagentoWishlistItem;
 
-class Wishlist extends HistoricalEvent implements EventHistoryInterface
+class Wishlist extends HistoricalEvent
 {
     /**
      * @var WishlistItemCollectionFactory
@@ -74,10 +74,10 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
                 return;
             }
 
-            $wishlistItemCollection = $this->getWishlistItemCollection(
-                $store->getId(),
+            $wishlistItemCollection = $this->getCollectionArray(
                 array_keys($wishlistArrayCollection),
                 $duration,
+                $store,
                 $apsisCoreHelper
             );
             if (empty($wishlistItemCollection)) {
@@ -114,44 +114,46 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
      */
     private function getWishlistCollection(array $customerIds, ApsisCoreHelper $apsisCoreHelper)
     {
-        $wishlistCollectionArray = [];
+        $collectionArray = [];
 
         try {
-            $wishlistCollection = $this->wishlistCollectionFactory
-                ->create()
-                ->filterByCustomerIds($customerIds);
+            foreach (array_chunk($customerIds, self::QUERY_LIMIT) as $customerIdsChunk) {
+                $collection = $this->wishlistCollectionFactory
+                    ->create()
+                    ->filterByCustomerIds($customerIdsChunk);
 
-            if ($wishlistCollection->getSize()) {
-                foreach ($wishlistCollection as $wishlist) {
-                    $wishlistCollectionArray[$wishlist->getId()] =  $wishlist;
+                if ($collection->getSize()) {
+                    foreach ($collection as $item) {
+                        $collectionArray[$item->getId()] =  $item;
+                    }
                 }
             }
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }
 
-        return $wishlistCollectionArray;
+        return $collectionArray;
     }
 
     /**
-     * @param int $storeId
-     * @param array $wishlistIds
-     * @param array $period
      * @param ApsisCoreHelper $apsisCoreHelper
+     * @param StoreInterface $store
+     * @param array $wishlistIds
+     * @param array $duration
      *
      * @return WishlistItemCollection|array
      */
-    private function getWishlistItemCollection(
-        int $storeId,
+    protected function createCollection(
+        ApsisCoreHelper $apsisCoreHelper,
+        StoreInterface $store,
         array $wishlistIds,
-        array $period,
-        ApsisCoreHelper $apsisCoreHelper
+        array $duration
     ) {
         try {
             $collection = $this->wishlistItemCollectionFactory->create()
-                ->addStoreFilter([$storeId])
+                ->addStoreFilter([$store->getId()])
                 ->addFieldToFilter('wishlist_id', ['in' => $wishlistIds])
-                ->addFieldToFilter('added_at', $period)
+                ->addFieldToFilter('added_at', $duration)
                 ->setVisibilityFilter()
                 ->setSalableFilter();
             $collection->getSelect()->group('wishlist_item_id');
@@ -163,7 +165,7 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
     }
 
     /**
-     * @param WishlistItemCollection $wishlistItemCollection
+     * @param array $wishlistItemCollection
      * @param array $wishlistArrayCollection
      * @param array $profileCollectionArray
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -172,7 +174,7 @@ class Wishlist extends HistoricalEvent implements EventHistoryInterface
      * @return array
      */
     private function getEventsToRegister(
-        WishlistItemCollection $wishlistItemCollection,
+        array $wishlistItemCollection,
         array $wishlistArrayCollection,
         array $profileCollectionArray,
         ApsisCoreHelper $apsisCoreHelper,

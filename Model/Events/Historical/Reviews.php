@@ -17,7 +17,7 @@ use Apsis\One\Model\Events\Historical\Reviews\Data as ReviewEventData;
 use Apsis\One\Model\Event;
 use Magento\Review\Model\ReviewFactory;
 
-class Reviews extends HistoricalEvent implements EventHistoryInterface
+class Reviews extends HistoricalEvent
 {
     /**
      * @var ProductReviewCollectionFactory
@@ -75,11 +75,11 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
                 return;
             }
 
-            $reviewCollection = $this->getReviewCollection(
-                $apsisCoreHelper,
-                $store,
+            $reviewCollection = $this->getCollectionArray(
                 array_keys($profileCollectionArray),
-                $duration
+                $duration,
+                $store,
+                $apsisCoreHelper
             );
             if (empty($reviewCollection)) {
                 return;
@@ -88,7 +88,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
             $productCollectionArray = $this->getProductCollectionArray(
                 $store,
                 $apsisCoreHelper,
-                $reviewCollection->getColumnValues('entity_pk_value')
+                $this->getProductIdsFromCollection($reviewCollection, $apsisCoreHelper)
             );
             if (empty($productCollectionArray)) {
                 return;
@@ -117,7 +117,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
 
     /**
      * @param ApsisCoreHelper $apsisCoreHelper
-     * @param ProductReviewCollection $reviewCollection
+     * @param array $reviewCollection
      * @param array $profileCollectionArray
      * @param array $productCollectionArray
      *
@@ -125,7 +125,7 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
      */
     private function getEventsToRegister(
         ApsisCoreHelper $apsisCoreHelper,
-        ProductReviewCollection $reviewCollection,
+        array $reviewCollection,
         array $profileCollectionArray,
         array $productCollectionArray
     ) {
@@ -207,9 +207,9 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
      * @param array $customerIds
      * @param array $duration
      *
-     * @return array|ProductReviewCollection
+     * @return ProductReviewCollection|array
      */
-    private function getReviewCollection(
+    protected function createCollection(
         ApsisCoreHelper $apsisCoreHelper,
         StoreInterface $store,
         array $customerIds,
@@ -226,5 +226,34 @@ class Reviews extends HistoricalEvent implements EventHistoryInterface
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
         }
+    }
+
+    /**
+     * @param array $collection
+     * @param ApsisCoreHelper $apsisCoreHelper
+     *
+     * @return array
+     */
+    private function getProductIdsFromCollection(array $collection, ApsisCoreHelper $apsisCoreHelper)
+    {
+        $productIds = [];
+
+        try {
+            /** @var Review $item */
+            foreach ($collection as $item) {
+                try {
+                    if (! in_array($item->getEntityPkValue(), $productIds)) {
+                        $productIds[] = $item->getEntityPkValue();
+                    }
+                } catch (Throwable $e) {
+                    $apsisCoreHelper->logError(__METHOD__, $e);
+                    continue;
+                }
+            }
+        } catch (Throwable $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
+        }
+
+        return $productIds;
     }
 }

@@ -8,6 +8,8 @@ use Magento\Store\Api\Data\StoreInterface;
 
 interface EventHistoryInterface
 {
+    const QUERY_LIMIT = 500;
+
     /**
      * @param StoreInterface $store
      * @param ApsisCoreHelper $apsisCoreHelper

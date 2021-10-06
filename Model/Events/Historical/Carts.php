@@ -14,7 +14,7 @@ use Magento\Quote\Model\ResourceModel\Quote\Collection as QuoteCollection;
 use Apsis\One\Model\Events\Historical\Carts\Data as CartData;
 use Apsis\One\Model\Event;
 
-class Carts extends HistoricalEvent implements EventHistoryInterface
+class Carts extends HistoricalEvent
 {
     /**
      * @var QuoteCollectionFactory
@@ -56,11 +56,11 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
                 return;
             }
 
-            $quoteCollection = $this->getCartCollection(
-                $apsisCoreHelper,
-                $store,
+            $quoteCollection = $this->getCollectionArray(
                 array_keys($profileCollectionArray),
-                $duration
+                $duration,
+                $store,
+                $apsisCoreHelper
             );
             if (empty($quoteCollection)) {
                 return;
@@ -88,14 +88,14 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
 
     /**
      * @param ApsisCoreHelper $apsisCoreHelper
-     * @param QuoteCollection $quoteCollection
+     * @param array $quoteCollection
      * @param array $profileCollectionArray
      *
      * @return array
      */
     private function getEventsToRegister(
         ApsisCoreHelper $apsisCoreHelper,
-        QuoteCollection $quoteCollection,
+        array $quoteCollection,
         array $profileCollectionArray
     ) {
         $eventsToRegister = [];
@@ -139,9 +139,9 @@ class Carts extends HistoricalEvent implements EventHistoryInterface
      * @param array $customerIds
      * @param array $duration
      *
-     * @return array|QuoteCollection
+     * @return QuoteCollection|array
      */
-    private function getCartCollection(
+    protected function createCollection(
         ApsisCoreHelper $apsisCoreHelper,
         StoreInterface $store,
         array $customerIds,

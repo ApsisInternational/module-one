@@ -6,10 +6,11 @@ use Apsis\One\Model\Profile;
 use Apsis\One\Model\Event as EventModel;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Magento\Store\Api\Data\StoreInterface;
 use Throwable;
 use Magento\Framework\Stdlib\DateTime;
 
-class Event
+abstract class Event implements EventHistoryInterface
 {
     /**
      * @var DateTime
@@ -79,5 +80,42 @@ class Event
         }
 
         return $this->eventResource->insertEvents($eventsToRegister, $apsisCoreHelper);
+    }
+
+    /**
+     * @param array $filter
+     * @param array $duration
+     * @param StoreInterface $store
+     * @param ApsisCoreHelper $apsisCoreHelper
+     *
+     * @return array
+     */
+    protected function getCollectionArray(
+        array $filter,
+        array $duration,
+        StoreInterface $store,
+        ApsisCoreHelper $apsisCoreHelper
+    ) {
+        $collectionArray = [];
+
+        try {
+            foreach (array_chunk($filter, self::QUERY_LIMIT) as $filterChunk) {
+                $collection = $this->createCollection($apsisCoreHelper, $store, $filterChunk, $duration);
+                if ($collection->getSize()) {
+                    foreach ($collection as $item) {
+                        try {
+                            $collectionArray[$item->getId()] =  $item;
+                        } catch (Throwable $e) {
+                            $apsisCoreHelper->logError(__METHOD__, $e);
+                            continue;
+                        }
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
+        }
+
+        return $collectionArray;
     }
 }

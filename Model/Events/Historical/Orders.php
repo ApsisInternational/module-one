@@ -15,7 +15,7 @@ use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollection
 use Magento\Sales\Model\ResourceModel\Order\Collection as OrderCollection;
 use Magento\Sales\Model\Order;
 
-class Orders extends HistoricalEvent implements EventHistoryInterface
+class Orders extends HistoricalEvent
 {
     /**
      * @var OrderCollectionFactory
@@ -57,11 +57,11 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
                 return;
             }
 
-            $orderCollection = $this->getOrderCollection(
-                $apsisCoreHelper,
-                $store,
+            $orderCollection = $this->getCollectionArray(
                 array_keys($profileCollectionArray),
-                $duration
+                $duration,
+                $store,
+                $apsisCoreHelper
             );
             if (empty($orderCollection)) {
                 return;
@@ -88,14 +88,14 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
 
     /**
      * @param ApsisCoreHelper $apsisCoreHelper
-     * @param OrderCollection $orderCollection
+     * @param array $orderCollection
      * @param array $profileCollectionArray
      *
      * @return array
      */
     private function getEventsToRegister(
         ApsisCoreHelper $apsisCoreHelper,
-        OrderCollection $orderCollection,
+        array $orderCollection,
         array $profileCollectionArray
     ) {
         $eventsToRegister = [];
@@ -144,9 +144,9 @@ class Orders extends HistoricalEvent implements EventHistoryInterface
      * @param array $emails
      * @param array $duration
      *
-     * @return array|OrderCollection
+     * @return OrderCollection|array
      */
-    private function getOrderCollection(
+    protected function createCollection(
         ApsisCoreHelper $apsisCoreHelper,
         StoreInterface $store,
         array $emails,

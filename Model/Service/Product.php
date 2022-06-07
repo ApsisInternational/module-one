@@ -58,7 +58,7 @@ class Product
             $productImageUrl = $this->imageHelper
                 ->init($product, 'product_page_image_large')
                 ->getUrl();
-            return $helper->isFrontUrlSecure($storeId) && ! str_contains($productImageUrl, 'https:') ?
+            return $helper->isFrontUrlSecure($storeId) && strpos($productImageUrl, 'http:') !== false?
                 str_replace('http:', 'https:', $productImageUrl) : $productImageUrl;
         } catch (Throwable $e) {
             $helper->logError(__METHOD__, $e);

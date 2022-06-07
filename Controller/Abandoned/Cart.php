@@ -211,7 +211,8 @@ class Cart extends Action
     {
         try {
             $store = $this->storeManager->getStore($storeId);
-            $isSecureNeeded = $store->isCurrentlySecure() && $store->isFrontUrlSecure() && str_contains($data, 'http:');
+            $isSecureNeeded = $store->isCurrentlySecure() && $store->isFrontUrlSecure() &&
+                strpos($data, 'http:') !== false;
             return $isSecureNeeded ? str_replace('http:', 'https:', $data) : $data;
         } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);

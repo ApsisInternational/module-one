@@ -411,7 +411,7 @@ class Events implements SyncInterface
      */
     private function getData(bool $isSecure, string $data)
     {
-        $isSecureNeeded = $isSecure && str_contains($data, 'http:');
+        $isSecureNeeded = $isSecure && strpos($data, 'http:') !== false;
         return $isSecureNeeded ? str_replace('http:', 'https:', $data) : $data;
     }
 

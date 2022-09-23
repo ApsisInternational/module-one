@@ -134,15 +134,13 @@ class Subscription extends Action
     {
         $postConsents = $this->getRequest()->getParam('topic_subscriptions', []);
         $check = true;
-        foreach ($preUpdateConsents as $cld => $preUpdateConsent) {
-            foreach ($preUpdateConsent['topics'] as $topic) {
-                if ($topic['consent'] === true && ! in_array($topic['value'], $postConsents)) {
-                    //create consent (Remove)
-                    $check = $this->createConsent($profile, Subscribers::CONSENT_TYPE_OPT_OUT, $topic['value']);
-                } elseif ($topic['consent'] === false && in_array($topic['value'], $postConsents)) {
-                    //create consent (Add)
-                    $check = $this->createConsent($profile, Subscribers::CONSENT_TYPE_OPT_IN, $topic['value'], true);
-                }
+        foreach ($preUpdateConsents as $preUpdateConsent) {
+            if ($preUpdateConsent['consent'] === true && ! in_array($preUpdateConsent['value'], $postConsents)) {
+                //create consent (Remove)
+                $check = $this->createConsent($profile, Subscribers::CONSENT_TYPE_OPT_OUT, $preUpdateConsent['value']);
+            } elseif ($preUpdateConsent['consent'] === false && in_array($preUpdateConsent['value'], $postConsents)) {
+                //create consent (Add)
+                $check = $this->createConsent($profile, Subscribers::CONSENT_TYPE_OPT_IN, $preUpdateConsent['value']);
             }
         }
         return $check;
@@ -151,58 +149,34 @@ class Subscription extends Action
     /**
      * @param Profile $profile
      * @param string $type
-     * @param string $consent
-     * @param bool $subscribe
+     * @param string $consentTopic
      *
      * @return bool
      */
-    private function createConsent(Profile $profile, string $type, string $consent, bool $subscribe = false)
+    private function createConsent(Profile $profile, string $type, string $consentTopic)
     {
         $store = $this->apsisCoreHelper->getStore($profile->getSubscriberStoreId());
         $client = $this->apsisCoreHelper->getApiClient(
             ScopeInterface::SCOPE_STORES,
             $store->getId()
         );
-
-        if (! $client) {
-            return false;
-        }
-
         $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
             $store,
             ApsisConfigHelper::MAPPINGS_SECTION_SECTION
         );
-        $consent = explode('|', $consent);
+        $keySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator);
 
-        //If to subscribe
-        if ($subscribe) {
-            $result = $client->subscribeProfileToTopic(
-                $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator),
-                $profile->getIntegrationUid(),
-                $sectionDiscriminator,
-                $consent[0],
-                $consent[1]
-            );
-
-            if (isset($result->id)) {
-                $info = [
-                    'Action' => 'subscribeProfileToTopic',
-                    'Profile Id' => $profile->getIntegrationUid(),
-                    'Section' => $sectionDiscriminator,
-                    'Consent List' => $consent[0],
-                    'Topic' => $consent[1]
-                ];
-                $this->apsisCoreHelper->debug(__METHOD__, $info);
-            }
+        if (empty($client) || empty($sectionDiscriminator) || empty($keySpaceDiscriminator) || empty($consentTopic)) {
+            return false;
         }
 
         //Create consent
         $result = $client->createConsent(
-            Profile::EMAIL_CHANNEL_DISCRIMINATOR,
-            $profile->getEmail(),
+            $keySpaceDiscriminator,
+            $profile->getIntegrationUid(),
             $sectionDiscriminator,
-            $consent[0],
-            $consent[1],
+            $consentTopic,
+            Profile::EMAIL_CHANNEL_DISCRIMINATOR,
             $type
         );
 
@@ -212,8 +186,7 @@ class Subscription extends Action
                 'Consent Type' => $type,
                 'Profile Id' => $profile->getIntegrationUid(),
                 'Section' => $sectionDiscriminator,
-                'Consent List' => $consent[0],
-                'Topic' => $consent[1]
+                'Topic' => $consentTopic
             ];
             $this->apsisCoreHelper->debug(__METHOD__, $info);
         }

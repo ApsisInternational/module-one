@@ -2,7 +2,7 @@
     "name": "apsis/module-one",
     "description": "APSIS One integration for magento 2",
     "type": "magento2-module",
-    "version": "2.0.5",
+    "version": "2.1.0",
     "license": "MPL-2.0",
     "authors": [
         {

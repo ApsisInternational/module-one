@@ -266,29 +266,22 @@ class Config
 
         $jsonMappingData = [
             'keyspace_mappings' => [
-                [
-                    'keyspace_discriminator' => $keySpaceDiscriminator,
-                    'field_selector' => Profile::INTEGRATION_KEYSPACE,
-                    'merge_profiles' => true
-                ],
-                [
-                    'keyspace_discriminator' => Profile::EMAIL_KEYSPACE_DISCRIMINATOR,
-                    'field_selector' => Profile::EMAIL_FIELD,
-                    'merge_profiles' => true
-                ]
+                'keyspace_discriminator' => $keySpaceDiscriminator,
+                'field_selector' => Profile::INTEGRATION_KEYSPACE
             ],
-            'options' => ['update_existing_profiles' => true, 'clear_existing_attributes' => true],
+            'options' => [
+                'update_existing_profiles' => true,
+                'clear_existing_attributes' => true
+            ],
             'attribute_mappings' => $attributeMappings
         ];
 
         if (! empty($topicsMapping) && strlen($consentType)) {
             $consents = [];
-            foreach ($topicsMapping as $topicDiscriminator => $consentListDiscriminator) {
+            foreach ($topicsMapping as $topicDiscriminator) {
                 $consents[] = [
                     'resubscribe_if_opted_out' => true,
                     'field_selector' => $topicDiscriminator,
-                    'channel_discriminator' => Profile::EMAIL_CHANNEL_DISCRIMINATOR,
-                    'consent_list_discriminator' => $consentListDiscriminator,
                     'topic_discriminator' => $topicDiscriminator,
                     'type' => $consentType
                 ];

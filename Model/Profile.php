@@ -75,6 +75,7 @@ class Profile extends AbstractModel
 
     const INTEGRATION_KEYSPACE = 'integration_uid';
     const EMAIL_FIELD = 'email';
+    const EMAIL_KEYSPACE_DISCRIMINATOR = 'com.apsis1.keyspaces.email';
     const EMAIL_CHANNEL_DISCRIMINATOR = 'com.apsis1.channels.email';
 
     /**

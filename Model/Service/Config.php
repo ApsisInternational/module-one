@@ -266,13 +266,18 @@ class Config
 
         $jsonMappingData = [
             'keyspace_mappings' => [
-                'keyspace_discriminator' => $keySpaceDiscriminator,
-                'field_selector' => Profile::INTEGRATION_KEYSPACE
+                [
+                    'keyspace_discriminator' => $keySpaceDiscriminator,
+                    'field_selector' => Profile::INTEGRATION_KEYSPACE,
+                    'merge_profiles' => true
+                ],
+                [
+                    'keyspace_discriminator' => Profile::EMAIL_KEYSPACE_DISCRIMINATOR,
+                    'field_selector' => Profile::EMAIL_FIELD,
+                    'merge_profiles' => true
+                ]
             ],
-            'options' => [
-                'update_existing_profiles' => true,
-                'clear_existing_attributes' => true
-            ],
+            'options' => ['update_existing_profiles' => true, 'clear_existing_attributes' => true],
             'attribute_mappings' => $attributeMappings
         ];
 
@@ -282,6 +287,7 @@ class Config
                 $consents[] = [
                     'resubscribe_if_opted_out' => true,
                     'field_selector' => $topicDiscriminator,
+                    'channel_discriminator' => Profile::EMAIL_CHANNEL_DISCRIMINATOR,
                     'topic_discriminator' => $topicDiscriminator,
                     'type' => $consentType
                 ];

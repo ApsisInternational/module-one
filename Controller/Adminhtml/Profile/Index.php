@@ -41,9 +41,9 @@ class Index extends AbstractAction
         /** @var Page $resultPage */
         $resultPage = $this->resultPageFactory->create();
         $resultPage->setActiveMenu('Apsis_One::profile');
-        $resultPage->addBreadcrumb(__('Profile'), __('Profile'));
+        $resultPage->addBreadcrumb(__('Profile'), __('Profiles'));
         $resultPage->addBreadcrumb(__('Reports'), __('Reports'));
-        $resultPage->getConfig()->getTitle()->prepend(__('Profiles Status'));
+        $resultPage->getConfig()->getTitle()->prepend(__('Profiles'));
         return $resultPage;
     }
 }

@@ -10,6 +10,8 @@
                       xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Event\Collection</item>
                 <item name="apsis_profile_report_grid_data_source"
                       xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Profile\Collection</item>
+                <item name="apsis_profile_batch_report_grid_data_source"
+                      xsi:type="string">Apsis\One\Ui\Model\ResourceModel\ProfileBatch\Collection</item>
             </argument>
         </arguments>
     </type>
@@ -31,6 +33,9 @@
     </type>
     <type name="Magento\Customer\Model\Logger">
         <plugin name="apsis_logger_log_plugin" type="Apsis\One\Plugin\Customer\LoggerPlugin" />
+    </type>
+    <type name="Magento\Framework\App\Request\CsrfValidator">
+        <plugin name="csrf_validator_skip" type="Apsis\One\Plugin\Action\CsrfValidatorSkip" />
     </type>
     <preference for="Magento\Config\Model\Config\Structure\SearchInterface"
                 type="Magento\Config\Model\Config\Structure" />

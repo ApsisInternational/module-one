@@ -50,6 +50,14 @@ class ProfileBatch extends AbstractModel
     const SYNC_STATUS_FAILED = 3;
     const SYNC_STATUS_ERROR = 4;
 
+    const STATUS_TEXT_MAP = [
+        self::SYNC_STATUS_PENDING => 'Pending',
+        self::SYNC_STATUS_PROCESSING => 'Processing',
+        self::SYNC_STATUS_COMPLETED => 'Completed',
+        self::SYNC_STATUS_FAILED => 'Failed',
+        self::SYNC_STATUS_ERROR => 'Error'
+    ];
+
     const MAX_POST_IMPORT_STATUS_LIMIT = 20;
 
     /**

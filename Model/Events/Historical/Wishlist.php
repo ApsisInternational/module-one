@@ -185,7 +185,9 @@ class Wishlist extends HistoricalEvent
         /** @var  MagentoWishlistItem $wishlistItem */
         foreach ($wishlistItemCollection as $wishlistItem) {
             try {
-                if (empty($wishList = $wishlistArrayCollection[$wishlistItem->getWishlistId()]) ||
+                if (! isset($wishlistArrayCollection[$wishlistItem->getWishlistId()]) ||
+                    empty($wishList = $wishlistArrayCollection[$wishlistItem->getWishlistId()]) ||
+                    ! isset($profileCollectionArray[$wishList->getCustomerId()]) ||
                     empty($profile = $profileCollectionArray[$wishList->getCustomerId()]) ||
                     empty($product = $wishlistItem->getProduct())
                 ) {

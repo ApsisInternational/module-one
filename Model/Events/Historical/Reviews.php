@@ -135,7 +135,9 @@ class Reviews extends HistoricalEvent
         foreach ($reviewCollection as $review) {
             try {
                 if (empty($review = $this->reviewFactory->create()->load($review->getId())) ||
+                    ! isset($profileCollectionArray[$review->getCustomerId()]) ||
                     empty($profile = $profileCollectionArray[$review->getCustomerId()]) ||
+                    ! isset($productCollectionArray[$review->getEntityPkValue()]) ||
                     empty($product = $productCollectionArray[$review->getEntityPkValue()])
                 ) {
                     continue;

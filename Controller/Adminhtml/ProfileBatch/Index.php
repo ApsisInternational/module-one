@@ -1,6 +1,6 @@
 <?php
 
-namespace Apsis\One\Controller\Adminhtml\Abandoned;
+namespace Apsis\One\Controller\Adminhtml\ProfileBatch;
 
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
@@ -14,7 +14,7 @@ class Index extends AbstractAction
      *
      * @see _isAllowed()
      */
-    const ADMIN_RESOURCE = 'Apsis_One::abandoned';
+    const ADMIN_RESOURCE = 'Apsis_One::batched';
 
     /**
      * @var PageFactory
@@ -40,10 +40,10 @@ class Index extends AbstractAction
     {
         /** @var Page $resultPage */
         $resultPage = $this->resultPageFactory->create();
-        $resultPage->setActiveMenu('Apsis_One::abandoned');
-        $resultPage->addBreadcrumb(__('Abandoned'), __('Abandoned Carts'));
+        $resultPage->setActiveMenu('Apsis_One::batch');
+        $resultPage->addBreadcrumb(__('Batched Profile'), __('Batched Profiles'));
         $resultPage->addBreadcrumb(__('Reports'), __('Reports'));
-        $resultPage->getConfig()->getTitle()->prepend(__('Abandoned Carts'));
+        $resultPage->getConfig()->getTitle()->prepend(__('Batched Profiles'));
         return $resultPage;
     }
 }

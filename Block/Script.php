@@ -35,9 +35,9 @@ class Script extends Template
     /**
      * @return string
      */
-    public function getScriptText()
+    public function getTrackingUrl()
     {
-        $text = '';
+        $url = '';
 
         try {
             $isTrackingEnabled = (boolean) $this->_storeManager
@@ -47,14 +47,15 @@ class Script extends Template
                 ->getStore()
                 ->getConfig(ApsisConfigHelper::TRACKING_SCRIPT);
 
-            if ($isTrackingEnabled && strlen($trackingTextConfig)) {
-                return $trackingTextConfig;
+            preg_match('#\bhttps?://[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#', $trackingTextConfig, $match);
+            if ($isTrackingEnabled && ! empty($match)) {
+                $url = str_replace('.js', '', $match[0]);
             }
 
         } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
         }
 
-        return $text;
+        return $url;
     }
 }

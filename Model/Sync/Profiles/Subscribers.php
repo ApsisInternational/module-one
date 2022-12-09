@@ -2,7 +2,6 @@
 
 namespace Apsis\One\Model\Sync\Profiles;
 
-use Apsis\One\ApiClient\Client;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ProfileBatch;
 use Apsis\One\Model\ProfileBatchFactory;
@@ -13,12 +12,12 @@ use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\File as ApsisFileHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers\SubscriberFactory as SubscriberDataFactory;
-use Throwable;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class Subscribers implements ProfileSyncInterface
 {
@@ -301,7 +300,6 @@ class Subscribers implements ProfileSyncInterface
             } elseif (! empty($subscribersToUpdate)) {
                 $this->registerBatchItem($file, $store, $subscribersToUpdate, $jsonMappings);
             }
-
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
 
@@ -325,7 +323,7 @@ class Subscribers implements ProfileSyncInterface
         $topicsMapping = [];
 
         foreach ($topicsArr as $topicMapping) {
-            $topicMapping = explode('|', $topicMapping);
+            $topicMapping = explode('|', (string) $topicMapping);
             $topicsMapping[$topicMapping[1]] = $topicMapping[0];
         }
 
@@ -425,7 +423,6 @@ class Subscribers implements ProfileSyncInterface
                 'Store Id' => $store->getId()
             ];
             $this->apsisCoreHelper->debug(__METHOD__, $info);
-
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }

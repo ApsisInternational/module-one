@@ -2,16 +2,15 @@
 
 namespace Apsis\One\Controller\Adminhtml\Profile;
 
-use Apsis\One\Model\Profile;
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Profile as ProfileService;
-use Throwable;
-use Magento\Framework\Controller\ResultFactory;
-use Magento\Ui\Component\MassAction\Filter;
 use Magento\Backend\App\Action;
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Magento\Backend\App\Action\Context;
 use Magento\Backend\Model\View\Result\Redirect;
+use Magento\Framework\Controller\ResultFactory;
+use Magento\Ui\Component\MassAction\Filter;
+use Throwable;
 
 class MassReset extends Action
 {
@@ -81,9 +80,7 @@ class MassReset extends Action
             $this->profileService->resetProfiles(__METHOD__, [], $profileIds);
 
             $this->messageManager->addSuccessMessage(__('A total of %1 record(s) have been reset.', $collectionSize));
-
         } catch (Throwable $e) {
-
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             $this->messageManager->addErrorMessage(__('An error happen during execution. Please check logs'));
         }

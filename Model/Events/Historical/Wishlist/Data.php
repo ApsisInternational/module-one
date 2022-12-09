@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Model\Events\Historical\Wishlist;
 
+use Apsis\One\Model\Events\Historical\EventData;
 use Apsis\One\Model\Events\Historical\EventDataInterface;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Catalog\Model\Product;
@@ -9,7 +10,6 @@ use Magento\Framework\Model\AbstractModel;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Wishlist\Model\Item as WishlistItem;
 use Magento\Wishlist\Model\Wishlist;
-use Apsis\One\Model\Events\Historical\EventData;
 use Throwable;
 
 class Data extends EventData implements EventDataInterface
@@ -66,8 +66,8 @@ class Data extends EventData implements EventDataInterface
                 'websiteName' => (string)$this->apsisCoreHelper->getWebsiteNameFromStoreId($this->store->getId()),
                 'storeName' => (string)$this->apsisCoreHelper->getStoreNameFromId($this->store->getId()),
                 'productId' => (int)$this->wishlistItem->getProductId(),
-                'sku' => $this->isProductSet()? (string) $this->product->getSku() : '',
-                'name' => $this->isProductSet()? (string) $this->product->getName() : '',
+                'sku' => $this->isProductSet() ? (string) $this->product->getSku() : '',
+                'name' => $this->isProductSet() ? (string) $this->product->getName() : '',
                 'productUrl' => (string)$this->getProductUrl($this->store->getId()),
                 'productImageUrl' => (string)$this->getProductImageUrl($this->store->getId()),
                 'catalogPriceAmount' => (float)$this->apsisCoreHelper->round($this->product->getPrice()),

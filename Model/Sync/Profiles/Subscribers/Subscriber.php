@@ -43,20 +43,20 @@ class Subscriber implements ProfileDataInterface
     /**
      * @inheritdoc
      */
-    public function setModelData(array $mappingHash, AbstractModel $subscriber, ApsisCoreHelper $apsisCoreHelper)
+    public function setModelData(array $mappingHash, AbstractModel $model, ApsisCoreHelper $apsisCoreHelper)
     {
-        $this->subscriber = $subscriber;
+        $this->subscriber = $model;
         $this->apsisCoreHelper = $apsisCoreHelper;
 
         foreach ($mappingHash as $key) {
             $function = 'get';
-            $exploded = explode('_', $key);
+            $exploded = explode('_', (string) $key);
 
             foreach ($exploded as $one) {
                 $function .= ucfirst($one);
             }
 
-            $this->subscriberData[$key] = call_user_func(['self', $function]);
+            $this->subscriberData[(string) $key] = call_user_func(['self', $function]);
         }
 
         return $this;

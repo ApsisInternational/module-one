@@ -6,14 +6,13 @@ use Apsis\One\Model\Config\Source\System\Region;
 use Apsis\One\Model\Event;
 use Apsis\One\Model\Events\Historical;
 use Apsis\One\Model\Profile;
-use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
+use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Throwable;
+use Magento\Authorization\Model\Acl\Role\Group as RoleGroup;
 use Magento\Authorization\Model\RoleFactory;
 use Magento\Authorization\Model\RulesFactory;
-use Magento\Authorization\Model\Acl\Role\Group as RoleGroup;
 use Magento\Authorization\Model\UserContextInterface;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -26,6 +25,7 @@ use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\UpgradeDataInterface;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class UpgradeData implements UpgradeDataInterface
 {
@@ -316,8 +316,7 @@ class UpgradeData implements UpgradeDataInterface
         try {
             $this->apsisCoreHelper->log(__METHOD__);
             foreach ($this->apsisCoreHelper->getStores(true) as $store) {
-                $oldValue = (string) $store
-                    ->getConfig(ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC);
+                $oldValue = (string) $store->getConfig(ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC);
                 if (strlen($oldValue) && ! empty($topics = explode(',', $oldValue)) && count($topics)) {
                     $scopeArray = $this->apsisCoreHelper->resolveContext(
                         ScopeInterface::SCOPE_STORES,
@@ -348,7 +347,7 @@ class UpgradeData implements UpgradeDataInterface
 
             //Take value from older path
             $oldConfigPath = 'apsis_one_sync/sync/endpoint_key';
-            $oldValue = $this->apsisCoreHelper->getConfigValue(
+            $oldValue = (string) $this->apsisCoreHelper->getConfigValue(
                 $oldConfigPath,
                 ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                 0
@@ -362,7 +361,7 @@ class UpgradeData implements UpgradeDataInterface
                     0
                 );
             } else {
-                $value = $this->apsisCoreHelper->getConfigValue(
+                $value = (string) $this->apsisCoreHelper->getConfigValue(
                     ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
                     ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                     0
@@ -503,7 +502,11 @@ class UpgradeData implements UpgradeDataInterface
             $updatedConsents = '';
             if (! empty($consents = explode(',', $consentsData)) && is_array($consents)) {
                 foreach ($consents as $index => $consent) {
-                    $subConsentData = explode('|', $consent);
+                    $subConsentData = explode('|', (string) $consent);
+                    if (empty($subConsentData)) {
+                        continue;
+                    }
+
                     $subConsentData[2] = str_replace('_', '|', $subConsentData[2]);
                     $consents[$index] = implode('|', $subConsentData);
                 }

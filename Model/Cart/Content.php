@@ -3,19 +3,19 @@
 namespace Apsis\One\Model\Cart;
 
 use Apsis\One\Model\Events\Historical\EventData;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Service\Product as ProductServiceProvider;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product;
-use Magento\Framework\Model\AbstractModel;
-use Throwable;
 use Magento\Framework\App\Area;
+use Magento\Framework\Model\AbstractModel;
+use Magento\Quote\Api\CartTotalRepositoryInterface;
+use Magento\Quote\Model\Quote;
+use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\Quote\Item;
 use Magento\Store\Model\App\EmulationFactory;
-use Magento\Quote\Model\Quote;
-use Magento\Quote\Api\CartTotalRepositoryInterface;
-use Magento\Quote\Model\Quote\Address;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Service\Date as ApsisDateHelper;
+use Throwable;
 
 class Content extends EventData
 {

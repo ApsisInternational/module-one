@@ -8,7 +8,6 @@ use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers;
 use Apsis\One\Plugin\Customer\NewsletterManageIndexPlugin;
-use Throwable;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Model\Session;
@@ -18,6 +17,7 @@ use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class Subscription extends Action
 {

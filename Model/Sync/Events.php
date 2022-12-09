@@ -12,10 +12,10 @@ use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollection
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
-use Throwable;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use stdClass;
+use Throwable;
 use Zend_Date;
 
 class Events implements SyncInterface
@@ -163,7 +163,6 @@ class Events implements SyncInterface
 
         foreach ($this->apsisCoreHelper->getStores() as $store) {
             try {
-
                 if (! $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId())) {
                     continue;
                 }
@@ -212,7 +211,6 @@ class Events implements SyncInterface
 
                 //At this point proceed for actual batching of events to sync
                 $this->processEventCollection($client, $eventCollection, $store);
-
             } catch (Throwable $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);
                 $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
@@ -340,7 +338,6 @@ class Events implements SyncInterface
                     Profile::SYNC_STATUS_SYNCED,
                     $this->apsisCoreHelper
                 );
-
             } catch (Throwable $e) {
                 $this->apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
@@ -411,7 +408,7 @@ class Events implements SyncInterface
      */
     private function getData(bool $isSecure, string $data)
     {
-        $isSecureNeeded = $isSecure && strpos($data, 'http:') !== false;
+        $isSecureNeeded = $isSecure && str_contains($data, 'http:');
         return $isSecureNeeded ? str_replace('http:', 'https:', $data) : $data;
     }
 

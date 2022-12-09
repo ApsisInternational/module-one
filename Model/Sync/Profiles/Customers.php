@@ -2,20 +2,20 @@
 
 namespace Apsis\One\Model\Sync\Profiles;
 
+use Apsis\One\Model\Profile;
+use Apsis\One\Model\ProfileBatch;
+use Apsis\One\Model\ProfileBatchFactory;
+use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
+use Apsis\One\Model\ResourceModel\Profile\Collection;
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\ResourceModel\Profile\Collection;
-use Throwable;
-use Magento\Customer\Model\Customer;
-use Magento\Store\Api\Data\StoreInterface;
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
-use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\Service\File as ApsisFileHelper;
 use Apsis\One\Model\Sync\Profiles\Customers\CustomerFactory as CustomerDataFactory;
-use Apsis\One\Model\Profile;
-use Apsis\One\Model\ProfileBatchFactory;
-use Apsis\One\Model\ProfileBatch;
+use Magento\Customer\Model\Customer;
+use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class Customers implements ProfileSyncInterface
 {
@@ -127,7 +127,6 @@ class Customers implements ProfileSyncInterface
             }
 
             $this->batchCustomersForStore($store, $collection, $mappings, $attributesArrWithVersionId);
-
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }

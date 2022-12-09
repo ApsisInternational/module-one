@@ -2,9 +2,9 @@
 
 namespace Apsis\One\Controller\Adminhtml\Developer;
 
+use Apsis\One\Model\Developer;
 use Magento\Backend\App\AbstractAction;
 use Magento\Backend\App\Action\Context;
-use Apsis\One\Model\Developer;
 
 class Reset extends AbstractAction
 {
@@ -37,7 +37,7 @@ class Reset extends AbstractAction
      */
     public function execute()
     {
-        $this->developer->resetModule()?
+        $this->developer->resetModule() ?
             $this->messageManager->addSuccessMessage('Module full reset request is complete') :
             $this->messageManager->addWarningMessage('Unable to reset module, please check log file.');
 

@@ -5,13 +5,13 @@ namespace Apsis\One\Plugin\Customer;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Throwable;
+use Apsis\One\Model\Service\Event;
+use Apsis\One\Model\Service\Profile;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Logger as CustomerLogger;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
-use Apsis\One\Model\Service\Event;
-use Apsis\One\Model\Service\Profile;
+use Throwable;
 
 class LoggerPlugin
 {

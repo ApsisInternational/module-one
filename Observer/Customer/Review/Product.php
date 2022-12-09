@@ -5,19 +5,19 @@ namespace Apsis\One\Observer\Customer\Review;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Event;
-use Throwable;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product as MagentoProduct;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Review\Model\Review;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Magento\Catalog\Model\Product as MagentoProduct;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
-use Magento\Store\Model\ScopeInterface;
 use Magento\Review\Model\ReviewFactory;
+use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class Product implements ObserverInterface
 {

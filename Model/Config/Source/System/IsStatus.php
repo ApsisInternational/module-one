@@ -13,7 +13,7 @@ class IsStatus implements OptionSourceInterface
     {
         return [
             ['value' => '0', 'label' => __('No')],
-            ['value' => '1', 'label' => __('Yes'),]
+            ['value' => '1', 'label' => __('Yes')]
         ];
     }
 }

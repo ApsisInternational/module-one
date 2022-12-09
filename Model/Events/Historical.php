@@ -3,22 +3,22 @@
 namespace Apsis\One\Model\Events;
 
 use Apsis\One\Model\Event;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Service\Date as ApsisDateHelper;
-use Apsis\One\Model\Sync\SyncInterface;
-use Throwable;
-use Magento\Framework\App\Area;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Store\Api\Data\StoreInterface;
 use Apsis\One\Model\Events\Historical\Carts;
 use Apsis\One\Model\Events\Historical\Orders;
 use Apsis\One\Model\Events\Historical\Reviews;
 use Apsis\One\Model\Events\Historical\Wishlist;
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\ResourceModel\Profile\Collection as ProfileCollection;
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Date as ApsisDateHelper;
+use Apsis\One\Model\Sync\SyncInterface;
+use Apsis\One\Setup\UpgradeData;
+use Magento\Framework\App\Area;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\App\EmulationFactory;
 use Magento\Store\Model\ScopeInterface;
-use Apsis\One\Setup\UpgradeData;
+use Throwable;
 
 class Historical implements SyncInterface
 {
@@ -300,7 +300,6 @@ class Historical implements SyncInterface
                 }
                 $formattedProfileCollectionArray[$index] = $profile;
             }
-
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }

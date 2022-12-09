@@ -5,8 +5,10 @@ APSIS One integration for Magento 2
 
 ## Requirements
 
-- PHP 7.1+
-- Magento 2.2+
+- Magento 2.4.4+ is compatible from version 2.1.0
+  - PHP 8.1+
+- Magento 2.2.x, 2.3.x, 2.4.0 - 2.4.3-p3 is compatible up to version 2.0.x
+  - PHP 7.1+
 - Magento module(s) dependency 
     - Newsletter
     - Review

@@ -2,15 +2,15 @@
 
 namespace Apsis\One\Controller\Adminhtml\Event;
 
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Throwable;
-use Magento\Framework\Controller\ResultFactory;
-use Magento\Ui\Component\MassAction\Filter;
-use Magento\Backend\App\Action;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Event\CollectionFactory as EventCollectionFactory;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Backend\Model\View\Result\Redirect;
+use Magento\Framework\Controller\ResultFactory;
+use Magento\Ui\Component\MassAction\Filter;
+use Throwable;
 
 class MassReset extends Action
 {

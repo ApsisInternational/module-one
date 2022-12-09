@@ -36,7 +36,7 @@ class OrderStatus implements OptionSourceInterface
         }
 
         foreach ($statuses as $status) {
-            $options[] = ['value' => $status['value'], 'label' => __($status['label']),];
+            $options[] = ['value' => $status['value'], 'label' => __($status['label'])];
         }
 
         return $options;

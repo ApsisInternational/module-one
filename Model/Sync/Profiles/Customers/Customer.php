@@ -80,18 +80,18 @@ class Customer implements ProfileDataInterface
     /**
      * @inheritdoc
      */
-    public function setModelData(array $mappingHash, AbstractModel $customer, ApsisCoreHelper $apsisCoreHelper)
+    public function setModelData(array $mappingHash, AbstractModel $model, ApsisCoreHelper $apsisCoreHelper)
     {
-        $this->customer = $customer;
+        $this->customer = $model;
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->setReviewCollection();
         foreach ($mappingHash as $key) {
             $function = 'get';
-            $exploded = explode('_', $key);
+            $exploded = explode('_', (string) $key);
             foreach ($exploded as $one) {
                 $function .= ucfirst($one);
             }
-            $this->customerData[$key] = call_user_func(['self', $function]);
+            $this->customerData[(string) $key] = call_user_func(['self', $function]);
         }
         return $this;
     }
@@ -498,7 +498,7 @@ class Customer implements ProfileDataInterface
      *
      * @return string
      */
-    private function getStreet($street, $line)
+    private function getStreet(string $street, int $line)
     {
         $street = explode("\n", $street);
         if (isset($street[$line - 1])) {

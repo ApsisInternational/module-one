@@ -4,7 +4,6 @@ namespace Apsis\One\Controller\Abandoned;
 
 use Apsis\One\Model\Service\Cart as ApsisCartHelper;
 use Apsis\One\Model\Service\Log;
-use Throwable;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
@@ -13,6 +12,7 @@ use Magento\Framework\DataObject;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
+use Throwable;
 
 class Checkout extends Action
 {

@@ -2,11 +2,11 @@
 
 namespace Apsis\One\Block;
 
-use Throwable;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Magento\Framework\DataObject;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Magento\Framework\View\Element\Template;
-use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Throwable;
 
 /**
  * Cart block

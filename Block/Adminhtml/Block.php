@@ -2,12 +2,12 @@
 
 namespace Apsis\One\Block\Adminhtml;
 
+use Apsis\One\Model\Service\Config;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\View\Element\Template;
-use Apsis\One\Model\Service\Config;
-use Throwable;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class Block extends Template
 {
@@ -51,7 +51,8 @@ class Block extends Template
     /**
      * @return bool
      */
-    public function isSectionAlreadyMapped(){
+    public function isSectionAlreadyMapped()
+    {
         try {
             $scope = $this->getSelectedScopeInAdmin();
             return (bool) $this->_scopeConfig->getValue(
@@ -68,7 +69,8 @@ class Block extends Template
     /**
      * @return bool
      */
-    public function isAccountAlreadyConfigured(){
+    public function isAccountAlreadyConfigured()
+    {
         try {
             $scope = $this->getSelectedScopeInAdmin();
             $idMapped = (bool) $this->_scopeConfig->getValue(

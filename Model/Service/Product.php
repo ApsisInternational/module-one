@@ -2,9 +2,9 @@
 
 namespace Apsis\One\Model\Service;
 
-use Magento\Catalog\Model\Product as MagentoProduct;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Catalog\Helper\Image;
+use Magento\Catalog\Model\Product as MagentoProduct;
 use Throwable;
 
 class Product
@@ -58,7 +58,7 @@ class Product
             $productImageUrl = $this->imageHelper
                 ->init($product, 'product_page_image_large')
                 ->getUrl();
-            return $helper->isFrontUrlSecure($storeId) && strpos($productImageUrl, 'http:') !== false?
+            return $helper->isFrontUrlSecure($storeId) && str_contains($productImageUrl, 'http:') ?
                 str_replace('http:', 'https:', $productImageUrl) : $productImageUrl;
         } catch (Throwable $e) {
             $helper->logError(__METHOD__, $e);

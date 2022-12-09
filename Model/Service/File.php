@@ -2,10 +2,10 @@
 
 namespace Apsis\One\Model\Service;
 
-use Throwable;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Filesystem\Directory\WriteFactory;
 use Magento\Framework\Filesystem\Directory\Write;
+use Magento\Framework\Filesystem\Directory\WriteFactory;
+use Throwable;
 
 class File
 {

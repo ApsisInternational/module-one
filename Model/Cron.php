@@ -2,15 +2,15 @@
 
 namespace Apsis\One\Model;
 
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Abandoned\Find;
+use Apsis\One\Model\ResourceModel\Abandoned;
 use Apsis\One\Model\ResourceModel\Cron\CollectionFactory as CronCollectionFactory;
 use Apsis\One\Model\ResourceModel\ProfileBatch;
-use Apsis\One\Model\ResourceModel\Abandoned;
-use Apsis\One\Model\Sync\Profiles;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\Events;
+use Apsis\One\Model\Sync\Profiles;
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Apsis\One\Model\Abandoned\Find;
 use Throwable;
 
 class Cron

@@ -7,7 +7,6 @@ use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Throwable;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\ResponseInterface;
@@ -15,6 +14,7 @@ use Magento\Framework\Escaper;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class Subscription extends Action
 {
@@ -77,7 +77,7 @@ class Subscription extends Action
         try {
             //Validate http method against allowed one.
             if ('PATCH' !== $_SERVER['REQUEST_METHOD']) {
-                return $this->sendResponse( 405);
+                return $this->sendResponse(405);
             }
 
             if (empty($key = (string) $this->getRequest()->getHeader('authorization')) ||

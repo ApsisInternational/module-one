@@ -10,7 +10,6 @@ use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
-use Throwable;
 use Magento\Framework\App\Area;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Newsletter\Model\SubscriberFactory;
@@ -19,6 +18,7 @@ use Magento\Quote\Model\ResourceModel\Quote\Collection;
 use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\App\EmulationFactory;
+use Throwable;
 
 class AbandonedSub
 {

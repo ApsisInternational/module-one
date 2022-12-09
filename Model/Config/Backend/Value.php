@@ -2,6 +2,8 @@
 
 namespace Apsis\One\Model\Config\Backend;
 
+use Apsis\One\Model\Event as EventModel;
+use Apsis\One\Model\ResourceModel\Event;
 use Apsis\One\Model\Service\Config;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Profile as ProfileService;
@@ -17,8 +19,6 @@ use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
-use Apsis\One\Model\ResourceModel\Event;
-use Apsis\One\Model\Event as EventModel;
 use Throwable;
 
 class Value extends ConfigValue implements ProcessorInterface
@@ -154,8 +154,7 @@ class Value extends ConfigValue implements ProcessorInterface
     {
         //If secret config
         if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
-
-            if (strlen($decrypted = $this->processValue((string) $this->getValue()))) {
+            if (strlen($decrypted = (string) $this->processValue((string) $this->getValue()))) {
                 $this->setValue($decrypted);
             }
 
@@ -205,7 +204,6 @@ class Value extends ConfigValue implements ProcessorInterface
                     // Success and need to let parent process config
                     return 2;
                 }
-
             } elseif ($this->assertRegistryStatus(self::FAIL)) {
 
                 //Already validated and failed. Do not let the value saved in DB
@@ -216,12 +214,10 @@ class Value extends ConfigValue implements ProcessorInterface
 
                     // Failure from secret config, return void
                     return 3;
-
                 } else { //All other account configs
 
                     // Failure from other account configs then return $this
                     return 4;
-
                 }
             }
         }
@@ -285,12 +281,10 @@ class Value extends ConfigValue implements ProcessorInterface
             //Save secret account config
             $this->accountSecretBeforeSave();
             return;
-
         } elseif ($check === 2) { // Success and need to let parent process config
 
             //Save all other account configs
             return parent::beforeSave();
-
         } elseif ($check === 3) { // Failure from secret config, return void
             return;
         } elseif ($check === 4) { // Failure from other account configs, return $this
@@ -392,10 +386,9 @@ class Value extends ConfigValue implements ProcessorInterface
 
         //If secret config
         if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
-
             $result = $this->getValueForSecretConfig($this->getValue());
 
-            if (strlen($result)) {
+            if (is_string($result) && strlen($result)) {
                 return $this->processValue($result);
             } elseif ($result === null) {
                 $fromDb = true;
@@ -403,11 +396,10 @@ class Value extends ConfigValue implements ProcessorInterface
 
             //All other account config
         } elseif (isset($groups['oauth']['fields']['secret']['value'])) {
-
             $secret = $groups['oauth']['fields']['secret']['value'];
             $result = $this->getValueForSecretConfig($secret);
 
-            if (strlen($result)) {
+            if (is_string($result) && strlen($result)) {
                 return $this->processValue($secret);
             } elseif ($result === null) {
                 $fromDb = true;
@@ -435,7 +427,7 @@ class Value extends ConfigValue implements ProcessorInterface
         if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
             $oldValue = 'Encrypted value';
         } else {
-            $oldValue = $this->getOldValue()? $this->getOldValue() : $this->getValue();
+            $oldValue = $this->getOldValue() ? $this->getOldValue() : $this->getValue();
         }
 
         $this->_registry->unregister(self::REGISTRY_NAME_FOR_OLD_VALUE);
@@ -452,7 +444,6 @@ class Value extends ConfigValue implements ProcessorInterface
         $storeIdArr = $this->apsisCoreHelper->getStoreIdsBasedOnScope();
 
         if (in_array($this->getPath(), $historyConfigs) && $this->getValue() && ! empty($storeIdArr)) {
-
             $status = $this->eventResource->setPendingStatusOnHistoricalPendingEvents(
                 $this->apsisCoreHelper,
                 $this->getValue(),
@@ -523,7 +514,6 @@ class Value extends ConfigValue implements ProcessorInterface
 
                 // Other account configs
             } else {
-
                 $old = $this->getOldValue();
                 $new = $this->getValue();
 
@@ -532,7 +522,6 @@ class Value extends ConfigValue implements ProcessorInterface
                     $old = $this->processValue($old);
                     $new = $secret;
                 }
-
 
                 //If already exist an old value and not same as new value. log it and perform full reset
                 if ($old && $new && $old != $new) {
@@ -590,7 +579,7 @@ class Value extends ConfigValue implements ProcessorInterface
             $this->apsisCoreHelper->log(self::MSG_FAIL_NO_REGION);
             $this->messageManager->addWarningMessage(__(self::MSG_FAIL_NO_REGION));
 
-            $this->setRegistryReachableCheck( self::FAIL);
+            $this->setRegistryReachableCheck(self::FAIL);
 
             return false;
         }
@@ -599,14 +588,14 @@ class Value extends ConfigValue implements ProcessorInterface
             $this->apsisCoreHelper->validateIsUrlReachable($this->apsisCoreHelper->buildFileUploadHostName($region));
 
             //Set registry key, 1 = success and tried
-            $this->setRegistryReachableCheck( self::SUCCESS);
+            $this->setRegistryReachableCheck(self::SUCCESS);
 
             return true;
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             $this->messageManager->addWarningMessage(__($e->getMessage() . ' .' . self::MSG_FAIL_HOST_FILE_UPLOAD));
 
-            $this->setRegistryReachableCheck( self::FAIL);
+            $this->setRegistryReachableCheck(self::FAIL);
 
             return false;
         }

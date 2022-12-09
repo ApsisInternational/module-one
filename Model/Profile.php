@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Model;
 
-use Apsis\One\Model\Sql\ExpressionFactory;
+use Magento\Framework\DB\Sql\ExpressionFactory;
 use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Model\AbstractModel;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;

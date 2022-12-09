@@ -2,6 +2,8 @@
 
 namespace Apsis\One\Model\Service;
 
+use Apsis\One\Model\Event as EventModel;
+use Apsis\One\Model\EventFactory as EventModelFactory;
 use Apsis\One\Model\Events\Historical\Carts\Data as CartData;
 use Apsis\One\Model\Events\Historical\Orders\Data as OrderData;
 use Apsis\One\Model\Events\Historical\Reviews\Data as ReviewData;
@@ -13,10 +15,8 @@ use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Magento\Catalog\Model\Product;
 use Magento\Customer\Api\Data\CustomerInterface;
+use Magento\Customer\Model\Customer;
 use Magento\Customer\Model\Logger as CustomerLogger;
-use Apsis\One\Model\Event as EventModel;
-use Apsis\One\Model\EventFactory as EventModelFactory;
-use Throwable;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Registry;
 use Magento\Newsletter\Model\Subscriber;
@@ -27,7 +27,7 @@ use Magento\Sales\Model\Order;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Wishlist\Model\Item as WishlistItem;
 use Magento\Wishlist\Model\Wishlist;
-use Magento\Customer\Model\Customer;
+use Throwable;
 
 class Event
 {
@@ -164,8 +164,7 @@ class Event
                 [
                     'subscriberId' => (int) $subscriber->getSubscriberId(),
                     'customerId' => (int) $profile->getCustomerId(),
-                    'websiteName' =>
-                        (string) $this->apsisCoreHelper->getWebsiteNameFromStoreId($subscriber->getStoreId()),
+                    'websiteName' => (string) $this->apsisCoreHelper->getWebsiteNameFromStoreId($subscriber->getStoreId()),
                     'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($subscriber->getStoreId())
                 ],
                 (int) $profile->getId(),
@@ -273,10 +272,8 @@ class Event
             $eventData = [
                 'subscriberId' => (int) $profile->getSubscriberId(),
                 'customerId' => (int) $customer->getEntityId(),
-                'websiteName' =>
-                    (string) $this->apsisCoreHelper->getWebsiteNameFromStoreId($customer->getStoreId()),
-                'storeName' =>
-                    (string) $this->apsisCoreHelper->getStoreNameFromId($customer->getStoreId())
+                'websiteName' => (string) $this->apsisCoreHelper->getWebsiteNameFromStoreId($customer->getStoreId()),
+                'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($customer->getStoreId())
             ];
             $this->registerEvent(
                 EventModel::EVENT_TYPE_SUBSCRIBER_BECOMES_CUSTOMER,

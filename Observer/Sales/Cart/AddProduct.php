@@ -2,20 +2,20 @@
 
 namespace Apsis\One\Observer\Sales\Cart;
 
+use Apsis\One\Model\Profile;
+use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Profile;
-use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\Service\Event;
-use Throwable;
+use Magento\Catalog\Model\Product;
+use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Quote\Model\Quote\Item;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
-use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Catalog\Model\Product;
+use Throwable;
 
 class AddProduct implements ObserverInterface
 {

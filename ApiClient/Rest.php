@@ -359,7 +359,7 @@ abstract class Rest
         }
 
         if (isset($response->status) && isset($response->detail)) {
-            if (strpos($method, '::getAccessToken') !== false) {
+            if (str_contains($method, '::getAccessToken')) {
                 // Return as it is
                 return $response;
             } elseif (in_array($response->status, self::HTTP_CODES_FORCE_GENERATE_TOKEN)) {

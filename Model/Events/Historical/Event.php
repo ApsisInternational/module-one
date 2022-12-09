@@ -2,13 +2,13 @@
 
 namespace Apsis\One\Model\Events\Historical;
 
-use Apsis\One\Model\Profile;
 use Apsis\One\Model\Event as EventModel;
+use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Magento\Framework\Stdlib\DateTime;
 use Magento\Store\Api\Data\StoreInterface;
 use Throwable;
-use Magento\Framework\Stdlib\DateTime;
 
 abstract class Event implements EventHistoryInterface
 {

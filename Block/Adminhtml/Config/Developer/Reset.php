@@ -2,13 +2,13 @@
 
 namespace Apsis\One\Block\Adminhtml\Config\Developer;
 
-use Throwable;
-use Magento\Backend\Block\Widget\Button;
-use Magento\Config\Block\System\Config\Form\Field;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Magento\Backend\Block\Template\Context;
+use Magento\Backend\Block\Widget\Button;
+use Magento\Config\Block\System\Config\Form\Field;
 use Magento\Framework\App\State;
 use Magento\Framework\Data\Form\Element\AbstractElement;
+use Throwable;
 
 class Reset extends Field
 {

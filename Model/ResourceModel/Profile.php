@@ -4,19 +4,19 @@ namespace Apsis\One\Model\ResourceModel;
 
 use Apsis\One\Model\Profile as ApsisProfile;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Apsis\One\Model\Sql\ExpressionFactory;
-use Throwable;
 use Magento\Customer\Model\ResourceModel\Customer\Collection;
 use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
 use Magento\Framework\DB\Adapter\AdapterInterface;
+use Magento\Framework\DB\Sql\ExpressionFactory;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Framework\Model\ResourceModel\Db\Context;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
 use Magento\Store\Api\Data\StoreInterface;
+use Throwable;
 
 class Profile extends AbstractDb implements ResourceInterface
 {
@@ -98,7 +98,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 '',
                 $storeIds,
                 $profileIds,
-               ['error_message' => ''],
+                ['error_message' => ''],
                 $isEntityTypeCond
             );
 
@@ -179,7 +179,6 @@ class Profile extends AbstractDb implements ResourceInterface
                     false
                 );
             }
-
         } catch (Throwable $e) {
             $apsisHelper->logError(__METHOD__, $e);
         }
@@ -535,7 +534,6 @@ class Profile extends AbstractDb implements ResourceInterface
                     ]
                 );
             }
-
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -709,8 +707,7 @@ class Profile extends AbstractDb implements ResourceInterface
                 ['subscriber' => $magentoTable],
                 [
                     'subscriber_store_id' => 'store_id',
-                    'subscriber_sync_status' =>
-                        $this->expressionFactory->create(["expression" => (ApsisProfile::SYNC_STATUS_PENDING)]),
+                    'subscriber_sync_status' => $this->expressionFactory->create(["expression" => (ApsisProfile::SYNC_STATUS_PENDING)]),
                     'updated_at' => $this->expressionFactory
                         ->create(["expression" => "'" . $this->dateTime->formatDate(true) . "'"])
                 ]

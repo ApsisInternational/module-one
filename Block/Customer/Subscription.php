@@ -96,7 +96,8 @@ class Subscription extends Template
                 return $sortedTopicArr;
             }
 
-            $topicMappings = explode(',', (string)$this->apsisCoreHelper->getStoreConfig($customer->getStore(),
+            $topicMappings = explode(',', (string)$this->apsisCoreHelper->getStoreConfig(
+                $customer->getStore(),
                 ApsisConfigHelper::SYNC_SETTING_ADDITIONAL_TOPIC
             ));
             $subscriber = $this->subscriberFactory->create()->loadByCustomerId($customer->getId());
@@ -104,7 +105,6 @@ class Subscription extends Template
             if (empty($topicMappings) || empty($subscriber->getId())) {
                 return $sortedTopicArr;
             }
-
 
             $profile = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
             if (empty($profile)) {
@@ -152,7 +152,7 @@ class Subscription extends Template
             }
 
             foreach ($topicMappings as $topicMappingString) {
-                $topicMapping = explode('|', $topicMappingString);
+                $topicMapping = explode('|', (string) $topicMappingString);
 
                 //Count should always be 4, if not then not a valid config.
                 if (empty($topicMapping) || count($topicMapping) < 4) {
@@ -174,7 +174,6 @@ class Subscription extends Template
                     }
                 }
             }
-
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -194,7 +193,7 @@ class Subscription extends Template
 
         try {
             foreach ($topicMappings as $topicMappingString) {
-                $topicMapping = explode('|', $topicMappingString);
+                $topicMapping = explode('|', (string) $topicMappingString);
 
                 //Count should always be 4, if not then not a valid config.
                 if (empty($topicMapping) || count($topicMapping) < 4) {
@@ -219,7 +218,6 @@ class Subscription extends Template
 
                 $topicMappingsArr[$topicMapping[0]]['topics'][] = $topic;
             }
-
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }

@@ -3,12 +3,12 @@
 namespace Apsis\One\Controller\Cart;
 
 use Apsis\One\Model\Service\Log;
-use Throwable;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Quote\Model\ResourceModel\Quote;
+use Throwable;
 
 class Updater extends Action
 {
@@ -41,7 +41,8 @@ class Updater extends Action
      * @param Quote $quoteResource
      * @param Session $session
      */
-    public function __construct(Context $context,
+    public function __construct(
+        Context $context,
         Validator $formKeyValidator,
         Log $log,
         Quote $quoteResource,

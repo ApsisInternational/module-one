@@ -10,6 +10,7 @@ use Apsis\One\Model\Config\Source\System\Region;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Exception;
 use Magento\Config\Model\ResourceModel\Config\Data\Collection as DataCollection;
 use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as DataCollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -23,7 +24,6 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use stdClass;
-use Exception;
 use Throwable;
 
 class Core extends ApsisLogHelper
@@ -342,7 +342,7 @@ class Core extends ApsisLogHelper
     }
 
     /**
-     * @param float $price
+     * @param int|float $price
      * @param int $precision
      *
      * @return float
@@ -490,7 +490,7 @@ class Core extends ApsisLogHelper
     private function getTokenExpiryFromDb(string $contextScope, int $scopeId)
     {
         $expiryTime = '';
-        $context = $this->resolveContext($contextScope, $scopeId,ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE);
+        $context = $this->resolveContext($contextScope, $scopeId, ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE);
 
         $collection = $this->getDataCollectionByContextAndPath(
             $context['scope'],
@@ -564,25 +564,30 @@ class Core extends ApsisLogHelper
      */
     private function isTokenExpired(string $contextScope, int $scopeId)
     {
-        $expiryTime = $this->getTokenExpiryFromDb($contextScope, $scopeId);
+        try {
+            $expiryTime = $this->getTokenExpiryFromDb($contextScope, $scopeId);
 
-        $nowTime = $this->apsisDateHelper->getDateTimeFromTimeAndTimeZone()
-            ->add($this->apsisDateHelper->getDateIntervalFromIntervalSpec('PT15M'))
-            ->format('Y-m-d H:i:s');
+            $nowTime = $this->apsisDateHelper->getDateTimeFromTimeAndTimeZone()
+                ->add($this->apsisDateHelper->getDateIntervalFromIntervalSpec('PT15M'))
+                ->format('Y-m-d H:i:s');
 
-        $check = ($nowTime > $expiryTime);
+            $check = ($nowTime > $expiryTime);
 
-        if ($check) {
-            $info = [
-                'Scope' => $contextScope,
-                'Scope Id' => $scopeId,
-                'Is Expired/Empty' => true,
-                'Last Expiry DateTime' => $expiryTime
-            ];
-            $this->debug(__METHOD__, $info);
+            if ($check) {
+                $info = [
+                    'Scope' => $contextScope,
+                    'Scope Id' => $scopeId,
+                    'Is Expired/Empty' => true,
+                    'Last Expiry DateTime' => $expiryTime
+                ];
+                $this->debug(__METHOD__, $info);
+            }
+
+            return $check;
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return true;
         }
-
-        return $check;
     }
 
     /**
@@ -659,25 +664,29 @@ class Core extends ApsisLogHelper
      */
     private function saveTokenAndExpiry(string $contextScope, int $scopeId, stdClass $request)
     {
-        $this->saveConfigValue(
-            ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN,
-            $this->encryptor->encrypt($request->access_token),
-            $contextScope,
-            $scopeId
-        );
+        try {
+            $this->saveConfigValue(
+                ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN,
+                $this->encryptor->encrypt($request->access_token),
+                $contextScope,
+                $scopeId
+            );
 
-        $time = $this->apsisDateHelper
-            ->getDateTimeFromTimeAndTimeZone()
-            ->add($this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('PT%sS', $request->expires_in)))
-            ->sub($this->apsisDateHelper->getDateIntervalFromIntervalSpec('PT60M'))
-            ->format('Y-m-d H:i:s');
+            $time = $this->apsisDateHelper
+                ->getDateTimeFromTimeAndTimeZone()
+                ->add($this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('PT%sS', $request->expires_in)))
+                ->sub($this->apsisDateHelper->getDateIntervalFromIntervalSpec('PT60M'))
+                ->format('Y-m-d H:i:s');
 
-        $this->saveConfigValue(
-            ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE,
-            $time,
-            $contextScope,
-            $scopeId
-        );
+            $this->saveConfigValue(
+                ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE,
+                $time,
+                $contextScope,
+                $scopeId
+            );
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+        }
     }
 
     /**
@@ -911,8 +920,8 @@ class Core extends ApsisLogHelper
     {
         $ch = curl_init($url);
 
-        curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
-        curl_setopt($ch,CURLOPT_CONNECTTIMEOUT,5);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
         curl_exec($ch);
 
         if (curl_errno($ch)) {
@@ -1033,7 +1042,7 @@ class Core extends ApsisLogHelper
                 $keySpaces = $client->getKeySpaces();
                 if (is_object($keySpaces) && isset($keySpaces->items)) {
                     foreach ($keySpaces->items as $item) {
-                        if (strpos($item->discriminator, 'magento') !== false) {
+                        if (str_contains($item->discriminator, 'magento')) {
                             return true;
                         }
                     }

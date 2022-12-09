@@ -81,13 +81,14 @@ class Client extends Rest
      * @param string $method
      * @param array $methodParams
      *
-     * @return string|false
+     * @return string
      */
     private function buildKeyForCacheContainer(string $method, array $methodParams)
     {
-        return filter_var(
-            implode(".", array_filter(array_merge([$method], $methodParams))),
-            FILTER_SANITIZE_STRING
+        return (string) preg_replace(
+            '/[^a-z0-9_\-]/',
+            '',
+            implode(".", array_filter(array_merge([$method], $methodParams)))
         );
     }
 
@@ -137,7 +138,7 @@ class Client extends Rest
 
         $this->setUrl($this->hostName . '/audience/keyspaces')
             ->setVerb(Rest::VERB_GET);
-        return $this->executeRequestAndReturnResponse( __METHOD__, $key);
+        return $this->executeRequestAndReturnResponse(__METHOD__, $key);
     }
 
     /**

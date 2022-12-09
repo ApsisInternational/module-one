@@ -2,18 +2,18 @@
 
 namespace Apsis\One\Controller\Abandoned;
 
+use Apsis\One\Block\Cart as CartBlock;
 use Apsis\One\Model\Service\Cart as ApsisCartHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Apsis\One\Block\Cart as CartBlock;
-use Magento\Store\Model\StoreManagerInterface;
-use Throwable;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
+use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\Result\Raw;
 use Magento\Framework\Controller\ResultFactory;
-use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\DataObject;
+use Magento\Store\Model\StoreManagerInterface;
+use Throwable;
 
 class Cart extends Action
 {
@@ -119,7 +119,6 @@ class Cart extends Action
         }
     }
 
-
     /**
      * @param DataObject $cart
      *
@@ -211,8 +210,7 @@ class Cart extends Action
     {
         try {
             $store = $this->storeManager->getStore($storeId);
-            $isSecureNeeded = $store->isCurrentlySecure() && $store->isFrontUrlSecure() &&
-                strpos($data, 'http:') !== false;
+            $isSecureNeeded = $store->isCurrentlySecure() && $store->isFrontUrlSecure() && str_contains($data, 'http:');
             return $isSecureNeeded ? str_replace('http:', 'https:', $data) : $data;
         } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);

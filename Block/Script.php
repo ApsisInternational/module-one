@@ -2,10 +2,10 @@
 
 namespace Apsis\One\Block;
 
-use Throwable;
-use Magento\Framework\View\Element\Template;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Magento\Framework\View\Element\Template;
+use Throwable;
 
 /**
  * Script block
@@ -51,7 +51,6 @@ class Script extends Template
             if ($isTrackingEnabled && ! empty($match)) {
                 $url = str_replace('.js', '', $match[0]);
             }
-
         } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
         }

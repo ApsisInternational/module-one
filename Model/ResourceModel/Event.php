@@ -2,15 +2,15 @@
 
 namespace Apsis\One\Model\ResourceModel;
 
+use Apsis\One\Model\Event as EventModel;
 use Apsis\One\Model\Profile as ApsisProfile;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Throwable;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Magento\Framework\Model\ResourceModel\Db\Context;
 use Magento\Framework\Stdlib\DateTime;
-use Apsis\One\Model\Event as EventModel;
+use Throwable;
 
 class Event extends AbstractDb implements ResourceInterface
 {
@@ -243,7 +243,6 @@ class Event extends AbstractDb implements ResourceInterface
             }
 
             return ['from' => $from, 'to' => $to];
-
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
@@ -262,7 +261,6 @@ class Event extends AbstractDb implements ResourceInterface
             return $this->apsisDateHelper->getDateTimeFromTime()
                 ->sub($this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('P%sM', $pastEventsDuration)))
                 ->format('Y-m-d H:i:s');
-
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return '';

@@ -2,20 +2,20 @@
 
 namespace Apsis\One\Model\Events\Historical;
 
+use Apsis\One\Model\Event;
 use Apsis\One\Model\Events\Historical\Event as HistoricalEvent;
+use Apsis\One\Model\Events\Historical\Reviews\Data as ReviewEventData;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile\Collection as ProfileCollection;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Throwable;
-use Magento\Framework\Stdlib\DateTime;
-use Magento\Store\Api\Data\StoreInterface;
-use Magento\Review\Model\ResourceModel\Review\CollectionFactory as ProductReviewCollectionFactory;
-use Magento\Review\Model\ResourceModel\Review\Collection as ProductReviewCollection;
-use Magento\Review\Model\Review;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
-use Apsis\One\Model\Events\Historical\Reviews\Data as ReviewEventData;
-use Apsis\One\Model\Event;
+use Magento\Framework\Stdlib\DateTime;
+use Magento\Review\Model\ResourceModel\Review\Collection as ProductReviewCollection;
+use Magento\Review\Model\ResourceModel\Review\CollectionFactory as ProductReviewCollectionFactory;
+use Magento\Review\Model\Review;
 use Magento\Review\Model\ReviewFactory;
+use Magento\Store\Api\Data\StoreInterface;
+use Throwable;
 
 class Reviews extends HistoricalEvent
 {

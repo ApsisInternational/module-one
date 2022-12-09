@@ -10,7 +10,6 @@ use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollection
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers;
-use Throwable;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Stdlib\Cookie\PhpCookieManagerFactory;
@@ -19,6 +18,7 @@ use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 use Zend_Date;
 
 class Profile
@@ -270,10 +270,10 @@ class Profile
                     ->setDurationOneYear();
 
                 $this->phpCookieManager->create()->setPublicCookie(
-                        self::APSIS_WEB_COOKIE_NAME,
-                        $keySpacesToMerge[1]['profile_key'],
-                        $cookieMetaData
-                    );
+                    self::APSIS_WEB_COOKIE_NAME,
+                    $keySpacesToMerge[1]['profile_key'],
+                    $cookieMetaData
+                );
 
                 //Log it
                 $info = ['Name' => self::APSIS_WEB_COOKIE_NAME, 'Value' => $keySpacesToMerge[1]['profile_key']];
@@ -293,7 +293,7 @@ class Profile
     {
         $domain = '';
         try {
-            $host = parse_url($store->getBaseUrl(), PHP_URL_HOST);
+            $host = (string) parse_url($store->getBaseUrl(), PHP_URL_HOST);
             if (! empty($host) && ! empty($hostArr = explode('.', $host))) {
                 if (count($hostArr) > 3) {
                     $domain = sprintf('.%s', $host);
@@ -326,7 +326,6 @@ class Profile
                     ->setIsSubscriber(ProfileModel::NO_FLAG)
                     ->setErrorMessage('');
                 $this->profileResource->save($profile);
-
             } elseif ((int) $subscriber->getSubscriberStatus() === Subscriber::STATUS_SUBSCRIBED) {
                 if ($profile->getIsCustomer()) {
                     $this->eventService->registerCustomerBecomesSubscriberEvent($subscriber, $profile, $store);
@@ -346,7 +345,6 @@ class Profile
                     ->setIsSubscriber(ProfileModel::IS_FLAG)
                     ->setErrorMessage('');
                 $this->profileResource->save($profile);
-
             }
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
@@ -374,7 +372,6 @@ class Profile
                 ->setIsCustomer(ProfileModel::IS_FLAG)
                 ->setErrorMessage('');
             $this->profileResource->save($profile);
-
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -590,7 +587,6 @@ class Profile
                     $type
                 );
             }
-
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -641,7 +637,6 @@ class Profile
 
             //Save profile
             $this->profileResource->save($profile);
-
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -771,7 +766,7 @@ class Profile
                 $store,
                 ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENABLED
             );
-            $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
+            $sectionDiscriminator = (string) $this->apsisCoreHelper->getStoreConfig(
                 $store,
                 ApsisConfigHelper::MAPPINGS_SECTION_SECTION
             );
@@ -872,7 +867,6 @@ class Profile
                 ];
                 $this->apsisCoreHelper->debug(__METHOD__, $info);
             }
-
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -891,7 +885,7 @@ class Profile
         string $sectionDiscriminator
     ) {
         try {
-            $selectedConsentTopics = (string)$this->apsisCoreHelper->getStoreConfig(
+            $selectedConsentTopics = (string) $this->apsisCoreHelper->getStoreConfig(
                 $store,
                 ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC
             );
@@ -965,7 +959,7 @@ class Profile
         $andCondScopeId = $connection->quoteInto('AND scope_id = ?', $scope['context_scope_id']);
         $status = $this->profileResource->deleteAllModuleConfig(
             $this->apsisCoreHelper,
-            $andCondPath . ' ' . $andCondScope . ' '. $andCondScopeId
+            $andCondPath . ' ' . $andCondScope . ' ' . $andCondScopeId
         );
 
         if ($status) {

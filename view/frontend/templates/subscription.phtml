@@ -27,7 +27,7 @@
         </div>
         <?= $block->getChildHtml('customer.form.newsletter.extra') ?>
     </fieldset>
-    <?php if (! empty($sortedTopicArr = $block->getConsentListTopicsToShow())) : ?>
+    <?php if (! empty($sortedTopicArr = $block->getTopicsToShow())) : ?>
         <fieldset class="fieldset">
             <legend class="legend">
                 <span>
@@ -35,26 +35,21 @@
                 </span>
             </legend>
             <ul class="form-list" style="padding-left: 0">
-                <?php foreach ($sortedTopicArr as $list) : ?>
-                        <h5 style="margin-bottom: 10px">
-                            <?= $block->escapeHtml($list['name']) ?>
-                        </h5>
-                        <?php foreach ($list['topics'] as $topic) : ?>
-                            <li class="control" style="display: block; margin: 5px 0 5px 10px">
-                                <input type="checkbox"
-                                       name="topic_subscriptions[]"
-                                       id="<?= $block->escapeHtml($topic["value"]); ?>"
-                                       value="<?= $block->escapeHtml($topic["value"]) ?>"
-                                       title="<?= $block->escapeHtml($topic["name"]) ?>"
-                                    <?php if ($topic["consent"]) : ?>
-                                        checked="checked"
-                                    <?php endif; ?> class="checkbox apsis-topic-subscription"
-                                />
-                                <label for="<?= $block->escapeHtml($topic["value"]); ?>">
-                                    <?= $block->escapeHtml($topic["name"]) ?>
-                                </label>
-                            </li>
-                        <?php endforeach; ?>
+                <?php foreach ($sortedTopicArr as $topicArr) : ?>
+                    <li class="control" style="display: block; margin: 5px 0 5px 10px">
+                        <input type="checkbox"
+                               name="topic_subscriptions[]"
+                               id="<?= $block->escapeHtml($topicArr["value"]); ?>"
+                               value="<?= $block->escapeHtml($topicArr["value"]) ?>"
+                               title="<?= $block->escapeHtml($topicArr["name"]) ?>"
+                            <?php if ($topicArr["consent"]) : ?>
+                                checked="checked"
+                            <?php endif; ?> class="checkbox apsis-topic-subscription"
+                        />
+                        <label for="<?= $block->escapeHtml($topicArr["value"]); ?>">
+                            <?= $block->escapeHtml($topicArr["name"]) ?>
+                        </label>
+                    </li>
                 <?php endforeach; ?>
             </ul>
         </fieldset>

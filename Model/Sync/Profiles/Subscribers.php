@@ -243,7 +243,7 @@ class Subscribers implements ProfileSyncInterface
             $file = $this->createFileWithHeaders(
                 $store,
                 $consentType,
-                array_merge(array_keys($mappings), array_keys($topicsMapping))
+                array_merge(array_keys($mappings), array_values($topicsMapping))
             );
 
             if (empty($file)) {
@@ -276,7 +276,7 @@ class Subscribers implements ProfileSyncInterface
                         $subscriberData = $this->getSubscriberDataForCsvRow(
                             array_keys($mappings),
                             $subscriber,
-                            array_keys($topicsMapping),
+                            array_values($topicsMapping),
                             $profileData['consent']
                         );
 
@@ -324,7 +324,7 @@ class Subscribers implements ProfileSyncInterface
 
         foreach ($topicsArr as $topicMapping) {
             $topicMapping = explode('|', (string) $topicMapping);
-            $topicsMapping[$topicMapping[1]] = $topicMapping[0];
+            $topicsMapping[] = $topicMapping[0];
         }
 
         return $topicsMapping;

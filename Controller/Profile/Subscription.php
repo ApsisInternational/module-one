@@ -87,7 +87,7 @@ class Subscription extends Action
             }
 
             $params = $this->getBodyParams();
-            if (empty($params['PK']) || empty($params['TD']) || empty($params['CLD'])) {
+            if (empty($params['PK']) || empty($params['TD'])) {
                 return $this->sendResponse(400);
             }
 
@@ -95,7 +95,7 @@ class Subscription extends Action
                 return $this->sendResponse(404);
             }
 
-            if ($profile->getSubscriberId() && $this->isTopicMatchedWithConfigTopic($profile, $params)) {
+            if ($profile->getSubscriberId() && $this->isTopicMatchedWithConfigTopic($profile, $params['TD'])) {
                 $subscriber = $this->subscriberFactory->create()->load($profile->getSubscriberId());
                 if ($subscriber->getId()) {
 
@@ -147,11 +147,11 @@ class Subscription extends Action
 
     /**
      * @param ProfileModel $profile
-     * @param array $params
+     * @param string $topicDiscriminator
      *
      * @return bool
      */
-    private function isTopicMatchedWithConfigTopic(ProfileModel $profile, array $params)
+    private function isTopicMatchedWithConfigTopic(ProfileModel $profile, string $topicDiscriminator)
     {
         $isSyncEnabled = (string) $this->apsisCoreHelper->getConfigValue(
             ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENABLED,
@@ -168,14 +168,8 @@ class Subscription extends Action
             ($profile->getSubscriberStoreId()) ? $profile->getSubscriberStoreId() : $profile->getStoreId()
         );
 
-        if (strlen($selectedTopicInConfig) &&
-            ! empty($topicMappings = explode('|', $selectedTopicInConfig)) &&
-            isset($topicMappings[0]) && isset($topicMappings[1])
-        ) {
-            return ($topicMappings[0] === $params['CLD'] && $topicMappings[1] === $params['TD']);
-        }
-
-        return false;
+        return strlen($selectedTopicInConfig) && ! empty($topicMappings = explode('|', $selectedTopicInConfig)) &&
+            isset($topicMappings[0]) && $topicMappings[0] === $topicDiscriminator;
     }
 
     /**

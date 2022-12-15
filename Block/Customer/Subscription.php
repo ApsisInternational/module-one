@@ -2,7 +2,6 @@
 
 namespace Apsis\One\Block\Customer;
 
-use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;

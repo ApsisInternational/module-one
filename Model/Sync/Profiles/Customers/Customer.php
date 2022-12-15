@@ -294,10 +294,10 @@ class Customer implements ProfileDataInterface
     private function getBillingAddress1()
     {
         if (empty($this->customer->getBillingStreet())) {
-            return (string) $this->getStreet($this->customer->getShippingStreet(), 1);
+            return (string) $this->getStreet((string) $this->customer->getShippingStreet(), 1);
         }
 
-        return (string) $this->getStreet($this->customer->getBillingStreet(), 1);
+        return (string) $this->getStreet((string) $this->customer->getBillingStreet(), 1);
     }
 
     /**
@@ -306,10 +306,10 @@ class Customer implements ProfileDataInterface
     private function getBillingAddress2()
     {
         if (empty($this->customer->getBillingStreet())) {
-            return (string) $this->getStreet($this->customer->getShippingStreet(), 2);
+            return (string) $this->getStreet((string) $this->customer->getShippingStreet(), 2);
         }
 
-        return (string) $this->getStreet($this->customer->getBillingStreet(), 2);
+        return (string) $this->getStreet((string) $this->customer->getBillingStreet(), 2);
     }
 
     /**
@@ -396,10 +396,10 @@ class Customer implements ProfileDataInterface
     private function getDeliveryAddress1()
     {
         if (empty($this->customer->getShippingStreet())) {
-            return (string) $this->getStreet($this->customer->getBillingStreet(), 1);
+            return (string) $this->getStreet((string) $this->customer->getBillingStreet(), 1);
         }
 
-        return (string) $this->getStreet($this->customer->getShippingStreet(), 1);
+        return (string) $this->getStreet((string) $this->customer->getShippingStreet(), 1);
     }
 
     /**
@@ -408,10 +408,10 @@ class Customer implements ProfileDataInterface
     private function getDeliveryAddress2()
     {
         if (empty($this->customer->getShippingStreet())) {
-            return (string) $this->getStreet($this->customer->getBillingStreet(), 2);
+            return (string) $this->getStreet((string) $this->customer->getBillingStreet(), 2);
         }
 
-        return (string) $this->getStreet($this->customer->getShippingStreet(), 2);
+        return (string) $this->getStreet((string) $this->customer->getShippingStreet(), 2);
     }
 
     /**

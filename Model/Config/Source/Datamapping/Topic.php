@@ -42,32 +42,26 @@ class Topic implements OptionSourceInterface
                 return [];
             }
 
-            $consentLists = $apiClient->getConsentLists($section);
-            if (! $consentLists || ! isset($consentLists->items)) {
+            $topics = $apiClient->getTopics($section);
+            if (! $topics || ! isset($topics->items)) {
                 $this->apsisCoreHelper->log(
-                    __METHOD__ . ': No consent list / topic found on section ' . $section . '. Try again later.'
+                    __METHOD__ . ': No topic found on section ' . $section . '. Try again later.'
                 );
                 return [];
             }
 
             $options = [['label' => __('--- Please select ---'), 'value' => '']];
 
-            foreach ($consentLists->items as $consentList) {
-                $topics = $apiClient->getTopics($section, $consentList->discriminator);
-                if (! $topics || ! isset($topics->items)) {
-                    continue;
-                }
+            foreach ($topics->items as $topic) {
+                /**
+                $formattedTopics[] = [
+                    'value' => $consentList->discriminator . '|' . $topic->discriminator . '|' . $consentList->name . '|' . $topic->name,
+                    'label' => $topic->name
+                ];**/
 
-                $formattedTopics = [];
-                foreach ($topics->items as $topic) {
-                    $formattedTopics[] = [
-                        'value' => $consentList->discriminator . '|' . $topic->discriminator . '|'
-                            . $consentList->name . '|' . $topic->name,
-                        'label' => $topic->name
-                    ];
-                }
-
-                $options[] = ['label' => $consentList->name, 'value' => $formattedTopics];
+                $options[] = [
+                    'label' => $topic->name, 'value' => $topic->discriminator . '|' . $topic->name
+                ];
             }
             return $options;
         } catch (Throwable $e) {

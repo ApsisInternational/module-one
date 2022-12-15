@@ -165,8 +165,47 @@ class UpgradeData implements UpgradeDataInterface
             if (version_compare($context->getVersion(), '2.0.0', '<')) {
                 $this->upgradeTwoZeroZero($setup);
             }
+            if (version_compare($context->getVersion(), '2.1.0', '<')) {
+                $this->upgradeTwoOneZero($setup);
+            }
         } catch (Throwable $e) {
             $setup->endSetup();
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
+     * @param ModuleDataSetupInterface $setup
+     */
+    private function upgradeTwoOneZero(ModuleDataSetupInterface $setup)
+    {
+        try {
+            $this->apsisCoreHelper->log(__METHOD__);
+
+            $configs = [ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC, ApsisConfigHelper::SYNC_SETTING_ADDITIONAL_TOPIC];
+            foreach ($this->apsisCoreHelper->getStores(true) as $store) {
+                foreach ($configs as $config) {
+                    $value = [];
+                    $topics = explode(',', (string) $store->getConfig($config));
+                    foreach ($topics as $topicStr) {
+                        $topicArr = explode('|', (string) $topicStr);
+                        if (empty($topicArr) || count($topicArr) !== 4) {
+                            continue;
+                        }
+
+                        $value[] = $topicArr[1] . '|' . $topicArr[3];
+                    }
+
+                    $scopeArray = $this->apsisCoreHelper->resolveContext(
+                        ScopeInterface::SCOPE_STORES, $store->getId(), $config
+                    );
+                    $this->apsisCoreHelper->saveConfigValue(
+                        $config, implode(',', $value), $scopeArray['scope'], $scopeArray['id']
+                    );
+                    $store->resetConfig();
+                }
+            }
+        } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
     }

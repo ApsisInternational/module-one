@@ -182,45 +182,22 @@ class Client extends Rest
     }
 
     /**
-     * DEFINITIONS: Get consent lists
-     *
-     * Get all Consent lists within a specific section.
-     *
-     * @param string $sectionDiscriminator
-     *
-     * @return mixed
-     */
-    public function getConsentLists(string $sectionDiscriminator)
-    {
-        $key = $this->buildKeyForCacheContainer(__FUNCTION__, func_get_args());
-        if ($fromCache = $this->getFromCacheContainer($key)) {
-            return $fromCache;
-        }
-
-        $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/consent-lists')
-            ->setVerb(Rest::VERB_GET);
-        return $this->executeRequestAndReturnResponse(__METHOD__, $key);
-    }
-
-    /**
      * DEFINITIONS: Get topics
      *
      * Get all topics on a consent list
      *
      * @param string $sectionDiscriminator
-     * @param string $consentListDiscriminator
      *
      * @return mixed
      */
-    public function getTopics(string $sectionDiscriminator, string $consentListDiscriminator)
+    public function getTopics(string $sectionDiscriminator)
     {
         $key = $this->buildKeyForCacheContainer(__FUNCTION__, func_get_args());
         if ($fromCache = $this->getFromCacheContainer($key)) {
             return $fromCache;
         }
 
-        $url = $this->hostName . '/audience/sections/' . $sectionDiscriminator . '/consent-lists/' .
-            $consentListDiscriminator . '/topics';
+        $url = $this->hostName . '/v2/audience/sections/' . $sectionDiscriminator . '/topics';
 
         $this->setUrl($url)
             ->setVerb(Rest::VERB_GET);
@@ -328,37 +305,6 @@ class Client extends Rest
     }
 
     /**
-     * PROFILES: Subscribe profile to topic
-     *
-     * @param string $keySpaceDiscriminator
-     * @param string $profileKey
-     * @param string $sectionDiscriminator
-     * @param string $consentListDiscriminator
-     * @param string $topicDiscriminator
-     *
-     * @return mixed
-     */
-    public function subscribeProfileToTopic(
-        string $keySpaceDiscriminator,
-        string $profileKey,
-        string $sectionDiscriminator,
-        string $consentListDiscriminator,
-        string $topicDiscriminator
-    ) {
-        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
-            '/sections/' . $sectionDiscriminator . '/subscriptions';
-        $this->setUrl($url)
-            ->setVerb(Rest::VERB_POST)
-            ->buildBody(
-                [
-                    'consent_list_discriminator' => $consentListDiscriminator,
-                    'topic_discriminator' => $topicDiscriminator
-                ]
-            );
-        return $this->executeRequestAndReturnResponse(__METHOD__);
-    }
-
-    /**
      * PROFILES: Merge two profiles
      *
      * Merges two profiles designated in the body using keyspace discriminator and profile key. As a result of the
@@ -402,34 +348,31 @@ class Client extends Rest
     /**
      * CONSENTS: Create consent
      *
-     * @param string $channelDiscriminator
-     * @param string $address
+     * @param string $keyspaceDiscriminator
+     * @param string $profileKey
      * @param string $sectionDiscriminator
-     * @param string $consentListDiscriminator
      * @param string $topicDiscriminator
+     * @param string $channelDiscriminator
      * @param string $type
      *
      * @return mixed
      */
     public function createConsent(
-        string $channelDiscriminator,
-        string $address,
+        string $keyspaceDiscriminator,
+        string $profileKey,
         string $sectionDiscriminator,
-        string $consentListDiscriminator,
         string $topicDiscriminator,
+        string $channelDiscriminator,
         string $type
     ) {
-        $url = $this->hostName . '/audience/channels/' . $channelDiscriminator . '/addresses/' . $address . '/consents';
+        $url = $this->hostName . '/v2/audience/keyspaces/' . $keyspaceDiscriminator . '/profiles/' . $profileKey .
+            '/sections/' . $sectionDiscriminator . '/consents';
         $body = [
-            'section_discriminator' => $sectionDiscriminator,
-            'type' => $type
+            'topic_discriminator' => $topicDiscriminator,
+            'channel_discriminator' => $channelDiscriminator,
+            'type' => $type,
+            'reason' => ''
         ];
-        if (strlen($consentListDiscriminator)) {
-            $body['consent_list_discriminator'] = $consentListDiscriminator;
-        }
-        if (strlen($topicDiscriminator)) {
-            $body['topic_discriminator'] = $topicDiscriminator;
-        }
         $this->setUrl($url)
             ->setVerb(Rest::VERB_POST)
             ->buildBody($body);
@@ -437,28 +380,24 @@ class Client extends Rest
     }
 
     /**
-     * CONSENTS: Get opt-in consents
+     * CONSENTS: Get consents
      *
-     * Returns all opt-in consented topics for a given address.
-     * Verifies whether an opt-in consent (topic-level opt-in with no opt-out on higher level) exists for given address.
-     * If no opt-in consent exists for a given address then an empty list is returned.
+     * Get all or selected types of consents for different topics over various channels currently existing for a specific profile.
+     * Profile is identified by keyspace discriminator and profile key. Topic is identified by section discriminator and topic discriminator.
      *
-     * @param string $channelDiscriminator
-     * @param string $address
+     * @param string $keyspaceDiscriminator
+     * @param string $profileKey
      * @param string $sectionDiscriminator
-     * @param string $consentListDiscriminator
      *
      * @return mixed
      */
-    public function getOptInConsents(
-        string $channelDiscriminator,
-        string $address,
-        string $sectionDiscriminator,
-        string $consentListDiscriminator
+    public function getConsents(
+        string $keyspaceDiscriminator,
+        string $profileKey,
+        string $sectionDiscriminator
     ) {
-        $url = $this->hostName . '/audience/channels/' . $channelDiscriminator . '/addresses/' . $address
-            . '/consents/sections/' . $sectionDiscriminator . '/consent-lists/' . $consentListDiscriminator
-            . '/evaluations';
+        $url = $this->hostName . '/v2/audience/keyspaces/' . $keyspaceDiscriminator . '/profiles/' . $profileKey .
+            '/sections/' . $sectionDiscriminator . '/consents?consent_types=opt-in&consent_types=confirmed-opt-in';
         $this->setUrl($url)
             ->setVerb(Rest::VERB_GET);
         return $this->executeRequestAndReturnResponse(__METHOD__);

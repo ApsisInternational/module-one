@@ -775,15 +775,14 @@ class Profile
                 $store,
                 ApsisConfigHelper::MAPPINGS_SECTION_SECTION
             );
-            $selectedConsentTopics = (string) $this->apsisCoreHelper->getStoreConfig(
+            $selectedConsentTopic = (string) $this->apsisCoreHelper->getStoreConfig(
                 $customer->getStore(),
                 ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC
             );
             if ((int)$profile->getSubscriberSyncStatus() === ProfileModel::SYNC_STATUS_SYNCED &&
                 (int)$profile->getSubscriberStatus() === Subscriber::STATUS_SUBSCRIBED &&
-                $IsSubscriberSyncEnabled && strlen($sectionDiscriminator) && strlen($selectedConsentTopics) &&
-                ! empty($topicMappings = explode('|', $selectedConsentTopics)) && isset($topicMappings[0]) &&
-                isset($topicMappings[1]) &&
+                $IsSubscriberSyncEnabled && strlen($sectionDiscriminator) && strlen($selectedConsentTopic) &&
+                ! empty($topicMapping = explode('|', $selectedConsentTopic)) && isset($topicMapping[0]) &&
                 $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId())
             ) {
                 $attributesArrWithVersionId = $this->apsisCoreHelper
@@ -808,22 +807,12 @@ class Profile
                             __METHOD__ . ': Unable to change email for Profile ' . $profile->getId()
                         );
                     } else {
-                        //Make call to remove consent from old email
                         $this->createConsentForTopics(
                             $client,
-                            $profile->getEmail(),
+                            $keySpaceDiscriminator,
+                            $profile->getIntegrationUid(),
                             $sectionDiscriminator,
-                            $topicMappings[0],
-                            $topicMappings[1],
-                            Subscribers::CONSENT_TYPE_OPT_OUT
-                        );
-                        //Make call to add consent to old email
-                        $this->createConsentForTopics(
-                            $client,
-                            $customer->getEmail(),
-                            $sectionDiscriminator,
-                            $topicMappings[0],
-                            $topicMappings[1],
+                            $topicMapping[0],
                             Subscribers::CONSENT_TYPE_OPT_IN
                         );
                     }
@@ -836,36 +825,35 @@ class Profile
 
     /**
      * @param Client $client
-     * @param string $email
+     * @param string $keyspaceDiscriminator
+     * @param string $profileKey
      * @param string $sectionDiscriminator
-     * @param string $consentListDiscriminator
      * @param string $topicDiscriminator
      * @param string $type
      */
     private function createConsentForTopics(
         Client $client,
-        string $email,
+        string $keyspaceDiscriminator,
+        string $profileKey,
         string $sectionDiscriminator,
-        string $consentListDiscriminator,
         string $topicDiscriminator,
         string $type
     ) {
         try {
             $status = $client->createConsent(
-                ProfileModel::EMAIL_CHANNEL_DISCRIMINATOR,
-                $email,
+                $keyspaceDiscriminator,
+                $profileKey,
                 $sectionDiscriminator,
-                $consentListDiscriminator,
                 $topicDiscriminator,
+                ProfileModel::EMAIL_CHANNEL_DISCRIMINATOR,
                 $type
             );
 
             //Log it
             if ($status === null) {
                 $info = [
-                    'Email' => $email,
+                    'Profile' => $profileKey,
                     'Section' => $sectionDiscriminator,
-                    'Consent List' => $consentListDiscriminator,
                     'Topic' => $topicDiscriminator,
                     'Type' => $type,
 
@@ -891,22 +879,22 @@ class Profile
         string $sectionDiscriminator
     ) {
         try {
-            $selectedConsentTopics = (string)$this->apsisCoreHelper->getStoreConfig(
+            $keySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator);
+            $selectedConsentTopic = (string)$this->apsisCoreHelper->getStoreConfig(
                 $store,
                 ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC
             );
-            $topicMappings = explode('|', $selectedConsentTopics);
 
-            if (strlen($selectedConsentTopics) && ! empty($topicMappings) && isset($topicMappings[0]) &&
-                    isset($topicMappings[1])
+            if (strlen($keySpaceDiscriminator) && strlen($selectedConsentTopic) &&
+                ! empty($topicMapping = explode('|', $selectedConsentTopic)) && isset($topicMapping[0])
             ) {
                 //Make call to remove consent from email
                 $this->createConsentForTopics(
                     $client,
-                    $profile->getEmail(),
+                    $keySpaceDiscriminator,
+                    $profile->getIntegrationUid(),
                     $sectionDiscriminator,
-                    $topicMappings[0],
-                    $topicMappings[1],
+                    $topicMapping[0],
                     Subscribers::CONSENT_TYPE_OPT_OUT
                 );
             }

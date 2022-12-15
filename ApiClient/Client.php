@@ -371,7 +371,8 @@ class Client extends Rest
             'topic_discriminator' => $topicDiscriminator,
             'channel_discriminator' => $channelDiscriminator,
             'type' => $type,
-            'reason' => ''
+            'reason' => 'User provided consent.',
+            'source' => 'Magento connector'
         ];
         $this->setUrl($url)
             ->setVerb(Rest::VERB_POST)

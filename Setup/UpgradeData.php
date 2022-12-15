@@ -165,8 +165,8 @@ class UpgradeData implements UpgradeDataInterface
             if (version_compare($context->getVersion(), '2.0.0', '<')) {
                 $this->upgradeTwoZeroZero($setup);
             }
-            if (version_compare($context->getVersion(), '2.1.0', '<')) {
-                $this->upgradeTwoOneZero($setup);
+            if (version_compare($context->getVersion(), '2.0.7', '<')) {
+                $this->upgradeTwoZeroSeven($setup);
             }
         } catch (Throwable $e) {
             $setup->endSetup();
@@ -177,7 +177,7 @@ class UpgradeData implements UpgradeDataInterface
     /**
      * @param ModuleDataSetupInterface $setup
      */
-    private function upgradeTwoOneZero(ModuleDataSetupInterface $setup)
+    private function upgradeTwoZeroSeven(ModuleDataSetupInterface $setup)
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);

@@ -30,8 +30,19 @@ APSIS One integration for Magento 2
 ## Installation
 
 It is recommended to use [composer](https://getcomposer.org) to install the module.
+
 ```bash
+# Install latest version for Magento 2.4.4+
 $ composer require apsis/module-one
+
+# Install latest version for Magento 2.2.x, 2.3.x, 2.4.0 - 2.4.3-p3
+$ composer require apsis/module-one:~2.0
+
+# Update to latest version for Magento 2.4.4+
+$ composer update apsis/module-one
+
+# Update to latest version for Magento 2.2.x, 2.3.x, 2.4.0 - 2.4.3-p3
+$ composer update apsis/module-one:~2.0
 ```
 If you do not use composer, ensure that you also load any dependencies that this module has, such as [giggsey/libphonenumber-for-php](https://github.com/giggsey/libphonenumber-for-php) and it's own dependencies.
 
@@ -43,7 +54,6 @@ Full support documentation and setup guides available [here](https://knowledge.a
 
 You are welcome to contribute to our APSIS One integration module for Magento 2. You can either:
 - Report a bug: Create a [GitHub issue](https://github.com/ApsisInternational/module-one/issues/new) including detailed description, steps to reproduce issue, Magento version including edition and module version number.
-- Fix a bug: Please clone our [Develop branch](https://github.com/ApsisInternational/module-one/tree/develop) to include your changes and submit your Pull Request.
 - To request a feature: Please contact us through [support](https://www.apsis.com/services/support)
 
 ## Internal Docs

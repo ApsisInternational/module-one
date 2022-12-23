@@ -283,12 +283,11 @@ class Config
 
         if (! empty($topicsMapping) && strlen($consentType)) {
             $consents = [];
-            foreach ($topicsMapping as $topicDiscriminator => $consentListDiscriminator) {
+            foreach ($topicsMapping as $topicDiscriminator) {
                 $consents[] = [
                     'resubscribe_if_opted_out' => true,
                     'field_selector' => $topicDiscriminator,
                     'channel_discriminator' => Profile::EMAIL_CHANNEL_DISCRIMINATOR,
-                    'consent_list_discriminator' => $consentListDiscriminator,
                     'topic_discriminator' => $topicDiscriminator,
                     'type' => $consentType
                 ];

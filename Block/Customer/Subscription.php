@@ -86,7 +86,7 @@ class Subscription extends Template
     /**
      * @return array
      */
-    public function getConsentListTopicsToShow()
+    public function getTopicsToShow()
     {
         $sortedTopicArr = [];
 
@@ -96,8 +96,8 @@ class Subscription extends Template
                 return $sortedTopicArr;
             }
 
-            $topicMappings = explode(',', (string)$this->apsisCoreHelper->getStoreConfig($customer->getStore(),
-                ApsisConfigHelper::SYNC_SETTING_ADDITIONAL_TOPIC
+            $topicMappings = explode(',', (string)$this->apsisCoreHelper->getStoreConfig(
+                $customer->getStore(), ApsisConfigHelper::SYNC_SETTING_ADDITIONAL_TOPIC
             ));
             $subscriber = $this->subscriberFactory->create()->loadByCustomerId($customer->getId());
 
@@ -113,7 +113,7 @@ class Subscription extends Template
 
             $sortedTopicArr = $this->getConsentListsWithTopicsArr(
                 $topicMappings,
-                $this->getProfileTopicArr($profile, $topicMappings)
+                $this->getProfileOptinTopicArr($profile)
             );
 
             if (!empty($sortedTopicArr)) {
@@ -128,11 +128,10 @@ class Subscription extends Template
 
     /**
      * @param DataObject $profile
-     * @param array $topicMappings
      *
      * @return array
      */
-    private function getProfileTopicArr(DataObject $profile, array $topicMappings)
+    private function getProfileOptinTopicArr(DataObject $profile)
     {
         $topicArr = [];
 
@@ -146,33 +145,23 @@ class Subscription extends Template
                 $store,
                 ApsisConfigHelper::MAPPINGS_SECTION_SECTION
             );
+            $keySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator);
 
-            if (empty($client) || empty($sectionDiscriminator)) {
+            if (empty($client) || empty($sectionDiscriminator) || empty($keySpaceDiscriminator)) {
                 return $topicArr;
             }
 
-            foreach ($topicMappings as $topicMappingString) {
-                $topicMapping = explode('|', $topicMappingString);
+            $consents = $client->getConsents(
+                $keySpaceDiscriminator,
+                $profile->getIntegrationUid(),
+                $sectionDiscriminator
+            );
+            if (! $consents || empty($consents->items)) {
+                return $topicArr;
+            }
 
-                //Count should always be 4, if not then not a valid config.
-                if (empty($topicMapping) || count($topicMapping) < 4) {
-                    continue;
-                }
-
-                if ($consentListDiscriminator = $topicMapping[0]) {
-                    $consents = $client->getOptInConsents(
-                        Profile::EMAIL_CHANNEL_DISCRIMINATOR,
-                        $profile->getEmail(),
-                        $sectionDiscriminator,
-                        $consentListDiscriminator
-                    );
-
-                    if (! empty($consents->items)) {
-                        foreach ($consents->items as $consent) {
-                            $topicArr[] = $consent->topic_discriminator;
-                        }
-                    }
-                }
+            foreach ($consents->items as $consent) {
+                $topicArr[] = $consent->topic_discriminator;
             }
 
         } catch (Throwable $e) {
@@ -196,28 +185,17 @@ class Subscription extends Template
             foreach ($topicMappings as $topicMappingString) {
                 $topicMapping = explode('|', $topicMappingString);
 
-                //Count should always be 4, if not then not a valid config.
-                if (empty($topicMapping) || count($topicMapping) < 4) {
+                //Count should always be 2, if not then not a valid config.
+                if (empty($topicMapping) || count($topicMapping) < 2) {
                     continue;
                 }
 
-                //index 0 is always CLD, 1 is always TD, 2 is always list name and 3 is always  topic name
-                $topic = [
-                    'value' => $topicMapping[0] . '|' . $topicMapping[1],
-                    'name' => $topicMapping[3],
-                    'consent' => in_array($topicMapping[1], $profileTopics)
+                //index 0 is always topic discriminator, 1 is always topic name
+                $topicMappingsArr[] = [
+                    'value' => $topicMapping[0],
+                    'name' => $topicMapping[1],
+                    'consent' => in_array($topicMapping[0], $profileTopics)
                 ];
-
-                //Prepare array
-                if (empty($topicMappingsArr[$topicMapping[0]]['topics'])) {
-                    $topicMappingsArr[$topicMapping[0]] = [
-                        'name' => $topicMapping[2],
-                        'topics' => [$topic]
-                    ];
-                    continue;
-                }
-
-                $topicMappingsArr[$topicMapping[0]]['topics'][] = $topic;
             }
 
         } catch (Throwable $e) {

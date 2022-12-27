@@ -265,7 +265,7 @@ class Config
         }
 
         $jsonMappingData = [
-            'keyspace_mappings' => [
+            'keyspace_mapping' => [
                 'keyspace_discriminator' => $keySpaceDiscriminator,
                 'field_selector' => Profile::INTEGRATION_KEYSPACE
             ],

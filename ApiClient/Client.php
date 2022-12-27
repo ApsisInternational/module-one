@@ -417,7 +417,7 @@ class Client extends Rest
      */
     public function initializeProfileImport(string $sectionDiscriminator, array $data)
     {
-        $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/imports')
+        $this->setUrl($this->hostName . '/v2/audience/sections/' . $sectionDiscriminator . '/imports')
             ->setVerb(Rest::VERB_POST)
             ->buildBody($data);
         return $this->executeRequestAndReturnResponse(__METHOD__);

@@ -284,6 +284,7 @@ class Config
                 $consents[] = [
                     'resubscribe_if_opted_out' => true,
                     'field_selector' => $topicDiscriminator,
+                    'channel_discriminator' => Profile::EMAIL_CHANNEL_DISCRIMINATOR,
                     'topic_discriminator' => $topicDiscriminator,
                     'type' => $consentType
                 ];

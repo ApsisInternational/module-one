@@ -70,7 +70,7 @@ class Client extends Rest
     {
         if (strlen($key) && isset($this->cacheContainer[$key])) {
             if ((bool) getenv('APSIS_DEVELOPER')) {
-                $this->helper->debug('API response from cache container.', ['URL' => $key]);
+                $this->helper->debug('API response from cache container.', ['API_METHOD.PARAMS' => $key]);
             }
 
             return $this->cacheContainer[$key];

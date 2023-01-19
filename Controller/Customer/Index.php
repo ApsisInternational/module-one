@@ -13,7 +13,7 @@ class Index extends Manage
     /**
      * @var SubscriberFactory
      */
-    private $subscriberFactory;
+    private SubscriberFactory $subscriberFactory;
 
     /**
      * Index constructor.
@@ -29,9 +29,9 @@ class Index extends Manage
     }
 
     /**
-     * @inheritdoc
+     * @return void
      */
-    public function execute()
+    public function execute(): void
     {
         try {
             if (! $this->_customerSession->authenticate()) {

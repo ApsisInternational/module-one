@@ -23,22 +23,22 @@ class Profile extends AbstractDb implements ResourceInterface
     /**
      * @var CustomerCollectionFactory
      */
-    private $customerCollectionFactory;
+    private CustomerCollectionFactory $customerCollectionFactory;
 
     /**
      * @var ExpressionFactory
      */
-    private $expressionFactory;
+    private ExpressionFactory $expressionFactory;
 
     /**
      * @var OrderCollectionFactory
      */
-    private $orderCollectionFactory;
+    private OrderCollectionFactory $orderCollectionFactory;
 
     /**
      * @var DateTime
      */
-    private $dateTime;
+    private DateTime $dateTime;
 
     /**
      * @inheritdoc
@@ -80,6 +80,8 @@ class Profile extends AbstractDb implements ResourceInterface
      * @param int $status
      * @param array $isEntityTypeCond
      * @param bool $secondUpdate
+     *
+     * @return void
      */
     public function resetProfiles(
         ApsisLogHelper $apsisHelper,
@@ -88,7 +90,7 @@ class Profile extends AbstractDb implements ResourceInterface
         int $status = ApsisProfile::SYNC_STATUS_PENDING,
         array $isEntityTypeCond = [],
         bool $secondUpdate = false
-    ) {
+    ): void {
         try {
             // Update Profile type Customer
             $this->updateCustomerSyncStatus(
@@ -140,6 +142,8 @@ class Profile extends AbstractDb implements ResourceInterface
      * @param array $bind
      * @param array $isEntityTypeCond
      * @param bool $secondUpdate
+     *
+     * @return void
      */
     public function updateSubscribersSyncStatus(
         array $subscriberIds,
@@ -151,7 +155,7 @@ class Profile extends AbstractDb implements ResourceInterface
         array $bind = [],
         array $isEntityTypeCond = [],
         bool $secondUpdate = true
-    ) {
+    ): void {
         try {
             $this->updateProfilSyncStatus(
                 $apsisHelper,
@@ -205,7 +209,7 @@ class Profile extends AbstractDb implements ResourceInterface
         array $profileIds = [],
         array $bind = [],
         array $isEntityTypeCond = []
-    ) {
+    ): int {
         try {
             return $this->updateProfilSyncStatus(
                 $apsisHelper,
@@ -247,7 +251,7 @@ class Profile extends AbstractDb implements ResourceInterface
         array $profileIds = [],
         array $bind = [],
         array $isEntityTypeCond = []
-    ) {
+    ): int {
         try {
             $where = [];
 
@@ -301,8 +305,11 @@ class Profile extends AbstractDb implements ResourceInterface
      *
      * @return array|Collection
      */
-    public function buildCustomerCollection(int $storeId, array $customerIds, ApsisCoreHelper $apsisCoreHelper)
-    {
+    public function buildCustomerCollection(
+        int $storeId,
+        array $customerIds,
+        ApsisCoreHelper $apsisCoreHelper
+    ): Collection|array {
         try {
             $customerLog = $this->getTable('customer_log');
             $customerCollection = $this->customerCollectionFactory->create()
@@ -356,7 +363,7 @@ class Profile extends AbstractDb implements ResourceInterface
         Collection $customerCollection,
         int $storeId,
         ApsisCoreHelper $apsisCoreHelper
-    ) {
+    ): Collection {
         try {
             return $customerCollection
                 ->joinAttribute(
@@ -426,7 +433,7 @@ class Profile extends AbstractDb implements ResourceInterface
         Collection $customerCollection,
         int $storeId,
         ApsisCoreHelper $apsisCoreHelper
-    ) {
+    ): Collection {
         try {
             return $customerCollection->joinAttribute(
                 'billing_street',
@@ -501,7 +508,7 @@ class Profile extends AbstractDb implements ResourceInterface
         StoreInterface $store,
         array $customerIds,
         ApsisCoreHelper $apsisCoreHelper
-    ) {
+    ): array {
         $orderArray = [];
 
         try {
@@ -547,7 +554,7 @@ class Profile extends AbstractDb implements ResourceInterface
      *
      * @return array
      */
-    private function buildColumnData(string $salesOrderGrid, string $statuses, ApsisCoreHelper $apsisCoreHelper)
+    private function buildColumnData(string $salesOrderGrid, string $statuses, ApsisCoreHelper $apsisCoreHelper): array
     {
         try {
             $statusText = $this->getConnection()->quoteInto('status in (?)', explode(",", $statuses));
@@ -574,13 +581,15 @@ class Profile extends AbstractDb implements ResourceInterface
      * @param string $magentoTable
      * @param string $apsisTable
      * @param ApsisLogHelper $apsisLogHelper
+     *
+     * @return void
      */
     public function fetchAndPopulateCustomers(
         AdapterInterface $connection,
         string $magentoTable,
         string $apsisTable,
         ApsisLogHelper $apsisLogHelper
-    ) {
+    ): void {
         try {
             $select = $connection->select()
                 ->from(
@@ -611,13 +620,15 @@ class Profile extends AbstractDb implements ResourceInterface
      * @param string $magentoTable
      * @param string $apsisTable
      * @param ApsisLogHelper $apsisLogHelper
+     *
+     * @return void
      */
     public function fetchAndPopulateSubscribers(
         AdapterInterface $connection,
         string $magentoTable,
         string $apsisTable,
         ApsisLogHelper $apsisLogHelper
-    ) {
+    ): void {
         try {
             $select = $connection->select()
                 ->from(
@@ -660,13 +671,15 @@ class Profile extends AbstractDb implements ResourceInterface
      * @param string $magentoTable
      * @param string $apsisTable
      * @param ApsisLogHelper $apsisLogHelper
+     *
+     * @return void
      */
     public function updateCustomerProfiles(
         AdapterInterface $connection,
         string $magentoTable,
         string $apsisTable,
         ApsisLogHelper $apsisLogHelper
-    ) {
+    ): void {
         try {
             $select = $connection->select();
             $select
@@ -694,20 +707,23 @@ class Profile extends AbstractDb implements ResourceInterface
      * @param string $magentoTable
      * @param string $apsisTable
      * @param ApsisLogHelper $apsisLogHelper
+     *
+     * @return void
      */
     public function updateSubscriberStoreId(
         AdapterInterface $connection,
         string $magentoTable,
         string $apsisTable,
         ApsisLogHelper $apsisLogHelper
-    ) {
+    ): void {
         try {
             $select = $connection->select();
             $select->from(
                 ['subscriber' => $magentoTable],
                 [
                     'subscriber_store_id' => 'store_id',
-                    'subscriber_sync_status' => $this->expressionFactory->create(["expression" => (ApsisProfile::SYNC_STATUS_PENDING)]),
+                    'subscriber_sync_status' => $this->expressionFactory
+                        ->create(["expression" => (ApsisProfile::SYNC_STATUS_PENDING)]),
                     'updated_at' => $this->expressionFactory
                         ->create(["expression" => "'" . $this->dateTime->formatDate(true) . "'"])
                 ]
@@ -725,7 +741,7 @@ class Profile extends AbstractDb implements ResourceInterface
      *
      * @return bool
      */
-    public function truncateTable(ApsisLogHelper $apsisLogHelper)
+    public function truncateTable(ApsisLogHelper $apsisLogHelper): bool
     {
         try {
             $this->getConnection()->query('SET FOREIGN_KEY_CHECKS = 0');
@@ -743,7 +759,7 @@ class Profile extends AbstractDb implements ResourceInterface
      *
      * @return bool
      */
-    public function populateProfilesTable(ApsisLogHelper $apsisLogHelper)
+    public function populateProfilesTable(ApsisLogHelper $apsisLogHelper): bool
     {
         try {
             $magentoSubscriberTable = $this->getTable('newsletter_subscriber');
@@ -781,18 +797,18 @@ class Profile extends AbstractDb implements ResourceInterface
     /**
      * @inheritdoc
      */
-    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper)
+    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper): void
     {
         // Not needed for profiles
     }
 
     /**
-     * @param ApsisLogHelper|ApsisCoreHelper $apsisHelper
+     * @param ApsisCoreHelper|ApsisLogHelper $apsisHelper
      * @param string $andCondition
      *
      * @return bool
      */
-    public function deleteAllModuleConfig($apsisHelper, string $andCondition = '')
+    public function deleteAllModuleConfig(ApsisLogHelper|ApsisCoreHelper $apsisHelper, string $andCondition = ''): bool
     {
         try {
             $connection = $this->getConnection();

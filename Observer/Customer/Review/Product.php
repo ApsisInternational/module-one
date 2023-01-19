@@ -24,37 +24,37 @@ class Product implements ObserverInterface
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var ProductRepositoryInterface
      */
-    private $productRepository;
+    private ProductRepositoryInterface $productRepository;
 
     /**
      * @var CustomerRepositoryInterface
      */
-    private $customerRepository;
+    private CustomerRepositoryInterface $customerRepository;
 
     /**
      * @var Event
      */
-    private $eventService;
+    private Event $eventService;
 
     /**
      * @var ReviewFactory
      */
-    private $reviewFactory;
+    private ReviewFactory $reviewFactory;
 
     /**
      * Product constructor.
@@ -130,7 +130,7 @@ class Product implements ObserverInterface
      *
      * @return bool
      */
-    private function isOkToProceed(int $storeId)
+    private function isOkToProceed(int $storeId): bool
     {
         $store = $this->apsisCoreHelper->getStore($storeId);
         $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
@@ -148,7 +148,7 @@ class Product implements ObserverInterface
      *
      * @return bool|ProductInterface
      */
-    private function getProductById(int $productId, int $storeId)
+    private function getProductById(int $productId, int $storeId): bool|ProductInterface
     {
         try {
             return $this->productRepository->getById($productId, false, $storeId);

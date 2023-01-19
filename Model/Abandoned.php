@@ -39,17 +39,17 @@ class Abandoned extends AbstractModel
     /**
      * @var ApsisLogHelper
      */
-    private $apsisLogHelper;
+    private ApsisLogHelper $apsisLogHelper;
 
     /**
      * @var DateTime
      */
-    private $dateTime;
+    private DateTime $dateTime;
 
     /**
      * @var ExpressionFactory
      */
-    private $expressionFactory;
+    private ExpressionFactory $expressionFactory;
 
     /**
      * Abandoned constructor.
@@ -94,9 +94,9 @@ class Abandoned extends AbstractModel
     }
 
     /**
-     * @inheritdoc
+     * @return Abandoned
      */
-    public function afterDelete()
+    public function afterDelete(): Abandoned
     {
         if ($this->isDeleted()) {
             //Log it
@@ -113,9 +113,9 @@ class Abandoned extends AbstractModel
     }
 
     /**
-     * @return $this
+     * @return Abandoned|$this
      */
-    public function beforeSave()
+    public function beforeSave(): Abandoned|static
     {
         parent::beforeSave();
         if ($this->isObjectNew()) {

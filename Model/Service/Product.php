@@ -12,7 +12,7 @@ class Product
     /**
      * @var Image
      */
-    private $imageHelper;
+    private Image $imageHelper;
 
     /**
      * Product constructor.
@@ -31,7 +31,7 @@ class Product
      *
      * @return string
      */
-    public function getUrl(MagentoProduct $product, ApsisCoreHelper $helper, int $storeId)
+    public function getUrl(MagentoProduct $product, ApsisCoreHelper $helper, int $storeId): string
     {
         try {
             return $product->getUrlModel()
@@ -52,7 +52,7 @@ class Product
      *
      * @return string
      */
-    public function getImageUrl(MagentoProduct $product, ApsisCoreHelper $helper, int $storeId)
+    public function getImageUrl(MagentoProduct $product, ApsisCoreHelper $helper, int $storeId): string
     {
         try {
             $productImageUrl = $this->imageHelper
@@ -73,7 +73,7 @@ class Product
      *
      * @return string
      */
-    public function getReviewUrl(ApsisCoreHelper $helper, int $storeId, int $productId)
+    public function getReviewUrl(ApsisCoreHelper $helper, int $storeId, int $productId): string
     {
         try {
             $store = $helper->getStore($storeId);

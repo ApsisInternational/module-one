@@ -11,17 +11,17 @@ class Intervalminute implements OptionSourceInterface
      *
      * @var array
      */
-    protected $times = [15, 20, 25, 30, 45, 60, 90, 120, 180, 240];
+    protected array $times = [15, 20, 25, 30, 45, 60, 90, 120, 180, 240];
 
     /**
      * @var string
      */
-    protected $timeType = 'Minute';
+    protected string $timeType = 'Minute';
 
     /**
      * @inheritdoc
      */
-    public function toOptionArray()
+    public function toOptionArray(): array
     {
         $interval = [['value' => 0, 'label' => __('Disable')]];
 

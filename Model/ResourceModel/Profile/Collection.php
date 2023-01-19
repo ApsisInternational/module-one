@@ -12,22 +12,18 @@ class Collection extends AbstractCollection
     /**
      * @inheritdoc
      */
-    protected $_idFieldName = 'id';
-
-    /**
-     * @inheritdoc
-     */
     public function _construct()
     {
+        $this->_idFieldName = 'id';
         $this->_init(Profile::class, ProfileResource::class);
     }
 
     /**
      * @param int $customerId
      *
-     * @return bool|DataObject
+     * @return DataObject|Profile|bool
      */
-    public function loadByCustomerId(int $customerId)
+    public function loadByCustomerId(int $customerId): DataObject|Profile|bool
     {
         $collection = $this->addFieldToFilter('customer_id', $customerId)
             ->setPageSize(1);
@@ -42,9 +38,9 @@ class Collection extends AbstractCollection
     /**
      * @param int $subscriberId
      *
-     * @return bool|DataObject
+     * @return DataObject|Profile|bool
      */
-    public function loadBySubscriberId(int $subscriberId)
+    public function loadBySubscriberId(int $subscriberId): DataObject|Profile|bool
     {
         $collection = $this->addFieldToFilter('subscriber_id', $subscriberId)
             ->setPageSize(1);
@@ -59,9 +55,9 @@ class Collection extends AbstractCollection
     /**
      * @param string $integrationId
      *
-     * @return bool|DataObject
+     * @return DataObject|Profile|bool
      */
-    public function loadByIntegrationId(string $integrationId)
+    public function loadByIntegrationId(string $integrationId): DataObject|Profile|bool
     {
         $collection = $this->addFieldToFilter('integration_uid', $integrationId)
             ->setPageSize(1);
@@ -81,8 +77,12 @@ class Collection extends AbstractCollection
      *
      * @return Collection
      */
-    public function getSubscribersToBatchByStore(int $storeId, int $syncLimit, int $subscriberStatus, array $syncStatus)
-    {
+    public function getSubscribersToBatchByStore(
+        int $storeId,
+        int $syncLimit,
+        int $subscriberStatus,
+        array $syncStatus
+    ): Collection {
         return $this->addFieldToSelect('*')
             ->addFieldToFilter('subscriber_id', ['notnull' => true])
             ->addFieldToFilter('subscriber_status', $subscriberStatus)
@@ -97,7 +97,7 @@ class Collection extends AbstractCollection
      *
      * @return Collection
      */
-    public function getCustomerToBatchByStore(int $storeId, int $syncLimit)
+    public function getCustomerToBatchByStore(int $storeId, int $syncLimit): Collection
     {
         return $this->addFieldToSelect('*')
             ->addFieldToFilter('customer_id', ['notnull' => true])
@@ -111,7 +111,7 @@ class Collection extends AbstractCollection
      *
      * @return Collection
      */
-    public function getCollectionFromIds(array $ids)
+    public function getCollectionFromIds(array $ids): Collection
     {
         return $this->addFieldToSelect('*')
             ->addFieldToFilter('id', ['in' => $ids]);
@@ -122,7 +122,7 @@ class Collection extends AbstractCollection
      *
      * @return Collection
      */
-    public function getProfileCollectionForStore(int $storeId)
+    public function getProfileCollectionForStore(int $storeId): Collection
     {
         return $this->addFieldToFilter(
             ['store_id', 'subscriber_store_id'],

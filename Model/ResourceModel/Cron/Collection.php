@@ -11,13 +11,9 @@ class Collection extends AbstractCollection
     /**
      * @inheritdoc
      */
-    protected $_idFieldName = 'schedule_id';
-
-    /**
-     * @inheritdoc
-     */
     public function _construct()
     {
+        $this->_idFieldName = 'schedule_id';
         $this->_init(Schedule::class, ScheduleResource::class);
     }
 }

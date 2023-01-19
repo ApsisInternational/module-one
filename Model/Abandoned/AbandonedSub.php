@@ -25,47 +25,47 @@ class AbandonedSub
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var EventResource
      */
-    private $eventResource;
+    private EventResource $eventResource;
 
     /**
      * @var AbandonedResource
      */
-    private $abandonedResource;
+    private AbandonedResource $abandonedResource;
 
     /**
      * @var QuoteCollectionFactory
      */
-    private $quoteCollectionFactory;
+    private QuoteCollectionFactory $quoteCollectionFactory;
 
     /**
      * @var ContentFactory
      */
-    private $cartContentFactory;
+    private ContentFactory $cartContentFactory;
 
     /**
      * @var DateTime
      */
-    private $dateTime;
+    private DateTime $dateTime;
 
     /**
      * @var ApsisDateHelper
      */
-    private $apsisDateHelper;
+    private ApsisDateHelper $apsisDateHelper;
 
     /**
      * @var SubscriberFactory
      */
-    private $subscriberFactory;
+    private SubscriberFactory $subscriberFactory;
 
     /**
      * @var EmulationFactory
      */
-    private $emulationFactory;
+    private EmulationFactory $emulationFactory;
 
     /**
      * AbandonedSub constructor.
@@ -104,13 +104,16 @@ class AbandonedSub
 
     /**
      * @param StoreInterface $store
-     * @param string|int $acDelayPeriod
+     * @param string $acDelayPeriod
      * @param ApsisCoreHelper $apsisCoreHelper
      *
      * @return Collection|boolean
      */
-    public function getQuoteCollectionByStore(StoreInterface $store, $acDelayPeriod, ApsisCoreHelper $apsisCoreHelper)
-    {
+    public function getQuoteCollectionByStore(
+        StoreInterface $store,
+        string $acDelayPeriod,
+        ApsisCoreHelper $apsisCoreHelper
+    ): bool|Collection {
         try {
             $interval = $this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('PT%sM', $acDelayPeriod));
             $fromTime = $this->apsisDateHelper->getDateTimeFromTimeAndTimeZone()
@@ -139,12 +142,14 @@ class AbandonedSub
      * @param Collection $quoteCollection
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param int $storeId
+     *
+     * @return void
      */
     public function aggregateCartDataFromStoreCollection(
         Collection $quoteCollection,
         ApsisCoreHelper $apsisCoreHelper,
         int $storeId
-    ) {
+    ): void {
         $abandonedCarts = [];
         $events = [];
         $createdAt = $this->dateTime->formatDate(true);
@@ -216,7 +221,7 @@ class AbandonedSub
      *
      * @return bool|Profile
      */
-    private function findProfile(Quote $quote, ApsisCoreHelper $apsisCoreHelper)
+    private function findProfile(Quote $quote, ApsisCoreHelper $apsisCoreHelper): Profile|bool
     {
         if ($quote->getCustomerId()) {
             $profile = $this->profileCollectionFactory->create()->loadByCustomerId($quote->getCustomerId());
@@ -253,7 +258,7 @@ class AbandonedSub
      *
      * @return array
      */
-    private function getDataForEventFromAcData(array $acData, string $uuid, ApsisCoreHelper $apsisCoreHelper)
+    private function getDataForEventFromAcData(array $acData, string $uuid, ApsisCoreHelper $apsisCoreHelper): array
     {
         try {
             $items = [];

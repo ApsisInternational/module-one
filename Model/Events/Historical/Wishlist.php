@@ -21,12 +21,12 @@ class Wishlist extends HistoricalEvent
     /**
      * @var WishlistItemCollectionFactory
      */
-    private $wishlistItemCollectionFactory;
+    private WishlistItemCollectionFactory $wishlistItemCollectionFactory;
 
     /**
      * @var WishlistCollectionFactory
      */
-    private $wishlistCollectionFactory;
+    private WishlistCollectionFactory $wishlistCollectionFactory;
 
     /**
      * Wishlist constructor.
@@ -60,7 +60,7 @@ class Wishlist extends HistoricalEvent
         ProfileCollection $profileCollection,
         array $duration,
         array $profileCollectionArray
-    ) {
+    ): void {
         try {
             if (empty($profileCollectionArray)) {
                 return;
@@ -112,7 +112,7 @@ class Wishlist extends HistoricalEvent
      *
      * @return array
      */
-    private function getWishlistCollection(array $customerIds, ApsisCoreHelper $apsisCoreHelper)
+    private function getWishlistCollection(array $customerIds, ApsisCoreHelper $apsisCoreHelper): array
     {
         $collectionArray = [];
 
@@ -148,7 +148,7 @@ class Wishlist extends HistoricalEvent
         StoreInterface $store,
         array $wishlistIds,
         array $duration
-    ) {
+    ): WishlistItemCollection|array {
         try {
             $collection = $this->wishlistItemCollectionFactory->create()
                 ->addStoreFilter([$store->getId()])
@@ -179,7 +179,7 @@ class Wishlist extends HistoricalEvent
         array $profileCollectionArray,
         ApsisCoreHelper $apsisCoreHelper,
         StoreInterface $store
-    ) {
+    ): array {
         $eventsToRegister = [];
 
         /** @var  MagentoWishlistItem $wishlistItem */

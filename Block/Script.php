@@ -17,7 +17,7 @@ class Script extends Template
     /**
      * @var ApsisLogHelper
      */
-    private $apsisLogHelper;
+    private ApsisLogHelper $apsisLogHelper;
 
     /**
      * Cart constructor.
@@ -35,7 +35,7 @@ class Script extends Template
     /**
      * @return string
      */
-    public function getTrackingUrl()
+    public function getTrackingUrl(): string
     {
         $url = '';
 

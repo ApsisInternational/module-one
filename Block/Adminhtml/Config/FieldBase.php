@@ -13,7 +13,7 @@ class FieldBase extends Field
     /**
      * @var Log
      */
-    private $logger;
+    private Log $logger;
 
     /**
      * FieldBase constructor.
@@ -31,7 +31,7 @@ class FieldBase extends Field
     /**
      * @inheritdoc
      */
-    public function _getElementHtml(AbstractElement $element)
+    public function _getElementHtml(AbstractElement $element): string
     {
         $element->setData('readonly', 1)
             ->addClass('apsis-copy-helper');
@@ -41,7 +41,7 @@ class FieldBase extends Field
     /**
      * @return string
      */
-    public function generateBaseUrlForDynamicContent()
+    public function generateBaseUrlForDynamicContent(): string
     {
         try {
             $website = $this->_storeManager->getWebsite($this->_request->getParam('website', 0));

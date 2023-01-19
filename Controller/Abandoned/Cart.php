@@ -3,10 +3,12 @@
 namespace Apsis\One\Controller\Abandoned;
 
 use Apsis\One\Block\Cart as CartBlock;
+use Apsis\One\Model\Abandoned;
 use Apsis\One\Model\Service\Cart as ApsisCartHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\Result\Raw;
 use Magento\Framework\Controller\ResultFactory;
@@ -22,27 +24,27 @@ class Cart extends Action
     /**
      * @var JsonFactory
      */
-    private $resultJsonFactory;
+    private JsonFactory $resultJsonFactory;
 
     /**
      * @var ApsisCartHelper
      */
-    private $apsisCartHelper;
+    private ApsisCartHelper $apsisCartHelper;
 
     /**
      * @var ApsisLogHelper
      */
-    private $apsisLogHelper;
+    private ApsisLogHelper $apsisLogHelper;
 
     /**
-     * @var Raw
+     * @var Raw|ResultInterface
      */
-    private $resultRaw;
+    private Raw|ResultInterface $resultRaw;
 
     /**
      * @var StoreManagerInterface
      */
-    private $storeManager;
+    private StoreManagerInterface $storeManager;
 
     /**
      * Cart constructor.
@@ -72,7 +74,7 @@ class Cart extends Action
     /**
      * @inheritdoc
      */
-    public function execute()
+    public function execute(): ResultInterface|ResponseInterface
     {
         try {
             //Validate http method against allowed one.
@@ -98,21 +100,19 @@ class Cart extends Action
     }
 
     /**
-     * @param DataObject $cart
+     * @param DataObject|Abandoned $cart
      *
      * @return ResultInterface
      */
-    private function renderOutput(DataObject $cart)
+    private function renderOutput(DataObject|Abandoned $cart): ResultInterface
     {
         try {
             $cart->setCartData($this->getData($cart->getCartData(), $cart->getStoreId()));
             $output = $this->getRequest()->getParam('output');
-            switch ($output) {
-                case 'html':
-                    return $this->renderHtml($cart);
-                default:
-                    return $this->renderJson($cart);
-            }
+            return match ($output) {
+                'html' => $this->renderHtml($cart),
+                default => $this->renderJson($cart),
+            };
         } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
             return $this->handleException();
@@ -124,7 +124,7 @@ class Cart extends Action
      *
      * @return ResultInterface
      */
-    private function renderHtml(DataObject $cart)
+    private function renderHtml(DataObject $cart): ResultInterface
     {
         try {
             /** @var CartBlock $block */
@@ -149,7 +149,7 @@ class Cart extends Action
      *
      * @return ResultInterface
      */
-    private function renderJson(DataObject $cart)
+    private function renderJson(DataObject $cart): ResultInterface
     {
         try {
             $resultJson = $this->resultJsonFactory
@@ -168,7 +168,7 @@ class Cart extends Action
      *
      * @return ResultInterface
      */
-    public function sendResponse(ResultInterface $result, int $code)
+    public function sendResponse(ResultInterface $result, int $code): ResultInterface
     {
         try {
             return $result->setHttpResponseCode($code)
@@ -189,7 +189,7 @@ class Cart extends Action
      *
      * @return bool
      */
-    private function isJson(string $string)
+    private function isJson(string $string): bool
     {
         try {
             json_decode($string);
@@ -206,7 +206,7 @@ class Cart extends Action
      *
      * @return string
      */
-    private function getData(string $data, int $storeId)
+    private function getData(string $data, int $storeId): string
     {
         try {
             $store = $this->storeManager->getStore($storeId);
@@ -221,7 +221,7 @@ class Cart extends Action
     /**
      * @return ResultInterface
      */
-    private function handleException()
+    private function handleException(): ResultInterface
     {
         return $this->resultRaw->setHttpResponseCode(500)
             ->setHeader('Pragma', 'public', true)

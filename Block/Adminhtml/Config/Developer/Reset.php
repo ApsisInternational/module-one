@@ -15,24 +15,24 @@ class Reset extends Field
     /**
      * @var ApsisLogHelper
      */
-    private $apsisLogHelper;
+    private ApsisLogHelper $apsisLogHelper;
 
     /**
      * @var string
      */
-    public $buttonLabel = 'Reset';
+    public string $buttonLabel = 'Reset';
 
     /**
      * @var State
      */
-    private $state;
+    private State $state;
 
     /**
      * @param string $buttonLabel
      *
      * @return $this
      */
-    public function setButtonLabel(string $buttonLabel)
+    public function setButtonLabel(string $buttonLabel): static
     {
         $this->buttonLabel = $buttonLabel;
         return $this;
@@ -60,7 +60,7 @@ class Reset extends Field
     /**
      * @inheritdoc
      */
-    public function _getElementHtml(AbstractElement $element)
+    public function _getElementHtml(AbstractElement $element): string
     {
         try {
             $elm = $this->getLayout()

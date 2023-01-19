@@ -22,27 +22,27 @@ class Placed implements ObserverInterface
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var Event
      */
-    private $eventService;
+    private Event $eventService;
 
     /**
      * @var SubscriberFactory
      */
-    private $subscriberFactory;
+    private SubscriberFactory $subscriberFactory;
 
     /**
      * Placed constructor.
@@ -93,9 +93,9 @@ class Placed implements ObserverInterface
     /**
      * @param Order $order
      *
-     * @return bool|DataObject
+     * @return bool|DataObject|Profile
      */
-    private function findProfile(Order $order)
+    private function findProfile(Order $order): DataObject|Profile|bool
     {
         try {
             if ($order->getCustomerId()) {
@@ -127,7 +127,7 @@ class Placed implements ObserverInterface
      *
      * @return bool
      */
-    private function isOkToProceed(Store $store)
+    private function isOkToProceed(Store $store): bool
     {
         $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(

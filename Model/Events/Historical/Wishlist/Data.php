@@ -17,12 +17,12 @@ class Data extends EventData implements EventDataInterface
     /**
      * @var StoreInterface
      */
-    private $store;
+    private StoreInterface $store;
 
     /**
      * @var WishlistItem
      */
-    private $wishlistItem;
+    private WishlistItem $wishlistItem;
 
     /**
      * @param Wishlist $wishlist
@@ -39,7 +39,7 @@ class Data extends EventData implements EventDataInterface
         WishlistItem $item,
         Product $product,
         ApsisCoreHelper $apsisCoreHelper
-    ) {
+    ): array {
         try {
             $this->apsisCoreHelper = $apsisCoreHelper;
             $this->store = $store;
@@ -53,9 +53,11 @@ class Data extends EventData implements EventDataInterface
     }
 
     /**
-     * @inheritdoc
+     * @param AbstractModel|Wishlist $model
+     *
+     * @return array
      */
-    protected function getProcessedDataArr(AbstractModel $model)
+    protected function getProcessedDataArr(AbstractModel|Wishlist $model): array
     {
         try {
             return [

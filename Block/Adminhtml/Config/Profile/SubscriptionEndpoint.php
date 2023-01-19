@@ -26,7 +26,7 @@ class SubscriptionEndpoint extends FieldBase
     /**
      * @inheritdoc
      */
-    public function _getElementHtml(AbstractElement $element)
+    public function _getElementHtml(AbstractElement $element): string
     {
         $text = sprintf(
             '%s%s',

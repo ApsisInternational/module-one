@@ -15,17 +15,17 @@ class Profiles implements SyncInterface
     /**
      * @var Subscribers
      */
-    private $subscribers;
+    private Subscribers $subscribers;
 
     /**
      * @var Customers
      */
-    private $customers;
+    private Customers $customers;
 
     /**
      * @var Batch
      */
-    private $batch;
+    private Batch $batch;
 
     /**
      * Profiles constructor.
@@ -47,7 +47,7 @@ class Profiles implements SyncInterface
     /**
      * @inheritdoc
      */
-    public function process(ApsisCoreHelper $apsisCoreHelper)
+    public function process(ApsisCoreHelper $apsisCoreHelper): void
     {
         foreach ($apsisCoreHelper->getStores() as $store) {
             try {

@@ -15,22 +15,22 @@ class Updater extends Action
     /**
      * @var Quote
      */
-    private $quoteResource;
+    private Quote $quoteResource;
 
     /**
      * @var Session
      */
-    private $cartSession;
+    private Session $cartSession;
 
     /**
      * @var Log
      */
-    private $log;
+    private Log $log;
 
     /**
      * @var Validator
      */
-    private $formKeyValidator;
+    private Validator $formKeyValidator;
 
     /**
      * Updater constructor.
@@ -56,9 +56,9 @@ class Updater extends Action
     }
 
     /**
-     * @inheritdoc
+     * @return void
      */
-    public function execute()
+    public function execute(): void
     {
         try {
             if ($this->formKeyValidator->validate($this->getRequest()) &&

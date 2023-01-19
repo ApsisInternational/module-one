@@ -15,12 +15,12 @@ class Cart extends Template
     /**
      * @var Log
      */
-    private $logger;
+    private Log $logger;
 
     /**
      * @var FormKey
      */
-    private $formKey;
+    private FormKey $formKey;
 
     /**
      * Cart constructor.
@@ -41,7 +41,7 @@ class Cart extends Template
     /**
      * @return string
      */
-    public function getUpdaterUrl()
+    public function getUpdaterUrl(): string
     {
         try {
             return $this->_storeManager
@@ -59,7 +59,7 @@ class Cart extends Template
     /**
      * @return bool
      */
-    public function isOkToProceed()
+    public function isOkToProceed(): bool
     {
         try {
             return (boolean) $this->_storeManager->getStore()->getConfig(
@@ -74,7 +74,7 @@ class Cart extends Template
     /**
      * @return string
      */
-    public function getKey()
+    public function getKey(): string
     {
         try {
             return $this->formKey->getFormKey();

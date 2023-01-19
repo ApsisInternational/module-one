@@ -5,6 +5,7 @@ namespace Apsis\One\Controller\Adminhtml\Developer;
 use Apsis\One\Model\Developer;
 use Magento\Backend\App\AbstractAction;
 use Magento\Backend\App\Action\Context;
+use Magento\Framework\App\ResponseInterface;
 
 class Reset extends AbstractAction
 {
@@ -18,7 +19,7 @@ class Reset extends AbstractAction
     /**
      * @var Developer
      */
-    private $developer;
+    private Developer $developer;
 
     /**
      * Reset constructor.
@@ -33,9 +34,9 @@ class Reset extends AbstractAction
     }
 
     /**
-     * @inheritdoc
+     * @return ResponseInterface
      */
-    public function execute()
+    public function execute(): ResponseInterface
     {
         $this->developer->resetModule() ?
             $this->messageManager->addSuccessMessage('Module full reset request is complete') :

@@ -11,5 +11,5 @@ interface SyncInterface
      *
      * @return void
      */
-    public function process(ApsisCoreHelper $apsisCoreHelper);
+    public function process(ApsisCoreHelper $apsisCoreHelper): void;
 }

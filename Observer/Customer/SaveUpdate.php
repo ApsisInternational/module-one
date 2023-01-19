@@ -18,17 +18,17 @@ class SaveUpdate implements ObserverInterface
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var Registry
      */
-    private $registry;
+    private Registry $registry;
 
     /**
      * @var Profile
      */
-    private $profileService;
+    private Profile $profileService;
 
     /**
      * SaveUpdate constructor.

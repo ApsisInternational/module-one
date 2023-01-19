@@ -25,5 +25,5 @@ interface EventHistoryInterface
         ProfileCollection $profileCollection,
         array $duration,
         array $profileCollectionArray
-    );
+    ): void;
 }

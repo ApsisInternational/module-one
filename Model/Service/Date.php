@@ -15,10 +15,12 @@ class Date
      * @param string|null $date
      * @param string $format
      *
-     * @return string|int
+     * @return string
      */
-    public function formatDateForPlatformCompatibility($date = null, $format = Zend_Date::TIMESTAMP)
-    {
+    public function formatDateForPlatformCompatibility(
+        string $date = null,
+        string $format = Zend_Date::TIMESTAMP
+    ): string {
         if (empty($date)) {
             $date = 'now';
         }
@@ -36,7 +38,7 @@ class Date
      *
      * @return string
      */
-    public function addSecond($date = null, $format = Zend_Date::TIMESTAMP)
+    public function addSecond(string $date = null, string $format = Zend_Date::TIMESTAMP): string
     {
         if (empty($date)) {
             $date = 'now';
@@ -59,7 +61,7 @@ class Date
      *
      * @throws Exception
      */
-    public function getDateTimeFromTimeAndTimeZone($time = 'now', $timezone = 'UTC')
+    public function getDateTimeFromTimeAndTimeZone(string $time = 'now', string $timezone = 'UTC'): DateTime
     {
         return new dateTime($time, new dateTimeZone($timezone));
     }
@@ -71,19 +73,19 @@ class Date
      *
      * @throws Exception
      */
-    public function getDateTimeFromTime($time = 'now')
+    public function getDateTimeFromTime(string $time = 'now'): DateTime
     {
         return new dateTime($time);
     }
 
     /**
-     * @param $intervalSpec
+     * @param string $intervalSpec
      *
      * @return DateInterval
      *
      * @throws Exception
      */
-    public function getDateIntervalFromIntervalSpec($intervalSpec)
+    public function getDateIntervalFromIntervalSpec(string $intervalSpec): DateInterval
     {
         return new DateInterval($intervalSpec);
     }
@@ -94,7 +96,7 @@ class Date
      *
      * @return string
      */
-    public function getFormattedDateTimeWithAddedInterval(string $inputDateTime, int $day = 1)
+    public function getFormattedDateTimeWithAddedInterval(string $inputDateTime, int $day = 1): string
     {
         try {
             return $this->getDateTimeFromTimeAndTimeZone($inputDateTime)
@@ -110,7 +112,7 @@ class Date
      *
      * @return bool
      */
-    public function isExpired(string $inputDateTime)
+    public function isExpired(string $inputDateTime): bool
     {
         try {
             $nowDateTime = $this->getDateTimeFromTimeAndTimeZone()->format(Zend_Date::ISO_8601);

@@ -21,27 +21,27 @@ class Subscription extends Action
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var SubscriberFactory
      */
-    private $subscriberFactory;
+    private SubscriberFactory $subscriberFactory;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var Escaper
      */
-    private $escaper;
+    private Escaper $escaper;
 
     /**
      * Subscription constructor.
@@ -70,9 +70,9 @@ class Subscription extends Action
     }
 
     /**
-     * @inheritdoc
+     * @return ResponseInterface
      */
-    public function execute()
+    public function execute(): ResponseInterface
     {
         try {
             //Validate http method against allowed one.
@@ -98,7 +98,6 @@ class Subscription extends Action
             if ($profile->getSubscriberId() && $this->isTopicMatchedWithConfigTopic($profile, $params['TD'])) {
                 $subscriber = $this->subscriberFactory->create()->load($profile->getSubscriberId());
                 if ($subscriber->getId()) {
-
                     //Set subscriber status
                     $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED)
                         ->setSubscriberStoreId($subscriber->getStoreId())
@@ -136,7 +135,7 @@ class Subscription extends Action
      *
      * @return array
      */
-    private function getBodyParams()
+    private function getBodyParams(): array
     {
         $bodyParams = [];
         if ($body = $this->getRequest()->getContent()) {
@@ -151,7 +150,7 @@ class Subscription extends Action
      *
      * @return bool
      */
-    private function isTopicMatchedWithConfigTopic(ProfileModel $profile, string $topicDiscriminator)
+    private function isTopicMatchedWithConfigTopic(ProfileModel $profile, string $topicDiscriminator): bool
     {
         $isSyncEnabled = (string) $this->apsisCoreHelper->getConfigValue(
             ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENABLED,
@@ -177,7 +176,7 @@ class Subscription extends Action
      *
      * @return ResponseInterface
      */
-    private function sendResponse(int $code)
+    private function sendResponse(int $code): ResponseInterface
     {
         $this->getResponse()
             ->setHttpResponseCode($code)
@@ -192,7 +191,7 @@ class Subscription extends Action
      *
      * @return bool
      */
-    private function authenticateKey(string $key)
+    private function authenticateKey(string $key): bool
     {
         return $this->apsisCoreHelper->getSubscriptionEndpointKey() === $key;
     }
@@ -202,7 +201,7 @@ class Subscription extends Action
      *
      * @return ProfileModel|bool
      */
-    private function getProfile(array $params)
+    private function getProfile(array $params): ProfileModel|bool
     {
         return $this->profileCollectionFactory->create()
             ->loadByIntegrationId($this->escaper->escapeHtml($params['PK']));

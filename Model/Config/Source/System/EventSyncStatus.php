@@ -11,7 +11,7 @@ class EventSyncStatus extends SyncStatus implements OptionSourceInterface
     /**
      * @inheritdoc
      */
-    public function toOptionArray()
+    public function toOptionArray(): array
     {
         $statusArray = parent::toOptionArray();
 

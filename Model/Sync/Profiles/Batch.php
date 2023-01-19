@@ -34,32 +34,32 @@ class Batch implements ProfileSyncInterface
     /**
      * @var ProfileBatchFactory
      */
-    private $profileBatchFactory;
+    private ProfileBatchFactory $profileBatchFactory;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var ProfileBatchResource
      */
-    private $profileBatchResource;
+    private ProfileBatchResource $profileBatchResource;
 
     /**
      * @var ApsisFileHelper
      */
-    private $apsisFileHelper;
+    private ApsisFileHelper $apsisFileHelper;
 
     /**
      * @var ApsisDateHelper
      */
-    private $apsisDateHelper;
+    private ApsisDateHelper $apsisDateHelper;
 
     /**
      * Batch constructor.
@@ -87,7 +87,7 @@ class Batch implements ProfileSyncInterface
     /**
      * @inheritdoc
      */
-    public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
+    public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper): void
     {
         try {
             $this->apsisCoreHelper = $apsisCoreHelper;
@@ -112,8 +112,10 @@ class Batch implements ProfileSyncInterface
     /**
      * @param StoreInterface $store
      * @param string $section
+     *
+     * @return void
      */
-    private function handlePendingCollectionForStore(StoreInterface $store, string $section)
+    private function handlePendingCollectionForStore(StoreInterface $store, string $section): void
     {
         $collection = $this->profileBatchFactory
             ->create()
@@ -205,8 +207,10 @@ class Batch implements ProfileSyncInterface
     /**
      * @param StoreInterface $store
      * @param string $section
+     *
+     * @return void
      */
-    private function handleProcessingCollectionForStore(StoreInterface $store, string $section)
+    private function handleProcessingCollectionForStore(StoreInterface $store, string $section): void
     {
         $collection = $this->profileBatchFactory
             ->create()
@@ -259,8 +263,10 @@ class Batch implements ProfileSyncInterface
      * @param ProfileBatch $item
      * @param int $status
      * @param string $msg
+     *
+     * @return void
      */
-    private function updateItem(ProfileBatch $item, int $status, string $msg = '')
+    private function updateItem(ProfileBatch $item, int $status, string $msg = ''): void
     {
         $item->setSyncStatus($status);
         if (strlen($msg)) {
@@ -287,8 +293,10 @@ class Batch implements ProfileSyncInterface
      * @param ProfileBatch $item
      * @param int $status
      * @param string $msg
+     *
+     * @return void
      */
-    private function updateProfilesStatus(ProfileBatch $item, int $status, string $msg = '')
+    private function updateProfilesStatus(ProfileBatch $item, int $status, string $msg = ''): void
     {
         try {
             $ids = explode(",", (string) $item->getEntityIds());
@@ -329,8 +337,10 @@ class Batch implements ProfileSyncInterface
      * @param Client $apiClient
      * @param stdClass $result
      * @param ProfileBatch $item
+     *
+     * @return void
      */
-    private function processImportStatus(Client $apiClient, stdClass $result, ProfileBatch $item)
+    private function processImportStatus(Client $apiClient, stdClass $result, ProfileBatch $item): void
     {
         try {
             if ($result->result->status === self::STATUS_COMPLETED) {

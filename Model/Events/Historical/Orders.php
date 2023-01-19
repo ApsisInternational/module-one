@@ -20,7 +20,7 @@ class Orders extends HistoricalEvent
     /**
      * @var OrderCollectionFactory
      */
-    private $orderCollectionFactory;
+    private OrderCollectionFactory $orderCollectionFactory;
 
     /**
      * Orders constructor.
@@ -51,7 +51,7 @@ class Orders extends HistoricalEvent
         ProfileCollection $profileCollection,
         array $duration,
         array $profileCollectionArray
-    ) {
+    ): void {
         try {
             if (empty($profileCollectionArray)) {
                 return;
@@ -97,7 +97,7 @@ class Orders extends HistoricalEvent
         ApsisCoreHelper $apsisCoreHelper,
         array $orderCollection,
         array $profileCollectionArray
-    ) {
+    ): array {
         $eventsToRegister = [];
 
         /** @var Order $order */
@@ -151,7 +151,7 @@ class Orders extends HistoricalEvent
         StoreInterface $store,
         array $emails,
         array $duration
-    ) {
+    ): array|OrderCollection {
         try {
             return $this->orderCollectionFactory->create()
                 ->addFieldToFilter('main_table.store_id', $store->getId())

@@ -28,42 +28,42 @@ class Subscribers implements ProfileSyncInterface
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var ApsisConfigHelper
      */
-    private $apsisConfigHelper;
+    private ApsisConfigHelper $apsisConfigHelper;
 
     /**
      * @var ApsisFileHelper
      */
-    private $apsisFileHelper;
+    private ApsisFileHelper $apsisFileHelper;
 
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var SubscriberCollectionFactory
      */
-    private $subscriberCollectionFactory;
+    private SubscriberCollectionFactory $subscriberCollectionFactory;
 
     /**
      * @var SubscriberDataFactory
      */
-    private $subscriberDataFactory;
+    private SubscriberDataFactory $subscriberDataFactory;
 
     /**
      * @var ProfileBatchFactory
      */
-    private $profileBatchFactory;
+    private ProfileBatchFactory $profileBatchFactory;
 
     /**
      * @var string
@@ -100,10 +100,9 @@ class Subscribers implements ProfileSyncInterface
     }
 
     /**
-     * @param StoreInterface $store
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @inheirtDoc
      */
-    public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
+    public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper): void
     {
         try {
             $this->apsisCoreHelper = $apsisCoreHelper;
@@ -175,6 +174,8 @@ class Subscribers implements ProfileSyncInterface
      * @param string $topics
      * @param string $consentType
      * @param string $section
+     *
+     * @return void
      */
     private function batchSubscribersForStore(
         Collection $collection,
@@ -183,7 +184,7 @@ class Subscribers implements ProfileSyncInterface
         string $topics,
         string $consentType,
         string $section
-    ) {
+    ): void {
         try {
             $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
             if (! $client) {
@@ -215,6 +216,8 @@ class Subscribers implements ProfileSyncInterface
      * @param string $topics
      * @param array $attributesArrWithVersionId
      * @param string $consentType
+     *
+     * @return void
      */
     private function createCsvForStore(
         StoreInterface $store,
@@ -223,7 +226,7 @@ class Subscribers implements ProfileSyncInterface
         string $topics,
         array $attributesArrWithVersionId,
         string $consentType
-    ) {
+    ): void {
         try {
             $topicsMapping = $this->getTopicArrFromString($topics);
             $profileDataArr = $this->getProfileDataArr($collection);
@@ -317,7 +320,7 @@ class Subscribers implements ProfileSyncInterface
      *
      * @return array
      */
-    private function getTopicArrFromString(string $topics)
+    private function getTopicArrFromString(string $topics): array
     {
         $topicsArr = explode(',', $topics);
         $topicsMapping = [];
@@ -335,7 +338,7 @@ class Subscribers implements ProfileSyncInterface
      *
      * @return array
      */
-    private function getProfileDataArr(Collection $collection)
+    private function getProfileDataArr(Collection $collection): array
     {
         $profileDataArr = [];
 
@@ -356,7 +359,7 @@ class Subscribers implements ProfileSyncInterface
      *
      * @return string
      */
-    private function createFileWithHeaders(StoreInterface $store, string $consentType, array $headers)
+    private function createFileWithHeaders(StoreInterface $store, string $consentType, array $headers): string
     {
         try {
             $file = strtolower($store->getCode() . '_subscriber_' . $consentType . '_' . date('d_m_Y_His') . '.csv');
@@ -382,7 +385,7 @@ class Subscribers implements ProfileSyncInterface
         Subscriber $subscriber,
         array $topics,
         int $consent
-    ) {
+    ): array {
         return $this->subscriberDataFactory->create()
             ->setModelData($mappings, $subscriber, $this->apsisCoreHelper)
             ->setConsentTopicData($topics, $consent)
@@ -394,13 +397,15 @@ class Subscribers implements ProfileSyncInterface
      * @param StoreInterface $store
      * @param array $ids
      * @param array $jsonMappings
+     *
+     * @return void
      */
     private function registerBatchItem(
         string $file,
         StoreInterface $store,
         array $ids,
         array $jsonMappings
-    ) {
+    ): void {
         try {
             $filePath = $this->apsisFileHelper->getFilePath($file);
             $this->profileBatchFactory->create()
@@ -434,7 +439,7 @@ class Subscribers implements ProfileSyncInterface
      *
      * @return array|SubscriberCollection
      */
-    private function getSubscribersFromIdsByStore(StoreInterface $store, $subscriberIds)
+    private function getSubscribersFromIdsByStore(StoreInterface $store, $subscriberIds): SubscriberCollection|array
     {
         try {
             $collection = $this->subscriberCollectionFactory->create()

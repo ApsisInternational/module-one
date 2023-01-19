@@ -57,12 +57,12 @@ class Event extends AbstractModel
     /**
      * @var DateTime
      */
-    private $dateTime;
+    private DateTime $dateTime;
 
     /**
      * @var Log
      */
-    private $logger;
+    private Log $logger;
 
     /**
      * Event constructor.
@@ -104,9 +104,9 @@ class Event extends AbstractModel
     }
 
     /**
-     * @inheritdoc
+     * @return Event
      */
-    public function afterDelete()
+    public function afterDelete(): Event
     {
         if ($this->isDeleted()) {
             //Log it
@@ -123,9 +123,9 @@ class Event extends AbstractModel
     }
 
     /**
-     * @inheritdoc
+     * @return Event|$this
      */
-    public function beforeSave()
+    public function beforeSave(): Event|static
     {
         parent::beforeSave();
         if ($this->isObjectNew()) {

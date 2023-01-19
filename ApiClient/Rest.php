@@ -3,8 +3,8 @@
 namespace Apsis\One\ApiClient;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use CurlHandle;
 use Throwable;
-use stdClass;
 
 /**
  * Rest class to make cURL requests.
@@ -28,67 +28,72 @@ abstract class Rest
     /**
      * @var string
      */
-    protected $hostName;
+    protected string $hostName;
 
     /**
      * @var string
      */
-    private $url;
+    private string $url;
 
     /**
      * @var string
      */
-    private $verb;
+    private string $verb;
+
+    /**
+     * @var string|bool
+     */
+    private string|bool $requestBody;
 
     /**
      * @var string
      */
-    private $requestBody;
+    private string $token;
 
     /**
      * @var string
      */
-    private $token;
+    private string $clientId;
 
     /**
      * @var string
      */
-    private $clientId;
+    private string $clientSecret;
 
     /**
-     * @var string
+     * @var mixed
      */
-    private $clientSecret;
-
-    /**
-     * @var null|stdClass
-     */
-    protected $responseBody;
+    protected mixed $responseBody;
 
     /**
      * @var array
      */
-    protected $responseInfo;
+    protected array $responseInfo;
 
     /**
      * @var ApsisCoreHelper
      */
-    protected $helper;
+    protected ApsisCoreHelper $helper;
 
     /**
      * @var string
      */
-    protected $curlError;
+    protected string $curlError;
 
     /**
-     * @return null|stdClass
+     * @return mixed
      */
-    protected function execute()
+    protected function execute(): mixed
     {
         $this->responseBody = null;
         $this->responseInfo = [];
         $this->curlError = '';
         $ch = curl_init();
+
+        if (! $ch instanceof CurlHandle) {
+            return $this->responseBody;
+        }
+
         try {
             switch (strtoupper($this->verb)) {
                 case self::VERB_GET:
@@ -121,9 +126,11 @@ abstract class Rest
     /**
      * Execute curl get request.
      *
-     * @param mixed $ch
+     * @param CurlHandle $ch
+     *
+     * @return void
      */
-    private function executeGet($ch)
+    private function executeGet(CurlHandle $ch): void
     {
         $headers = [
             'Accept: application/json'
@@ -132,10 +139,14 @@ abstract class Rest
     }
 
     /**
-     * @param mixed $ch
+     * Execute post/put/patch
+     *
+     * @param CurlHandle $ch
      * @param array $headers
+     *
+     * @return void
      */
-    private function executePostPutPatch($ch, array $headers)
+    private function executePostPutPatch(CurlHandle $ch, array $headers): void
     {
         if (! is_string($this->requestBody)) {
             $this->buildBody();
@@ -148,9 +159,11 @@ abstract class Rest
     /**
      * Execute post request.
      *
-     * @param mixed $ch
+     * @param CurlHandle $ch
+     *
+     * @return void
      */
-    private function executePost($ch)
+    private function executePost(CurlHandle $ch): void
     {
         $headers = [
             'Accept: application/json',
@@ -162,9 +175,11 @@ abstract class Rest
     /**
      * Execute patch request.
      *
-     * @param mixed $ch
+     * @param CurlHandle $ch
+     *
+     * @param void
      */
-    private function executePatch($ch)
+    private function executePatch(CurlHandle $ch): void
     {
         $headers = [
             'Accept: application/problem+json',
@@ -176,9 +191,11 @@ abstract class Rest
     /**
      * Execute put request.
      *
-     * @param mixed $ch
+     * @param CurlHandle $ch
+     *
+     * @param void
      */
-    private function executePut($ch)
+    private function executePut(CurlHandle $ch): void
     {
         $headers = [
             'Accept: application/json',
@@ -190,9 +207,11 @@ abstract class Rest
     /**
      * Execute delete request.
      *
-     * @param mixed $ch
+     * @param CurlHandle $ch
+     *
+     * @return void
      */
-    private function executeDelete($ch)
+    private function executeDelete(CurlHandle $ch): void
     {
         $headers = [
             'Accept: application/problem+json'
@@ -203,10 +222,12 @@ abstract class Rest
     /**
      * Execute request.
      *
-     * @param mixed $ch
+     * @param CurlHandle $ch
      * @param array headers
+     *
+     * @return void
      */
-    private function doExecute(&$ch, array $headers)
+    private function doExecute(CurlHandle $ch, array $headers): void
     {
         $this->setCurlOpts($ch, $headers);
         $this->responseBody = $this->helper->unserialize(curl_exec($ch));
@@ -224,7 +245,7 @@ abstract class Rest
      *
      * @return $this
      */
-    protected function buildBody($data = null)
+    protected function buildBody($data = null): static
     {
         $this->requestBody = $this->helper->serialize($data);
         return $this;
@@ -233,7 +254,7 @@ abstract class Rest
     /**
      * @return $this
      */
-    protected function buildBodyForGetAccessTokenCall()
+    protected function buildBodyForGetAccessTokenCall(): static
     {
         return $this->buildBody([
             'grant_type' => 'client_credentials',
@@ -245,10 +266,12 @@ abstract class Rest
     /**
      * Curl options.
      *
-     * @param mixed $ch
+     * @param CurlHandle $ch
      * @param array $headers
+     *
+     * @return void
      */
-    private function setCurlOpts(&$ch, array $headers)
+    private function setCurlOpts(CurlHandle $ch, array $headers): void
     {
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         curl_setopt($ch, CURLOPT_URL, $this->url);
@@ -268,7 +291,7 @@ abstract class Rest
      *
      * @return $this
      */
-    public function setToken(string $token)
+    public function setToken(string $token): static
     {
         $this->token = $token;
         return $this;
@@ -280,7 +303,7 @@ abstract class Rest
      *
      * @return $this
      */
-    public function setClientCredentials(string $clientId, string $clientSecret)
+    public function setClientCredentials(string $clientId, string $clientSecret): static
     {
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
@@ -292,7 +315,7 @@ abstract class Rest
      *
      * @return $this
      */
-    public function setHelper(ApsisCoreHelper $helper)
+    public function setHelper(ApsisCoreHelper $helper): static
     {
         $this->helper = $helper;
         return $this;
@@ -303,7 +326,7 @@ abstract class Rest
      *
      * @return $this
      */
-    public function setHostName(string $hostName)
+    public function setHostName(string $hostName): static
     {
         $this->hostName = $hostName;
         return $this;
@@ -316,7 +339,7 @@ abstract class Rest
      *
      * @return $this
      */
-    public function setUrl($url)
+    public function setUrl(string $url): static
     {
         $this->url = $url;
         return $this;
@@ -329,7 +352,7 @@ abstract class Rest
      *
      * @return $this
      */
-    public function setVerb($verb)
+    public function setVerb(string $verb): static
     {
         $this->verb = $verb;
         return $this;
@@ -341,7 +364,7 @@ abstract class Rest
      *
      * @return mixed
      */
-    protected function processResponse($response, string $method)
+    protected function processResponse(mixed $response, string $method): mixed
     {
         if (strlen($this->curlError)) {
             $this->helper->log(__METHOD__ . ': CURL ERROR: ' . $this->curlError);

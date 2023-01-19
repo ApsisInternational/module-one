@@ -80,22 +80,22 @@ class Profile extends AbstractModel
     /**
      * @var DateTime
      */
-    private $dateTime;
+    private DateTime $dateTime;
 
     /**
      * @var ExpressionFactory
      */
-    private $expressionFactory;
+    private ExpressionFactory $expressionFactory;
 
     /**
      * @var Log
      */
-    private $logger;
+    private Log $logger;
 
     /**
      * @var ProfileService
      */
-    private $profileService;
+    private ProfileService $profileService;
 
     /**
      * Subscriber constructor.
@@ -143,9 +143,9 @@ class Profile extends AbstractModel
     }
 
     /**
-     * @inheritdoc
+     * @return Profile
      */
-    public function afterDelete()
+    public function afterDelete(): Profile
     {
         try {
             if ($this->isDeleted()) {
@@ -169,9 +169,9 @@ class Profile extends AbstractModel
     }
 
     /**
-     * @inheritdoc
+     * @return Profile|$this
      */
-    public function beforeSave()
+    public function beforeSave(): Profile|static
     {
         parent::beforeSave();
         $this->setUpdatedAt($this->dateTime->formatDate(true));

@@ -15,12 +15,12 @@ class InstallData implements InstallDataInterface
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var ApsisLogHelper
      */
-    private $logHelper;
+    private ApsisLogHelper $logHelper;
 
     /**
      * InstallData constructor.
@@ -37,8 +37,10 @@ class InstallData implements InstallDataInterface
     /**
      * @param ModuleDataSetupInterface $setup
      * @param ModuleContextInterface $context
+     *
+     * @return void
      */
-    public function install(ModuleDataSetupInterface $setup, ModuleContextInterface $context)
+    public function install(ModuleDataSetupInterface $setup, ModuleContextInterface $context): void
     {
         try {
             $this->logHelper->log(__METHOD__);
@@ -62,8 +64,10 @@ class InstallData implements InstallDataInterface
 
     /**
      * @param ModuleDataSetupInterface $installer
+     *
+     * @return void
      */
-    private function populateApsisProfileTable(ModuleDataSetupInterface $installer)
+    private function populateApsisProfileTable(ModuleDataSetupInterface $installer): void
     {
         try {
             $this->logHelper->log(__METHOD__);

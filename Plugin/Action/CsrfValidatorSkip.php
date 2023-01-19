@@ -14,9 +14,15 @@ class CsrfValidatorSkip
      * @param Closure $proceed
      * @param RequestInterface $request
      * @param ActionInterface $action
+     *
+     * @return void
      */
-    public function aroundValidate($subject, Closure $proceed, $request, $action)
-    {
+    public function aroundValidate(
+        CsrfValidator $subject,
+        Closure $proceed,
+        RequestInterface $request,
+        ActionInterface $action
+    ): void {
         if ($request->getModuleName() == 'apsis') {
             return;
         }

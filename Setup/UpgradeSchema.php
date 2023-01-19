@@ -18,12 +18,12 @@ class UpgradeSchema implements UpgradeSchemaInterface
     /**
      * @var Registry
      */
-    private $registry;
+    private Registry $registry;
 
     /**
      * @var ApsisLogHelper
      */
-    private $logHelper;
+    private ApsisLogHelper $logHelper;
 
     /**
      * UpgradeSchema constructor.
@@ -40,8 +40,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
     /**
      * @param SchemaSetupInterface $setup
      * @param ModuleContextInterface $context
+     *
+     * @return void
      */
-    public function upgrade(SchemaSetupInterface $setup, ModuleContextInterface $context)
+    public function upgrade(SchemaSetupInterface $setup, ModuleContextInterface $context): void
     {
         try {
             $this->logHelper->log(__METHOD__);
@@ -69,8 +71,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
     /**
      * @param SchemaSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeOneNineFour(SchemaSetupInterface $setup)
+    private function upgradeOneNineFour(SchemaSetupInterface $setup): void
     {
         try {
             $this->logHelper->log(__METHOD__);
@@ -133,8 +137,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
     /**
      * @param SchemaSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeOneNineOne(SchemaSetupInterface $setup)
+    private function upgradeOneNineOne(SchemaSetupInterface $setup): void
     {
         try {
             $this->logHelper->log(__METHOD__);
@@ -171,8 +177,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
     /**
      * @param SchemaSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeOneEightZero(SchemaSetupInterface $setup)
+    private function upgradeOneEightZero(SchemaSetupInterface $setup): void
     {
         try {
             $this->logHelper->log(__METHOD__);
@@ -187,8 +195,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
     /**
      * @param SchemaSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeOneOneZero(SchemaSetupInterface $setup)
+    private function upgradeOneOneZero(SchemaSetupInterface $setup): void
     {
         try {
             $this->logHelper->log(__METHOD__);
@@ -209,8 +219,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
     /**
      * @param SchemaSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeOneThreeZero(SchemaSetupInterface $setup)
+    private function upgradeOneThreeZero(SchemaSetupInterface $setup): void
     {
         try {
             $this->logHelper->log(__METHOD__);

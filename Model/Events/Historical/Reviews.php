@@ -22,17 +22,17 @@ class Reviews extends HistoricalEvent
     /**
      * @var ProductReviewCollectionFactory
      */
-    private $reviewProductCollectionFactory;
+    private ProductReviewCollectionFactory $reviewProductCollectionFactory;
 
     /**
      * @var ProductCollectionFactory
      */
-    private $productCollectionFactory;
+    private ProductCollectionFactory $productCollectionFactory;
 
     /**
      * @var ReviewFactory
      */
-    private $reviewFactory;
+    private ReviewFactory $reviewFactory;
 
     /**
      * Reviews constructor.
@@ -69,7 +69,7 @@ class Reviews extends HistoricalEvent
         ProfileCollection $profileCollection,
         array $duration,
         array $profileCollectionArray
-    ) {
+    ): void {
         try {
             if (empty($profileCollectionArray)) {
                 return;
@@ -128,7 +128,7 @@ class Reviews extends HistoricalEvent
         array $reviewCollection,
         array $profileCollectionArray,
         array $productCollectionArray
-    ) {
+    ): array {
         $eventsToRegister = [];
 
         /** @var Review $review */
@@ -182,7 +182,7 @@ class Reviews extends HistoricalEvent
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper,
         array $productIds
-    ) {
+    ): array {
         $productCollectionArray = [];
 
         try {
@@ -216,7 +216,7 @@ class Reviews extends HistoricalEvent
         StoreInterface $store,
         array $customerIds,
         array $duration
-    ) {
+    ): ProductReviewCollection|array {
         try {
             return $this->reviewProductCollectionFactory->create()
                 ->addStoreFilter($store->getId())
@@ -236,7 +236,7 @@ class Reviews extends HistoricalEvent
      *
      * @return array
      */
-    private function getProductIdsFromCollection(array $collection, ApsisCoreHelper $apsisCoreHelper)
+    private function getProductIdsFromCollection(array $collection, ApsisCoreHelper $apsisCoreHelper): array
     {
         $productIds = [];
 

@@ -12,7 +12,7 @@ class Topic implements OptionSourceInterface
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * Topic constructor.
@@ -27,7 +27,7 @@ class Topic implements OptionSourceInterface
     /**
      * @inheritdoc
      */
-    public function toOptionArray()
+    public function toOptionArray(): array
     {
         try {
             $section = $this->apsisCoreHelper

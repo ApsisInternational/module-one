@@ -36,47 +36,47 @@ class Event
     /**
      * @var EventResource
      */
-    private $eventResource;
+    private EventResource $eventResource;
 
     /**
      * @var ApsisDateHelper
      */
-    private $apsisDateHelper;
+    private Date $apsisDateHelper;
 
     /**
      * @var EventModelFactory
      */
-    private $eventFactory;
+    private EventModelFactory $eventFactory;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private Core $apsisCoreHelper;
 
     /**
      * @var Registry
      */
-    private $registry;
+    private Registry $registry;
 
     /**
      * @var CartData
      */
-    private $cartData;
+    private CartData $cartData;
 
     /**
      * @var OrderData
      */
-    private $orderData;
+    private OrderData $orderData;
 
     /**
      * @var WishlistData
      */
-    private $wishlistData;
+    private WishlistData $wishlistData;
 
     /**
      * @var ReviewData
      */
-    private $reviewData;
+    private ReviewData $reviewData;
 
     /**
      * Event constructor.
@@ -118,13 +118,15 @@ class Event
      * @param int $customerId
      * @param Profile $profile
      * @param CustomerInterface $customer
+     *
+     * @return void
      */
     public function registerCustomerLoginEvent(
         CustomerLogger $logger,
         int $customerId,
         Profile $profile,
         CustomerInterface $customer
-    ) {
+    ): void {
         $customerLog = $logger->get($customerId);
         $this->registerEvent(
             EventModel::EVENT_TYPE_CUSTOMER_LOGIN,
@@ -148,12 +150,14 @@ class Event
      * @param Subscriber $subscriber
      * @param Profile $profile
      * @param StoreInterface $store
+     *
+     * @return void
      */
     public function registerCustomerBecomesSubscriberEvent(
         Subscriber $subscriber,
         Profile $profile,
         StoreInterface $store
-    ) {
+    ): void {
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,
             ApsisConfigHelper::EVENTS_CUSTOMER_2_SUBSCRIBER
@@ -164,7 +168,8 @@ class Event
                 [
                     'subscriberId' => (int) $subscriber->getSubscriberId(),
                     'customerId' => (int) $profile->getCustomerId(),
-                    'websiteName' => (string) $this->apsisCoreHelper->getWebsiteNameFromStoreId($subscriber->getStoreId()),
+                    'websiteName' => (string) $this->apsisCoreHelper
+                        ->getWebsiteNameFromStoreId($subscriber->getStoreId()),
                     'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($subscriber->getStoreId())
                 ],
                 (int) $profile->getId(),
@@ -180,9 +185,14 @@ class Event
      * @param Subscriber $subscriber
      * @param Profile $profile
      * @param StoreInterface $store
+     *
+     * @return void
      */
-    public function registerSubscriberUnsubscribeEvent(Subscriber $subscriber, Profile $profile, StoreInterface $store)
-    {
+    public function registerSubscriberUnsubscribeEvent(
+        Subscriber $subscriber,
+        Profile $profile,
+        StoreInterface $store
+    ): void {
         $emailReg = $this->registry->registry($subscriber->getEmail() . self::REGISTRY_NAME_SUBSCRIBER_UNSUBSCRIBE);
         if ($emailReg) {
             return;
@@ -219,8 +229,10 @@ class Event
      * @param Quote $cart
      * @param Item $item
      * @param Profile $profile
+     *
+     * @return void
      */
-    public function registerProductCartedEvent(Quote $cart, Item $item, Profile $profile)
+    public function registerProductCartedEvent(Quote $cart, Item $item, Profile $profile): void
     {
         $eventData = $this->cartData->getDataArr($cart, $item, $this->apsisCoreHelper);
         if (! empty($eventData)) {
@@ -239,8 +251,10 @@ class Event
     /**
      * @param Order $order
      * @param Profile $profile
+     *
+     * @return void
      */
-    public function registerOrderPlacedEvent(Order $order, Profile $profile)
+    public function registerOrderPlacedEvent(Order $order, Profile $profile): void
     {
         $mainData = $this->orderData->getDataArr($order, $this->apsisCoreHelper, (int) $profile->getSubscriberId());
         if (! empty($mainData) && ! empty($mainData['items'])) {
@@ -262,8 +276,10 @@ class Event
     /**
      * @param Customer $customer
      * @param Profile $profile
+     *
+     * @return void
      */
-    public function registerSubscriberBecomesCustomerEvent(Customer $customer, Profile $profile)
+    public function registerSubscriberBecomesCustomerEvent(Customer $customer, Profile $profile): void
     {
         if ((boolean) $this->apsisCoreHelper->getStoreConfig(
             $customer->getStore(),
@@ -293,6 +309,8 @@ class Event
      * @param StoreInterface $store
      * @param Profile $profile
      * @param CustomerInterface $customer
+     *
+     * @return void
      */
     public function registerWishlistEvent(
         Observer $observer,
@@ -300,7 +318,7 @@ class Event
         StoreInterface $store,
         Profile $profile,
         CustomerInterface $customer
-    ) {
+    ): void {
         /** @var Product $product */
         $product = $observer->getEvent()->getProduct();
         if (empty($product)) {
@@ -327,13 +345,15 @@ class Event
      * @param Product $product
      * @param Profile $profile
      * @param CustomerInterface $customer
+     *
+     * @return void
      */
     public function registerProductReviewEvent(
         Review $reviewObject,
         Product $product,
         Profile $profile,
         CustomerInterface $customer
-    ) {
+    ): void {
         $eventData = $this->reviewData->getDataArr($reviewObject, $product, $this->apsisCoreHelper);
         if (! empty($eventData)) {
             $this->registerEvent(
@@ -356,6 +376,8 @@ class Event
      * @param int $customerId
      * @param int $subscriberId
      * @param array $subEventData
+     *
+     * @return void
      */
     private function registerEvent(
         int $eventType,
@@ -366,7 +388,7 @@ class Event
         int $customerId = 0,
         int $subscriberId = 0,
         array $subEventData = []
-    ) {
+    ): void {
         try {
             $eventModel = $this->eventFactory->create();
             $eventModel->setEventType($eventType)
@@ -389,8 +411,10 @@ class Event
     /**
      * @param Profile $profile
      * @param Customer $customer
+     *
+     * @return void
      */
-    public function updateEmailInEventsForCustomer(Profile $profile, Customer $customer)
+    public function updateEmailInEventsForCustomer(Profile $profile, Customer $customer): void
     {
         $this->eventResource->updateEventsEmail(
             $profile->getEmail(),
@@ -405,7 +429,7 @@ class Event
      *
      * @return int
      */
-    public function resetEvents(string $from, array $storeIds)
+    public function resetEvents(string $from, array $storeIds): int
     {
         $info = [
             'From' => $from,

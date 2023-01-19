@@ -19,7 +19,7 @@ class Carts extends HistoricalEvent
     /**
      * @var QuoteCollectionFactory
      */
-    private $quoteCollectionFactory;
+    private QuoteCollectionFactory $quoteCollectionFactory;
 
     /**
      * Carts constructor.
@@ -50,7 +50,7 @@ class Carts extends HistoricalEvent
         ProfileCollection $profileCollection,
         array $duration,
         array $profileCollectionArray
-    ) {
+    ): void {
         try {
             if (empty($profileCollectionArray)) {
                 return;
@@ -96,7 +96,7 @@ class Carts extends HistoricalEvent
         ApsisCoreHelper $apsisCoreHelper,
         array $quoteCollection,
         array $profileCollectionArray
-    ) {
+    ): array {
         $eventsToRegister = [];
         foreach ($quoteCollection as $quote) {
             try {
@@ -145,7 +145,7 @@ class Carts extends HistoricalEvent
         StoreInterface $store,
         array $customerIds,
         array $duration
-    ) {
+    ): array|QuoteCollection {
         try {
             return $this->quoteCollectionFactory->create()
                 ->addFieldToFilter('main_table.store_id', $store->getId())

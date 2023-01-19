@@ -19,7 +19,7 @@ class Index extends Action
     /**
      * @var PageFactory
      */
-    private $resultPageFactory;
+    private PageFactory $resultPageFactory;
 
     /**
      * Index constructor.
@@ -34,9 +34,9 @@ class Index extends Action
     }
 
     /**
-     * @inheritdoc
+     * @return Page
      */
-    public function execute()
+    public function execute(): Page
     {
         /** @var Page $resultPage */
         $resultPage = $this->resultPageFactory->create();

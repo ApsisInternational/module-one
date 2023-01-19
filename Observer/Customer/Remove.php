@@ -15,12 +15,12 @@ class Remove implements ObserverInterface
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var Profile
      */
-    private $profileService;
+    private Profile $profileService;
 
     /**
      * Remove constructor.

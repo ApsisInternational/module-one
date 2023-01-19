@@ -52,32 +52,32 @@ class Value extends ConfigValue implements ProcessorInterface
     /**
      * @var ProfileService
      */
-    private $profileService;
+    private ProfileService $profileService;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var ManagerInterface
      */
-    private $messageManager;
+    private ManagerInterface $messageManager;
 
     /**
      * @var RequestInterface
      */
-    private $request;
+    private RequestInterface $request;
 
     /**
      * @var Event
      */
-    private $eventResource;
+    private Event $eventResource;
 
     /**
      * @var EncryptorInterface
      */
-    private $_encryptor;
+    private EncryptorInterface $encryptor;
 
     /**
      * Value constructor.
@@ -109,7 +109,7 @@ class Value extends ConfigValue implements ProcessorInterface
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null
     ) {
-        $this->_encryptor = $encryptor;
+        $this->encryptor = $encryptor;
         $this->eventResource = $eventResource;
         $this->profileService = $profileService;
         $this->apsisCoreHelper = $apsisLogHelper;
@@ -121,7 +121,7 @@ class Value extends ConfigValue implements ProcessorInterface
     /**
      * @inheritdoc
      */
-    public function __sleep()
+    public function __sleep(): array
     {
         $properties = parent::__sleep();
 
@@ -137,18 +137,18 @@ class Value extends ConfigValue implements ProcessorInterface
     /**
      * @inheritdoc
      */
-    public function __wakeup()
+    public function __wakeup(): void
     {
         parent::__wakeup();
 
         //If secret config
         if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
-            $this->_encryptor = ObjectManager::getInstance()->get(EncryptorInterface::class);
+            $this->encryptor = ObjectManager::getInstance()->get(EncryptorInterface::class);
         }
     }
 
     /**
-     * @return $this|void
+     * @return ConfigValue|void
      */
     protected function _afterLoad()
     {
@@ -168,11 +168,11 @@ class Value extends ConfigValue implements ProcessorInterface
     /**
      * @inheritdoc
      */
-    public function processValue($value)
+    public function processValue($value): string
     {
         //If secret config
         if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET && ! empty($value)) {
-            return $this->_encryptor->decrypt($value);
+            return $this->encryptor->decrypt($value);
         }
 
         return $value;
@@ -181,7 +181,7 @@ class Value extends ConfigValue implements ProcessorInterface
     /**
      * @return int
      */
-    private function isAccountConfigThenAssertBeforeSave()
+    private function isAccountConfigThenAssertBeforeSave(): int
     {
         //Account config
         if (in_array($this->getPath(), Config::CONFIG_PATHS_ACCOUNT)) {
@@ -190,14 +190,11 @@ class Value extends ConfigValue implements ProcessorInterface
             //Already validated and success. Let the value be saved in DB
             //Assert inherit configs. Save value in DB, Observer will remove token configs for this context
             if ($this->assertRegistryStatus(self::SUCCESS) || $this->apsisCoreHelper->isInheritConfig($groups)) {
-
                 //If secret config
                 if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
-
                     // Success and need to run beforeSave for secret config only
                     return 1;
                 } else { //All other account configs
-
                     // Save old value to log in afterSave in case old value does not exist in afterSave
                     $this->registerOldValue();
 
@@ -205,17 +202,14 @@ class Value extends ConfigValue implements ProcessorInterface
                     return 2;
                 }
             } elseif ($this->assertRegistryStatus(self::FAIL)) {
-
                 //Already validated and failed. Do not let the value saved in DB
                 $this->_dataSaveAllowed = false;
 
                 //If secret config
                 if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
-
                     // Failure from secret config, return void
                     return 3;
                 } else { //All other account configs
-
                     // Failure from other account configs then return $this
                     return 4;
                 }
@@ -229,7 +223,7 @@ class Value extends ConfigValue implements ProcessorInterface
     /**
      * @return bool
      */
-    private function isConfigOtherThenAccountThenAssertBeforeSave()
+    private function isConfigOtherThenAccountThenAssertBeforeSave(): bool
     {
         //If failed flag exist then do not let save config in DB
         if ($this->assertRegistryStatus(self::FAIL)) {
@@ -242,7 +236,6 @@ class Value extends ConfigValue implements ProcessorInterface
 
         //Validate account enabled for all config other then account config.
         if (! $isAccountEnabled && ! in_array($this->getPath(), Config::CONFIG_PATHS_ACCOUNT)) {
-
             //If not enabled, do not save value in DB
             $this->_dataSaveAllowed = false;
             $this->setRegistryStatus(self::FAIL);
@@ -255,7 +248,6 @@ class Value extends ConfigValue implements ProcessorInterface
 
         //Event sync config, validate host reachable for file upload api endpoint.
         if (in_array($this->getPath(), Config::CONFIG_PATHS_SYNCS) && ! $this->isFileUploadHostReachable()) {
-
             //If false, do not save value in DB
             $this->_dataSaveAllowed = false;
 
@@ -277,12 +269,10 @@ class Value extends ConfigValue implements ProcessorInterface
         //Account config assertions
         $check = $this->isAccountConfigThenAssertBeforeSave();
         if ($check === 1) { // Success and need to run beforeSave for secret config only
-
             //Save secret account config
             $this->accountSecretBeforeSave();
             return;
         } elseif ($check === 2) { // Success and need to let parent process config
-
             //Save all other account configs
             return parent::beforeSave();
         } elseif ($check === 3) { // Failure from secret config, return void
@@ -302,9 +292,9 @@ class Value extends ConfigValue implements ProcessorInterface
     }
 
     /**
-     * @inheritdoc
+     * @return ConfigValue|$this
      */
-    public function afterSave()
+    public function afterSave(): ConfigValue|static
     {
         //Flag exist
         if ($this->assertRegistryStatus(self::FAIL)) {
@@ -330,9 +320,9 @@ class Value extends ConfigValue implements ProcessorInterface
     }
 
     /**
-     * @inheritdoc
+     * @return ConfigValue
      */
-    public function afterDelete()
+    public function afterDelete(): ConfigValue
     {
         $this->log(__METHOD__);
         return parent::afterDelete();
@@ -343,7 +333,7 @@ class Value extends ConfigValue implements ProcessorInterface
      *
      * @return void
      */
-    public function accountSecretBeforeSave()
+    public function accountSecretBeforeSave(): void
     {
         $this->_dataSaveAllowed = false;
 
@@ -362,12 +352,12 @@ class Value extends ConfigValue implements ProcessorInterface
      *
      * @return string|null
      */
-    private function getValueForSecretConfig(string $value)
+    private function getValueForSecretConfig(string $value): ?string
     {
         // don't save value, if an obscured value was received.
         //This indicates that data was not changed.
         if (! preg_match('/^\*+$/', $value) && ! empty($value)) {
-            return $this->_encryptor->encrypt($value);
+            return $this->encryptor->encrypt($value);
         } elseif (empty($value)) {
             return '';
         }
@@ -380,7 +370,7 @@ class Value extends ConfigValue implements ProcessorInterface
      *
      * @return string
      */
-    private function getSecretValue(array $groups)
+    private function getSecretValue(array $groups): string
     {
         $fromDb = false;
 
@@ -393,8 +383,6 @@ class Value extends ConfigValue implements ProcessorInterface
             } elseif ($result === null) {
                 $fromDb = true;
             }
-
-            //All other account config
         } elseif (isset($groups['oauth']['fields']['secret']['value'])) {
             $secret = $groups['oauth']['fields']['secret']['value'];
             $result = $this->getValueForSecretConfig($secret);
@@ -421,7 +409,7 @@ class Value extends ConfigValue implements ProcessorInterface
      *
      * @return void
      */
-    private function registerOldValue()
+    private function registerOldValue(): void
     {
         //If secret config, do not log it. Log only a placeholder text.
         if ($this->getPath() == Config::ACCOUNTS_OAUTH_SECRET) {
@@ -437,8 +425,10 @@ class Value extends ConfigValue implements ProcessorInterface
     /**
      * Process function for changing status of historical pending events.
      * Change to pending status for inclusion in the sync process.
+     *
+     * @return void
      */
-    private function isEventHistoricalConfigThenEvaluateAfterSave()
+    private function isEventHistoricalConfigThenEvaluateAfterSave(): void
     {
         $historyConfigs = array_keys(self::EVENT_HISTORICAL_DURATION);
         $storeIdArr = $this->apsisCoreHelper->getStoreIdsBasedOnScope();
@@ -464,14 +454,14 @@ class Value extends ConfigValue implements ProcessorInterface
 
     /**
      * Partial reset, reset all configs other then account, as well as events and profiles
+     *
+     * @return void
      */
-    private function isSectionConfigThenEvaluateAfterSave()
+    private function isSectionConfigThenEvaluateAfterSave(): void
     {
         if ($this->getPath() == Config::MAPPINGS_SECTION_SECTION) {
-
             // If section was mapped before
             if ($this->getOldValue()) {
-
                 // At this point, section value has changed. Send partial reset request
                 $this->apsisCoreHelper->log(self::MSG_SECTION_CHANGE);
                 $this->profileService->resetRequest(self::MSG_SECTION_RESET, [Config::MAPPINGS_SECTION_SECTION]);
@@ -485,7 +475,7 @@ class Value extends ConfigValue implements ProcessorInterface
     /**
      * @return void
      */
-    private function isAccountConfigThenEvaluateAfterSave()
+    private function isAccountConfigThenEvaluateAfterSave(): void
     {
         if (in_array($this->getPath(), Config::CONFIG_PATHS_ACCOUNT)) {
             $groups = $this->request->getPost('groups');
@@ -505,14 +495,11 @@ class Value extends ConfigValue implements ProcessorInterface
 
             // Enabled account config
             if ($this->getPath() == Config::ACCOUNTS_OAUTH_ENABLED) {
-
                 //If account is being disabled
                 if ($this->getOldValue() && empty($this->getValue())) {
                     $this->setRegistryStatus(self::SUCCESS);
                     return;
                 }
-
-                // Other account configs
             } else {
                 $old = $this->getOldValue();
                 $new = $this->getValue();
@@ -560,7 +547,7 @@ class Value extends ConfigValue implements ProcessorInterface
     /**
      * @return bool
      */
-    private function isFileUploadHostReachable()
+    private function isFileUploadHostReachable(): bool
     {
         // If 1 then already checked and is a success. Return true
         if ($this->assertRegistryReachableCheck(self::SUCCESS)) {
@@ -606,7 +593,7 @@ class Value extends ConfigValue implements ProcessorInterface
      *
      * @return bool
      */
-    public function assertRegistryReachableCheck(int $check)
+    public function assertRegistryReachableCheck(int $check): bool
     {
         return $this->_registry->registry(self::REGISTRY_NAME_FOR_STATUS_CHECK) === $check;
     }
@@ -616,7 +603,7 @@ class Value extends ConfigValue implements ProcessorInterface
      *
      * @return void
      */
-    private function setRegistryReachableCheck(int $value)
+    private function setRegistryReachableCheck(int $value): void
     {
         $this->_registry->unregister(self::REGISTRY_NAME_FOR_HOST_REACHABLE_CHECK);
         $this->_registry->register(self::REGISTRY_NAME_FOR_HOST_REACHABLE_CHECK, $value, true);
@@ -627,7 +614,7 @@ class Value extends ConfigValue implements ProcessorInterface
      *
      * @return bool
      */
-    public function assertRegistryStatus(int $check)
+    public function assertRegistryStatus(int $check): bool
     {
         return $this->_registry->registry(self::REGISTRY_NAME_FOR_STATUS_CHECK) === $check;
     }
@@ -637,7 +624,7 @@ class Value extends ConfigValue implements ProcessorInterface
      *
      * @return void
      */
-    private function setRegistryStatus(int $value)
+    private function setRegistryStatus(int $value): void
     {
         $this->_registry->unregister(self::REGISTRY_NAME_FOR_STATUS_CHECK);
         $this->_registry->register(self::REGISTRY_NAME_FOR_STATUS_CHECK, $value, true);
@@ -648,7 +635,7 @@ class Value extends ConfigValue implements ProcessorInterface
      *
      * @return void
      */
-    private function log(string $msg)
+    private function log(string $msg): void
     {
         $oldValue = ($this->getOldValue() == $this->getValue()) ?
             $this->_registry->registry(self::REGISTRY_NAME_FOR_OLD_VALUE) : $this->getOldValue();
@@ -673,7 +660,7 @@ class Value extends ConfigValue implements ProcessorInterface
      *
      * @return bool
      */
-    private function isCompulsoryConfigExistForValidation(array $groups)
+    private function isCompulsoryConfigExistForValidation(array $groups): bool
     {
         return isset($groups['oauth']['fields']['id']['value']) &&
             isset($groups['oauth']['fields']['region']['value']) &&

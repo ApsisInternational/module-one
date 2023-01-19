@@ -17,22 +17,22 @@ abstract class EventData
     /**
      * @var ProductServiceProvider
      */
-    protected $productServiceProvider;
+    protected ProductServiceProvider $productServiceProvider;
 
     /**
      * @var ApsisCoreHelper
      */
-    protected $apsisCoreHelper;
+    protected ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var Product|null
      */
-    protected $product = null;
+    protected ?Product $product = null;
 
     /**
      * @var ProductRepositoryInterface
      */
-    protected $productRepository;
+    protected ProductRepositoryInterface $productRepository;
 
     /**
      * Data constructor.
@@ -53,12 +53,14 @@ abstract class EventData
      *
      * @return array
      */
-    abstract protected function getProcessedDataArr(AbstractModel $model);
+    abstract protected function getProcessedDataArr(AbstractModel $model): array;
 
     /**
      * @param AbstractModel $object
+     *
+     * @return void
      */
-    protected function fetchProduct(AbstractModel $object)
+    protected function fetchProduct(AbstractModel $object): void
     {
         try {
             $this->product = null;
@@ -80,9 +82,10 @@ abstract class EventData
     /**
      * @param int $productId
      * @param int $storeId
+     *
      * @return ProductInterface|null
      */
-    protected function loadProduct(int $productId, int $storeId)
+    protected function loadProduct(int $productId, int $storeId): ?ProductInterface
     {
         try {
             return $this->productRepository->getById($productId, false, $storeId);
@@ -94,8 +97,10 @@ abstract class EventData
 
     /**
      * @param Product $product
+     *
+     * @return void
      */
-    private function setProduct(Product $product)
+    private function setProduct(Product $product): void
     {
         try {
             if ($product->getId()) {
@@ -110,7 +115,7 @@ abstract class EventData
     /**
      * @return bool
      */
-    protected function isProductSet()
+    protected function isProductSet(): bool
     {
         try {
             return isset($this->product) && $this->product instanceof Product && $this->product->getId();
@@ -125,7 +130,7 @@ abstract class EventData
      *
      * @return string
      */
-    protected function getProductUrl(int $storeId)
+    protected function getProductUrl(int $storeId): string
     {
         try {
             if ($this->isProductSet()) {
@@ -144,7 +149,7 @@ abstract class EventData
      *
      * @return string
      */
-    protected function getProductReviewUrl(int $storeId)
+    protected function getProductReviewUrl(int $storeId): string
     {
         try {
             if ($this->isProductSet()) {
@@ -164,7 +169,7 @@ abstract class EventData
      *
      * @return string
      */
-    protected function getProductImageUrl(int $storeId)
+    protected function getProductImageUrl(int $storeId): string
     {
         try {
             if ($this->isProductSet()) {

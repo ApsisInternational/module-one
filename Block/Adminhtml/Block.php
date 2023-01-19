@@ -14,7 +14,7 @@ class Block extends Template
     /**
      * @var ApsisLogHelper
      */
-    private $apsisLogHelper;
+    private ApsisLogHelper $apsisLogHelper;
 
     /**
      * Block constructor.
@@ -32,7 +32,7 @@ class Block extends Template
     /**
      * @return bool
      */
-    public function isProfileDeleteEnabled()
+    public function isProfileDeleteEnabled(): bool
     {
         try {
             $scope = $this->getSelectedScopeInAdmin();
@@ -51,7 +51,7 @@ class Block extends Template
     /**
      * @return bool
      */
-    public function isSectionAlreadyMapped()
+    public function isSectionAlreadyMapped(): bool
     {
         try {
             $scope = $this->getSelectedScopeInAdmin();
@@ -69,7 +69,7 @@ class Block extends Template
     /**
      * @return bool
      */
-    public function isAccountAlreadyConfigured()
+    public function isAccountAlreadyConfigured(): bool
     {
         try {
             $scope = $this->getSelectedScopeInAdmin();
@@ -99,7 +99,7 @@ class Block extends Template
     /**
      * @return string
      */
-    public function getResetUrl()
+    public function getResetUrl(): string
     {
         return $this->escapeUrl($this->_urlBuilder->getUrl('apsis_one/developer/reset'));
     }
@@ -109,7 +109,7 @@ class Block extends Template
      *
      * @return array
      */
-    private function getSelectedScopeInAdmin()
+    private function getSelectedScopeInAdmin(): array
     {
         $scope = [];
         $storeId = $this->_request->getParam('store');

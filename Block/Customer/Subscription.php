@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Block\Customer;
 
+use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
@@ -19,27 +20,22 @@ class Subscription extends Template
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var Session
      */
-    private $customerSession;
+    private Session $customerSession;
 
     /**
      * @var SubscriberFactory
      */
-    private $subscriberFactory;
+    private SubscriberFactory $subscriberFactory;
 
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
-
-    /**
-     * @inheritdoc
-     */
-    protected $_isScopePrivate = true;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * NewsletterPreferences constructor.
@@ -64,6 +60,7 @@ class Subscription extends Template
         $this->customerSession = $customerSession;
         $this->apsisCoreHelper = $apsisCoreHelper;
         parent::__construct($context, $data);
+        $this->_isScopePrivate = true;
     }
 
     /**
@@ -77,7 +74,7 @@ class Subscription extends Template
     /**
      * @return string
      */
-    public function getSaveUrl()
+    public function getSaveUrl(): string
     {
         return $this->getUrl(self::CUSTOMER_NEWSLETTER_SAVE_URL);
     }
@@ -85,7 +82,7 @@ class Subscription extends Template
     /**
      * @return array
      */
-    public function getTopicsToShow()
+    public function getTopicsToShow(): array
     {
         $sortedTopicArr = [];
 
@@ -126,11 +123,11 @@ class Subscription extends Template
     }
 
     /**
-     * @param DataObject $profile
+     * @param DataObject|Profile $profile
      *
      * @return array
      */
-    private function getProfileOptinTopicArr(DataObject $profile)
+    private function getProfileOptinTopicArr(DataObject|Profile $profile): array
     {
         $topicArr = [];
 
@@ -175,7 +172,7 @@ class Subscription extends Template
      *
      * @return array
      */
-    private function getConsentListsWithTopicsArr(array $topicMappings, array $profileTopics)
+    private function getConsentListsWithTopicsArr(array $topicMappings, array $profileTopics): array
     {
         $topicMappingsArr = [];
 

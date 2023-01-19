@@ -11,17 +11,17 @@ class Cleanup implements OptionSourceInterface
      *
      * @var array
      */
-    protected $days = [7, 14, 30, 60, 90, 180];
+    protected array $days = [7, 14, 30, 60, 90, 180];
 
     /**
      * @var string
      */
-    protected $timeType = 'Days';
+    protected string $timeType = 'Days';
 
     /**
      * @inheritdoc
      */
-    public function toOptionArray()
+    public function toOptionArray(): array
     {
         $interval = [['value' => 0, 'label' => __('Disable')]];
 

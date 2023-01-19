@@ -22,27 +22,27 @@ class AddProduct implements ObserverInterface
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var CheckoutSession
      */
-    protected $checkoutSession;
+    protected CheckoutSession $checkoutSession;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var Event
      */
-    private $eventService;
+    private Event $eventService;
 
     /**
      * AddProduct constructor.
@@ -112,7 +112,7 @@ class AddProduct implements ObserverInterface
      *
      * @return bool
      */
-    private function isOkToProceed(Store $store)
+    private function isOkToProceed(Store $store): bool
     {
         $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(

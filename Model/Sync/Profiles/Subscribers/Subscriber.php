@@ -13,22 +13,17 @@ class Subscriber implements ProfileDataInterface
     /**
      * @var array
      */
-    private $subscriberData = [];
+    private array $subscriberData = [];
 
     /**
      * @var MagentoSubscriber
      */
-    private $subscriber;
+    private MagentoSubscriber $subscriber;
 
     /**
      * @var ApsisDateHelper
      */
-    private $apsisDateHelper;
-
-    /**
-     * @var ApsisCoreHelper
-     */
-    private $apsisCoreHelper;
+    private ApsisDateHelper $apsisDateHelper;
 
     /**
      * Subscriber constructor.
@@ -43,10 +38,12 @@ class Subscriber implements ProfileDataInterface
     /**
      * @inheritdoc
      */
-    public function setModelData(array $mappingHash, AbstractModel $model, ApsisCoreHelper $apsisCoreHelper)
-    {
+    public function setModelData(
+        array $mappingHash,
+        AbstractModel|MagentoSubscriber $model,
+        ApsisCoreHelper $apsisCoreHelper
+    ): static {
         $this->subscriber = $model;
-        $this->apsisCoreHelper = $apsisCoreHelper;
 
         foreach ($mappingHash as $key) {
             $function = 'get';
@@ -68,7 +65,7 @@ class Subscriber implements ProfileDataInterface
      *
      * @return $this
      */
-    public function setConsentTopicData(array $topics, int $consent)
+    public function setConsentTopicData(array $topics, int $consent): static
     {
         foreach ($topics as $topic) {
             $this->subscriberData[$topic] = $consent;
@@ -79,7 +76,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @inheritdoc
      */
-    public function toCSVArray()
+    public function toCSVArray(): array
     {
         return array_values($this->subscriberData);
     }
@@ -87,7 +84,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getProfileKey()
+    private function getProfileKey(): string
     {
         return (string) $this->subscriber->getProfileKey();
     }
@@ -95,7 +92,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getIntegrationUid()
+    private function getIntegrationUid(): string
     {
         return (string) $this->subscriber->getIntegrationUid();
     }
@@ -103,7 +100,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getEmail()
+    private function getEmail(): string
     {
         return (string) $this->subscriber->getEmail();
     }
@@ -111,7 +108,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getStoreId()
+    private function getStoreId(): int|string
     {
         return ($this->subscriber->getStoreId()) ? (int) $this->subscriber->getStoreId() : '';
     }
@@ -119,7 +116,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getStoreName()
+    private function getStoreName(): string
     {
         return (string) $this->subscriber->getStoreName();
     }
@@ -127,7 +124,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getWebsiteId()
+    private function getWebsiteId(): int|string
     {
         return ($this->subscriber->getWebsiteId()) ? (int) $this->subscriber->getWebsiteId() : '';
     }
@@ -135,7 +132,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getWebsiteName()
+    private function getWebsiteName(): string
     {
         return (string) $this->subscriber->getWebsiteName();
     }
@@ -143,7 +140,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getSubscriberId()
+    private function getSubscriberId(): int|string
     {
         return ($this->subscriber->getSubscriberId()) ? (int) $this->subscriber->getSubscriberId() : '';
     }
@@ -151,7 +148,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getSubscriberStatus()
+    private function getSubscriberStatus(): string
     {
         if ((int) $this->subscriber->getSubscriberStatus() === MagentoSubscriber::STATUS_SUBSCRIBED) {
             $status = 'subscribed';
@@ -165,7 +162,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getChangeStatusAt()
+    private function getChangeStatusAt(): int|string
     {
         return ($this->subscriber->getChangeStatusAt()) ?
             (int) $this->apsisDateHelper->formatDateForPlatformCompatibility($this->subscriber->getChangeStatusAt()) :

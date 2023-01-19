@@ -29,47 +29,47 @@ class Profile
     /**
      * @var PhpCookieManagerFactory
      */
-    private $phpCookieManager;
+    private PhpCookieManagerFactory $phpCookieManager;
 
     /**
      * @var PublicCookieMetadataFactory
      */
-    private $cookieMetadataFactory;
+    private PublicCookieMetadataFactory $cookieMetadataFactory;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private Core $apsisCoreHelper;
 
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var ProfileFactory
      */
-    private $profileFactory;
+    private ProfileFactory $profileFactory;
 
     /**
      * @var Event
      */
-    private $eventService;
+    private Event $eventService;
 
     /**
      * @var SubscriberFactory
      */
-    private $subscriberFactory;
+    private SubscriberFactory $subscriberFactory;
 
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var ApsisConfigHelper
      */
-    private $apsisConfigHelper;
+    private Config $apsisConfigHelper;
 
     /**
      * Profile constructor.
@@ -110,12 +110,14 @@ class Profile
      * @param ProfileModel $profile
      * @param StoreInterface $store
      * @param CustomerInterface $customer
+     *
+     * @return void
      */
     public function mergeMagentoProfileWithWebProfile(
         ProfileModel $profile,
         StoreInterface $store,
         CustomerInterface $customer
-    ) {
+    ): void {
         $sectionDiscriminator = $this->apsisCoreHelper->getStoreConfig(
             $store,
             ApsisConfigHelper::MAPPINGS_SECTION_SECTION
@@ -133,7 +135,6 @@ class Profile
 
         if ($apiClient && ! empty($keySpacesToMerge)) {
             if ($this->isProfileSynced($apiClient, $sectionDiscriminator, $mappedEmailAttribute, $profile, $customer)) {
-
                 //If conflict on merge then set new cookie value for web keyspace
                 if ($apiClient->mergeProfile($keySpacesToMerge) === Client::HTTP_CODE_CONFLICT) {
                     //Log it
@@ -158,7 +159,7 @@ class Profile
      *
      * @return array
      */
-    private function getKeySpacesToMerge(ProfileModel $profile, string $sectionDiscriminator)
+    private function getKeySpacesToMerge(ProfileModel $profile, string $sectionDiscriminator): array
     {
         $keySpacesToMerge = [];
 
@@ -199,7 +200,7 @@ class Profile
         string $mappedEmailAttribute,
         ProfileModel $profile,
         CustomerInterface $customer
-    ) {
+    ): bool {
         try {
             //If already synced, return true
             if ((int) $profile->getCustomerSyncStatus() === ProfileModel::SYNC_STATUS_SYNCED ||
@@ -256,8 +257,10 @@ class Profile
     /**
      * @param array $keySpacesToMerge
      * @param StoreInterface $store
+     *
+     * @return void
      */
-    private function setNewCookieValue(array $keySpacesToMerge, StoreInterface $store)
+    private function setNewCookieValue(array $keySpacesToMerge, StoreInterface $store): void
     {
         try {
             $domain = $this->getDomainFromBaseUrl($store);
@@ -289,7 +292,7 @@ class Profile
      *
      * @return string
      */
-    private function getDomainFromBaseUrl(StoreInterface $store)
+    private function getDomainFromBaseUrl(StoreInterface $store): string
     {
         $domain = '';
         try {
@@ -313,9 +316,14 @@ class Profile
      * @param Subscriber $subscriber
      * @param ProfileModel $profile
      * @param StoreInterface $store
+     *
+     * @return void
      */
-    public function updateProfileForSubscriber(Subscriber $subscriber, ProfileModel $profile, StoreInterface $store)
-    {
+    public function updateProfileForSubscriber(
+        Subscriber $subscriber,
+        ProfileModel $profile,
+        StoreInterface $store
+    ): void {
         try {
             if ($profile->getIsSubscriber() && (int) $subscriber->getStatus() === Subscriber::STATUS_UNSUBSCRIBED) {
                 $this->eventService->registerSubscriberUnsubscribeEvent($subscriber, $profile, $store);
@@ -354,8 +362,10 @@ class Profile
     /**
      * @param Customer $customer
      * @param ProfileModel $profile
+     *
+     * @return void
      */
-    public function updateProfileForCustomer(Customer $customer, ProfileModel $profile)
+    public function updateProfileForCustomer(Customer $customer, ProfileModel $profile): void
     {
         try {
             $this->eventService->registerSubscriberBecomesCustomerEvent($customer, $profile);
@@ -379,8 +389,10 @@ class Profile
 
     /**
      * @param Customer $customer
+     *
+     * @return void
      */
-    public function createProfileForCustomer(Customer $customer)
+    public function createProfileForCustomer(Customer $customer): void
     {
         $this->createProfile(
             (int) $customer->getStoreId(),
@@ -392,8 +404,10 @@ class Profile
 
     /**
      * @param Subscriber $subscriber
+     *
+     * @return void
      */
-    public function createProfileForSubscriber(Subscriber $subscriber)
+    public function createProfileForSubscriber(Subscriber $subscriber): void
     {
         if ((int) $subscriber->getStatus() === Subscriber::STATUS_SUBSCRIBED) {
             $this->createProfile(
@@ -409,13 +423,15 @@ class Profile
      * @param string $email
      * @param int $subscriberId
      * @param int $customerId
+     *
+     * @return void
      */
     private function createProfile(
         int $storeId,
         string $email,
         int $subscriberId,
         int $customerId = 0
-    ) {
+    ): void {
         try {
             $profile = $this->profileFactory->create();
             $profile->setEmail($email);
@@ -448,7 +464,7 @@ class Profile
      *
      * @return bool|ProfileModel
      */
-    public function findProfileForCustomer(Customer $customer)
+    public function findProfileForCustomer(Customer $customer): ProfileModel|bool
     {
         try {
             $foundCustomerType = $this->profileCollectionFactory->create()
@@ -480,7 +496,7 @@ class Profile
      *
      * @return StoreInterface
      */
-    private function getStoreForProfileType(ProfileModel $profile, string $type)
+    private function getStoreForProfileType(ProfileModel $profile, string $type): StoreInterface
     {
         $storeId = 0;
 
@@ -501,7 +517,7 @@ class Profile
      *
      * @return bool
      */
-    private function isSyncEnabledForProfileType(StoreInterface $store, string $type)
+    private function isSyncEnabledForProfileType(StoreInterface $store, string $type): bool
     {
         $isSyncEnabled = false;
 
@@ -528,7 +544,7 @@ class Profile
      *
      * @return string
      */
-    private function getActionByType(ProfileModel $profile, string $type)
+    private function getActionByType(ProfileModel $profile, string $type): string
     {
         $action = '';
 
@@ -546,8 +562,10 @@ class Profile
     /**
      * @param ProfileModel $profile
      * @param string $type
+     *
+     * @return void
      */
-    public function handleDeleteOperationByType(ProfileModel $profile, string $type)
+    public function handleDeleteOperationByType(ProfileModel $profile, string $type): void
     {
         try {
             $store = $this->getStoreForProfileType($profile, $type);
@@ -565,8 +583,8 @@ class Profile
             }
 
             if (empty($isSyncEnabled) || empty($sectionDiscriminator) ||
-                empty($keySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator)) ||
-                empty($client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId()))
+                empty($keySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator))
+                || empty($client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId()))
             ) {
                 return;
             }
@@ -599,6 +617,8 @@ class Profile
      * @param StoreInterface $store
      * @param string $keySpace
      * @param string $type
+     *
+     * @param void
      */
     private function removeAttributesFromProfile(
         ProfileModel $profile,
@@ -607,7 +627,7 @@ class Profile
         StoreInterface $store,
         string $keySpace,
         string $type
-    ) {
+    ): void {
         try {
             $attributes = [];
 
@@ -648,6 +668,8 @@ class Profile
      * @param string $section
      * @param Client $client
      * @param ProfileModel $profile
+     *
+     * @return void
      */
     public function clearProfileAttributes(
         array $attributes,
@@ -655,7 +677,7 @@ class Profile
         string $section,
         Client $client,
         ProfileModel $profile
-    ) {
+    ): void {
         $status = false;
         $attributesArrWithVersionId = $this->apsisCoreHelper->getAttributeVersionIds(
             $client,
@@ -691,7 +713,7 @@ class Profile
      *
      * @return bool|ProfileModel
      */
-    public function findProfileForSubscriber(Subscriber $subscriber)
+    public function findProfileForSubscriber(Subscriber $subscriber): ProfileModel|bool
     {
         try {
             $found = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
@@ -712,8 +734,10 @@ class Profile
 
     /**
      * @param ProfileModel $profile
+     *
+     * @return void
      */
-    public function deleteProfileFromOne(ProfileModel $profile)
+    public function deleteProfileFromOne(ProfileModel $profile): void
     {
         try {
             $storeId = $profile->getStoreId() ? $profile->getStoreId() : $profile->getSubscriberStoreId();
@@ -757,8 +781,10 @@ class Profile
     /**
      * @param ProfileModel $profile
      * @param Customer $customer
+     *
+     * @return void
      */
-    private function removeOldSubscriptionsAndAddNewSubscriptions(ProfileModel $profile, Customer $customer)
+    private function removeOldSubscriptionsAndAddNewSubscriptions(ProfileModel $profile, Customer $customer): void
     {
         try {
             $store = $customer->getStore();
@@ -825,6 +851,8 @@ class Profile
      * @param string $sectionDiscriminator
      * @param string $topicDiscriminator
      * @param string $type
+     *
+     * @return void
      */
     private function createConsentForTopics(
         Client $client,
@@ -833,7 +861,7 @@ class Profile
         string $sectionDiscriminator,
         string $topicDiscriminator,
         string $type
-    ) {
+    ): void {
         try {
             $status = $client->createConsent(
                 $keyspaceDiscriminator,
@@ -865,13 +893,15 @@ class Profile
      * @param ProfileModel $profile
      * @param Client $client
      * @param string $sectionDiscriminator
+     *
+     * @return void
      */
     private function removeConsentForSubscriberDelete(
         StoreInterface $store,
         ProfileModel $profile,
         Client $client,
         string $sectionDiscriminator
-    ) {
+    ): void {
         try {
             $keySpaceDiscriminator = $this->apsisCoreHelper->getKeySpaceDiscriminator($sectionDiscriminator);
             $selectedConsentTopic = (string)$this->apsisCoreHelper->getStoreConfig(
@@ -902,8 +932,10 @@ class Profile
      *
      * @param string $from
      * @param array $extra
+     *
+     * @return void
      */
-    public function resetRequest(string $from, array $extra = [])
+    public function resetRequest(string $from, array $extra = []): void
     {
         try {
             $this->apsisCoreHelper->debug(__METHOD__, ['From' => $from]);
@@ -922,8 +954,10 @@ class Profile
     /**
      * @param string $from
      * @param array $extra
+     *
+     * @return void
      */
-    public function removeAllConfigExceptAccountConfig(string $from, array $extra = [])
+    public function removeAllConfigExceptAccountConfig(string $from, array $extra = []): void
     {
         $scope = $this->apsisCoreHelper->getSelectedScopeInAdmin();
         $connection = $this->profileResource->getConnection();
@@ -960,8 +994,10 @@ class Profile
      * @param string $from
      * @param array $storeIds
      * @param array $profileIds
+     *
+     * @return void
      */
-    public function resetProfiles(string $from, array $storeIds, array $profileIds = [])
+    public function resetProfiles(string $from, array $storeIds, array $profileIds = []): void
     {
         try {
             //Reset Profiles to status Pending

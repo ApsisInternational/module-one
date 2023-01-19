@@ -15,7 +15,7 @@ class Data extends EventData implements EventDataInterface
     /**
      * @var int
      */
-    private $subscriberId;
+    private int $subscriberId;
 
     /**
      * @param Order $order
@@ -24,7 +24,7 @@ class Data extends EventData implements EventDataInterface
      *
      * @return array
      */
-    public function getDataArr(Order $order, ApsisCoreHelper $apsisCoreHelper, int $subscriberId = 0)
+    public function getDataArr(Order $order, ApsisCoreHelper $apsisCoreHelper, int $subscriberId = 0): array
     {
         try {
             $this->apsisCoreHelper = $apsisCoreHelper;
@@ -37,9 +37,11 @@ class Data extends EventData implements EventDataInterface
     }
 
     /**
-     * @inheritdoc
+     * @param AbstractModel|Order $model
+     *
+     * @return array
      */
-    protected function getProcessedDataArr(AbstractModel $model)
+    protected function getProcessedDataArr(AbstractModel|Order $model): array
     {
         try {
             $items = [];

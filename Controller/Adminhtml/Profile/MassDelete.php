@@ -9,6 +9,7 @@ use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Backend\Model\View\Result\Redirect;
 use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Controller\ResultInterface;
 use Magento\Ui\Component\MassAction\Filter;
 use Throwable;
 
@@ -24,22 +25,22 @@ class MassDelete extends Action
     /**
      * @var ProfileResource
      */
-    public $profileResource;
+    public ProfileResource $profileResource;
 
     /**
      * @var ProfileCollectionFactory
      */
-    public $profileCollectionFactory;
+    public ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var Filter
      */
-    private $filter;
+    private Filter $filter;
 
     /**
      * @var ApsisLogHelper
      */
-    private $apsisLogHelper;
+    private ApsisLogHelper $apsisLogHelper;
 
     /**
      * MassDelete constructor.
@@ -65,9 +66,9 @@ class MassDelete extends Action
     }
 
     /**
-     * @inheritdoc
+     * @return ResultInterface
      */
-    public function execute()
+    public function execute(): ResultInterface
     {
         /** @var Redirect $resultRedirect */
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);

@@ -18,27 +18,27 @@ class LoggerPlugin
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var CustomerRepositoryInterface
      */
-    private $customerRepository;
+    private CustomerRepositoryInterface $customerRepository;
 
     /**
      * @var Event
      */
-    private $eventService;
+    private Event $eventService;
 
     /**
      * @var Profile
      */
-    private $profileService;
+    private Profile $profileService;
 
     /**
      * Account constructor.
@@ -71,8 +71,12 @@ class LoggerPlugin
      *
      * @return CustomerLogger
      */
-    public function afterLog(CustomerLogger $logger, CustomerLogger $result, int $customerId, array $data)
-    {
+    public function afterLog(
+        CustomerLogger $logger,
+        CustomerLogger $result,
+        int $customerId,
+        array $data
+    ): CustomerLogger {
         try {
             $customer = $this->customerRepository->getById($customerId);
             if (empty($customer->getId())) {
@@ -109,7 +113,7 @@ class LoggerPlugin
      *
      * @return bool
      */
-    private function isEventEnabled(StoreInterface $store)
+    private function isEventEnabled(StoreInterface $store): bool
     {
         return (boolean) $this->apsisCoreHelper->getStoreConfig(
             $store,

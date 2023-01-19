@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Model\Service;
 
+use Apsis\One\Model\Abandoned;
 use Apsis\One\Model\ResourceModel\Abandoned\CollectionFactory as AbandonedCollectionFactory;
 use Magento\Framework\DataObject;
 
@@ -10,7 +11,7 @@ class Cart
     /**
      * @var AbandonedCollectionFactory
      */
-    private $abandonedCollectionFactory;
+    private AbandonedCollectionFactory $abandonedCollectionFactory;
 
     /**
      * Cart constructor.
@@ -27,7 +28,7 @@ class Cart
      *
      * @return bool
      */
-    public function isClean(string $string)
+    public function isClean(string $string): bool
     {
         return ! preg_match("/[^a-zA-Z\d-]/i", $string);
     }
@@ -35,9 +36,9 @@ class Cart
     /**
      * @param string $token
      *
-     * @return bool|DataObject
+     * @return DataObject|Abandoned|bool
      */
-    public function getCart(string $token)
+    public function getCart(string $token): DataObject|Abandoned|bool
     {
         return $this->abandonedCollectionFactory->create()
             ->loadByToken($token);

@@ -46,52 +46,52 @@ class UpgradeData implements UpgradeDataInterface
     /**
      * @var Registry
      */
-    private $registry;
+    private Registry $registry;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var Random
      */
-    private $random;
+    private Random $random;
 
     /**
      * @var EncryptorInterface
      */
-    private $encryptor;
+    private EncryptorInterface $encryptor;
 
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var EventResource
      */
-    private $eventResource;
+    private EventResource $eventResource;
 
     /**
      * @var RoleFactory
      */
-    private $roleFactory;
+    private RoleFactory $roleFactory;
 
     /**
      * @var RulesFactory
      */
-    private $rulesFactory;
+    private RulesFactory $rulesFactory;
 
     /**
      * @var Historical
      */
-    private $historicalEvents;
+    private Historical $historicalEvents;
 
     /**
      * @var State
      */
-    private $appState;
+    private State $appState;
 
     /**
      * UpgradeData constructor.
@@ -134,8 +134,10 @@ class UpgradeData implements UpgradeDataInterface
     /**
      * @param ModuleDataSetupInterface $setup
      * @param ModuleContextInterface $context
+     *
+     * @return void
      */
-    public function upgrade(ModuleDataSetupInterface $setup, ModuleContextInterface $context)
+    public function upgrade(ModuleDataSetupInterface $setup, ModuleContextInterface $context): void
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);
@@ -176,13 +178,18 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param ModuleDataSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeTwoZeroSeven(ModuleDataSetupInterface $setup)
+    private function upgradeTwoZeroSeven(ModuleDataSetupInterface $setup): void
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);
 
-            $configs = [ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC, ApsisConfigHelper::SYNC_SETTING_ADDITIONAL_TOPIC];
+            $configs = [
+                ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC,
+                ApsisConfigHelper::SYNC_SETTING_ADDITIONAL_TOPIC
+            ];
             foreach ($this->apsisCoreHelper->getStores(true) as $store) {
                 foreach ($configs as $config) {
                     $value = [];
@@ -196,12 +203,10 @@ class UpgradeData implements UpgradeDataInterface
                         $value[] = $topicArr[1] . '|' . $topicArr[3];
                     }
 
-                    $scopeArray = $this->apsisCoreHelper->resolveContext(
-                        ScopeInterface::SCOPE_STORES, $store->getId(), $config
-                    );
-                    $this->apsisCoreHelper->saveConfigValue(
-                        $config, implode(',', $value), $scopeArray['scope'], $scopeArray['id']
-                    );
+                    $scopeArray = $this->apsisCoreHelper
+                        ->resolveContext(ScopeInterface::SCOPE_STORES, $store->getId(), $config);
+                    $this->apsisCoreHelper
+                        ->saveConfigValue($config, implode(',', $value), $scopeArray['scope'], $scopeArray['id']);
                     $store->resetConfig();
                 }
             }
@@ -212,8 +217,10 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param ModuleDataSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeTwoZeroZero(ModuleDataSetupInterface $setup)
+    private function upgradeTwoZeroZero(ModuleDataSetupInterface $setup): void
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);
@@ -265,8 +272,10 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param ModuleDataSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeOneNineFive(ModuleDataSetupInterface $setup)
+    private function upgradeOneNineFive(ModuleDataSetupInterface $setup): void
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);
@@ -329,8 +338,10 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param ModuleDataSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeOneNineFour(ModuleDataSetupInterface $setup)
+    private function upgradeOneNineFour(ModuleDataSetupInterface $setup): void
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);
@@ -349,8 +360,10 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param ModuleDataSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeOneNineZero(ModuleDataSetupInterface $setup)
+    private function upgradeOneNineZero(ModuleDataSetupInterface $setup): void
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);
@@ -378,8 +391,10 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param ModuleDataSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeOneFiveZero(ModuleDataSetupInterface $setup)
+    private function upgradeOneFiveZero(ModuleDataSetupInterface $setup): void
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);
@@ -422,8 +437,10 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param ModuleDataSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeOneTwoZero(ModuleDataSetupInterface $setup)
+    private function upgradeOneTwoZero(ModuleDataSetupInterface $setup): void
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);
@@ -459,8 +476,10 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * Global 32 character long key
+     *
+     * @return void
      */
-    private function generateGlobalKey()
+    private function generateGlobalKey(): void
     {
         try {
             $this->apsisCoreHelper->saveConfigValue(
@@ -476,8 +495,10 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param array $scopeArray
+     *
+     * @return void
      */
-    private function addRegion(array $scopeArray)
+    private function addRegion(array $scopeArray): void
     {
         try {
             $this->apsisCoreHelper->saveConfigValue(
@@ -494,8 +515,10 @@ class UpgradeData implements UpgradeDataInterface
     /**
      * @param ModuleDataSetupInterface $setup
      * @param string $topics
+     *
+     * @return void
      */
-    private function updateConsentForProfiles(ModuleDataSetupInterface $setup, string $topics)
+    private function updateConsentForProfiles(ModuleDataSetupInterface $setup, string $topics): void
     {
         try {
             $setup->getConnection()->update(
@@ -515,8 +538,10 @@ class UpgradeData implements UpgradeDataInterface
     /**
      * @param string $topics
      * @param array $scopeArray
+     *
+     * @return void
      */
-    private function updateConsentListTopicData(string $topics, array $scopeArray)
+    private function updateConsentListTopicData(string $topics, array $scopeArray): void
     {
         try {
             $this->apsisCoreHelper->saveConfigValue(
@@ -535,7 +560,7 @@ class UpgradeData implements UpgradeDataInterface
      *
      * @return string
      */
-    private function getUpdatedConsentData(string $consentsData)
+    private function getUpdatedConsentData(string $consentsData): string
     {
         try {
             $updatedConsents = '';

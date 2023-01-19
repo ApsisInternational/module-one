@@ -13,6 +13,7 @@ use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Model\Session;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
@@ -27,32 +28,32 @@ class Subscription extends Action
     /**
      * @var Session
      */
-    private $customerSession;
+    private Session $customerSession;
 
     /**
      * @var Validator
      */
-    private $formKeyValidator;
+    private Validator $formKeyValidator;
 
     /**
      * @var CustomerRepository
      */
-    private $customerRepository;
+    private CustomerRepository $customerRepository;
 
     /**
      * @var SubscriberFactory
      */
-    private $subscriberFactory;
+    private SubscriberFactory $subscriberFactory;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * Subscription constructor.
@@ -84,9 +85,9 @@ class Subscription extends Action
     }
 
     /**
-     * @inheritdoc
+     * @return ResponseInterface
      */
-    public function execute()
+    public function execute(): ResponseInterface
     {
         if (! $this->formKeyValidator->validate($this->getRequest())) {
             return $this->_redirect(self::MAGENTO_CUSTOMER_ACCOUNT_URL);
@@ -130,7 +131,7 @@ class Subscription extends Action
      *
      * @return bool
      */
-    private function evaluateAndUpdateConsent(array $preUpdateConsents, Profile $profile)
+    private function evaluateAndUpdateConsent(array $preUpdateConsents, Profile $profile): bool
     {
         $postConsents = $this->getRequest()->getParam('topic_subscriptions', []);
         $check = true;
@@ -153,7 +154,7 @@ class Subscription extends Action
      *
      * @return bool
      */
-    private function createConsent(Profile $profile, string $type, string $consentTopic)
+    private function createConsent(Profile $profile, string $type, string $consentTopic): bool
     {
         $store = $this->apsisCoreHelper->getStore($profile->getSubscriberStoreId());
         $client = $this->apsisCoreHelper->getApiClient(
@@ -191,13 +192,15 @@ class Subscription extends Action
             $this->apsisCoreHelper->debug(__METHOD__, $info);
         }
 
-        return ($result === false || is_string($result)) ? false : true;
+        return !(($result === false || is_string($result)));
     }
 
     /**
      * Process general subscription
+     *
+     * @return void
      */
-    private function updateMagentoNewsletterSubscription()
+    private function updateMagentoNewsletterSubscription(): void
     {
         $customerId = $this->customerSession->getCustomerId();
         if ($customerId === null) {
@@ -229,12 +232,14 @@ class Subscription extends Action
      * @param bool $isSubscribedParam
      * @param int $customerId
      *
+     * @return void
+     *
      */
     private function updateForCustomerWithExtensionAttributes(
         CustomerInterface $customer,
         bool $isSubscribedParam,
         int $customerId
-    ) {
+    ): void {
         try {
             $customer->setData('ignore_validation_flag', true);
             $this->customerRepository->save($customer);
@@ -258,9 +263,13 @@ class Subscription extends Action
     /**
      * @param bool $isSubscribedParam
      * @param CustomerInterface $customer
+     *
+     * @return void
      */
-    private function updateForCustomerWithoutExtensionAttributes(bool $isSubscribedParam, CustomerInterface $customer)
-    {
+    private function updateForCustomerWithoutExtensionAttributes(
+        bool $isSubscribedParam,
+        CustomerInterface $customer
+    ): void {
         try {
             $this->customerRepository->save($customer);
             if ($isSubscribedParam) {

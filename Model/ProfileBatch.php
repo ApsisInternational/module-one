@@ -63,22 +63,22 @@ class ProfileBatch extends AbstractModel
     /**
      * @var DateTime
      */
-    private $dateTime;
+    private DateTime $dateTime;
 
     /**
      * @var ProfileBatchResource
      */
-    private $profileBatchResource;
+    private ProfileBatchResource $profileBatchResource;
 
     /**
      * @var ProfileBatchCollectionFactory
      */
-    private $profileBatchCollectionFactory;
+    private ProfileBatchCollectionFactory $profileBatchCollectionFactory;
 
     /**
      * @var Log
      */
-    private $logger;
+    private Log $logger;
 
     /**
      * Subscriber constructor.
@@ -126,9 +126,9 @@ class ProfileBatch extends AbstractModel
     }
 
     /**
-     * @inheritdoc
+     * @return ProfileBatch
      */
-    public function afterDelete()
+    public function afterDelete(): ProfileBatch
     {
         if ($this->isDeleted()) {
             //Log it
@@ -144,9 +144,9 @@ class ProfileBatch extends AbstractModel
     }
 
     /**
-     * @inheritdoc
+     * @return ProfileBatch|$this
      */
-    public function beforeSave()
+    public function beforeSave(): ProfileBatch|static
     {
         parent::beforeSave();
         $this->setUpdatedAt($this->dateTime->formatDate(true));
@@ -159,9 +159,16 @@ class ProfileBatch extends AbstractModel
      * @param int $type
      * @param string $ids
      * @param string $jsonMappings
+     *
+     * @return void
      */
-    public function registerBatchItem(int $storeId, string $filePath, int $type, string $ids, string $jsonMappings)
-    {
+    public function registerBatchItem(
+        int $storeId,
+        string $filePath,
+        int $type,
+        string $ids,
+        string $jsonMappings
+    ): void {
         try {
             $this->setStoreId($storeId)
                 ->setFilePath($filePath)
@@ -180,7 +187,7 @@ class ProfileBatch extends AbstractModel
      *
      * @return ProfileBatchCollection
      */
-    public function getPendingBatchItemsForStore(int $storeId)
+    public function getPendingBatchItemsForStore(int $storeId): ProfileBatchCollection
     {
         return $this->getBatchItemCollectionForStoreByStatus(
             $storeId,
@@ -194,7 +201,7 @@ class ProfileBatch extends AbstractModel
      *
      * @return ProfileBatchCollection
      */
-    public function getProcessingBatchItemsForStore(int $storeId)
+    public function getProcessingBatchItemsForStore(int $storeId): ProfileBatchCollection
     {
         return $this->getBatchItemCollectionForStoreByStatus(
             $storeId,
@@ -210,8 +217,11 @@ class ProfileBatch extends AbstractModel
      *
      * @return ProfileBatchCollection
      */
-    private function getBatchItemCollectionForStoreByStatus(int $storeId, int $status, int $limit)
-    {
+    private function getBatchItemCollectionForStoreByStatus(
+        int $storeId,
+        int $status,
+        int $limit
+    ): ProfileBatchCollection {
         return $this->profileBatchCollectionFactory->create()
             ->addFieldToFilter('sync_status', $status)
             ->addFieldToFilter('store_id', $storeId)

@@ -104,13 +104,13 @@ class Cart extends Template
     /**
      * @param float $value
      *
-     * @return float|string
+     * @return string
      */
-    public function getCurrencyByStore(float $value): float|string
+    public function getCurrencyByStore(float $value): string
     {
         try {
             $storeId = $this->cart->getStoreId();
-            return $this->priceHelper->currencyByStore($value, $storeId, true, false);
+            return (string) $this->priceHelper->currencyByStore($value, $storeId, true, false);
         } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
         }

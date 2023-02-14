@@ -95,7 +95,7 @@ class Placed implements ObserverInterface
      *
      * @return bool|DataObject|Profile
      */
-    private function findProfile(Order $order): DataObject|Profile|bool
+    private function findProfile(Order $order)
     {
         try {
             if ($order->getCustomerId()) {

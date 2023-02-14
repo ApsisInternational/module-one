@@ -68,7 +68,7 @@ class MassReset extends Action
     /**
      * @return ResultInterface
      */
-    public function execute(): ResultInterface
+    public function execute()
     {
         /** @var Redirect $resultRedirect */
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);

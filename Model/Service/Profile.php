@@ -464,7 +464,7 @@ class Profile
      *
      * @return bool|ProfileModel
      */
-    public function findProfileForCustomer(Customer $customer): ProfileModel|bool
+    public function findProfileForCustomer(Customer $customer)
     {
         try {
             $foundCustomerType = $this->profileCollectionFactory->create()
@@ -713,7 +713,7 @@ class Profile
      *
      * @return bool|ProfileModel
      */
-    public function findProfileForSubscriber(Subscriber $subscriber): ProfileModel|bool
+    public function findProfileForSubscriber(Subscriber $subscriber)
     {
         try {
             $found = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());

@@ -40,7 +40,7 @@ class InstallData implements InstallDataInterface
      *
      * @return void
      */
-    public function install(ModuleDataSetupInterface $setup, ModuleContextInterface $context): void
+    public function install(ModuleDataSetupInterface $setup, ModuleContextInterface $context)
     {
         try {
             $this->logHelper->log(__METHOD__);

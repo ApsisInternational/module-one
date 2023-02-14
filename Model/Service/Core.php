@@ -127,7 +127,7 @@ class Core extends ApsisLogHelper
      *
      * @return bool|StoreInterface
      */
-    public function getStore(int $storeId = null): StoreInterface|bool
+    public function getStore(int $storeId = null)
     {
         try {
             return $this->storeManager->getStore($storeId);
@@ -339,7 +339,7 @@ class Core extends ApsisLogHelper
      *
      * @return string|null
      */
-    public function getStoreConfig(StoreInterface $store, string $path): ?string
+    public function getStoreConfig(StoreInterface $store, string $path)
     {
         try {
             return $store->getConfig($path);
@@ -619,7 +619,7 @@ class Core extends ApsisLogHelper
         string $region = '',
         string $clientId = '',
         string $clientSecret = ''
-    ): bool|Client {
+    ) {
         if (! $bypass) {
             if (! $this->isEnabled($contextScope, $scopeId)) {
                 return false;
@@ -1017,7 +1017,7 @@ class Core extends ApsisLogHelper
         string $region,
         string $scope,
         string $scopeId
-    ): bool|string {
+    ) {
         try {
             //Validate api host is reachable
             try {
@@ -1056,7 +1056,7 @@ class Core extends ApsisLogHelper
         string $region,
         string $scope,
         string $scopeId
-    ): bool|string {
+    ) {
         try {
             $client = $this->getApiClient($scope, $scopeId, true, $region, $id, $secret);
 

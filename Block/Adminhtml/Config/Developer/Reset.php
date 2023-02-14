@@ -60,7 +60,7 @@ class Reset extends Field
     /**
      * @inheritdoc
      */
-    public function _getElementHtml(AbstractElement $element): string
+    public function _getElementHtml(AbstractElement $element)
     {
         try {
             $elm = $this->getLayout()

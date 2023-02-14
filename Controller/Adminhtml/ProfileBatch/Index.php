@@ -36,7 +36,7 @@ class Index extends AbstractAction
     /**
      * @return Page
      */
-    public function execute(): Page
+    public function execute()
     {
         /** @var Page $resultPage */
         $resultPage = $this->resultPageFactory->create();

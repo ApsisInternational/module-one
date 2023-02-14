@@ -455,7 +455,7 @@ class Events implements SyncInterface
      *
      * @return bool|stdClass|string
      */
-    private function syncProfileForEvent(Client $client, Profile $profile): bool|string|stdClass
+    private function syncProfileForEvent(Client $client, Profile $profile)
     {
         $attributesToSync[$this->attributeVerIds[$this->emailAttribute]] = $profile->getEmail();
         if (isset($this->attributeVerIds[$this->profileKeyAttribute])) {

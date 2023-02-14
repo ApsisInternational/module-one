@@ -9,7 +9,7 @@ class DataSource extends Columns
     /**
      * @inheritdoc
      */
-    public function prepareDataSource(array $dataSource): array
+    public function prepareDataSource(array $dataSource)
     {
         if (isset($dataSource['data']['items'])) {
             foreach ($dataSource['data']['items'] as & $item) {

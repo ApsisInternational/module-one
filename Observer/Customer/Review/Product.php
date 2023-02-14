@@ -148,7 +148,7 @@ class Product implements ObserverInterface
      *
      * @return bool|ProductInterface
      */
-    private function getProductById(int $productId, int $storeId): bool|ProductInterface
+    private function getProductById(int $productId, int $storeId)
     {
         try {
             return $this->productRepository->getById($productId, false, $storeId);

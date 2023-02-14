@@ -23,7 +23,7 @@ class Collection extends AbstractCollection
      *
      * @return DataObject|Abandoned|bool
      */
-    public function loadByToken(string $token): DataObject|Abandoned|bool
+    public function loadByToken(string $token)
     {
         $collection = $this->addFieldToFilter('token', $token)
             ->setPageSize(1);
@@ -41,7 +41,7 @@ class Collection extends AbstractCollection
      *
      * @return DataObject|Abandoned|bool
      */
-    public function loadByProfileIdAndStoreId(int $profileId, int $storeId): DataObject|Abandoned|bool
+    public function loadByProfileIdAndStoreId(int $profileId, int $storeId)
     {
         $collection = $this->addFieldToFilter('profile_id', $profileId)
             ->addFieldToFilter('store_id', $storeId)

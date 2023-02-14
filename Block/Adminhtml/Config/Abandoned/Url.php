@@ -26,7 +26,7 @@ class Url extends FieldBase
     /**
      * @inheritdoc
      */
-    public function _getElementHtml(AbstractElement $element): string
+    public function _getElementHtml(AbstractElement $element)
     {
         $text = sprintf(
             '%s%s',

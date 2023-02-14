@@ -137,7 +137,7 @@ class UpgradeData implements UpgradeDataInterface
      *
      * @return void
      */
-    public function upgrade(ModuleDataSetupInterface $setup, ModuleContextInterface $context): void
+    public function upgrade(ModuleDataSetupInterface $setup, ModuleContextInterface $context)
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);

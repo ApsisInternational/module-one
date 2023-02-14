@@ -96,7 +96,7 @@ class Abandoned extends AbstractModel
     /**
      * @return Abandoned
      */
-    public function afterDelete(): Abandoned
+    public function afterDelete()
     {
         if ($this->isDeleted()) {
             //Log it
@@ -113,9 +113,9 @@ class Abandoned extends AbstractModel
     }
 
     /**
-     * @return Abandoned|$this
+     * @return $this
      */
-    public function beforeSave(): Abandoned|static
+    public function beforeSave()
     {
         parent::beforeSave();
         if ($this->isObjectNew()) {

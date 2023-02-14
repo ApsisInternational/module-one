@@ -87,7 +87,7 @@ class Subscription extends Action
     /**
      * @return ResponseInterface
      */
-    public function execute(): ResponseInterface
+    public function execute()
     {
         if (! $this->formKeyValidator->validate($this->getRequest())) {
             return $this->_redirect(self::MAGENTO_CUSTOMER_ACCOUNT_URL);

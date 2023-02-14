@@ -80,7 +80,7 @@ class NewsletterManageIndexPlugin
      *
      * @return Http|HttpInterface
      */
-    public function aroundExecute(Index $subject, callable $proceed): HttpInterface|Http
+    public function aroundExecute(Index $subject, callable $proceed)
     {
         if ($this->isOkToProceed()) {
             return $this->response->setRedirect(

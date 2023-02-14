@@ -309,7 +309,7 @@ class Profile extends AbstractDb implements ResourceInterface
         int $storeId,
         array $customerIds,
         ApsisCoreHelper $apsisCoreHelper
-    ): Collection|array {
+    ) {
         try {
             $customerLog = $this->getTable('customer_log');
             $customerCollection = $this->customerCollectionFactory->create()

@@ -129,7 +129,7 @@ class Log
      *
      * @return string|bool
      */
-    public function serialize(mixed $data): bool|string
+    public function serialize(mixed $data)
     {
         try {
             return json_encode($data);

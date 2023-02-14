@@ -72,7 +72,7 @@ class Subscription extends Action
     /**
      * @return ResponseInterface
      */
-    public function execute(): ResponseInterface
+    public function execute()
     {
         try {
             //Validate http method against allowed one.
@@ -201,7 +201,7 @@ class Subscription extends Action
      *
      * @return ProfileModel|bool
      */
-    private function getProfile(array $params): ProfileModel|bool
+    private function getProfile(array $params)
     {
         return $this->profileCollectionFactory->create()
             ->loadByIntegrationId($this->escaper->escapeHtml($params['PK']));

@@ -36,12 +36,12 @@ class Reset extends AbstractAction
     /**
      * @return ResponseInterface
      */
-    public function execute(): ResponseInterface
+    public function execute()
     {
         $this->developer->resetModule() ?
             $this->messageManager->addSuccessMessage('Module full reset request is complete') :
             $this->messageManager->addWarningMessage('Unable to reset module, please check log file.');
 
-        $this->_redirect($this->_redirect->getRefererUrl());
+        return $this->_redirect($this->_redirect->getRefererUrl());
     }
 }

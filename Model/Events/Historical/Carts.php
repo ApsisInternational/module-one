@@ -145,7 +145,7 @@ class Carts extends HistoricalEvent
         StoreInterface $store,
         array $customerIds,
         array $duration
-    ): array|QuoteCollection {
+    ) {
         try {
             return $this->quoteCollectionFactory->create()
                 ->addFieldToFilter('main_table.store_id', $store->getId())

@@ -151,7 +151,7 @@ class Orders extends HistoricalEvent
         StoreInterface $store,
         array $emails,
         array $duration
-    ): array|OrderCollection {
+    ) {
         try {
             return $this->orderCollectionFactory->create()
                 ->addFieldToFilter('main_table.store_id', $store->getId())

@@ -439,7 +439,7 @@ class Subscribers implements ProfileSyncInterface
      *
      * @return array|SubscriberCollection
      */
-    private function getSubscribersFromIdsByStore(StoreInterface $store, $subscriberIds): SubscriberCollection|array
+    private function getSubscribersFromIdsByStore(StoreInterface $store, $subscriberIds)
     {
         try {
             $collection = $this->subscriberCollectionFactory->create()

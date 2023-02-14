@@ -108,7 +108,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getStoreId(): int|string
+    private function getStoreId()
     {
         return ($this->subscriber->getStoreId()) ? (int) $this->subscriber->getStoreId() : '';
     }
@@ -124,7 +124,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getWebsiteId(): int|string
+    private function getWebsiteId()
     {
         return ($this->subscriber->getWebsiteId()) ? (int) $this->subscriber->getWebsiteId() : '';
     }
@@ -140,7 +140,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getSubscriberId(): int|string
+    private function getSubscriberId()
     {
         return ($this->subscriber->getSubscriberId()) ? (int) $this->subscriber->getSubscriberId() : '';
     }
@@ -162,7 +162,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getChangeStatusAt(): int|string
+    private function getChangeStatusAt()
     {
         return ($this->subscriber->getChangeStatusAt()) ?
             (int) $this->apsisDateHelper->formatDateForPlatformCompatibility($this->subscriber->getChangeStatusAt()) :

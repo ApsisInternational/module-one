@@ -58,7 +58,7 @@ class Updater extends Action
     /**
      * @return void
      */
-    public function execute(): void
+    public function execute()
     {
         try {
             if ($this->formKeyValidator->validate($this->getRequest()) &&

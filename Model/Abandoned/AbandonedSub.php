@@ -113,7 +113,7 @@ class AbandonedSub
         StoreInterface $store,
         string $acDelayPeriod,
         ApsisCoreHelper $apsisCoreHelper
-    ): bool|Collection {
+    ) {
         try {
             $interval = $this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('PT%sM', $acDelayPeriod));
             $fromTime = $this->apsisDateHelper->getDateTimeFromTimeAndTimeZone()
@@ -221,7 +221,7 @@ class AbandonedSub
      *
      * @return bool|Profile
      */
-    private function findProfile(Quote $quote, ApsisCoreHelper $apsisCoreHelper): Profile|bool
+    private function findProfile(Quote $quote, ApsisCoreHelper $apsisCoreHelper)
     {
         if ($quote->getCustomerId()) {
             $profile = $this->profileCollectionFactory->create()->loadByCustomerId($quote->getCustomerId());

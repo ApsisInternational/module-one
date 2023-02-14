@@ -23,7 +23,7 @@ class Collection extends AbstractCollection
      *
      * @return DataObject|Profile|bool
      */
-    public function loadByCustomerId(int $customerId): DataObject|Profile|bool
+    public function loadByCustomerId(int $customerId)
     {
         $collection = $this->addFieldToFilter('customer_id', $customerId)
             ->setPageSize(1);
@@ -40,7 +40,7 @@ class Collection extends AbstractCollection
      *
      * @return DataObject|Profile|bool
      */
-    public function loadBySubscriberId(int $subscriberId): DataObject|Profile|bool
+    public function loadBySubscriberId(int $subscriberId)
     {
         $collection = $this->addFieldToFilter('subscriber_id', $subscriberId)
             ->setPageSize(1);
@@ -57,7 +57,7 @@ class Collection extends AbstractCollection
      *
      * @return DataObject|Profile|bool
      */
-    public function loadByIntegrationId(string $integrationId): DataObject|Profile|bool
+    public function loadByIntegrationId(string $integrationId)
     {
         $collection = $this->addFieldToFilter('integration_uid', $integrationId)
             ->setPageSize(1);

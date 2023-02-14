@@ -85,7 +85,7 @@ abstract class EventData
      *
      * @return ProductInterface|null
      */
-    protected function loadProduct(int $productId, int $storeId): ?ProductInterface
+    protected function loadProduct(int $productId, int $storeId)
     {
         try {
             return $this->productRepository->getById($productId, false, $storeId);

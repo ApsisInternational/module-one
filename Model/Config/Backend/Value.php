@@ -121,7 +121,7 @@ class Value extends ConfigValue implements ProcessorInterface
     /**
      * @inheritdoc
      */
-    public function __sleep(): array
+    public function __sleep()
     {
         $properties = parent::__sleep();
 
@@ -137,7 +137,7 @@ class Value extends ConfigValue implements ProcessorInterface
     /**
      * @inheritdoc
      */
-    public function __wakeup(): void
+    public function __wakeup()
     {
         parent::__wakeup();
 
@@ -294,7 +294,7 @@ class Value extends ConfigValue implements ProcessorInterface
     /**
      * @return ConfigValue|$this
      */
-    public function afterSave(): ConfigValue|static
+    public function afterSave()
     {
         //Flag exist
         if ($this->assertRegistryStatus(self::FAIL)) {
@@ -322,7 +322,7 @@ class Value extends ConfigValue implements ProcessorInterface
     /**
      * @return ConfigValue
      */
-    public function afterDelete(): ConfigValue
+    public function afterDelete()
     {
         $this->log(__METHOD__);
         return parent::afterDelete();
@@ -352,7 +352,7 @@ class Value extends ConfigValue implements ProcessorInterface
      *
      * @return string|null
      */
-    private function getValueForSecretConfig(string $value): ?string
+    private function getValueForSecretConfig(string $value)
     {
         // don't save value, if an obscured value was received.
         //This indicates that data was not changed.

@@ -31,7 +31,7 @@ class Index extends Manage
     /**
      * @return void
      */
-    public function execute(): void
+    public function execute()
     {
         try {
             if (! $this->_customerSession->authenticate()) {

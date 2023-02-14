@@ -44,7 +44,7 @@ class Uninstall implements UninstallInterface
      *
      * @return void
      */
-    public function uninstall(SchemaSetupInterface $setup, ModuleContextInterface $context): void
+    public function uninstall(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {
         try {
             $this->logHelper->log(__METHOD__);

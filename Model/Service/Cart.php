@@ -38,7 +38,7 @@ class Cart
      *
      * @return DataObject|Abandoned|bool
      */
-    public function getCart(string $token): DataObject|Abandoned|bool
+    public function getCart(string $token)
     {
         return $this->abandonedCollectionFactory->create()
             ->loadByToken($token);

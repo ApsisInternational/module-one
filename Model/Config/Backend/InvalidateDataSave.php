@@ -12,9 +12,9 @@ use Magento\Framework\App\Config\Value;
 class InvalidateDataSave extends Value
 {
     /**
-     * @return InvalidateDataSave|$this
+     * @return $this
      */
-    public function beforeSave(): InvalidateDataSave|static
+    public function beforeSave()
     {
         $this->_dataSaveAllowed = false;
         return $this;

@@ -63,7 +63,7 @@ class Checkout extends Action
     /**
      * @inheritdoc
      */
-    public function execute(): ResultInterface|ResponseInterface
+    public function execute()
     {
         try {
             $token = $this->getRequest()->getParam('token');

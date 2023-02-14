@@ -148,7 +148,7 @@ class Wishlist extends HistoricalEvent
         StoreInterface $store,
         array $wishlistIds,
         array $duration
-    ): WishlistItemCollection|array {
+    ) {
         try {
             $collection = $this->wishlistItemCollectionFactory->create()
                 ->addStoreFilter([$store->getId()])

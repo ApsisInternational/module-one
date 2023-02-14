@@ -74,7 +74,7 @@ class Cart extends Action
     /**
      * @inheritdoc
      */
-    public function execute(): ResultInterface|ResponseInterface
+    public function execute()
     {
         try {
             //Validate http method against allowed one.

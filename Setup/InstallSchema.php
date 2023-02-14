@@ -33,7 +33,7 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @return void
      */
-    public function install(SchemaSetupInterface $setup, ModuleContextInterface $context): void
+    public function install(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {
         try {
             $this->logHelper->log(__METHOD__);
@@ -94,7 +94,7 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @return Table|false
      */
-    private function addColumnsToApsisAbandonedTable(Table $table): bool|Table
+    private function addColumnsToApsisAbandonedTable(Table $table)
     {
         try {
             return $table->addColumn(
@@ -177,7 +177,7 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @return Table|false
      */
-    private function addIndexesToApsisAbandonedTable(SchemaSetupInterface $installer, Table $table): bool|Table
+    private function addIndexesToApsisAbandonedTable(SchemaSetupInterface $installer, Table $table)
     {
         try {
             $tableName = $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
@@ -199,7 +199,7 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @return Table|false
      */
-    private function addForeignKeysToAbandonedTable(SchemaSetupInterface $installer, Table $table): bool|Table
+    private function addForeignKeysToAbandonedTable(SchemaSetupInterface $installer, Table $table)
     {
         try {
             return $table->addForeignKey(
@@ -291,7 +291,7 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @return Table|false
      */
-    private function addColumnsToApsisEventTable(Table $table): bool|Table
+    private function addColumnsToApsisEventTable(Table $table)
     {
         try {
             return $table->addColumn(
@@ -402,7 +402,7 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @return Table|false
      */
-    private function addIndexesToApsisEventTable(SchemaSetupInterface $installer, Table $table): bool|Table
+    private function addIndexesToApsisEventTable(SchemaSetupInterface $installer, Table $table)
     {
         try {
             $tableName = $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE);
@@ -428,7 +428,7 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @return Table|false
      */
-    private function addForeignKeysToEventTable(SchemaSetupInterface $installer, Table $table): bool|Table
+    private function addForeignKeysToEventTable(SchemaSetupInterface $installer, Table $table)
     {
         try {
             return $table->addForeignKey(
@@ -498,7 +498,7 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @return Table|false
      */
-    private function addColumnsToApsisProfileBatchTable(Table $table): bool|Table
+    private function addColumnsToApsisProfileBatchTable(Table $table)
     {
         try {
             return $table->addColumn(
@@ -595,7 +595,7 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @return Table|false
      */
-    private function addIndexesToApsisProfileBatchTable(SchemaSetupInterface $installer, Table $table): bool|Table
+    private function addIndexesToApsisProfileBatchTable(SchemaSetupInterface $installer, Table $table)
     {
         try {
             $tableName = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE);
@@ -616,7 +616,7 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @return Table|false
      */
-    private function addForeignKeysToProfileBatchTable(SchemaSetupInterface $installer, Table $table): bool|Table
+    private function addForeignKeysToProfileBatchTable(SchemaSetupInterface $installer, Table $table)
     {
         try {
             return $table->addForeignKey(
@@ -671,7 +671,7 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @return Table|false
      */
-    private function addColumnsToApsisProfileTable(Table $table): bool|Table
+    private function addColumnsToApsisProfileTable(Table $table)
     {
         try {
             return $table->addColumn(
@@ -789,7 +789,7 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @return Table|false
      */
-    private function addIndexesToApsisProfileTable(SchemaSetupInterface $installer, Table $table): bool|Table
+    private function addIndexesToApsisProfileTable(SchemaSetupInterface $installer, Table $table)
     {
         try {
             $tableName = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);

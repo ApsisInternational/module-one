@@ -106,7 +106,7 @@ class Event extends AbstractModel
     /**
      * @return Event
      */
-    public function afterDelete(): Event
+    public function afterDelete()
     {
         if ($this->isDeleted()) {
             //Log it
@@ -123,9 +123,9 @@ class Event extends AbstractModel
     }
 
     /**
-     * @return Event|$this
+     * @return $this
      */
-    public function beforeSave(): Event|static
+    public function beforeSave()
     {
         parent::beforeSave();
         if ($this->isObjectNew()) {

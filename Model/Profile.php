@@ -145,7 +145,7 @@ class Profile extends AbstractModel
     /**
      * @return Profile
      */
-    public function afterDelete(): Profile
+    public function afterDelete()
     {
         try {
             if ($this->isDeleted()) {
@@ -169,9 +169,9 @@ class Profile extends AbstractModel
     }
 
     /**
-     * @return Profile|$this
+     * @return $this
      */
-    public function beforeSave(): Profile|static
+    public function beforeSave()
     {
         parent::beforeSave();
         $this->setUpdatedAt($this->dateTime->formatDate(true));

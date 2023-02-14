@@ -216,7 +216,7 @@ class Reviews extends HistoricalEvent
         StoreInterface $store,
         array $customerIds,
         array $duration
-    ): ProductReviewCollection|array {
+    ) {
         try {
             return $this->reviewProductCollectionFactory->create()
                 ->addStoreFilter($store->getId())

@@ -43,7 +43,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
      *
      * @return void
      */
-    public function upgrade(SchemaSetupInterface $setup, ModuleContextInterface $context): void
+    public function upgrade(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {
         try {
             $this->logHelper->log(__METHOD__);

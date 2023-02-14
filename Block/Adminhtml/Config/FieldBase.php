@@ -31,7 +31,7 @@ class FieldBase extends Field
     /**
      * @inheritdoc
      */
-    public function _getElementHtml(AbstractElement $element): string
+    public function _getElementHtml(AbstractElement $element)
     {
         $element->setData('readonly', 1)
             ->addClass('apsis-copy-helper');

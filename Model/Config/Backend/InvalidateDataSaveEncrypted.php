@@ -48,9 +48,9 @@ class InvalidateDataSaveEncrypted extends Value
     }
 
     /**
-     * @return InvalidateDataSaveEncrypted|$this
+     * @return $this
      */
-    public function beforeSave(): InvalidateDataSaveEncrypted|static
+    public function beforeSave()
     {
         $this->_dataSaveAllowed = false;
         return $this;
@@ -61,7 +61,7 @@ class InvalidateDataSaveEncrypted extends Value
      *
      * @return void
      */
-    protected function _afterLoad(): void
+    protected function _afterLoad()
     {
         $value = (string) $this->getValue();
         if (! empty($value) && ($decrypted = $this->encryptor->decrypt($value))) {

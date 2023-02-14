@@ -128,7 +128,7 @@ class ProfileBatch extends AbstractModel
     /**
      * @return ProfileBatch
      */
-    public function afterDelete(): ProfileBatch
+    public function afterDelete()
     {
         if ($this->isDeleted()) {
             //Log it
@@ -144,9 +144,9 @@ class ProfileBatch extends AbstractModel
     }
 
     /**
-     * @return ProfileBatch|$this
+     * @return $this
      */
-    public function beforeSave(): ProfileBatch|static
+    public function beforeSave()
     {
         parent::beforeSave();
         $this->setUpdatedAt($this->dateTime->formatDate(true));

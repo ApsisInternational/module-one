@@ -147,7 +147,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getStoreId(): int|string
+    private function getStoreId()
     {
         return ($this->customer->getStoreId()) ? (int) $this->customer->getStoreId() : '';
     }
@@ -163,7 +163,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getWebsiteId(): int|string
+    private function getWebsiteId()
     {
         return ($this->customer->getWebsiteId()) ? (int) $this->customer->getWebsiteId() : '';
     }
@@ -187,7 +187,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getCustomerId(): int|string
+    private function getCustomerId()
     {
         return ($this->customer->getId()) ? (int) $this->customer->getId() : '';
     }
@@ -235,7 +235,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getCreatedAt(): int|string
+    private function getCreatedAt()
     {
         return ($this->customer->getCreatedAt()) ?
             (int) $this->apsisDateHelper->formatDateForPlatformCompatibility($this->customer->getCreatedAt()) : '';
@@ -246,7 +246,7 @@ class Customer implements ProfileDataInterface
      *
      * @return int|string
      */
-    private function getLastLoggedDate(): int|string
+    private function getLastLoggedDate()
     {
         return ($this->customer->getLastLoggedDate()) ?
             (int) $this->apsisDateHelper->formatDateForPlatformCompatibility($this->customer->getLastLoggedDate()) : '';
@@ -269,7 +269,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getReviewCount(): int|string
+    private function getReviewCount()
     {
         return ($this->reviewCollection->getSize()) ? (int) $this->reviewCollection->getSize() : '';
     }
@@ -277,7 +277,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getLastReviewDate(): int|string
+    private function getLastReviewDate()
     {
         if ($this->reviewCollection->getSize()) {
             $this->reviewCollection->getSelect()->limit(1);
@@ -365,7 +365,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getBillingTelephone(): int|string
+    private function getBillingTelephone()
     {
         if (empty($this->customer->getBillingTelephone())) {
             return $this->validateAndFormatMobileNumber(
@@ -467,7 +467,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getDeliveryTelephone(): int|string
+    private function getDeliveryTelephone()
     {
         if (empty($this->customer->getShippingTelephone())) {
             return $this->validateAndFormatMobileNumber(
@@ -513,7 +513,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getLastOrderDate(): int|string
+    private function getLastOrderDate()
     {
         return ($this->customer->getLastOrderDate()) ?
             (int) $this->apsisDateHelper->formatDateForPlatformCompatibility($this->customer->getLastOrderDate()) : '';
@@ -522,7 +522,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return int|string
      */
-    private function getNumberOfOrders(): int|string
+    private function getNumberOfOrders()
     {
         return ($this->customer->getNumberOfOrders()) ? (int) $this->customer->getNumberOfOrders() : '';
     }
@@ -530,7 +530,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return float|string
      */
-    private function getAverageOrderValue(): float|string
+    private function getAverageOrderValue()
     {
         return ($this->customer->getAverageOrderValue()) ?
             $this->apsisCoreHelper->round($this->customer->getAverageOrderValue()) : '';
@@ -539,7 +539,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return float|string
      */
-    private function getTotalSpend(): float|string
+    private function getTotalSpend()
     {
         return ($this->customer->getTotalSpend()) ?
             $this->apsisCoreHelper->round($this->customer->getTotalSpend()) : '';
@@ -551,7 +551,7 @@ class Customer implements ProfileDataInterface
      *
      * @return int|string
      */
-    private function validateAndFormatMobileNumber(string $countryCode, string $phoneNumber): int|string
+    private function validateAndFormatMobileNumber(string $countryCode, string $phoneNumber)
     {
         $formattedNumber = '';
         try {

@@ -2,15 +2,15 @@
 
 namespace Apsis\One\Model;
 
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Abandoned\Find;
+use Apsis\One\Model\ResourceModel\Abandoned;
 use Apsis\One\Model\ResourceModel\Cron\CollectionFactory as CronCollectionFactory;
 use Apsis\One\Model\ResourceModel\ProfileBatch;
-use Apsis\One\Model\ResourceModel\Abandoned;
-use Apsis\One\Model\Sync\Profiles;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\Events;
+use Apsis\One\Model\Sync\Profiles;
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Apsis\One\Model\Abandoned\Find;
 use Throwable;
 
 class Cron
@@ -18,37 +18,37 @@ class Cron
     /**
      * @var CronCollectionFactory
      */
-    private $cronCollectionFactory;
+    private CronCollectionFactory $cronCollectionFactory;
 
     /**
      * @var Find
      */
-    private $abandonedFind;
+    private Find $abandonedFind;
 
     /**
      * @var Profiles
      */
-    private $profileSyncModel;
+    private Profiles $profileSyncModel;
 
     /**
      * @var Events
      */
-    private $eventsSyncModel;
+    private Events $eventsSyncModel;
 
     /**
      * @var ProfileBatch
      */
-    private $profileBatchResource;
+    private ProfileBatch $profileBatchResource;
 
     /**
      * @var Abandoned
      */
-    private $abandonedResource;
+    private Abandoned $abandonedResource;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $coreHelper;
+    private ApsisCoreHelper $coreHelper;
 
     /**
      * Cron constructor.
@@ -81,8 +81,10 @@ class Cron
 
     /**
      * Cleanup process
+     *
+     * @return void
      */
-    public function cleanup()
+    public function cleanup(): void
     {
         try {
             $isEnabled = $this->coreHelper->isEnabled(ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 0);
@@ -107,8 +109,10 @@ class Cron
 
     /**
      * Sync events
+     *
+     * @return void
      */
-    public function syncEvents()
+    public function syncEvents(): void
     {
         try {
             if ($this->checkIfJobAlreadyRan('apsis_one_sync_events')) {
@@ -123,8 +127,10 @@ class Cron
 
     /**
      * Sync profiles
+     *
+     * @return void
      */
-    public function syncProfiles()
+    public function syncProfiles(): void
     {
         try {
             if ($this->checkIfJobAlreadyRan('apsis_one_sync_profiles')) {
@@ -139,8 +145,10 @@ class Cron
 
     /**
      * Find abandoned carts
+     *
+     * @return void
      */
-    public function findAbandonedCarts()
+    public function findAbandonedCarts(): void
     {
         try {
             if ($this->checkIfJobAlreadyRan('apsis_one_find_abandoned_carts')) {
@@ -158,7 +166,7 @@ class Cron
      *
      * @return bool
      */
-    private function checkIfJobAlreadyRan(string $jobCode)
+    private function checkIfJobAlreadyRan(string $jobCode): bool
     {
         try {
             $currentRunningJob = $this->cronCollectionFactory
@@ -167,7 +175,8 @@ class Cron
                 ->addFieldToFilter('status', 'running')
                 ->setPageSize(1);
 
-            if (! $currentRunningJob->getSize() || empty($dateTime = $currentRunningJob->getFirstItem()->getScheduledAt())) {
+            if (! $currentRunningJob->getSize() ||
+                empty($dateTime = $currentRunningJob->getFirstItem()->getScheduledAt())) {
                 return false;
             }
 

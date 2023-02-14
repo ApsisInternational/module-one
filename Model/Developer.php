@@ -17,32 +17,32 @@ class Developer
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisHelper;
+    private ApsisCoreHelper $apsisHelper;
 
     /**
      * @var ProfileBatch
      */
-    private $profileBatch;
+    private ProfileBatch $profileBatch;
 
     /**
      * @var Profile
      */
-    private $profile;
+    private Profile $profile;
 
     /**
      * @var Event
      */
-    private $event;
+    private Event $event;
 
     /**
      * @var Abandoned
      */
-    private $abandoned;
+    private Abandoned $abandoned;
 
     /**
      * @var Historical
      */
-    private $historicalEvents;
+    private Historical $historicalEvents;
 
     /**
      * Developer constructor.
@@ -73,7 +73,7 @@ class Developer
     /**
      * @return bool
      */
-    public function resetModule()
+    public function resetModule(): bool
     {
         try {
             $this->apsisHelper->log('Module full reset is requested from "RESET" button.');
@@ -130,7 +130,7 @@ class Developer
     /**
      * @return bool
      */
-    private function truncateAllTables()
+    private function truncateAllTables(): bool
     {
         return (
             $this->profile->truncateTable($this->apsisHelper) &&

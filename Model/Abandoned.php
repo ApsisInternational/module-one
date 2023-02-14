@@ -2,15 +2,15 @@
 
 namespace Apsis\One\Model;
 
-use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Apsis\One\Model\Sql\ExpressionFactory;
-use Magento\Framework\Model\AbstractModel;
 use Apsis\One\Model\ResourceModel\Abandoned as AbandonedResource;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Magento\Framework\Data\Collection\AbstractDb;
+use Magento\Framework\DB\Sql\ExpressionFactory;
+use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\Context;
+use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime;
-use Magento\Framework\Model\ResourceModel\AbstractResource;
-use Magento\Framework\Data\Collection\AbstractDb;
 
 /**
  * Class Abandoned
@@ -39,17 +39,17 @@ class Abandoned extends AbstractModel
     /**
      * @var ApsisLogHelper
      */
-    private $apsisLogHelper;
+    private ApsisLogHelper $apsisLogHelper;
 
     /**
      * @var DateTime
      */
-    private $dateTime;
+    private DateTime $dateTime;
 
     /**
      * @var ExpressionFactory
      */
-    private $expressionFactory;
+    private ExpressionFactory $expressionFactory;
 
     /**
      * Abandoned constructor.
@@ -94,7 +94,7 @@ class Abandoned extends AbstractModel
     }
 
     /**
-     * @inheritdoc
+     * @return Abandoned
      */
     public function afterDelete()
     {

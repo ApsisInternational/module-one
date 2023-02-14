@@ -2,11 +2,12 @@
 
 namespace Apsis\One\Block;
 
-use Throwable;
+use Apsis\One\Model\Abandoned;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Magento\Framework\DataObject;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Magento\Framework\View\Element\Template;
-use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Throwable;
 
 /**
  * Cart block
@@ -20,17 +21,17 @@ class Cart extends Template
     /**
      * @var ApsisLogHelper
      */
-    private $apsisLogHelper;
+    private ApsisLogHelper $apsisLogHelper;
 
     /**
      * @var PriceHelper
      */
-    private $priceHelper;
+    private PriceHelper $priceHelper;
 
     /**
-     * @var DataObject
+     * @var DataObject|Abandoned
      */
-    private $cart;
+    private DataObject|Abandoned $cart;
 
     /**
      * Cart constructor.
@@ -52,11 +53,11 @@ class Cart extends Template
     }
 
     /**
-     * @param DataObject $cart
+     * @param DataObject|Abandoned $cart
      *
      * @return $this
      */
-    public function setCart(DataObject $cart)
+    public function setCart(DataObject|Abandoned $cart): static
     {
         $this->cart = $cart;
         return $this;
@@ -65,7 +66,7 @@ class Cart extends Template
     /**
      * @return array
      */
-    public function getCartItems()
+    public function getCartItems(): array
     {
         try {
             $obj = $this->apsisLogHelper->unserialize($this->cart->getCartData());
@@ -83,7 +84,7 @@ class Cart extends Template
      *
      * @return array
      */
-    private function getItemsWithLimitApplied(array $items)
+    private function getItemsWithLimitApplied(array $items): array
     {
         try {
             $limit = (int) $this->getRequest()->getParam('limit');
@@ -103,13 +104,13 @@ class Cart extends Template
     /**
      * @param float $value
      *
-     * @return float|string
+     * @return string
      */
-    public function getCurrencyByStore(float $value)
+    public function getCurrencyByStore(float $value): string
     {
         try {
             $storeId = $this->cart->getStoreId();
-            return $this->priceHelper->currencyByStore($value, $storeId, true, false);
+            return (string) $this->priceHelper->currencyByStore($value, $storeId, true, false);
         } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);
         }
@@ -119,7 +120,7 @@ class Cart extends Template
     /**
      * @return string
      */
-    public function getUrlForCheckoutLink()
+    public function getUrlForCheckoutLink(): string
     {
         $params = ['token' => $this->cart->getToken()];
         try {

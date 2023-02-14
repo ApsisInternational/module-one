@@ -14,10 +14,10 @@ interface ProfileDataInterface
      *
      * @return $this
      */
-    public function setModelData(array $mappingHash, AbstractModel $model, ApsisCoreHelper $apsisCoreHelper);
+    public function setModelData(array $mappingHash, AbstractModel $model, ApsisCoreHelper $apsisCoreHelper): static;
 
     /**
      * @return array
      */
-    public function toCSVArray();
+    public function toCSVArray(): array;
 }

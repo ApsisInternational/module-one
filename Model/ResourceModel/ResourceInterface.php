@@ -12,7 +12,7 @@ interface ResourceInterface
      *
      * @return boolean
      */
-    public function truncateTable(ApsisLogHelper $apsisLogHelper);
+    public function truncateTable(ApsisLogHelper $apsisLogHelper): bool;
 
     /**
      * @param int $day
@@ -20,5 +20,5 @@ interface ResourceInterface
      *
      * @return void
      */
-    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper);
+    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper): void;
 }

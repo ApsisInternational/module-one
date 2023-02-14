@@ -7,7 +7,6 @@ use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Throwable;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\ResponseInterface;
@@ -15,33 +14,34 @@ use Magento\Framework\Escaper;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class Subscription extends Action
 {
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var SubscriberFactory
      */
-    private $subscriberFactory;
+    private SubscriberFactory $subscriberFactory;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var Escaper
      */
-    private $escaper;
+    private Escaper $escaper;
 
     /**
      * Subscription constructor.
@@ -70,14 +70,14 @@ class Subscription extends Action
     }
 
     /**
-     * @inheritdoc
+     * @return ResponseInterface
      */
     public function execute()
     {
         try {
             //Validate http method against allowed one.
             if ('PATCH' !== $_SERVER['REQUEST_METHOD']) {
-                return $this->sendResponse( 405);
+                return $this->sendResponse(405);
             }
 
             if (empty($key = (string) $this->getRequest()->getHeader('authorization')) ||
@@ -98,7 +98,6 @@ class Subscription extends Action
             if ($profile->getSubscriberId() && $this->isTopicMatchedWithConfigTopic($profile, $params['TD'])) {
                 $subscriber = $this->subscriberFactory->create()->load($profile->getSubscriberId());
                 if ($subscriber->getId()) {
-
                     //Set subscriber status
                     $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED)
                         ->setSubscriberStoreId($subscriber->getStoreId())
@@ -136,7 +135,7 @@ class Subscription extends Action
      *
      * @return array
      */
-    private function getBodyParams()
+    private function getBodyParams(): array
     {
         $bodyParams = [];
         if ($body = $this->getRequest()->getContent()) {
@@ -151,7 +150,7 @@ class Subscription extends Action
      *
      * @return bool
      */
-    private function isTopicMatchedWithConfigTopic(ProfileModel $profile, string $topicDiscriminator)
+    private function isTopicMatchedWithConfigTopic(ProfileModel $profile, string $topicDiscriminator): bool
     {
         $isSyncEnabled = (string) $this->apsisCoreHelper->getConfigValue(
             ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENABLED,
@@ -177,7 +176,7 @@ class Subscription extends Action
      *
      * @return ResponseInterface
      */
-    private function sendResponse(int $code)
+    private function sendResponse(int $code): ResponseInterface
     {
         $this->getResponse()
             ->setHttpResponseCode($code)
@@ -192,7 +191,7 @@ class Subscription extends Action
      *
      * @return bool
      */
-    private function authenticateKey(string $key)
+    private function authenticateKey(string $key): bool
     {
         return $this->apsisCoreHelper->getSubscriptionEndpointKey() === $key;
     }

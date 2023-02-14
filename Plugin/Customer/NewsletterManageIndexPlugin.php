@@ -21,32 +21,32 @@ class NewsletterManageIndexPlugin
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var Session
      */
-    public $customerSession;
+    public Session $customerSession;
 
     /**
      * @var Http
      */
-    private $response;
+    private Http $response;
 
     /**
      * @var UrlFactory
      */
-    private $urlFactory;
+    private UrlFactory $urlFactory;
 
     /**
      * @var SubscriberFactory
      */
-    private $subscriberFactory;
+    private SubscriberFactory $subscriberFactory;
 
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * NewsletterManageIndexPlugin constructor.
@@ -94,7 +94,7 @@ class NewsletterManageIndexPlugin
     /**
      * @return bool
      */
-    private function isOkToProceed()
+    private function isOkToProceed(): bool
     {
         $store = $this->customerSession->getCustomer()->getStore();
         $accountEnabled = $this->apsisCoreHelper->isEnabled(

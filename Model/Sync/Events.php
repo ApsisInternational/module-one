@@ -12,10 +12,10 @@ use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollection
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
-use Throwable;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use stdClass;
+use Throwable;
 use Zend_Date;
 
 class Events implements SyncInterface
@@ -49,32 +49,32 @@ class Events implements SyncInterface
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var EventCollectionFactory
      */
-    private $eventCollectionFactory;
+    private EventCollectionFactory $eventCollectionFactory;
 
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var EventResourceModel
      */
-    private $eventResourceModel;
+    private EventResourceModel $eventResourceModel;
 
     /**
      * @var ApsisDateHelper
      */
-    private $apsisDateHelper;
+    private ApsisDateHelper $apsisDateHelper;
 
     /**
      * @var array
      */
-    private $eventsDiscriminatorMapping = [
+    private array $eventsDiscriminatorMapping = [
         Event::EVENT_TYPE_SUBSCRIBER_UNSUBSCRIBE => self::UNSUBSCRIBED_EVENT_DISCRIMINATOR,
         Event::EVENT_TYPE_SUBSCRIBER_BECOMES_CUSTOMER => self::SUBSCRIBER_2_CUSTOMER_EVENT_DISCRIMINATOR,
         Event::EVENT_TYPE_CUSTOMER_LOGIN => self::CUSTOMER_LOGIN_EVENT_DISCRIMINATOR,
@@ -95,7 +95,7 @@ class Events implements SyncInterface
     /**
      * @var array
      */
-    private $eventsVersionMapping = [
+    private array $eventsVersionMapping = [
         self::UNSUBSCRIBED_EVENT_DISCRIMINATOR => false,
         self::SUBSCRIBER_2_CUSTOMER_EVENT_DISCRIMINATOR => false,
         self::CUSTOMER_LOGIN_EVENT_DISCRIMINATOR => false,
@@ -112,27 +112,27 @@ class Events implements SyncInterface
     /**
      * @var string
      */
-    private $keySpace = '';
+    private string $keySpace = '';
 
     /**
      * @var string
      */
-    private $section = '';
+    private string $section = '';
 
     /**
      * @var string
      */
-    private $emailAttribute = '';
+    private string $emailAttribute = '';
 
     /**
      * @var string
      */
-    private $profileKeyAttribute = '';
+    private string $profileKeyAttribute = '';
 
     /**
      * @var array
      */
-    private $attributeVerIds = [];
+    private array $attributeVerIds = [];
 
     /**
      * Profiles constructor.
@@ -157,13 +157,12 @@ class Events implements SyncInterface
     /**
      * @inheritdoc
      */
-    public function process(ApsisCoreHelper $apsisCoreHelper)
+    public function process(ApsisCoreHelper $apsisCoreHelper): void
     {
         $this->apsisCoreHelper = $apsisCoreHelper;
 
         foreach ($this->apsisCoreHelper->getStores() as $store) {
             try {
-
                 if (! $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId())) {
                     continue;
                 }
@@ -212,7 +211,6 @@ class Events implements SyncInterface
 
                 //At this point proceed for actual batching of events to sync
                 $this->processEventCollection($client, $eventCollection, $store);
-
             } catch (Throwable $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);
                 $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
@@ -224,7 +222,7 @@ class Events implements SyncInterface
     /**
      * @return bool
      */
-    private function isMinimumEventsMapped()
+    private function isMinimumEventsMapped(): bool
     {
         foreach ($this->eventsVersionMapping as $mapping) {
             if ($mapping !== false) {
@@ -236,8 +234,10 @@ class Events implements SyncInterface
 
     /**
      * @param Client $client
+     *
+     * @return void
      */
-    private function mapEventVersionIds(Client $client)
+    private function mapEventVersionIds(Client $client): void
     {
         $eventDefinition = $client->getEvents($this->section);
         if ($eventDefinition && isset($eventDefinition->items)) {
@@ -262,9 +262,14 @@ class Events implements SyncInterface
      * @param Client $client
      * @param EventCollection $eventCollection
      * @param StoreInterface $store
+     *
+     * @return void
      */
-    private function processEventCollection(Client $client, EventCollection $eventCollection, StoreInterface $store)
-    {
+    private function processEventCollection(
+        Client $client,
+        EventCollection $eventCollection,
+        StoreInterface $store
+    ): void {
         $groupedEvents = $this->getEventsArrayGroupedByProfile($eventCollection);
         foreach ($groupedEvents as $profileEvents) {
             try {
@@ -340,7 +345,6 @@ class Events implements SyncInterface
                     Profile::SYNC_STATUS_SYNCED,
                     $this->apsisCoreHelper
                 );
-
             } catch (Throwable $e) {
                 $this->apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
@@ -350,9 +354,10 @@ class Events implements SyncInterface
 
     /**
      * @param Event $event
+     *
      * @return array
      */
-    private function getEventArr(Event $event)
+    private function getEventArr(Event $event): array
     {
         $isSecure = $this->apsisCoreHelper->isFrontUrlSecure($event->getStoreId());
         $eventData = [];
@@ -372,7 +377,8 @@ class Events implements SyncInterface
             }
 
             $mainData = (array) $this->apsisCoreHelper->unserialize($event->getEventData());
-            $subData = (array) $this->apsisCoreHelper->unserialize($this->getData($isSecure, $event->getSubEventData()));
+            $subData = (array) $this->apsisCoreHelper
+                ->unserialize($this->getData($isSecure, $event->getSubEventData()));
             $eventData[] = [
                 'event_time' => $createdAt,
                 'version_id' => $this->eventsVersionMapping[$typeArray['main']],
@@ -383,7 +389,8 @@ class Events implements SyncInterface
                     $withAddedSecond = $createdAt;
                 }
                 $eventData[] = [
-                    'event_time' => $withAddedSecond = $this->apsisDateHelper->addSecond($withAddedSecond, Zend_Date::ISO_8601),
+                    'event_time' => $withAddedSecond = $this->apsisDateHelper
+                        ->addSecond($withAddedSecond, Zend_Date::ISO_8601),
                     'version_id' => $this->eventsVersionMapping[$typeArray['sub']],
                     'data' => (array) $item,
                 ];
@@ -396,7 +403,8 @@ class Events implements SyncInterface
             $eventData[] = [
                 'event_time' => $createdAt,
                 'version_id' => $this->eventsVersionMapping[$this->eventsDiscriminatorMapping[$event->getEventType()]],
-                'data' => (array) $this->apsisCoreHelper->unserialize($this->getData($isSecure, $event->getEventData())),
+                'data' => (array) $this->apsisCoreHelper
+                    ->unserialize($this->getData($isSecure, $event->getEventData())),
             ];
         }
 
@@ -409,9 +417,9 @@ class Events implements SyncInterface
      *
      * @return string
      */
-    private function getData(bool $isSecure, string $data)
+    private function getData(bool $isSecure, string $data): string
     {
-        $isSecureNeeded = $isSecure && strpos($data, 'http:') !== false;
+        $isSecureNeeded = $isSecure && str_contains($data, 'http:');
         return $isSecureNeeded ? str_replace('http:', 'https:', $data) : $data;
     }
 
@@ -420,7 +428,7 @@ class Events implements SyncInterface
      *
      * @return array
      */
-    private function getEventsArrayGroupedByProfile(EventCollection $eventCollection)
+    private function getEventsArrayGroupedByProfile(EventCollection $eventCollection): array
     {
         $profileCollection = $this->profileCollectionFactory->create()
             ->getCollectionFromIds($eventCollection->getColumnValues('profile_id'));

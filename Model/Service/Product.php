@@ -2,9 +2,9 @@
 
 namespace Apsis\One\Model\Service;
 
-use Magento\Catalog\Model\Product as MagentoProduct;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Catalog\Helper\Image;
+use Magento\Catalog\Model\Product as MagentoProduct;
 use Throwable;
 
 class Product
@@ -12,7 +12,7 @@ class Product
     /**
      * @var Image
      */
-    private $imageHelper;
+    private Image $imageHelper;
 
     /**
      * Product constructor.
@@ -31,7 +31,7 @@ class Product
      *
      * @return string
      */
-    public function getUrl(MagentoProduct $product, ApsisCoreHelper $helper, int $storeId)
+    public function getUrl(MagentoProduct $product, ApsisCoreHelper $helper, int $storeId): string
     {
         try {
             return $product->getUrlModel()
@@ -52,13 +52,13 @@ class Product
      *
      * @return string
      */
-    public function getImageUrl(MagentoProduct $product, ApsisCoreHelper $helper, int $storeId)
+    public function getImageUrl(MagentoProduct $product, ApsisCoreHelper $helper, int $storeId): string
     {
         try {
             $productImageUrl = $this->imageHelper
                 ->init($product, 'product_page_image_large')
                 ->getUrl();
-            return $helper->isFrontUrlSecure($storeId) && strpos($productImageUrl, 'http:') !== false?
+            return $helper->isFrontUrlSecure($storeId) && str_contains($productImageUrl, 'http:') ?
                 str_replace('http:', 'https:', $productImageUrl) : $productImageUrl;
         } catch (Throwable $e) {
             $helper->logError(__METHOD__, $e);
@@ -73,7 +73,7 @@ class Product
      *
      * @return string
      */
-    public function getReviewUrl(ApsisCoreHelper $helper, int $storeId, int $productId)
+    public function getReviewUrl(ApsisCoreHelper $helper, int $storeId, int $productId): string
     {
         try {
             $store = $helper->getStore($storeId);

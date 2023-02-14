@@ -2,37 +2,37 @@
 
 namespace Apsis\One\Model\Events\Historical;
 
+use Apsis\One\Model\Event;
 use Apsis\One\Model\Events\Historical\Event as HistoricalEvent;
+use Apsis\One\Model\Events\Historical\Reviews\Data as ReviewEventData;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile\Collection as ProfileCollection;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Throwable;
-use Magento\Framework\Stdlib\DateTime;
-use Magento\Store\Api\Data\StoreInterface;
-use Magento\Review\Model\ResourceModel\Review\CollectionFactory as ProductReviewCollectionFactory;
-use Magento\Review\Model\ResourceModel\Review\Collection as ProductReviewCollection;
-use Magento\Review\Model\Review;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
-use Apsis\One\Model\Events\Historical\Reviews\Data as ReviewEventData;
-use Apsis\One\Model\Event;
+use Magento\Framework\Stdlib\DateTime;
+use Magento\Review\Model\ResourceModel\Review\Collection as ProductReviewCollection;
+use Magento\Review\Model\ResourceModel\Review\CollectionFactory as ProductReviewCollectionFactory;
+use Magento\Review\Model\Review;
 use Magento\Review\Model\ReviewFactory;
+use Magento\Store\Api\Data\StoreInterface;
+use Throwable;
 
 class Reviews extends HistoricalEvent
 {
     /**
      * @var ProductReviewCollectionFactory
      */
-    private $reviewProductCollectionFactory;
+    private ProductReviewCollectionFactory $reviewProductCollectionFactory;
 
     /**
      * @var ProductCollectionFactory
      */
-    private $productCollectionFactory;
+    private ProductCollectionFactory $productCollectionFactory;
 
     /**
      * @var ReviewFactory
      */
-    private $reviewFactory;
+    private ReviewFactory $reviewFactory;
 
     /**
      * Reviews constructor.
@@ -69,7 +69,7 @@ class Reviews extends HistoricalEvent
         ProfileCollection $profileCollection,
         array $duration,
         array $profileCollectionArray
-    ) {
+    ): void {
         try {
             if (empty($profileCollectionArray)) {
                 return;
@@ -128,7 +128,7 @@ class Reviews extends HistoricalEvent
         array $reviewCollection,
         array $profileCollectionArray,
         array $productCollectionArray
-    ) {
+    ): array {
         $eventsToRegister = [];
 
         /** @var Review $review */
@@ -182,7 +182,7 @@ class Reviews extends HistoricalEvent
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper,
         array $productIds
-    ) {
+    ): array {
         $productCollectionArray = [];
 
         try {
@@ -236,7 +236,7 @@ class Reviews extends HistoricalEvent
      *
      * @return array
      */
-    private function getProductIdsFromCollection(array $collection, ApsisCoreHelper $apsisCoreHelper)
+    private function getProductIdsFromCollection(array $collection, ApsisCoreHelper $apsisCoreHelper): array
     {
         $productIds = [];
 

@@ -16,7 +16,7 @@ class Uninstall implements UninstallInterface
     /**
      * @var ApsisLogHelper
      */
-    private $logHelper;
+    private ApsisLogHelper $logHelper;
 
     /**
      * Uninstall constructor.
@@ -31,7 +31,7 @@ class Uninstall implements UninstallInterface
     /**
      * @var array
      */
-    protected $apsisTablesArr = [
+    protected array $apsisTablesArr = [
         ApsisCoreHelper::APSIS_ABANDONED_TABLE,
         ApsisCoreHelper::APSIS_EVENT_TABLE,
         ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE,
@@ -41,6 +41,8 @@ class Uninstall implements UninstallInterface
     /**
      * @param SchemaSetupInterface $setup
      * @param ModuleContextInterface $context
+     *
+     * @return void
      */
     public function uninstall(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {

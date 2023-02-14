@@ -5,56 +5,56 @@ namespace Apsis\One\Observer\Customer\Review;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
+use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Event;
-use Throwable;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product as MagentoProduct;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Review\Model\Review;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Magento\Catalog\Model\Product as MagentoProduct;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
-use Magento\Store\Model\ScopeInterface;
 use Magento\Review\Model\ReviewFactory;
+use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class Product implements ObserverInterface
 {
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var ProductRepositoryInterface
      */
-    private $productRepository;
+    private ProductRepositoryInterface $productRepository;
 
     /**
      * @var CustomerRepositoryInterface
      */
-    private $customerRepository;
+    private CustomerRepositoryInterface $customerRepository;
 
     /**
      * @var Event
      */
-    private $eventService;
+    private Event $eventService;
 
     /**
      * @var ReviewFactory
      */
-    private $reviewFactory;
+    private ReviewFactory $reviewFactory;
 
     /**
      * Product constructor.
@@ -130,7 +130,7 @@ class Product implements ObserverInterface
      *
      * @return bool
      */
-    private function isOkToProceed(int $storeId)
+    private function isOkToProceed(int $storeId): bool
     {
         $store = $this->apsisCoreHelper->getStore($storeId);
         $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());

@@ -2,10 +2,10 @@
 
 namespace Apsis\One\Model\Service;
 
-use Throwable;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Filesystem\Directory\WriteFactory;
 use Magento\Framework\Filesystem\Directory\Write;
+use Magento\Framework\Filesystem\Directory\WriteFactory;
+use Throwable;
 
 class File
 {
@@ -18,12 +18,12 @@ class File
     /**
      * @var DirectoryList
      */
-    private $directoryList;
+    private DirectoryList $directoryList;
 
     /**
      * @var Write
      */
-    private $write;
+    private Write $write;
 
     /**
      * File constructor.
@@ -44,7 +44,7 @@ class File
      *
      * @throws Throwable
      */
-    private function getOutputFolder()
+    private function getOutputFolder(): string
     {
         return $this->directoryList->getPath('var') . DIRECTORY_SEPARATOR . 'apsis';
     }
@@ -56,7 +56,7 @@ class File
      *
      * @throws Throwable
      */
-    public function getFilePath(string $filename)
+    public function getFilePath(string $filename): string
     {
         return $this->getOutputFolder() . DIRECTORY_SEPARATOR . $filename;
     }
@@ -68,7 +68,7 @@ class File
      *
      * @throws Throwable
      */
-    public function deleteFile(string $filePath)
+    public function deleteFile(string $filePath): bool
     {
         if (empty($filePath)) {
             return true;
@@ -81,9 +81,11 @@ class File
      * @param string $file
      * @param array $data
      *
+     * @return void
+     *
      * @throws Throwable
      */
-    public function outputCSV($file, $data)
+    public function outputCSV(string $file, array $data): void
     {
         $resource = $this->write->openFile($file, 'a');
         $resource->lock();
@@ -95,7 +97,7 @@ class File
     /**
      * @return string
      */
-    public function getLogFileContent()
+    public function getLogFileContent(): string
     {
         try {
             $logFile = $this->directoryList->getPath(self::FOLDER_ROOT) . DIRECTORY_SEPARATOR . self::LOG_FILE_NAME;

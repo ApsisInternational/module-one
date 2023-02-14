@@ -48,7 +48,7 @@ class InvalidateDataSaveEncrypted extends Value
     }
 
     /**
-     * @inheritdoc
+     * @return $this
      */
     public function beforeSave()
     {

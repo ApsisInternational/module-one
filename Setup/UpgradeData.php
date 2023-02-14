@@ -6,14 +6,13 @@ use Apsis\One\Model\Config\Source\System\Region;
 use Apsis\One\Model\Event;
 use Apsis\One\Model\Events\Historical;
 use Apsis\One\Model\Profile;
-use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
+use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Throwable;
+use Magento\Authorization\Model\Acl\Role\Group as RoleGroup;
 use Magento\Authorization\Model\RoleFactory;
 use Magento\Authorization\Model\RulesFactory;
-use Magento\Authorization\Model\Acl\Role\Group as RoleGroup;
 use Magento\Authorization\Model\UserContextInterface;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -26,6 +25,7 @@ use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\UpgradeDataInterface;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class UpgradeData implements UpgradeDataInterface
 {
@@ -46,52 +46,52 @@ class UpgradeData implements UpgradeDataInterface
     /**
      * @var Registry
      */
-    private $registry;
+    private Registry $registry;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var Random
      */
-    private $random;
+    private Random $random;
 
     /**
      * @var EncryptorInterface
      */
-    private $encryptor;
+    private EncryptorInterface $encryptor;
 
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var EventResource
      */
-    private $eventResource;
+    private EventResource $eventResource;
 
     /**
      * @var RoleFactory
      */
-    private $roleFactory;
+    private RoleFactory $roleFactory;
 
     /**
      * @var RulesFactory
      */
-    private $rulesFactory;
+    private RulesFactory $rulesFactory;
 
     /**
      * @var Historical
      */
-    private $historicalEvents;
+    private Historical $historicalEvents;
 
     /**
      * @var State
      */
-    private $appState;
+    private State $appState;
 
     /**
      * UpgradeData constructor.
@@ -134,6 +134,8 @@ class UpgradeData implements UpgradeDataInterface
     /**
      * @param ModuleDataSetupInterface $setup
      * @param ModuleContextInterface $context
+     *
+     * @return void
      */
     public function upgrade(ModuleDataSetupInterface $setup, ModuleContextInterface $context)
     {
@@ -176,13 +178,18 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param ModuleDataSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeTwoZeroSeven(ModuleDataSetupInterface $setup)
+    private function upgradeTwoZeroSeven(ModuleDataSetupInterface $setup): void
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);
 
-            $configs = [ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC, ApsisConfigHelper::SYNC_SETTING_ADDITIONAL_TOPIC];
+            $configs = [
+                ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC,
+                ApsisConfigHelper::SYNC_SETTING_ADDITIONAL_TOPIC
+            ];
             foreach ($this->apsisCoreHelper->getStores(true) as $store) {
                 foreach ($configs as $config) {
                     $value = [];
@@ -196,12 +203,10 @@ class UpgradeData implements UpgradeDataInterface
                         $value[] = $topicArr[1] . '|' . $topicArr[3];
                     }
 
-                    $scopeArray = $this->apsisCoreHelper->resolveContext(
-                        ScopeInterface::SCOPE_STORES, $store->getId(), $config
-                    );
-                    $this->apsisCoreHelper->saveConfigValue(
-                        $config, implode(',', $value), $scopeArray['scope'], $scopeArray['id']
-                    );
+                    $scopeArray = $this->apsisCoreHelper
+                        ->resolveContext(ScopeInterface::SCOPE_STORES, $store->getId(), $config);
+                    $this->apsisCoreHelper
+                        ->saveConfigValue($config, implode(',', $value), $scopeArray['scope'], $scopeArray['id']);
                     $store->resetConfig();
                 }
             }
@@ -212,8 +217,10 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param ModuleDataSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeTwoZeroZero(ModuleDataSetupInterface $setup)
+    private function upgradeTwoZeroZero(ModuleDataSetupInterface $setup): void
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);
@@ -265,8 +272,10 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param ModuleDataSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeOneNineFive(ModuleDataSetupInterface $setup)
+    private function upgradeOneNineFive(ModuleDataSetupInterface $setup): void
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);
@@ -329,8 +338,10 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param ModuleDataSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeOneNineFour(ModuleDataSetupInterface $setup)
+    private function upgradeOneNineFour(ModuleDataSetupInterface $setup): void
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);
@@ -349,14 +360,15 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param ModuleDataSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeOneNineZero(ModuleDataSetupInterface $setup)
+    private function upgradeOneNineZero(ModuleDataSetupInterface $setup): void
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);
             foreach ($this->apsisCoreHelper->getStores(true) as $store) {
-                $oldValue = (string) $store
-                    ->getConfig(ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC);
+                $oldValue = (string) $store->getConfig(ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_TOPIC);
                 if (strlen($oldValue) && ! empty($topics = explode(',', $oldValue)) && count($topics)) {
                     $scopeArray = $this->apsisCoreHelper->resolveContext(
                         ScopeInterface::SCOPE_STORES,
@@ -379,15 +391,17 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param ModuleDataSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeOneFiveZero(ModuleDataSetupInterface $setup)
+    private function upgradeOneFiveZero(ModuleDataSetupInterface $setup): void
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);
 
             //Take value from older path
             $oldConfigPath = 'apsis_one_sync/sync/endpoint_key';
-            $oldValue = $this->apsisCoreHelper->getConfigValue(
+            $oldValue = (string) $this->apsisCoreHelper->getConfigValue(
                 $oldConfigPath,
                 ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                 0
@@ -401,7 +415,7 @@ class UpgradeData implements UpgradeDataInterface
                     0
                 );
             } else {
-                $value = $this->apsisCoreHelper->getConfigValue(
+                $value = (string) $this->apsisCoreHelper->getConfigValue(
                     ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
                     ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                     0
@@ -423,8 +437,10 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param ModuleDataSetupInterface $setup
+     *
+     * @return void
      */
-    private function upgradeOneTwoZero(ModuleDataSetupInterface $setup)
+    private function upgradeOneTwoZero(ModuleDataSetupInterface $setup): void
     {
         try {
             $this->apsisCoreHelper->log(__METHOD__);
@@ -460,8 +476,10 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * Global 32 character long key
+     *
+     * @return void
      */
-    private function generateGlobalKey()
+    private function generateGlobalKey(): void
     {
         try {
             $this->apsisCoreHelper->saveConfigValue(
@@ -477,8 +495,10 @@ class UpgradeData implements UpgradeDataInterface
 
     /**
      * @param array $scopeArray
+     *
+     * @return void
      */
-    private function addRegion(array $scopeArray)
+    private function addRegion(array $scopeArray): void
     {
         try {
             $this->apsisCoreHelper->saveConfigValue(
@@ -495,8 +515,10 @@ class UpgradeData implements UpgradeDataInterface
     /**
      * @param ModuleDataSetupInterface $setup
      * @param string $topics
+     *
+     * @return void
      */
-    private function updateConsentForProfiles(ModuleDataSetupInterface $setup, string $topics)
+    private function updateConsentForProfiles(ModuleDataSetupInterface $setup, string $topics): void
     {
         try {
             $setup->getConnection()->update(
@@ -516,8 +538,10 @@ class UpgradeData implements UpgradeDataInterface
     /**
      * @param string $topics
      * @param array $scopeArray
+     *
+     * @return void
      */
-    private function updateConsentListTopicData(string $topics, array $scopeArray)
+    private function updateConsentListTopicData(string $topics, array $scopeArray): void
     {
         try {
             $this->apsisCoreHelper->saveConfigValue(
@@ -536,13 +560,17 @@ class UpgradeData implements UpgradeDataInterface
      *
      * @return string
      */
-    private function getUpdatedConsentData(string $consentsData)
+    private function getUpdatedConsentData(string $consentsData): string
     {
         try {
             $updatedConsents = '';
             if (! empty($consents = explode(',', $consentsData)) && is_array($consents)) {
                 foreach ($consents as $index => $consent) {
-                    $subConsentData = explode('|', $consent);
+                    $subConsentData = explode('|', (string) $consent);
+                    if (empty($subConsentData)) {
+                        continue;
+                    }
+
                     $subConsentData[2] = str_replace('_', '|', $subConsentData[2]);
                     $consents[$index] = implode('|', $subConsentData);
                 }

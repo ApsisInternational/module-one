@@ -13,7 +13,7 @@ class FieldBase extends Field
     /**
      * @var Log
      */
-    private $logger;
+    private Log $logger;
 
     /**
      * FieldBase constructor.
@@ -41,7 +41,7 @@ class FieldBase extends Field
     /**
      * @return string
      */
-    public function generateBaseUrlForDynamicContent()
+    public function generateBaseUrlForDynamicContent(): string
     {
         try {
             $website = $this->_storeManager->getWebsite($this->_request->getParam('website', 0));

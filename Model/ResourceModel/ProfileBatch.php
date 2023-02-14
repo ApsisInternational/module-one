@@ -21,7 +21,7 @@ class ProfileBatch extends AbstractDb implements ResourceInterface
     /**
      * @inheritdoc
      */
-    public function truncateTable(ApsisLogHelper $apsisLogHelper)
+    public function truncateTable(ApsisLogHelper $apsisLogHelper): bool
     {
         try {
             $this->getConnection()->truncateTable($this->getMainTable());
@@ -35,7 +35,7 @@ class ProfileBatch extends AbstractDb implements ResourceInterface
     /**
      * @inheritdoc
      */
-    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper)
+    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper): void
     {
         try {
             $where = [

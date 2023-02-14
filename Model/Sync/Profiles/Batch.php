@@ -12,10 +12,10 @@ use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Service\File as ApsisFileHelper;
-use Throwable;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use stdClass;
+use Throwable;
 
 class Batch implements ProfileSyncInterface
 {
@@ -34,32 +34,32 @@ class Batch implements ProfileSyncInterface
     /**
      * @var ProfileBatchFactory
      */
-    private $profileBatchFactory;
+    private ProfileBatchFactory $profileBatchFactory;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var ProfileBatchResource
      */
-    private $profileBatchResource;
+    private ProfileBatchResource $profileBatchResource;
 
     /**
      * @var ApsisFileHelper
      */
-    private $apsisFileHelper;
+    private ApsisFileHelper $apsisFileHelper;
 
     /**
      * @var ApsisDateHelper
      */
-    private $apsisDateHelper;
+    private ApsisDateHelper $apsisDateHelper;
 
     /**
      * Batch constructor.
@@ -87,7 +87,7 @@ class Batch implements ProfileSyncInterface
     /**
      * @inheritdoc
      */
-    public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
+    public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper): void
     {
         try {
             $this->apsisCoreHelper = $apsisCoreHelper;
@@ -104,7 +104,6 @@ class Batch implements ProfileSyncInterface
 
             $this->handleProcessingCollectionForStore($store, $sectionDiscriminator);
             $this->handlePendingCollectionForStore($store, $sectionDiscriminator);
-
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -113,8 +112,10 @@ class Batch implements ProfileSyncInterface
     /**
      * @param StoreInterface $store
      * @param string $section
+     *
+     * @return void
      */
-    private function handlePendingCollectionForStore(StoreInterface $store, string $section)
+    private function handlePendingCollectionForStore(StoreInterface $store, string $section): void
     {
         $collection = $this->profileBatchFactory
             ->create()
@@ -122,7 +123,6 @@ class Batch implements ProfileSyncInterface
         if (! $collection->getSize()) {
             return;
         }
-
 
         $apiClient = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
         if (! $apiClient) {
@@ -145,7 +145,6 @@ class Batch implements ProfileSyncInterface
                     );
 
                     continue;
-
                 } elseif (is_string($result)) {
                     $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, $result);
                     $this->updateProfilesStatus(
@@ -208,8 +207,10 @@ class Batch implements ProfileSyncInterface
     /**
      * @param StoreInterface $store
      * @param string $section
+     *
+     * @return void
      */
-    private function handleProcessingCollectionForStore(StoreInterface $store, string $section)
+    private function handleProcessingCollectionForStore(StoreInterface $store, string $section): void
     {
         $collection = $this->profileBatchFactory
             ->create()
@@ -217,7 +218,6 @@ class Batch implements ProfileSyncInterface
         if (! $collection->getSize()) {
             return;
         }
-
 
         $apiClient = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
         if (! $apiClient) {
@@ -263,8 +263,10 @@ class Batch implements ProfileSyncInterface
      * @param ProfileBatch $item
      * @param int $status
      * @param string $msg
+     *
+     * @return void
      */
-    private function updateItem(ProfileBatch $item, int $status, string $msg = '')
+    private function updateItem(ProfileBatch $item, int $status, string $msg = ''): void
     {
         $item->setSyncStatus($status);
         if (strlen($msg)) {
@@ -291,11 +293,17 @@ class Batch implements ProfileSyncInterface
      * @param ProfileBatch $item
      * @param int $status
      * @param string $msg
+     *
+     * @return void
      */
-    private function updateProfilesStatus(ProfileBatch $item, int $status, string $msg = '')
+    private function updateProfilesStatus(ProfileBatch $item, int $status, string $msg = ''): void
     {
         try {
-            $ids = explode(",", $item->getEntityIds());
+            $ids = explode(",", (string) $item->getEntityIds());
+            if (empty($ids)) {
+                return;
+            }
+
             if ((int)$item->getBatchType() === ProfileBatch::BATCH_TYPE_CUSTOMER) {
                 $this->profileResource->updateCustomerSyncStatus(
                     $ids,
@@ -329,40 +337,33 @@ class Batch implements ProfileSyncInterface
      * @param Client $apiClient
      * @param stdClass $result
      * @param ProfileBatch $item
+     *
+     * @return void
      */
-    private function processImportStatus(Client $apiClient, stdClass $result, ProfileBatch $item)
+    private function processImportStatus(Client $apiClient, stdClass $result, ProfileBatch $item): void
     {
         try {
             if ($result->result->status === self::STATUS_COMPLETED) {
-
                 $this->updateProfilesStatus($item, Profile::SYNC_STATUS_SYNCED);
                 $this->updateItem($item, ProfileBatch::SYNC_STATUS_COMPLETED);
                 $apiClient->countImportCountInProcessingStatus(false);
-
             } elseif ($result->result->status === self::STATUS_ERROR) {
-
                 $this->updateProfilesStatus($item, Profile::SYNC_STATUS_FAILED, self::MSG_ERROR_FAILED);
                 $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, self::MSG_ERROR_FAILED);
                 $apiClient->countImportCountInProcessingStatus(false);
-
             } elseif ($result->result->status === self::STATUS_WAITING_FILE &&
                 $item->getFileUploadExpiresAt() &&
                 $this->apsisDateHelper->isExpired($item->getFileUploadExpiresAt())
             ) {
-
                 $this->updateProfilesStatus($item, Profile::SYNC_STATUS_PENDING);
                 $this->updateItem($item, ProfileBatch::SYNC_STATUS_FAILED, self::MSG_EXPIRED);
                 $apiClient->countImportCountInProcessingStatus(false);
-
             } elseif (in_array($result->result->status, self::STATUS_TO_CHECK_IF_EXPIRED)) {
-
                 $inputDateTime = $this->apsisDateHelper->getFormattedDateTimeWithAddedInterval($item->getUpdatedAt());
                 if ($inputDateTime && $this->apsisDateHelper->isExpired($inputDateTime)) {
-
                     $this->updateItem($item, ProfileBatch::SYNC_STATUS_ERROR, self::MSG_STUCK_EXPIRED);
                     $this->updateProfilesStatus($item, Profile::SYNC_STATUS_PENDING);
                     $apiClient->countImportCountInProcessingStatus(false);
-
                 }
             }
         } catch (Throwable $e) {

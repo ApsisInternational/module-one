@@ -2,7 +2,6 @@
 
 namespace Apsis\One\Model\Sync\Profiles;
 
-use Apsis\One\ApiClient\Client;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ProfileBatch;
 use Apsis\One\Model\ProfileBatchFactory;
@@ -13,12 +12,12 @@ use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\File as ApsisFileHelper;
 use Apsis\One\Model\Sync\Profiles\Subscribers\SubscriberFactory as SubscriberDataFactory;
-use Throwable;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
 use Magento\Newsletter\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class Subscribers implements ProfileSyncInterface
 {
@@ -29,42 +28,42 @@ class Subscribers implements ProfileSyncInterface
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var ApsisConfigHelper
      */
-    private $apsisConfigHelper;
+    private ApsisConfigHelper $apsisConfigHelper;
 
     /**
      * @var ApsisFileHelper
      */
-    private $apsisFileHelper;
+    private ApsisFileHelper $apsisFileHelper;
 
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var SubscriberCollectionFactory
      */
-    private $subscriberCollectionFactory;
+    private SubscriberCollectionFactory $subscriberCollectionFactory;
 
     /**
      * @var SubscriberDataFactory
      */
-    private $subscriberDataFactory;
+    private SubscriberDataFactory $subscriberDataFactory;
 
     /**
      * @var ProfileBatchFactory
      */
-    private $profileBatchFactory;
+    private ProfileBatchFactory $profileBatchFactory;
 
     /**
      * @var string
@@ -101,10 +100,9 @@ class Subscribers implements ProfileSyncInterface
     }
 
     /**
-     * @param StoreInterface $store
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @inheirtDoc
      */
-    public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
+    public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper): void
     {
         try {
             $this->apsisCoreHelper = $apsisCoreHelper;
@@ -176,6 +174,8 @@ class Subscribers implements ProfileSyncInterface
      * @param string $topics
      * @param string $consentType
      * @param string $section
+     *
+     * @return void
      */
     private function batchSubscribersForStore(
         Collection $collection,
@@ -184,7 +184,7 @@ class Subscribers implements ProfileSyncInterface
         string $topics,
         string $consentType,
         string $section
-    ) {
+    ): void {
         try {
             $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
             if (! $client) {
@@ -216,6 +216,8 @@ class Subscribers implements ProfileSyncInterface
      * @param string $topics
      * @param array $attributesArrWithVersionId
      * @param string $consentType
+     *
+     * @return void
      */
     private function createCsvForStore(
         StoreInterface $store,
@@ -224,7 +226,7 @@ class Subscribers implements ProfileSyncInterface
         string $topics,
         array $attributesArrWithVersionId,
         string $consentType
-    ) {
+    ): void {
         try {
             $topicsMapping = $this->getTopicArrFromString($topics);
             $profileDataArr = $this->getProfileDataArr($collection);
@@ -301,7 +303,6 @@ class Subscribers implements ProfileSyncInterface
             } elseif (! empty($subscribersToUpdate)) {
                 $this->registerBatchItem($file, $store, $subscribersToUpdate, $jsonMappings);
             }
-
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
 
@@ -319,13 +320,13 @@ class Subscribers implements ProfileSyncInterface
      *
      * @return array
      */
-    private function getTopicArrFromString(string $topics)
+    private function getTopicArrFromString(string $topics): array
     {
         $topicsArr = explode(',', $topics);
         $topicsMapping = [];
 
         foreach ($topicsArr as $topicMapping) {
-            $topicMapping = explode('|', $topicMapping);
+            $topicMapping = explode('|', (string) $topicMapping);
             $topicsMapping[] = $topicMapping[0];
         }
 
@@ -337,7 +338,7 @@ class Subscribers implements ProfileSyncInterface
      *
      * @return array
      */
-    private function getProfileDataArr(Collection $collection)
+    private function getProfileDataArr(Collection $collection): array
     {
         $profileDataArr = [];
 
@@ -358,7 +359,7 @@ class Subscribers implements ProfileSyncInterface
      *
      * @return string
      */
-    private function createFileWithHeaders(StoreInterface $store, string $consentType, array $headers)
+    private function createFileWithHeaders(StoreInterface $store, string $consentType, array $headers): string
     {
         try {
             $file = strtolower($store->getCode() . '_subscriber_' . $consentType . '_' . date('d_m_Y_His') . '.csv');
@@ -384,7 +385,7 @@ class Subscribers implements ProfileSyncInterface
         Subscriber $subscriber,
         array $topics,
         int $consent
-    ) {
+    ): array {
         return $this->subscriberDataFactory->create()
             ->setModelData($mappings, $subscriber, $this->apsisCoreHelper)
             ->setConsentTopicData($topics, $consent)
@@ -396,13 +397,15 @@ class Subscribers implements ProfileSyncInterface
      * @param StoreInterface $store
      * @param array $ids
      * @param array $jsonMappings
+     *
+     * @return void
      */
     private function registerBatchItem(
         string $file,
         StoreInterface $store,
         array $ids,
         array $jsonMappings
-    ) {
+    ): void {
         try {
             $filePath = $this->apsisFileHelper->getFilePath($file);
             $this->profileBatchFactory->create()
@@ -425,7 +428,6 @@ class Subscribers implements ProfileSyncInterface
                 'Store Id' => $store->getId()
             ];
             $this->apsisCoreHelper->debug(__METHOD__, $info);
-
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }

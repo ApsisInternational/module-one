@@ -11,12 +11,12 @@ class Client extends Rest
     /**
      * @var array
      */
-    private $cacheContainer = [];
+    private array $cacheContainer = [];
 
     /**
      * @var int
      */
-    private $importCountInProcessingStatus;
+    private int $importCountInProcessingStatus;
 
     /**
      * Client constructor.
@@ -29,7 +29,7 @@ class Client extends Rest
     /**
      * @return int
      */
-    public function getImportCountInProcessingStatus()
+    public function getImportCountInProcessingStatus(): int
     {
         return $this->importCountInProcessingStatus;
     }
@@ -39,7 +39,7 @@ class Client extends Rest
      *
      * @return $this
      */
-    public function setImportCountInProcessingStatus(int $num)
+    public function setImportCountInProcessingStatus(int $num): static
     {
         $this->importCountInProcessingStatus = $num;
         return $this;
@@ -50,7 +50,7 @@ class Client extends Rest
      *
      * @return int
      */
-    public function countImportCountInProcessingStatus(bool $add = true)
+    public function countImportCountInProcessingStatus(bool $add = true): int
     {
         if ($add) {
             $this->importCountInProcessingStatus += 1;
@@ -63,9 +63,10 @@ class Client extends Rest
 
     /**
      * @param string $key
-     * @return mixed|null
+     *
+     * @return mixed
      */
-    private function getFromCacheContainer(string $key)
+    private function getFromCacheContainer(string $key): mixed
     {
         if (strlen($key) && isset($this->cacheContainer[$key])) {
             if ((bool) getenv('APSIS_DEVELOPER')) {
@@ -81,13 +82,14 @@ class Client extends Rest
      * @param string $method
      * @param array $methodParams
      *
-     * @return string|false
+     * @return string
      */
-    private function buildKeyForCacheContainer(string $method, array $methodParams)
+    private function buildKeyForCacheContainer(string $method, array $methodParams): string
     {
-        return filter_var(
-            implode(".", array_filter(array_merge([$method], $methodParams))),
-            FILTER_SANITIZE_STRING
+        return (string) preg_replace(
+            '/[^a-z0-9_\-]/',
+            '',
+            implode(".", array_filter(array_merge([$method], $methodParams)))
         );
     }
 
@@ -97,7 +99,7 @@ class Client extends Rest
      *
      * @return mixed
      */
-    private function executeRequestAndReturnResponse(string $fromMethod, string $key = '')
+    private function executeRequestAndReturnResponse(string $fromMethod, string $key = ''): mixed
     {
         $response = $this->processResponse($this->execute(), $fromMethod);
         return strlen($key) ? $this->cacheContainer[$key] = $response : $response;
@@ -113,7 +115,7 @@ class Client extends Rest
      *
      * @return mixed
      */
-    public function getAccessToken()
+    public function getAccessToken(): mixed
     {
         $this->setUrl($this->hostName . '/oauth/token')
             ->setVerb(Rest::VERB_POST)
@@ -128,7 +130,7 @@ class Client extends Rest
      *
      * @return mixed
      */
-    public function getKeySpaces()
+    public function getKeySpaces(): mixed
     {
         $key = $this->buildKeyForCacheContainer(__FUNCTION__, []);
         if ($fromCache = $this->getFromCacheContainer($key)) {
@@ -137,7 +139,7 @@ class Client extends Rest
 
         $this->setUrl($this->hostName . '/audience/keyspaces')
             ->setVerb(Rest::VERB_GET);
-        return $this->executeRequestAndReturnResponse( __METHOD__, $key);
+        return $this->executeRequestAndReturnResponse(__METHOD__, $key);
     }
 
     /**
@@ -147,7 +149,7 @@ class Client extends Rest
      *
      * @return mixed
      */
-    public function getSections()
+    public function getSections(): mixed
     {
         $key = $this->buildKeyForCacheContainer(__FUNCTION__, []);
         if ($fromCache = $this->getFromCacheContainer($key)) {
@@ -169,7 +171,7 @@ class Client extends Rest
      *
      * @return mixed
      */
-    public function getAttributes(string $sectionDiscriminator)
+    public function getAttributes(string $sectionDiscriminator): mixed
     {
         $key = $this->buildKeyForCacheContainer(__FUNCTION__, func_get_args());
         if ($fromCache = $this->getFromCacheContainer($key)) {
@@ -190,7 +192,7 @@ class Client extends Rest
      *
      * @return mixed
      */
-    public function getTopics(string $sectionDiscriminator)
+    public function getTopics(string $sectionDiscriminator): mixed
     {
         $key = $this->buildKeyForCacheContainer(__FUNCTION__, func_get_args());
         if ($fromCache = $this->getFromCacheContainer($key)) {
@@ -213,7 +215,7 @@ class Client extends Rest
      *
      * @return mixed
      */
-    public function getEvents(string $sectionDiscriminator)
+    public function getEvents(string $sectionDiscriminator): mixed
     {
         $key = $this->buildKeyForCacheContainer(__FUNCTION__, func_get_args());
         if ($fromCache = $this->getFromCacheContainer($key)) {
@@ -246,7 +248,7 @@ class Client extends Rest
         string $profileKey,
         string $sectionDiscriminator,
         array $attributes
-    ) {
+    ): mixed {
         $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/attributes';
         $this->setUrl($url)
@@ -270,7 +272,7 @@ class Client extends Rest
         string $profileKey,
         string $sectionDiscriminator,
         string $versionId
-    ) {
+    ): mixed {
         $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/attributes/' . $versionId;
         $this->setUrl($url)
@@ -295,7 +297,7 @@ class Client extends Rest
         string $profileKey,
         string $sectionDiscriminator,
         array $events
-    ) {
+    ): mixed {
         $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/events';
         $this->setUrl($url)
@@ -318,7 +320,7 @@ class Client extends Rest
      *
      * @return mixed
      */
-    public function mergeProfile(array $keySpacesToMerge)
+    public function mergeProfile(array $keySpacesToMerge): mixed
     {
         $this->setUrl($this->hostName . '/audience/profiles/merges')
             ->setVerb(Rest::VERB_PUT)
@@ -337,7 +339,7 @@ class Client extends Rest
      *
      * @return mixed
      */
-    public function deleteProfile(string $keySpaceDiscriminator, string $profileKey)
+    public function deleteProfile(string $keySpaceDiscriminator, string $profileKey): mixed
     {
         $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey;
         $this->setUrl($url)
@@ -364,7 +366,7 @@ class Client extends Rest
         string $topicDiscriminator,
         string $channelDiscriminator,
         string $type
-    ) {
+    ): mixed {
         $url = $this->hostName . '/v2/audience/keyspaces/' . $keyspaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/consents';
         $body = [
@@ -383,8 +385,10 @@ class Client extends Rest
     /**
      * CONSENTS: Get consents
      *
-     * Get all or selected types of consents for different topics over various channels currently existing for a specific profile.
-     * Profile is identified by keyspace discriminator and profile key. Topic is identified by section discriminator and topic discriminator.
+     * Get all or selected types of consents for different topics over various channels currently existing for a
+     * specific profile.
+     * Profile is identified by keyspace discriminator and profile key. Topic is identified by section discriminator and
+     * topic discriminator.
      *
      * @param string $keyspaceDiscriminator
      * @param string $profileKey
@@ -396,7 +400,7 @@ class Client extends Rest
         string $keyspaceDiscriminator,
         string $profileKey,
         string $sectionDiscriminator
-    ) {
+    ): mixed {
         $url = $this->hostName . '/v2/audience/keyspaces/' . $keyspaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/consents?consent_types=opt-in&consent_types=confirmed-opt-in';
         $this->setUrl($url)
@@ -414,7 +418,7 @@ class Client extends Rest
      *
      * @return mixed
      */
-    public function initializeProfileImport(string $sectionDiscriminator, array $data)
+    public function initializeProfileImport(string $sectionDiscriminator, array $data): mixed
     {
         $this->setUrl($this->hostName . '/v2/audience/sections/' . $sectionDiscriminator . '/imports')
             ->setVerb(Rest::VERB_POST)
@@ -433,7 +437,7 @@ class Client extends Rest
      *
      * @return mixed
      */
-    public function uploadFileForProfileImport(string $url, array $fields, string $fileNameWithPath)
+    public function uploadFileForProfileImport(string $url, array $fields, string $fileNameWithPath): mixed
     {
         $ch = curl_init();
         try {
@@ -476,7 +480,7 @@ class Client extends Rest
      *
      * @return mixed
      */
-    public function getImportStatus(string $sectionDiscriminator, string $importId)
+    public function getImportStatus(string $sectionDiscriminator, string $importId): mixed
     {
         $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/imports/' . $importId)
             ->setVerb(Rest::VERB_GET);

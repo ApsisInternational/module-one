@@ -2,11 +2,11 @@
 
 namespace Apsis\One\Model\Config\Source\Datamapping;
 
-use Throwable;
-use Magento\Framework\Data\OptionSourceInterface;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Magento\Framework\Data\OptionSourceInterface;
 use Magento\Framework\Registry;
+use Throwable;
 
 class Attributes implements OptionSourceInterface
 {
@@ -15,12 +15,12 @@ class Attributes implements OptionSourceInterface
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var Registry
      */
-    private $registry;
+    private Registry $registry;
 
     /**
      * Attributes constructor.
@@ -37,7 +37,7 @@ class Attributes implements OptionSourceInterface
     /**
      * @inheritdoc
      */
-    public function toOptionArray()
+    public function toOptionArray(): array
     {
         $fields = [['value' => '', 'label' => __('-- Please Select --')]];
 

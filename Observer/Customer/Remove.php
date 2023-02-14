@@ -5,22 +5,22 @@ namespace Apsis\One\Observer\Customer;
 use Apsis\One\Model\Profile as ProfileModel;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Profile;
-use Throwable;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class Remove implements ObserverInterface
 {
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var Profile
      */
-    private $profileService;
+    private Profile $profileService;
 
     /**
      * Remove constructor.

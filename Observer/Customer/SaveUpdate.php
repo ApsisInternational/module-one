@@ -4,12 +4,12 @@ namespace Apsis\One\Observer\Customer;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Profile;
-use Throwable;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Registry;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class SaveUpdate implements ObserverInterface
 {
@@ -18,17 +18,17 @@ class SaveUpdate implements ObserverInterface
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var Registry
      */
-    private $registry;
+    private Registry $registry;
 
     /**
      * @var Profile
      */
-    private $profileService;
+    private Profile $profileService;
 
     /**
      * SaveUpdate constructor.

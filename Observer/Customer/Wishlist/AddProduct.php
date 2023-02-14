@@ -6,35 +6,35 @@ use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollection
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Event;
-use Throwable;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Wishlist\Model\Wishlist;
+use Throwable;
 
 class AddProduct implements ObserverInterface
 {
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var CustomerRepositoryInterface
      */
-    private $customerRepository;
+    private CustomerRepositoryInterface $customerRepository;
 
     /**
      * @var Event
      */
-    private $eventService;
+    private Event $eventService;
 
     /**
      * AddProduct constructor.
@@ -89,7 +89,7 @@ class AddProduct implements ObserverInterface
      *
      * @return bool
      */
-    private function isOkToProceed(StoreInterface $store)
+    private function isOkToProceed(StoreInterface $store): bool
     {
         $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(

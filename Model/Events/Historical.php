@@ -3,22 +3,22 @@
 namespace Apsis\One\Model\Events;
 
 use Apsis\One\Model\Event;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Service\Date as ApsisDateHelper;
-use Apsis\One\Model\Sync\SyncInterface;
-use Throwable;
-use Magento\Framework\App\Area;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Store\Api\Data\StoreInterface;
 use Apsis\One\Model\Events\Historical\Carts;
 use Apsis\One\Model\Events\Historical\Orders;
 use Apsis\One\Model\Events\Historical\Reviews;
 use Apsis\One\Model\Events\Historical\Wishlist;
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\ResourceModel\Profile\Collection as ProfileCollection;
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Date as ApsisDateHelper;
+use Apsis\One\Model\Sync\SyncInterface;
+use Apsis\One\Setup\UpgradeData;
+use Magento\Framework\App\Area;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\App\EmulationFactory;
 use Magento\Store\Model\ScopeInterface;
-use Apsis\One\Setup\UpgradeData;
+use Throwable;
 
 class Historical implements SyncInterface
 {
@@ -32,37 +32,37 @@ class Historical implements SyncInterface
     /**
      * @var ApsisDateHelper
      */
-    private $apsisDateHelper;
+    private ApsisDateHelper $apsisDateHelper;
 
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var Carts
      */
-    private $historicalCarts;
+    private Carts $historicalCarts;
 
     /**
      * @var Orders
      */
-    private $historicalOrders;
+    private Orders $historicalOrders;
 
     /**
      * @var Reviews
      */
-    private $historicalReviews;
+    private Reviews $historicalReviews;
 
     /**
      * @var Wishlist
      */
-    private $historicalWishlist;
+    private Wishlist $historicalWishlist;
 
     /**
      * @var EmulationFactory
      */
-    private $emulationFactory;
+    private EmulationFactory $emulationFactory;
 
     /**
      * Historical constructor.
@@ -95,8 +95,10 @@ class Historical implements SyncInterface
 
     /**
      * @param ApsisCoreHelper $apsisCoreHelper
+     *
+     * @return void
      */
-    public function process(ApsisCoreHelper $apsisCoreHelper)
+    public function process(ApsisCoreHelper $apsisCoreHelper): void
     {
         $period = $this->calculatePeriod($apsisCoreHelper);
         if (empty($period)) {
@@ -134,7 +136,7 @@ class Historical implements SyncInterface
      *
      * @return array
      */
-    private function calculatePeriod(ApsisCoreHelper $apsisCoreHelper)
+    private function calculatePeriod(ApsisCoreHelper $apsisCoreHelper): array
     {
         try {
             $to = $this->apsisDateHelper->getDateTimeFromTime();
@@ -157,13 +159,15 @@ class Historical implements SyncInterface
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param ProfileCollection $profileCollection
      * @param array $period
+     *
+     * @return void
      */
     private function runByType(
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper,
         ProfileCollection $profileCollection,
         array $period
-    ) {
+    ): void {
         foreach (self::FETCH_HISTORICAL_EVENTS as $type) {
             try {
                 $profileCollectionArray = $this
@@ -231,7 +235,7 @@ class Historical implements SyncInterface
      *
      * @return bool
      */
-    private function isAlreadyDoneForStore(ApsisCoreHelper $apsisCoreHelper, StoreInterface $store, int $type)
+    private function isAlreadyDoneForStore(ApsisCoreHelper $apsisCoreHelper, StoreInterface $store, int $type): bool
     {
         try {
             $contexts = [
@@ -282,7 +286,7 @@ class Historical implements SyncInterface
         ApsisCoreHelper $apsisCoreHelper,
         StoreInterface $store,
         bool $orderType = false
-    ) {
+    ): array {
         $formattedProfileCollectionArray = [];
 
         try {
@@ -300,7 +304,6 @@ class Historical implements SyncInterface
                 }
                 $formattedProfileCollectionArray[$index] = $profile;
             }
-
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }

@@ -12,7 +12,7 @@ use Magento\Framework\App\Config\Value;
 class InvalidateDataSave extends Value
 {
     /**
-     * @inheritdoc
+     * @return $this
      */
     public function beforeSave()
     {

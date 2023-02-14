@@ -11,13 +11,9 @@ class Collection extends AbstractCollection
     /**
      * @inheritdoc
      */
-    protected $_idFieldName = 'id';
-
-    /**
-     * @inheritdoc
-     */
     public function _construct()
     {
+        $this->_idFieldName = 'id';
         $this->_init(ProfileBatch::class, ProfileBatchResource::class);
     }
 }

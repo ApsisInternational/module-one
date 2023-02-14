@@ -12,20 +12,16 @@ class Collection extends AbstractCollection
     /**
      * @inheritdoc
      */
-    protected $_idFieldName = 'id';
-
-    /**
-     * @inheritdoc
-     */
     public function _construct()
     {
+        $this->_idFieldName = 'id';
         $this->_init(Abandoned::class, AbandonedResource::class);
     }
 
     /**
      * @param string $token
      *
-     * @return bool|DataObject
+     * @return DataObject|Abandoned|bool
      */
     public function loadByToken(string $token)
     {
@@ -43,7 +39,7 @@ class Collection extends AbstractCollection
      * @param int $profileId
      * @param int $storeId
      *
-     * @return bool|DataObject
+     * @return DataObject|Abandoned|bool
      */
     public function loadByProfileIdAndStoreId(int $profileId, int $storeId)
     {

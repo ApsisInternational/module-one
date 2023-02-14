@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Controller\Customer;
 
+use Exception;
 use Magento\Customer\Model\Session;
 use Magento\Framework\App\Action\Context;
 use Magento\Newsletter\Controller\Manage;
@@ -12,7 +13,7 @@ class Index extends Manage
     /**
      * @var SubscriberFactory
      */
-    private $subscriberFactory;
+    private SubscriberFactory $subscriberFactory;
 
     /**
      * Index constructor.
@@ -28,11 +29,15 @@ class Index extends Manage
     }
 
     /**
-     * @inheritdoc
+     * @return void
      */
     public function execute()
     {
-        if (! $this->_customerSession->authenticate()) {
+        try {
+            if (! $this->_customerSession->authenticate()) {
+                $this->_response->setRedirect($this->_url->getUrl('newsletter/manage/index'));
+            }
+        } catch (Exception $e) {
             $this->_response->setRedirect($this->_url->getUrl('newsletter/manage/index'));
         }
 

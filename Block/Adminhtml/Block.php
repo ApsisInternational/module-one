@@ -2,19 +2,19 @@
 
 namespace Apsis\One\Block\Adminhtml;
 
+use Apsis\One\Model\Service\Config;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\View\Element\Template;
-use Apsis\One\Model\Service\Config;
-use Throwable;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class Block extends Template
 {
     /**
      * @var ApsisLogHelper
      */
-    private $apsisLogHelper;
+    private ApsisLogHelper $apsisLogHelper;
 
     /**
      * Block constructor.
@@ -32,7 +32,7 @@ class Block extends Template
     /**
      * @return bool
      */
-    public function isProfileDeleteEnabled()
+    public function isProfileDeleteEnabled(): bool
     {
         try {
             $scope = $this->getSelectedScopeInAdmin();
@@ -51,7 +51,8 @@ class Block extends Template
     /**
      * @return bool
      */
-    public function isSectionAlreadyMapped(){
+    public function isSectionAlreadyMapped(): bool
+    {
         try {
             $scope = $this->getSelectedScopeInAdmin();
             return (bool) $this->_scopeConfig->getValue(
@@ -68,7 +69,8 @@ class Block extends Template
     /**
      * @return bool
      */
-    public function isAccountAlreadyConfigured(){
+    public function isAccountAlreadyConfigured(): bool
+    {
         try {
             $scope = $this->getSelectedScopeInAdmin();
             $idMapped = (bool) $this->_scopeConfig->getValue(
@@ -97,7 +99,7 @@ class Block extends Template
     /**
      * @return string
      */
-    public function getResetUrl()
+    public function getResetUrl(): string
     {
         return $this->escapeUrl($this->_urlBuilder->getUrl('apsis_one/developer/reset'));
     }
@@ -107,7 +109,7 @@ class Block extends Template
      *
      * @return array
      */
-    private function getSelectedScopeInAdmin()
+    private function getSelectedScopeInAdmin(): array
     {
         $scope = [];
         $storeId = $this->_request->getParam('store');

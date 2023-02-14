@@ -10,7 +10,7 @@ class Store implements OptionSourceInterface
     /**
      * @var CollectionFactory
      */
-    private $collectionFactory;
+    private CollectionFactory $collectionFactory;
 
     /**
      * Store constructor.
@@ -25,7 +25,7 @@ class Store implements OptionSourceInterface
     /**
      * @inheritdoc
      */
-    public function toOptionArray()
+    public function toOptionArray(): array
     {
         $stores = $this->collectionFactory->create()->toOptionArray();
         $stores[] = ['value' => null, 'label' => 'N/A'];

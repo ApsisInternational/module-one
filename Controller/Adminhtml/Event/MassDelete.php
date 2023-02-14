@@ -2,15 +2,16 @@
 
 namespace Apsis\One\Controller\Adminhtml\Event;
 
-use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Throwable;
-use Magento\Framework\Controller\ResultFactory;
-use Magento\Ui\Component\MassAction\Filter;
-use Magento\Backend\App\Action;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Event\CollectionFactory as EventCollectionFactory;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Backend\Model\View\Result\Redirect;
+use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Ui\Component\MassAction\Filter;
+use Throwable;
 
 class MassDelete extends Action
 {
@@ -24,22 +25,22 @@ class MassDelete extends Action
     /**
      * @var EventResource
      */
-    public $eventResource;
+    public EventResource $eventResource;
 
     /**
      * @var EventCollectionFactory
      */
-    public $eventCollectionFactory;
+    public EventCollectionFactory $eventCollectionFactory;
 
     /**
      * @var Filter
      */
-    private $filter;
+    private Filter $filter;
 
     /**
      * @var ApsisLogHelper
      */
-    private $apsisLogHelper;
+    private ApsisLogHelper $apsisLogHelper;
 
     /**
      * MassDelete constructor.
@@ -65,7 +66,7 @@ class MassDelete extends Action
     }
 
     /**
-     * @inheritdoc
+     * @return ResultInterface
      */
     public function execute()
     {

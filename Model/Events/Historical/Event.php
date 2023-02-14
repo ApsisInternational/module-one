@@ -2,30 +2,30 @@
 
 namespace Apsis\One\Model\Events\Historical;
 
-use Apsis\One\Model\Profile;
 use Apsis\One\Model\Event as EventModel;
+use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Magento\Framework\Stdlib\DateTime;
 use Magento\Store\Api\Data\StoreInterface;
 use Throwable;
-use Magento\Framework\Stdlib\DateTime;
 
 abstract class Event implements EventHistoryInterface
 {
     /**
      * @var DateTime
      */
-    protected $dateTime;
+    protected DateTime $dateTime;
 
     /**
      * @var EventResource
      */
-    protected $eventResource;
+    protected EventResource $eventResource;
 
     /**
      * @var EventDataInterface
      */
-    protected $eventData;
+    protected EventDataInterface $eventData;
 
     /**
      * @param int $storeId
@@ -46,7 +46,7 @@ abstract class Event implements EventHistoryInterface
         string $eventData,
         ApsisCoreHelper $apsisCoreHelper,
         string $eventSubData = ''
-    ) {
+    ): array {
         try {
             return [
                 'event_type' => $eventType,
@@ -73,7 +73,7 @@ abstract class Event implements EventHistoryInterface
      *
      * @return int
      */
-    protected function registerEvents(array $eventsToRegister, ApsisCoreHelper $apsisCoreHelper)
+    protected function registerEvents(array $eventsToRegister, ApsisCoreHelper $apsisCoreHelper): int
     {
         if (empty($eventsToRegister)) {
             return 0;
@@ -95,7 +95,7 @@ abstract class Event implements EventHistoryInterface
         array $duration,
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper
-    ) {
+    ): array {
         $collectionArray = [];
 
         try {

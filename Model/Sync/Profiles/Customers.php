@@ -2,20 +2,20 @@
 
 namespace Apsis\One\Model\Sync\Profiles;
 
+use Apsis\One\Model\Profile;
+use Apsis\One\Model\ProfileBatch;
+use Apsis\One\Model\ProfileBatchFactory;
+use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
+use Apsis\One\Model\ResourceModel\Profile\Collection;
+use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\ResourceModel\Profile\Collection;
-use Throwable;
-use Magento\Customer\Model\Customer;
-use Magento\Store\Api\Data\StoreInterface;
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
-use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\Service\File as ApsisFileHelper;
 use Apsis\One\Model\Sync\Profiles\Customers\CustomerFactory as CustomerDataFactory;
-use Apsis\One\Model\Profile;
-use Apsis\One\Model\ProfileBatchFactory;
-use Apsis\One\Model\ProfileBatch;
+use Magento\Customer\Model\Customer;
+use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class Customers implements ProfileSyncInterface
 {
@@ -24,42 +24,42 @@ class Customers implements ProfileSyncInterface
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var ApsisConfigHelper
      */
-    private $apsisConfigHelper;
+    private ApsisConfigHelper $apsisConfigHelper;
 
     /**
      * @var ApsisFileHelper
      */
-    private $apsisFileHelper;
+    private ApsisFileHelper $apsisFileHelper;
 
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var CustomerDataFactory
      */
-    private $customerDataFactory;
+    private CustomerDataFactory $customerDataFactory;
 
     /**
      * @var ProfileBatchFactory
      */
-    private $profileBatchFactory;
+    private ProfileBatchFactory $profileBatchFactory;
 
     /**
      * @var string
      */
-    private $keySpace;
+    private string $keySpace;
 
     /**
      * Customers constructor.
@@ -90,7 +90,7 @@ class Customers implements ProfileSyncInterface
     /**
      * @inheritdoc
      */
-    public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
+    public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper): void
     {
         try {
             $this->apsisCoreHelper = $apsisCoreHelper;
@@ -127,7 +127,6 @@ class Customers implements ProfileSyncInterface
             }
 
             $this->batchCustomersForStore($store, $collection, $mappings, $attributesArrWithVersionId);
-
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -139,7 +138,7 @@ class Customers implements ProfileSyncInterface
      *
      * @return Customer
      */
-    private function setSalesDataOnCustomer(array $salesData, Customer $customer)
+    private function setSalesDataOnCustomer(array $salesData, Customer $customer): Customer
     {
         try {
             foreach ($salesData as $column => $value) {
@@ -163,13 +162,15 @@ class Customers implements ProfileSyncInterface
      * @param Collection $collection
      * @param array $mappings
      * @param array $attributesArrWithVersionId
+     *
+     * @return void
      */
     private function batchCustomersForStore(
         StoreInterface $store,
         Collection $collection,
         array $mappings,
         array $attributesArrWithVersionId
-    ) {
+    ): void {
         try {
             $integrationIdsArray = $this->getIntegrationIdsArray($collection);
             $jsonMappings = $this->apsisConfigHelper->getJsonMappingData(
@@ -264,7 +265,7 @@ class Customers implements ProfileSyncInterface
      *
      * @return string
      */
-    private function createFileWithHeaders(StoreInterface $store, array $headers)
+    private function createFileWithHeaders(StoreInterface $store, array $headers): string
     {
         try {
             $file = strtolower($store->getCode() . '_customer_' . date('d_m_Y_His') . '.csv');
@@ -282,7 +283,7 @@ class Customers implements ProfileSyncInterface
      *
      * @return array
      */
-    private function getIntegrationIdsArray(Collection $collection)
+    private function getIntegrationIdsArray(Collection $collection): array
     {
         $integrationIdsArray = [];
 

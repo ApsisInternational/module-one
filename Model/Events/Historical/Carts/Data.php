@@ -18,7 +18,7 @@ class Data extends EventData implements EventDataInterface
     /**
      * @var Item
      */
-    protected $cartItem;
+    protected Item $cartItem;
 
     /**
      * Data constructor.
@@ -40,7 +40,7 @@ class Data extends EventData implements EventDataInterface
      *
      * @return array
      */
-    public function getDataArr(Quote $cart, Item $item, ApsisCoreHelper $apsisCoreHelper)
+    public function getDataArr(Quote $cart, Item $item, ApsisCoreHelper $apsisCoreHelper): array
     {
         try {
             $this->cartItem = $item;
@@ -64,9 +64,11 @@ class Data extends EventData implements EventDataInterface
     }
 
     /**
-     * @inheritdoc
+     * @param AbstractModel|Quote $model
+     *
+     * @return array
      */
-    protected function getProcessedDataArr(AbstractModel $model)
+    protected function getProcessedDataArr(AbstractModel|Quote $model): array
     {
         try {
             return [

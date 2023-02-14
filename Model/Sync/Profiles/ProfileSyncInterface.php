@@ -13,5 +13,5 @@ interface ProfileSyncInterface
      *
      * @return void
      */
-    public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper);
+    public function processForStore(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper): void;
 }

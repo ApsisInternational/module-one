@@ -20,27 +20,22 @@ class Subscription extends Template
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var Session
      */
-    private $customerSession;
+    private Session $customerSession;
 
     /**
      * @var SubscriberFactory
      */
-    private $subscriberFactory;
+    private SubscriberFactory $subscriberFactory;
 
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
-
-    /**
-     * @inheritdoc
-     */
-    protected $_isScopePrivate = true;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * NewsletterPreferences constructor.
@@ -65,6 +60,7 @@ class Subscription extends Template
         $this->customerSession = $customerSession;
         $this->apsisCoreHelper = $apsisCoreHelper;
         parent::__construct($context, $data);
+        $this->_isScopePrivate = true;
     }
 
     /**
@@ -78,7 +74,7 @@ class Subscription extends Template
     /**
      * @return string
      */
-    public function getSaveUrl()
+    public function getSaveUrl(): string
     {
         return $this->getUrl(self::CUSTOMER_NEWSLETTER_SAVE_URL);
     }
@@ -86,7 +82,7 @@ class Subscription extends Template
     /**
      * @return array
      */
-    public function getTopicsToShow()
+    public function getTopicsToShow(): array
     {
         $sortedTopicArr = [];
 
@@ -97,14 +93,14 @@ class Subscription extends Template
             }
 
             $topicMappings = explode(',', (string)$this->apsisCoreHelper->getStoreConfig(
-                $customer->getStore(), ApsisConfigHelper::SYNC_SETTING_ADDITIONAL_TOPIC
+                $customer->getStore(),
+                ApsisConfigHelper::SYNC_SETTING_ADDITIONAL_TOPIC
             ));
             $subscriber = $this->subscriberFactory->create()->loadByCustomerId($customer->getId());
 
             if (empty($topicMappings) || empty($subscriber->getId())) {
                 return $sortedTopicArr;
             }
-
 
             $profile = $this->profileCollectionFactory->create()->loadBySubscriberId($subscriber->getId());
             if (empty($profile)) {
@@ -127,11 +123,11 @@ class Subscription extends Template
     }
 
     /**
-     * @param DataObject $profile
+     * @param DataObject|Profile $profile
      *
      * @return array
      */
-    private function getProfileOptinTopicArr(DataObject $profile)
+    private function getProfileOptinTopicArr(DataObject|Profile $profile): array
     {
         $topicArr = [];
 
@@ -163,7 +159,6 @@ class Subscription extends Template
             foreach ($consents->items as $consent) {
                 $topicArr[] = $consent->topic_discriminator;
             }
-
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -177,13 +172,13 @@ class Subscription extends Template
      *
      * @return array
      */
-    private function getConsentListsWithTopicsArr(array $topicMappings, array $profileTopics)
+    private function getConsentListsWithTopicsArr(array $topicMappings, array $profileTopics): array
     {
         $topicMappingsArr = [];
 
         try {
             foreach ($topicMappings as $topicMappingString) {
-                $topicMapping = explode('|', $topicMappingString);
+                $topicMapping = explode('|', (string) $topicMappingString);
 
                 //Count should always be 2, if not then not a valid config.
                 if (empty($topicMapping) || count($topicMapping) < 2) {
@@ -197,7 +192,6 @@ class Subscription extends Template
                     'consent' => in_array($topicMapping[0], $profileTopics)
                 ];
             }
-
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }

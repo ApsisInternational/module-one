@@ -11,7 +11,7 @@ class Section implements OptionSourceInterface
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * Section constructor.
@@ -26,7 +26,7 @@ class Section implements OptionSourceInterface
     /**
      * @inheritdoc
      */
-    public function toOptionArray()
+    public function toOptionArray(): array
     {
         $fields = [['value' => '', 'label' => __('-- Please Select --')]];
 

@@ -10,7 +10,7 @@ class CronSchedule implements OptionSourceInterface
     /**
      * @var State
      */
-    protected $state;
+    protected State $state;
 
     /**
      * CronSchedule constructor.
@@ -25,7 +25,7 @@ class CronSchedule implements OptionSourceInterface
     /**
      * @inheritdoc
      */
-    public function toOptionArray()
+    public function toOptionArray(): array
     {
         $options = [
             ['value' => '*/5 * * * *', 'label' => __('Every 5 Minutes')],

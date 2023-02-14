@@ -2,59 +2,34 @@
 
 namespace Apsis\One\Model\Service;
 
-use Apsis\One\Model\DateInterval;
-use Apsis\One\Model\DateIntervalFactory;
-use Apsis\One\Model\DateTime;
-use Apsis\One\Model\DateTimeFactory;
-use Apsis\One\Model\DateTimeZoneFactory;
+use DateTime;
+use DateTimeZone;
+use DateInterval;
+use Exception;
+use Throwable;
 use Zend_Date;
 
 class Date
 {
     /**
-     * @var DateTimeFactory
-     */
-    private $dateTimeFactory;
-
-    /**
-     * @var DateTimeZoneFactory
-     */
-    private $dateTimeZoneFactory;
-
-    /**
-     * @var DateIntervalFactory
-     */
-    private $dateIntervalFactory;
-
-    /**
-     * Date constructor.
-     *
-     * @param DateTimeFactory $dateTimeFactory
-     * @param DateTimeZoneFactory $dateTimeZoneFactory
-     * @param DateIntervalFactory $dateIntervalFactory
-     */
-    public function __construct(
-        DateTimeFactory $dateTimeFactory,
-        DateTimeZoneFactory $dateTimeZoneFactory,
-        DateIntervalFactory $dateIntervalFactory
-    ) {
-        $this->dateTimeZoneFactory = $dateTimeZoneFactory;
-        $this->dateIntervalFactory = $dateIntervalFactory;
-        $this->dateTimeFactory = $dateTimeFactory;
-    }
-
-    /**
      * @param string|null $date
      * @param string $format
      *
-     * @return string|int
+     * @return string
      */
-    public function formatDateForPlatformCompatibility($date = null, $format = Zend_Date::TIMESTAMP)
-    {
+    public function formatDateForPlatformCompatibility(
+        string $date = null,
+        string $format = Zend_Date::TIMESTAMP
+    ): string {
         if (empty($date)) {
             $date = 'now';
         }
-        return $this->getDateTimeFromTime($date)->format($format);
+
+        try {
+            return $this->getDateTimeFromTime($date)->format($format);
+        } catch (Throwable $e) {
+            return '';
+        }
     }
 
     /**
@@ -63,14 +38,19 @@ class Date
      *
      * @return string
      */
-    public function addSecond($date = null, $format = Zend_Date::TIMESTAMP)
+    public function addSecond(string $date = null, string $format = Zend_Date::TIMESTAMP): string
     {
         if (empty($date)) {
             $date = 'now';
         }
-        return (string) $this->getDateTimeFromTime($date)
-            ->add($this->getDateIntervalFromIntervalSpec('PT1S'))
-            ->format($format);
+
+        try {
+            return (string) $this->getDateTimeFromTime($date)
+                ->add($this->getDateIntervalFromIntervalSpec('PT1S'))
+                ->format($format);
+        } catch (Throwable $e) {
+            return '';
+        }
     }
 
     /**
@@ -78,37 +58,36 @@ class Date
      * @param string $timezone
      *
      * @return DateTime
+     *
+     * @throws Exception
      */
-    public function getDateTimeFromTimeAndTimeZone($time = 'now', $timezone = 'UTC')
+    public function getDateTimeFromTimeAndTimeZone(string $time = 'now', string $timezone = 'UTC'): DateTime
     {
-        return $this->dateTimeFactory->create(
-            [
-                'time' => $time,
-                'timezone' => $this->dateTimeZoneFactory->create(['timezone' => $timezone])
-            ]
-        );
+        return new dateTime($time, new dateTimeZone($timezone));
     }
 
     /**
      * @param string $time
      *
      * @return DateTime
+     *
+     * @throws Exception
      */
-    public function getDateTimeFromTime($time = 'now')
+    public function getDateTimeFromTime(string $time = 'now'): DateTime
     {
-        return $this->dateTimeFactory->create(['time' => $time]);
+        return new dateTime($time);
     }
 
     /**
-     * @param $intervalSpec
+     * @param string $intervalSpec
      *
      * @return DateInterval
+     *
+     * @throws Exception
      */
-    public function getDateIntervalFromIntervalSpec($intervalSpec)
+    public function getDateIntervalFromIntervalSpec(string $intervalSpec): DateInterval
     {
-        return $this->dateIntervalFactory->create(
-            ['interval_spec' => $intervalSpec]
-        );
+        return new DateInterval($intervalSpec);
     }
 
     /**
@@ -117,11 +96,15 @@ class Date
      *
      * @return string
      */
-    public function getFormattedDateTimeWithAddedInterval(string $inputDateTime, int $day = 1)
+    public function getFormattedDateTimeWithAddedInterval(string $inputDateTime, int $day = 1): string
     {
-        return $this->getDateTimeFromTimeAndTimeZone($inputDateTime)
-            ->add($this->getDateIntervalFromIntervalSpec(sprintf('P%sD', $day)))
-            ->format(Zend_Date::ISO_8601);
+        try {
+            return $this->getDateTimeFromTimeAndTimeZone($inputDateTime)
+                ->add($this->getDateIntervalFromIntervalSpec(sprintf('P%sD', $day)))
+                ->format(Zend_Date::ISO_8601);
+        } catch (Throwable $e) {
+            return '';
+        }
     }
 
     /**
@@ -129,9 +112,13 @@ class Date
      *
      * @return bool
      */
-    public function isExpired(string $inputDateTime)
+    public function isExpired(string $inputDateTime): bool
     {
-        $nowDateTime = $this->getDateTimeFromTimeAndTimeZone()->format(Zend_Date::ISO_8601);
-        return ($nowDateTime > $inputDateTime);
+        try {
+            $nowDateTime = $this->getDateTimeFromTimeAndTimeZone()->format(Zend_Date::ISO_8601);
+            return ($nowDateTime > $inputDateTime);
+        } catch (Throwable $e) {
+            return false;
+        }
     }
 }

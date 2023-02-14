@@ -8,7 +8,6 @@ use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollection
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Event;
-use Throwable;
 use Magento\Framework\DataObject;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -16,33 +15,34 @@ use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
+use Throwable;
 
 class Placed implements ObserverInterface
 {
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var ProfileCollectionFactory
      */
-    private $profileCollectionFactory;
+    private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
      * @var ProfileResource
      */
-    private $profileResource;
+    private ProfileResource $profileResource;
 
     /**
      * @var Event
      */
-    private $eventService;
+    private Event $eventService;
 
     /**
      * @var SubscriberFactory
      */
-    private $subscriberFactory;
+    private SubscriberFactory $subscriberFactory;
 
     /**
      * Placed constructor.
@@ -93,7 +93,7 @@ class Placed implements ObserverInterface
     /**
      * @param Order $order
      *
-     * @return bool|DataObject
+     * @return bool|DataObject|Profile
      */
     private function findProfile(Order $order)
     {
@@ -127,7 +127,7 @@ class Placed implements ObserverInterface
      *
      * @return bool
      */
-    private function isOkToProceed(Store $store)
+    private function isOkToProceed(Store $store): bool
     {
         $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
         $event = (boolean) $this->apsisCoreHelper->getStoreConfig(

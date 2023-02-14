@@ -10,6 +10,7 @@ use Apsis\One\Model\Config\Source\System\Region;
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Exception;
 use Magento\Config\Model\ResourceModel\Config\Data\Collection as DataCollection;
 use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as DataCollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -23,7 +24,6 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use stdClass;
-use Exception;
 use Throwable;
 
 class Core extends ApsisLogHelper
@@ -45,44 +45,44 @@ class Core extends ApsisLogHelper
     /**
      * @var StoreManagerInterface
      */
-    private $storeManager;
+    private StoreManagerInterface $storeManager;
 
     /**
      * @var EncryptorInterface
      */
-    private $encryptor;
+    private EncryptorInterface $encryptor;
 
     /**
      * @var WriterInterface
      */
-    private $writer;
+    private WriterInterface $writer;
 
     /**
      * @var ClientFactory
      */
-    private $apiClientFactory;
+    private ClientFactory $apiClientFactory;
 
     /**
      * @var DataCollectionFactory
      */
-    private $dataCollectionFactory;
+    private DataCollectionFactory $dataCollectionFactory;
 
     /**
      * @var ApsisDateHelper
      */
-    private $apsisDateHelper;
+    private Date $apsisDateHelper;
 
     /**
      * Request object
      *
      * @var RequestInterface
      */
-    private $request;
+    private RequestInterface $request;
 
     /**
      * @var array
      */
-    private $cachedClient = [];
+    private array $cachedClient = [];
 
     /**
      * Core constructor.
@@ -142,7 +142,7 @@ class Core extends ApsisLogHelper
      *
      * @return string
      */
-    public function getStoreNameFromId(int $storeId = null)
+    public function getStoreNameFromId(int $storeId = null): string
     {
         $store = $this->getStore($storeId);
         return ($store) ? $store->getName() : '';
@@ -153,7 +153,7 @@ class Core extends ApsisLogHelper
      *
      * @return string
      */
-    public function getWebsiteNameFromStoreId(int $storeId = null)
+    public function getWebsiteNameFromStoreId(int $storeId = null): string
     {
         try {
             $store = $this->getStore($storeId);
@@ -169,7 +169,7 @@ class Core extends ApsisLogHelper
      *
      * @return array
      */
-    public function getSelectedScopeInAdmin()
+    public function getSelectedScopeInAdmin(): array
     {
         $scope = [];
         $storeId = $this->request->getParam('store');
@@ -196,7 +196,7 @@ class Core extends ApsisLogHelper
      *
      * @return mixed
      */
-    public function getConfigValue(string $path, string $contextScope, int $contextScopeId)
+    public function getConfigValue(string $path, string $contextScope, int $contextScopeId): mixed
     {
         try {
             return $this->scopeConfig->getValue($path, $contextScope, $contextScopeId);
@@ -213,13 +213,15 @@ class Core extends ApsisLogHelper
      * @param string $value
      * @param string $contextScope
      * @param int|null $contextScopeId
+     *
+     * @return void
      */
     public function saveConfigValue(
         string $path,
         string $value,
         string $contextScope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
         int $contextScopeId = null
-    ) {
+    ): void {
         try {
             $context = $this->getScopeForConfigUpdate($path, $contextScope, $contextScopeId);
 
@@ -248,9 +250,15 @@ class Core extends ApsisLogHelper
      * @param string $contextScope
      * @param int $contextScopeId
      * @param bool $isUpdate
+     *
+     * @return void
      */
-    public function deleteConfigByScope(string $path, string $contextScope, int $contextScopeId, bool $isUpdate = true)
-    {
+    public function deleteConfigByScope(
+        string $path,
+        string $contextScope,
+        int $contextScopeId,
+        bool $isUpdate = true
+    ): void {
         try {
             if ($isUpdate) {
                 $context = $this->getScopeForConfigUpdate($path, $contextScope, $contextScopeId);
@@ -286,7 +294,7 @@ class Core extends ApsisLogHelper
      *
      * @return array
      */
-    private function getScopeForConfigUpdate(string $path, string $contextScope, int $scopeId)
+    private function getScopeForConfigUpdate(string $path, string $contextScope, int $scopeId): array
     {
         if ($path == Config::ACCOUNTS_OAUTH_TOKEN ||
             $path == Config::ACCOUNTS_OAUTH_TOKEN_EXPIRE
@@ -302,7 +310,7 @@ class Core extends ApsisLogHelper
      *
      * @return mixed
      */
-    public function getMappedValueFromSelectedScope(string $path)
+    public function getMappedValueFromSelectedScope(string $path): mixed
     {
         $scope = $this->getSelectedScopeInAdmin();
         return $this->getConfigValue($path, $scope['context_scope'], $scope['context_scope_id']);
@@ -313,9 +321,9 @@ class Core extends ApsisLogHelper
      *
      * @param bool $withDefault
      *
-     * @return StoreInterface[]|array
+     * @return array
      */
-    public function getStores(bool $withDefault = false)
+    public function getStores(bool $withDefault = false): array
     {
         try {
             return $this->storeManager->getStores($withDefault);
@@ -342,15 +350,15 @@ class Core extends ApsisLogHelper
     }
 
     /**
-     * @param float $price
+     * @param int|float $price
      * @param int $precision
      *
      * @return float
      */
-    public function round($price, int $precision = 2)
+    public function round(int|float $price, int $precision = 2): float
     {
         try {
-            return (float) round($price, $precision);
+            return round($price, $precision);
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return 0.00;
@@ -363,7 +371,7 @@ class Core extends ApsisLogHelper
      *
      * @return string
      */
-    public function getRegion(string $contextScope, int $scopeId)
+    public function getRegion(string $contextScope, int $scopeId): string
     {
         return (string) $this->getConfigValue(ApsisConfigHelper::ACCOUNTS_OAUTH_REGION, $contextScope, $scopeId);
     }
@@ -374,7 +382,7 @@ class Core extends ApsisLogHelper
      *
      * @return string
      */
-    private function getClientId(string $contextScope, int $scopeId)
+    private function getClientId(string $contextScope, int $scopeId): string
     {
         return (string) $this->getConfigValue(ApsisConfigHelper::ACCOUNTS_OAUTH_ID, $contextScope, $scopeId);
     }
@@ -385,7 +393,7 @@ class Core extends ApsisLogHelper
      *
      * @return string
      */
-    public function getClientSecret(string $contextScope, int $scopeId)
+    public function getClientSecret(string $contextScope, int $scopeId): string
     {
         $value = $this->getConfigValue(ApsisConfigHelper::ACCOUNTS_OAUTH_SECRET, $contextScope, $scopeId);
         return $this->encryptor->decrypt($value);
@@ -394,7 +402,7 @@ class Core extends ApsisLogHelper
     /**
      * @return string
      */
-    public function getSubscriptionEndpointKey()
+    public function getSubscriptionEndpointKey(): string
     {
         $value = $this->getConfigValue(
             ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
@@ -410,7 +418,7 @@ class Core extends ApsisLogHelper
      *
      * @return bool
      */
-    public function isEnabled(string $contextScope, int $scopeId)
+    public function isEnabled(string $contextScope, int $scopeId): bool
     {
         return (boolean) $this->getConfigValue(ApsisConfigHelper::ACCOUNTS_OAUTH_ENABLED, $contextScope, $scopeId);
     }
@@ -423,7 +431,7 @@ class Core extends ApsisLogHelper
      *
      * @return string
      */
-    private function getToken(Client $apiClient, string $contextScope, int $scopeId, bool $bypass = false)
+    private function getToken(Client $apiClient, string $contextScope, int $scopeId, bool $bypass = false): string
     {
         $token = '';
         try {
@@ -464,7 +472,7 @@ class Core extends ApsisLogHelper
      *
      * @return string
      */
-    private function getTokenFromDb(string $contextScope, int $scopeId)
+    private function getTokenFromDb(string $contextScope, int $scopeId): string
     {
         $token = '';
         $context = $this->resolveContext($contextScope, $scopeId, ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN);
@@ -487,10 +495,10 @@ class Core extends ApsisLogHelper
      *
      * @return string
      */
-    private function getTokenExpiryFromDb(string $contextScope, int $scopeId)
+    private function getTokenExpiryFromDb(string $contextScope, int $scopeId): string
     {
         $expiryTime = '';
-        $context = $this->resolveContext($contextScope, $scopeId,ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE);
+        $context = $this->resolveContext($contextScope, $scopeId, ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE);
 
         $collection = $this->getDataCollectionByContextAndPath(
             $context['scope'],
@@ -508,8 +516,10 @@ class Core extends ApsisLogHelper
      * @param string $fromMethod
      * @param string $contextScope
      * @param int $scopeId
+     *
+     * @return void
      */
-    public function disableAccountAndRemoveTokenConfig(string $fromMethod, string $contextScope, int $scopeId)
+    public function disableAccountAndRemoveTokenConfig(string $fromMethod, string $contextScope, int $scopeId): void
     {
         $this->debug(__METHOD__, ['From' => $fromMethod]);
 
@@ -533,13 +543,15 @@ class Core extends ApsisLogHelper
      * @param string $contextScope
      * @param int $contextScopeId
      * @param bool $isUpdate
+     *
+     * @return void
      */
     public function removeTokenConfig(
         string $fromMethod,
         string $contextScope,
         int $contextScopeId,
         bool $isUpdate = true
-    ) {
+    ): void {
         $this->debug(__METHOD__, ['From' => $fromMethod]);
 
         $this->deleteConfigByScope(
@@ -562,27 +574,32 @@ class Core extends ApsisLogHelper
      *
      * @return bool
      */
-    private function isTokenExpired(string $contextScope, int $scopeId)
+    private function isTokenExpired(string $contextScope, int $scopeId): bool
     {
-        $expiryTime = $this->getTokenExpiryFromDb($contextScope, $scopeId);
+        try {
+            $expiryTime = $this->getTokenExpiryFromDb($contextScope, $scopeId);
 
-        $nowTime = $this->apsisDateHelper->getDateTimeFromTimeAndTimeZone()
-            ->add($this->apsisDateHelper->getDateIntervalFromIntervalSpec('PT15M'))
-            ->format('Y-m-d H:i:s');
+            $nowTime = $this->apsisDateHelper->getDateTimeFromTimeAndTimeZone()
+                ->add($this->apsisDateHelper->getDateIntervalFromIntervalSpec('PT15M'))
+                ->format('Y-m-d H:i:s');
 
-        $check = ($nowTime > $expiryTime);
+            $check = ($nowTime > $expiryTime);
 
-        if ($check) {
-            $info = [
-                'Scope' => $contextScope,
-                'Scope Id' => $scopeId,
-                'Is Expired/Empty' => true,
-                'Last Expiry DateTime' => $expiryTime
-            ];
-            $this->debug(__METHOD__, $info);
+            if ($check) {
+                $info = [
+                    'Scope' => $contextScope,
+                    'Scope Id' => $scopeId,
+                    'Is Expired/Empty' => true,
+                    'Last Expiry DateTime' => $expiryTime
+                ];
+                $this->debug(__METHOD__, $info);
+            }
+
+            return $check;
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return true;
         }
-
-        return $check;
     }
 
     /**
@@ -656,28 +673,34 @@ class Core extends ApsisLogHelper
      * @param string $contextScope
      * @param int $scopeId
      * @param stdClass $request
+     *
+     * @return void
      */
-    private function saveTokenAndExpiry(string $contextScope, int $scopeId, stdClass $request)
+    private function saveTokenAndExpiry(string $contextScope, int $scopeId, stdClass $request): void
     {
-        $this->saveConfigValue(
-            ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN,
-            $this->encryptor->encrypt($request->access_token),
-            $contextScope,
-            $scopeId
-        );
+        try {
+            $this->saveConfigValue(
+                ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN,
+                $this->encryptor->encrypt($request->access_token),
+                $contextScope,
+                $scopeId
+            );
 
-        $time = $this->apsisDateHelper
-            ->getDateTimeFromTimeAndTimeZone()
-            ->add($this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('PT%sS', $request->expires_in)))
-            ->sub($this->apsisDateHelper->getDateIntervalFromIntervalSpec('PT60M'))
-            ->format('Y-m-d H:i:s');
+            $time = $this->apsisDateHelper
+                ->getDateTimeFromTimeAndTimeZone()
+                ->add($this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('PT%sS', $request->expires_in)))
+                ->sub($this->apsisDateHelper->getDateIntervalFromIntervalSpec('PT60M'))
+                ->format('Y-m-d H:i:s');
 
-        $this->saveConfigValue(
-            ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE,
-            $time,
-            $contextScope,
-            $scopeId
-        );
+            $this->saveConfigValue(
+                ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE,
+                $time,
+                $contextScope,
+                $scopeId
+            );
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+        }
     }
 
     /**
@@ -687,16 +710,13 @@ class Core extends ApsisLogHelper
      *
      * @return array
      */
-    public function resolveContext(string $contextScope, int $scopeId, string $path)
+    public function resolveContext(string $contextScope, int $scopeId, string $path): array
     {
-        switch ($contextScope) {
-            case ScopeInterface::SCOPE_STORES:
-                return $this->resolveContextForStore($scopeId, $path);
-            case ScopeInterface::SCOPE_WEBSITES:
-                return $this->resolveContextForWebsite($scopeId, $path);
-            default:
-                return ['scope' => $contextScope, 'id' => $scopeId];
-        }
+        return match ($contextScope) {
+            ScopeInterface::SCOPE_STORES => $this->resolveContextForStore($scopeId, $path),
+            ScopeInterface::SCOPE_WEBSITES => $this->resolveContextForWebsite($scopeId, $path),
+            default => ['scope' => $contextScope, 'id' => $scopeId],
+        };
     }
 
     /**
@@ -705,7 +725,7 @@ class Core extends ApsisLogHelper
      *
      * @return array
      */
-    private function resolveContextForStore(int $scopeId, string $path)
+    private function resolveContextForStore(int $scopeId, string $path): array
     {
         $contextScope = ScopeInterface::SCOPE_STORES;
         if (! $this->isExistInDataCollection($contextScope, $scopeId, $path)) {
@@ -727,7 +747,7 @@ class Core extends ApsisLogHelper
      *
      * @return array
      */
-    private function resolveContextForWebsite(int $scopeId, string $path)
+    private function resolveContextForWebsite(int $scopeId, string $path): array
     {
         $contextScope = ScopeInterface::SCOPE_WEBSITES;
         if (! $this->isExistInDataCollection($contextScope, $scopeId, $path)) {
@@ -744,7 +764,7 @@ class Core extends ApsisLogHelper
      *
      * @return bool
      */
-    private function isExistInDataCollection(string $contextScope, int $scopeId, string $path)
+    private function isExistInDataCollection(string $contextScope, int $scopeId, string $path): bool
     {
         $collection = $this->getDataCollectionByContextAndPath($contextScope, $scopeId, $path);
         return (boolean) $collection->getSize();
@@ -757,7 +777,7 @@ class Core extends ApsisLogHelper
      *
      * @return DataCollection
      */
-    public function getDataCollectionByContextAndPath(string $contextScope, int $scopeId, string $path)
+    public function getDataCollectionByContextAndPath(string $contextScope, int $scopeId, string $path): DataCollection
     {
         $collection = $this->dataCollectionFactory->create()
             ->addFieldToFilter('scope', $contextScope)
@@ -772,7 +792,7 @@ class Core extends ApsisLogHelper
      *
      * @return array
      */
-    public function getAllStoreIds(bool $withDefault = false)
+    public function getAllStoreIds(bool $withDefault = false): array
     {
         $storeIds = [];
 
@@ -789,7 +809,7 @@ class Core extends ApsisLogHelper
      *
      * @return array
      */
-    public function getAllStoreIdsFromWebsite(int $websiteId)
+    public function getAllStoreIdsFromWebsite(int $websiteId): array
     {
         try {
             return $this->storeManager->getWebsite($websiteId)->getStoreIds();
@@ -802,7 +822,7 @@ class Core extends ApsisLogHelper
     /**
      * @return array
      */
-    public function getStoreIdsBasedOnScope()
+    public function getStoreIdsBasedOnScope(): array
     {
         if ($storeId = $this->request->getParam('store')) {
             return [$storeId];
@@ -819,7 +839,7 @@ class Core extends ApsisLogHelper
     /**
      * @return DataCollection
      */
-    public function getConfigDataCollection()
+    public function getConfigDataCollection(): DataCollection
     {
         return $this->dataCollectionFactory->create();
     }
@@ -829,7 +849,7 @@ class Core extends ApsisLogHelper
      *
      * @return string
      */
-    public function getKeySpaceDiscriminator(string $sectionDiscriminator)
+    public function getKeySpaceDiscriminator(string $sectionDiscriminator): string
     {
         try {
             if (strlen($sectionDiscriminator)) {
@@ -849,7 +869,7 @@ class Core extends ApsisLogHelper
      *
      * @return array
      */
-    public function getAttributeVersionIds(Client $client, string $sectionDiscriminator)
+    public function getAttributeVersionIds(Client $client, string $sectionDiscriminator): array
     {
         $attributesArr = [];
 
@@ -874,7 +894,7 @@ class Core extends ApsisLogHelper
      *
      * @return string
      */
-    public static function generateUniversallyUniqueIdentifier()
+    public static function generateUniversallyUniqueIdentifier(): string
     {
         return sprintf(
             '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
@@ -905,14 +925,16 @@ class Core extends ApsisLogHelper
     /**
      * @param string $url
      *
+     * @return void
+     *
      * @throws Throwable
      */
-    public function validateIsUrlReachable(string $url)
+    public function validateIsUrlReachable(string $url): void
     {
         $ch = curl_init($url);
 
-        curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
-        curl_setopt($ch,CURLOPT_CONNECTTIMEOUT,5);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
         curl_exec($ch);
 
         if (curl_errno($ch)) {
@@ -930,7 +952,7 @@ class Core extends ApsisLogHelper
      *
      * @return string
      */
-    public function buildHostName(string $region)
+    public function buildHostName(string $region): string
     {
         $tld = self::PRODUCTION_TLD;
 
@@ -946,7 +968,7 @@ class Core extends ApsisLogHelper
      *
      * @return string
      */
-    public function buildFileUploadHostName(string $region)
+    public function buildFileUploadHostName(string $region): string
     {
         $url = self::EU_FILE_UPLOAD_URL;
 
@@ -959,10 +981,11 @@ class Core extends ApsisLogHelper
 
     /**
      * @param string $scope
-     *
      * @param int $scopeId
+     *
+     * @return void
      */
-    public function disableProfileSync(string $scope, int $scopeId)
+    public function disableProfileSync(string $scope, int $scopeId): void
     {
         $this->saveConfigValue(
             ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENABLED,
@@ -986,10 +1009,15 @@ class Core extends ApsisLogHelper
      * @param string $scope
      * @param string $scopeId
      *
-     * @return string
+     * @return bool|string
      */
-    public function isApiCredentialsValid(string $id, string $secret, string $region, string $scope, string $scopeId)
-    {
+    public function isApiCredentialsValid(
+        string $id,
+        string $secret,
+        string $region,
+        string $scope,
+        string $scopeId
+    ) {
         try {
             //Validate api host is reachable
             try {
@@ -1022,8 +1050,13 @@ class Core extends ApsisLogHelper
      *
      * @return bool|string
      */
-    private function validateApiCredentials(string $id, string $secret, string $region, string $scope, string $scopeId)
-    {
+    private function validateApiCredentials(
+        string $id,
+        string $secret,
+        string $region,
+        string $scope,
+        string $scopeId
+    ) {
         try {
             $client = $this->getApiClient($scope, $scopeId, true, $region, $id, $secret);
 
@@ -1033,7 +1066,7 @@ class Core extends ApsisLogHelper
                 $keySpaces = $client->getKeySpaces();
                 if (is_object($keySpaces) && isset($keySpaces->items)) {
                     foreach ($keySpaces->items as $item) {
-                        if (strpos($item->discriminator, 'magento') !== false) {
+                        if (str_contains($item->discriminator, 'magento')) {
                             return true;
                         }
                     }
@@ -1051,7 +1084,7 @@ class Core extends ApsisLogHelper
      *
      * @return bool
      */
-    public function isInheritConfig(array $groups)
+    public function isInheritConfig(array $groups): bool
     {
         $isInheritId = isset($groups['oauth']['fields']['id']['inherit']);
         $isInheritSecret = isset($groups['oauth']['fields']['secret']['inherit']);
@@ -1064,7 +1097,7 @@ class Core extends ApsisLogHelper
      *
      * @return bool
      */
-    public function isFrontUrlSecure(int $storeId)
+    public function isFrontUrlSecure(int $storeId): bool
     {
         try {
             $store = $this->getStore($storeId);
@@ -1080,7 +1113,7 @@ class Core extends ApsisLogHelper
      *
      * @return bool
      */
-    public function isCurrentlySecure(int $storeId)
+    public function isCurrentlySecure(int $storeId): bool
     {
         try {
             $store = $this->getStore($storeId);
@@ -1096,7 +1129,7 @@ class Core extends ApsisLogHelper
      *
      * @return bool
      */
-    public function isSecureUrl(int $storeId)
+    public function isSecureUrl(int $storeId): bool
     {
         try {
             $store = $this->getStore($storeId);
@@ -1112,7 +1145,7 @@ class Core extends ApsisLogHelper
      *
      * @return string
      */
-    public function getBaseUrl(int $storeId)
+    public function getBaseUrl(int $storeId): string
     {
         try {
             $store = $this->getStore($storeId);

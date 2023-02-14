@@ -18,7 +18,7 @@ class Data extends EventData implements EventDataInterface
     /**
      * @var VoteCollectionFactory
      */
-    private $voteCollectionFactory;
+    private VoteCollectionFactory $voteCollectionFactory;
 
     /**
      * Data constructor.
@@ -43,7 +43,7 @@ class Data extends EventData implements EventDataInterface
      *
      * @return array
      */
-    public function getDataArr(Review $reviewObject, MagentoProduct $product, ApsisCoreHelper $apsisCoreHelper)
+    public function getDataArr(Review $reviewObject, MagentoProduct $product, ApsisCoreHelper $apsisCoreHelper): array
     {
         try {
             $this->apsisCoreHelper = $apsisCoreHelper;
@@ -56,9 +56,11 @@ class Data extends EventData implements EventDataInterface
     }
 
     /**
-     * @inheritdoc
+     * @param AbstractModel|Review $model
+     *
+     * @return array
      */
-    protected function getProcessedDataArr(AbstractModel $model)
+    protected function getProcessedDataArr(AbstractModel|Review $model): array
     {
         try {
             $voteCollection = $this->voteCollectionFactory->create()->setReviewFilter($model->getReviewId());

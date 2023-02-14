@@ -4,37 +4,38 @@ namespace Apsis\One\Controller\Abandoned;
 
 use Apsis\One\Model\Service\Cart as ApsisCartHelper;
 use Apsis\One\Model\Service\Log;
-use Throwable;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\ResponseInterface;
+use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\DataObject;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
+use Throwable;
 
 class Checkout extends Action
 {
     /**
      * @var CartRepositoryInterface
      */
-    private $cartRepository;
+    private CartRepositoryInterface $cartRepository;
 
     /**
      * @var CheckoutSession
      */
-    private $checkoutSession;
+    private CheckoutSession $checkoutSession;
 
     /**
      * @var Log
      */
-    private $log;
+    private Log $log;
 
     /**
      * @var ApsisCartHelper
      */
-    private $apsisCartHelper;
+    private ApsisCartHelper $apsisCartHelper;
 
     /**
      * Checkout constructor.
@@ -92,7 +93,7 @@ class Checkout extends Action
      *
      * @return ResponseInterface
      */
-    private function handleCartRebuildRequest(Quote $quoteModel, DataObject $ac)
+    private function handleCartRebuildRequest(Quote $quoteModel, DataObject $ac): ResponseInterface
     {
         try {
             $quoteModel->setIsActive(1)

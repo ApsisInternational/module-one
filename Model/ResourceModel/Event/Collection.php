@@ -12,13 +12,9 @@ class Collection extends AbstractCollection
     /**
      * @inheritdoc
      */
-    protected $_idFieldName = 'id';
-
-    /**
-     * @inheritdoc
-     */
     public function _construct()
     {
+        $this->_idFieldName = 'id';
         $this->_init(Event::class, EventResource::class);
     }
 
@@ -28,7 +24,7 @@ class Collection extends AbstractCollection
      *
      * @return Collection
      */
-    public function getPendingEventsByStore(string $storeId, int $syncLimit)
+    public function getPendingEventsByStore(string $storeId, int $syncLimit): Collection
     {
         return $this->addFieldToSelect('*')
             ->addFieldToFilter('status', Profile::SYNC_STATUS_PENDING)

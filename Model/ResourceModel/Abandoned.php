@@ -23,7 +23,7 @@ class Abandoned extends AbstractDb implements ResourceInterface
      *
      * @return int
      */
-    public function insertAbandonedCarts(array $carts, ApsisCoreHelper $apsisCoreHelper)
+    public function insertAbandonedCarts(array $carts, ApsisCoreHelper $apsisCoreHelper): int
     {
         try {
             $write = $this->getConnection();
@@ -37,7 +37,7 @@ class Abandoned extends AbstractDb implements ResourceInterface
     /**
      * @inheritdoc
      */
-    public function truncateTable(ApsisLogHelper $apsisLogHelper)
+    public function truncateTable(ApsisLogHelper $apsisLogHelper): bool
     {
         try {
             $this->getConnection()->truncateTable($this->getMainTable());
@@ -51,7 +51,7 @@ class Abandoned extends AbstractDb implements ResourceInterface
     /**
      * @inheritdoc
      */
-    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper)
+    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper): void
     {
         try {
             $status = $this->getConnection()->delete(

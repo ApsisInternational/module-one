@@ -15,22 +15,22 @@ class Log
     /**
      * @var ScopeConfigInterface
      */
-    protected $scopeConfig;
+    protected ScopeConfigInterface $scopeConfig;
 
     /**
      * @var Logger
      */
-    private $logger;
+    private Logger $logger;
 
     /**
      * @var ResourceInterface
      */
-    private $moduleResource;
+    private ResourceInterface $moduleResource;
 
     /**
      * @var ModuleListInterface
      */
-    private $moduleList;
+    private ModuleListInterface $moduleList;
 
     /**
      * Log constructor.
@@ -55,8 +55,10 @@ class Log
     /**
      * @param string $message
      * @param array $extra
+     *
+     * @return void
      */
-    public function log(string $message, array $extra = [])
+    public function log(string $message, array $extra = []): void
     {
         $this->logger->info($this->addModuleVersionToMessage("Message : $message"), $extra);
     }
@@ -65,8 +67,10 @@ class Log
      * @param string $message
      * @param array $response
      * @param array $extra
+     *
+     * @return void
      */
-    public function debug(string $message, array $response = [], array $extra = [])
+    public function debug(string $message, array $response = [], array $extra = []): void
     {
         $this->logger->debug($this->getStringForLog(['Message' => $message, 'Information' => $response]), $extra);
     }
@@ -75,8 +79,10 @@ class Log
      * @param string $classMethodName
      * @param Throwable $e
      * @param array $extra
+     *
+     * @return void
      */
-    public function logError(string $classMethodName, Throwable $e, array $extra = [])
+    public function logError(string $classMethodName, Throwable $e, array $extra = []): void
     {
         $info = [
             'Method' => $classMethodName,
@@ -89,8 +95,10 @@ class Log
     /**
      * @param string $message
      * @param array $extra
+     *
+     * @return void
      */
-    public function error(string $message, array $extra = [])
+    public function error(string $message, array $extra = []): void
     {
         $this->logger->error($this->addModuleVersionToMessage($message), $extra);
     }
@@ -101,7 +109,7 @@ class Log
      *
      * @return string
      */
-    private function getStringForLog(array $info)
+    private function getStringForLog(array $info): string
     {
         return stripcslashes($this->addModuleVersionToMessage(json_encode($info, JSON_PRETTY_PRINT)));
     }
@@ -111,7 +119,7 @@ class Log
      *
      * @return string
      */
-    private function addModuleVersionToMessage(string $message)
+    private function addModuleVersionToMessage(string $message): string
     {
         return '(Module v' . $this->getCurrentVersion() . ') ' . $message;
     }
@@ -121,7 +129,7 @@ class Log
      *
      * @return string|bool
      */
-    public function serialize($data)
+    public function serialize(mixed $data)
     {
         try {
             return json_encode($data);
@@ -134,9 +142,9 @@ class Log
     /**
      * @param string $string
      *
-     * @return array|bool|float|int|mixed|string|null|object
+     * @return mixed
      */
-    public function unserialize(string $string)
+    public function unserialize(string $string): mixed
     {
         try {
             return json_decode($string);
@@ -149,8 +157,10 @@ class Log
     /**
      * Invalidate cache by type
      * Clean scopeCodeResolver
+     *
+     * @return void
      */
-    public function cleanCache()
+    public function cleanCache(): void
     {
         try {
             $this->scopeConfig->clean();
@@ -162,7 +172,7 @@ class Log
     /**
      * @return string
      */
-    public function getCurrentVersion()
+    public function getCurrentVersion(): string
     {
         try {
             $version = (string) $this->moduleResource->getDbVersion('Apsis_One');

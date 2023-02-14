@@ -18,7 +18,7 @@ class Config
 
     const CONFIG_PATHS_SYNCS = [
         self::SYNC_SETTING_CUSTOMER_ENABLED,
-        self::SYNC_SETTING_SUBSCRIBER_ENABLED.
+        self::SYNC_SETTING_SUBSCRIBER_ENABLED .
         self::SYNC_SETTING_SUBSCRIBER_TOPIC,
         self::SYNC_SETTING_ADDITIONAL_TOPIC
     ];
@@ -162,7 +162,7 @@ class Config
     /**
      * @var ScopeConfigInterface
      */
-    private $scopeConfig;
+    private ScopeConfigInterface $scopeConfig;
 
     /**
      * Config constructor.
@@ -180,7 +180,7 @@ class Config
      *
      * @return array
      */
-    public function getSubscriberAttributeMapping(StoreInterface $store, bool $withCommon = true)
+    public function getSubscriberAttributeMapping(StoreInterface $store, bool $withCommon = true): array
     {
         $subscriberMapping = $this->getConfigMappingsByPath($store, self::MAPPINGS_SUBSCRIBER_GROUP);
         if ($withCommon) {
@@ -196,7 +196,7 @@ class Config
      *
      * @return array
      */
-    public function getCustomerAttributeMapping(StoreInterface $store, bool $withCommon = true)
+    public function getCustomerAttributeMapping(StoreInterface $store, bool $withCommon = true): array
     {
         $customerMapping = $this->getConfigMappingsByPath($store, self::MAPPINGS_CUSTOMER_GROUP);
         if ($withCommon) {
@@ -208,9 +208,10 @@ class Config
 
     /**
      * @param StoreInterface $store
+     *
      * @return array
      */
-    private function getCommonAttributeMapping(StoreInterface $store)
+    private function getCommonAttributeMapping(StoreInterface $store): array
     {
         return $this->getConfigMappingsByPath($store, self::MAPPINGS_CUSTOMER_SUBSCRIBER_GROUP);
     }
@@ -218,9 +219,10 @@ class Config
     /**
      * @param StoreInterface $store
      * @param string $path
+     *
      * @return array
      */
-    private function getConfigMappingsByPath(StoreInterface $store, $path)
+    private function getConfigMappingsByPath(StoreInterface $store, string $path): array
     {
         $mapping = $this->scopeConfig->getValue(
             $path,
@@ -253,7 +255,7 @@ class Config
         array $attributesArrWithVersionId,
         array $topicsMapping = [],
         string $consentType = ''
-    ) {
+    ): array {
         $attributeMappings = [];
         foreach ($mappings as $key => $mapping) {
             if (isset($attributesArrWithVersionId[$mapping])) {

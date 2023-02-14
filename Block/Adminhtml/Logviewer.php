@@ -18,12 +18,12 @@ class Logviewer extends Container
     /**
      * @var Log
      */
-    private $logHelper;
+    private Log $logHelper;
 
     /**
      * @var File
      */
-    public $file;
+    public File $file;
 
     /**
      * @param Context $context
@@ -42,7 +42,7 @@ class Logviewer extends Container
     /**
      * @return string
      */
-    public function getFileContent()
+    public function getFileContent(): string
     {
         try {
             return $this->file->getLogFileContent();

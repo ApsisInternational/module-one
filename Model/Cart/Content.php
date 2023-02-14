@@ -3,36 +3,36 @@
 namespace Apsis\One\Model\Cart;
 
 use Apsis\One\Model\Events\Historical\EventData;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Service\Product as ProductServiceProvider;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product;
-use Magento\Framework\Model\AbstractModel;
-use Throwable;
 use Magento\Framework\App\Area;
+use Magento\Framework\Model\AbstractModel;
+use Magento\Quote\Api\CartTotalRepositoryInterface;
+use Magento\Quote\Model\Quote;
+use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\Quote\Item;
 use Magento\Store\Model\App\EmulationFactory;
-use Magento\Quote\Model\Quote;
-use Magento\Quote\Api\CartTotalRepositoryInterface;
-use Magento\Quote\Model\Quote\Address;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Service\Date as ApsisDateHelper;
+use Throwable;
 
 class Content extends EventData
 {
     /**
      * @var EmulationFactory
      */
-    private $emulationFactory;
+    private EmulationFactory $emulationFactory;
 
     /**
      * @var CartTotalRepositoryInterface
      */
-    private $cartTotalRepository;
+    private CartTotalRepositoryInterface $cartTotalRepository;
 
     /**
      * @var ApsisDateHelper
      */
-    private $apsisDateHelper;
+    private ApsisDateHelper $apsisDateHelper;
 
     /**
      * Content constructor.
@@ -63,7 +63,7 @@ class Content extends EventData
      *
      * @return array
      */
-    public function getCartData(Quote $quoteModel, ApsisCoreHelper $apsisCoreHelper)
+    public function getCartData(Quote $quoteModel, ApsisCoreHelper $apsisCoreHelper): array
     {
         $cartData = [];
         $this->apsisCoreHelper = $apsisCoreHelper;
@@ -84,7 +84,7 @@ class Content extends EventData
     /**
      * @inheritdoc
      */
-    protected function getProcessedDataArr(AbstractModel $model)
+    protected function getProcessedDataArr(AbstractModel $model): array
     {
         $cartData = [];
 
@@ -104,7 +104,7 @@ class Content extends EventData
      *
      * @return array
      */
-    private function getItemData(array $quoteItems)
+    private function getItemData(array $quoteItems): array
     {
         try {
             $itemsData = [];
@@ -125,7 +125,7 @@ class Content extends EventData
      *
      * @return array
      */
-    private function getMainCartData(Quote $quoteModel)
+    private function getMainCartData(Quote $quoteModel): array
     {
         try {
             $totals = $this->cartTotalRepository->get($quoteModel->getId());
@@ -163,7 +163,7 @@ class Content extends EventData
      *
      * @return array
      */
-    private function getAddress(Address $address)
+    private function getAddress(Address $address): array
     {
         try {
             return [
@@ -192,7 +192,7 @@ class Content extends EventData
      *
      * @return array
      */
-    private function getCustomerInformation(Quote $quoteModel)
+    private function getCustomerInformation(Quote $quoteModel): array
     {
         try {
             return [
@@ -216,7 +216,7 @@ class Content extends EventData
      *
      * @return array
      */
-    private function getItemsData(Item $quoteItem)
+    private function getItemsData(Item $quoteItem): array
     {
         try {
             if ($quoteItem->getProductId()) {
@@ -252,7 +252,7 @@ class Content extends EventData
     /**
      * @return array
      */
-    private function getProductOptions()
+    private function getProductOptions(): array
     {
         $sortedOptions = [];
         try {
@@ -286,7 +286,7 @@ class Content extends EventData
      *
      * @return array
      */
-    private function getConfigurableOptions(array $optionAttributes)
+    private function getConfigurableOptions(array $optionAttributes): array
     {
         $sortedOptions = [];
 
@@ -311,7 +311,7 @@ class Content extends EventData
      *
      * @return array
      */
-    private function getBundleOptions(array $options)
+    private function getBundleOptions(array $options): array
     {
         $sortedOptions = [];
         try {

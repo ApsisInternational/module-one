@@ -14,16 +14,20 @@ class CsrfValidatorSkip
      * @param Closure $proceed
      * @param RequestInterface $request
      * @param ActionInterface $action
+     *
+     * @return void
      */
-    public function aroundValidate($subject, Closure $proceed, $request, $action)
-    {
-        /* Magento 2.1.x, 2.2.x */
+    public function aroundValidate(
+        CsrfValidator $subject,
+        Closure $proceed,
+        RequestInterface $request,
+        ActionInterface $action
+    ): void {
         if ($request->getModuleName() == 'apsis') {
             return;
         }
 
-        /* Magento 2.3.x */
-        if (strpos($request->getOriginalPathInfo(), 'apsis') !== false) {
+        if (str_contains($request->getOriginalPathInfo(), 'apsis')) {
             return;
         }
 

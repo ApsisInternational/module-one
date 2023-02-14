@@ -10,7 +10,7 @@ class OrderStatus implements OptionSourceInterface
     /**
      * @var Status
      */
-    private $status;
+    private Status $status;
 
     /**
      * OrderStatus constructor.
@@ -25,7 +25,7 @@ class OrderStatus implements OptionSourceInterface
     /**
      * @inheritdoc
      */
-    public function toOptionArray()
+    public function toOptionArray(): array
     {
         $options = [['label' => __('-- Please Select --'), 'value' => '0']];
 
@@ -36,7 +36,7 @@ class OrderStatus implements OptionSourceInterface
         }
 
         foreach ($statuses as $status) {
-            $options[] = ['value' => $status['value'], 'label' => __($status['label']),];
+            $options[] = ['value' => $status['value'], 'label' => __($status['label'])];
         }
 
         return $options;

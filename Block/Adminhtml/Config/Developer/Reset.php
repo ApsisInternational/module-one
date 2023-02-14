@@ -2,37 +2,37 @@
 
 namespace Apsis\One\Block\Adminhtml\Config\Developer;
 
-use Throwable;
-use Magento\Backend\Block\Widget\Button;
-use Magento\Config\Block\System\Config\Form\Field;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Magento\Backend\Block\Template\Context;
+use Magento\Backend\Block\Widget\Button;
+use Magento\Config\Block\System\Config\Form\Field;
 use Magento\Framework\App\State;
 use Magento\Framework\Data\Form\Element\AbstractElement;
+use Throwable;
 
 class Reset extends Field
 {
     /**
      * @var ApsisLogHelper
      */
-    private $apsisLogHelper;
+    private ApsisLogHelper $apsisLogHelper;
 
     /**
      * @var string
      */
-    public $buttonLabel = 'Reset';
+    public string $buttonLabel = 'Reset';
 
     /**
      * @var State
      */
-    private $state;
+    private State $state;
 
     /**
      * @param string $buttonLabel
      *
      * @return $this
      */
-    public function setButtonLabel(string $buttonLabel)
+    public function setButtonLabel(string $buttonLabel): static
     {
         $this->buttonLabel = $buttonLabel;
         return $this;

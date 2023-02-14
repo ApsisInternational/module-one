@@ -2,7 +2,7 @@
     "name": "apsis/module-one",
     "description": "APSIS One integration for magento 2",
     "type": "magento2-module",
-    "version": "2.0.8",
+    "version": "2.1.0",
     "license": "MPL-2.0",
     "authors": [
         {
@@ -11,7 +11,7 @@
         }
     ],
     "require": {
-        "php": ">=7.1",
+        "php": ">=8.1",
         "magento/framework": ">=101 <104",
         "magento/module-newsletter": "100.*",
         "magento/module-review": ">=100 <102",
@@ -26,7 +26,6 @@
         "magento/module-customer": ">=100 <104",
         "magento/module-catalog": ">=101 <105",
         "magento/module-quote": ">=100 <103",
-        "magento/magento-composer-installer": "*",
         "giggsey/libphonenumber-for-php": ">=8.12.4"
     },
     "repositories": [

@@ -13,22 +13,17 @@ class Subscriber implements ProfileDataInterface
     /**
      * @var array
      */
-    private $subscriberData = [];
+    private array $subscriberData = [];
 
     /**
      * @var MagentoSubscriber
      */
-    private $subscriber;
+    private MagentoSubscriber $subscriber;
 
     /**
      * @var ApsisDateHelper
      */
-    private $apsisDateHelper;
-
-    /**
-     * @var ApsisCoreHelper
-     */
-    private $apsisCoreHelper;
+    private ApsisDateHelper $apsisDateHelper;
 
     /**
      * Subscriber constructor.
@@ -43,20 +38,22 @@ class Subscriber implements ProfileDataInterface
     /**
      * @inheritdoc
      */
-    public function setModelData(array $mappingHash, AbstractModel $subscriber, ApsisCoreHelper $apsisCoreHelper)
-    {
-        $this->subscriber = $subscriber;
-        $this->apsisCoreHelper = $apsisCoreHelper;
+    public function setModelData(
+        array $mappingHash,
+        AbstractModel|MagentoSubscriber $model,
+        ApsisCoreHelper $apsisCoreHelper
+    ): static {
+        $this->subscriber = $model;
 
         foreach ($mappingHash as $key) {
             $function = 'get';
-            $exploded = explode('_', $key);
+            $exploded = explode('_', (string) $key);
 
             foreach ($exploded as $one) {
                 $function .= ucfirst($one);
             }
 
-            $this->subscriberData[$key] = call_user_func(['self', $function]);
+            $this->subscriberData[(string) $key] = call_user_func(['self', $function]);
         }
 
         return $this;
@@ -68,7 +65,7 @@ class Subscriber implements ProfileDataInterface
      *
      * @return $this
      */
-    public function setConsentTopicData(array $topics, int $consent)
+    public function setConsentTopicData(array $topics, int $consent): static
     {
         foreach ($topics as $topic) {
             $this->subscriberData[$topic] = $consent;
@@ -79,7 +76,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @inheritdoc
      */
-    public function toCSVArray()
+    public function toCSVArray(): array
     {
         return array_values($this->subscriberData);
     }
@@ -87,7 +84,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getProfileKey()
+    private function getProfileKey(): string
     {
         return (string) $this->subscriber->getProfileKey();
     }
@@ -95,7 +92,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getIntegrationUid()
+    private function getIntegrationUid(): string
     {
         return (string) $this->subscriber->getIntegrationUid();
     }
@@ -103,7 +100,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getEmail()
+    private function getEmail(): string
     {
         return (string) $this->subscriber->getEmail();
     }
@@ -119,7 +116,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getStoreName()
+    private function getStoreName(): string
     {
         return (string) $this->subscriber->getStoreName();
     }
@@ -135,7 +132,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getWebsiteName()
+    private function getWebsiteName(): string
     {
         return (string) $this->subscriber->getWebsiteName();
     }
@@ -151,7 +148,7 @@ class Subscriber implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getSubscriberStatus()
+    private function getSubscriberStatus(): string
     {
         if ((int) $this->subscriber->getSubscriberStatus() === MagentoSubscriber::STATUS_SUBSCRIBED) {
             $status = 'subscribed';

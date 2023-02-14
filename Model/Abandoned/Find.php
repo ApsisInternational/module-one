@@ -13,7 +13,7 @@ class Find implements SyncInterface
     /**
      * @var AbandonedSub
      */
-    private $abandonedSub;
+    private AbandonedSub $abandonedSub;
 
     /**
      * Find constructor.
@@ -27,8 +27,10 @@ class Find implements SyncInterface
 
     /**
      * @param ApsisCoreHelper $apsisCoreHelper
+     *
+     * @return void
      */
-    public function process(ApsisCoreHelper $apsisCoreHelper)
+    public function process(ApsisCoreHelper $apsisCoreHelper): void
     {
         try {
             $stores = $apsisCoreHelper->getStores();

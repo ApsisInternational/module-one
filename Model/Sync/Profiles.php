@@ -4,28 +4,28 @@ namespace Apsis\One\Model\Sync;
 
 use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Sync\Profiles\Subscribers;
-use Apsis\One\Model\Sync\Profiles\Customers;
 use Apsis\One\Model\Sync\Profiles\Batch;
-use Throwable;
+use Apsis\One\Model\Sync\Profiles\Customers;
+use Apsis\One\Model\Sync\Profiles\Subscribers;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class Profiles implements SyncInterface
 {
     /**
      * @var Subscribers
      */
-    private $subscribers;
+    private Subscribers $subscribers;
 
     /**
      * @var Customers
      */
-    private $customers;
+    private Customers $customers;
 
     /**
      * @var Batch
      */
-    private $batch;
+    private Batch $batch;
 
     /**
      * Profiles constructor.
@@ -47,11 +47,10 @@ class Profiles implements SyncInterface
     /**
      * @inheritdoc
      */
-    public function process(ApsisCoreHelper $apsisCoreHelper)
+    public function process(ApsisCoreHelper $apsisCoreHelper): void
     {
         foreach ($apsisCoreHelper->getStores() as $store) {
             try {
-
                 $account = $apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
                 if (! $account) {
                     continue;
@@ -75,12 +74,10 @@ class Profiles implements SyncInterface
                     $this->customers->processForStore($store, $apsisCoreHelper);
                 }
 
-
                 //Start sync process for batch items (type Subscribers & Customers) in all states.
                 if ($subscriberSync || $customerSync) {
                     $this->batch->processForStore($store, $apsisCoreHelper);
                 }
-
             } catch (Throwable $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);
                 $apsisCoreHelper->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());

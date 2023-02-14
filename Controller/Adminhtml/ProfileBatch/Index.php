@@ -19,7 +19,7 @@ class Index extends AbstractAction
     /**
      * @var PageFactory
      */
-    private $resultPageFactory;
+    private PageFactory $resultPageFactory;
 
     /**
      * Index constructor.
@@ -34,7 +34,7 @@ class Index extends AbstractAction
     }
 
     /**
-     * @inheritdoc
+     * @return Page
      */
     public function execute()
     {

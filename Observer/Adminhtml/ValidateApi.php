@@ -17,22 +17,22 @@ class ValidateApi implements ObserverInterface
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var ManagerInterface
      */
-    private $messageManager;
+    private ManagerInterface $messageManager;
 
     /**
      * @var RequestInterface
      */
-    private $request;
+    private RequestInterface $request;
 
     /**
      * @var Registry
      */
-    protected $registry;
+    protected Registry $registry;
 
     /**
      * ValidateApi constructor.
@@ -66,7 +66,6 @@ class ValidateApi implements ObserverInterface
 
             //Need to remove toke configs for current context if set to inherit parent's context.
             if ($this->apsisCoreHelper->isInheritConfig($groups)) {
-
                 if (in_array($scope['context_scope'], [ScopeInterface::SCOPE_STORES, ScopeInterface::SCOPE_WEBSITES])) {
                     $this->disableAccountAndRemoveConfig($scope, true);
                 }
@@ -91,8 +90,10 @@ class ValidateApi implements ObserverInterface
     /**
      * @param array $scope
      * @param bool $isRemoveOnlyTokenConfig
+     *
+     * @return void
      */
-    private function disableAccountAndRemoveConfig(array $scope, bool $isRemoveOnlyTokenConfig = false)
+    private function disableAccountAndRemoveConfig(array $scope, bool $isRemoveOnlyTokenConfig = false): void
     {
         if ($isRemoveOnlyTokenConfig) {
             $this->apsisCoreHelper->removeTokenConfig(

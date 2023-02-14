@@ -2,31 +2,31 @@
 
 namespace Apsis\One\Model\Events\Historical;
 
-use Apsis\One\Model\Events\Historical\Event as HistoricalEvent;
 use Apsis\One\Model\Event;
+use Apsis\One\Model\Events\Historical\Event as HistoricalEvent;
 use Apsis\One\Model\Events\Historical\Wishlist\Data as WishlistEventData;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\ResourceModel\Profile\Collection as ProfileCollection;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Throwable;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Store\Api\Data\StoreInterface;
+use Magento\Wishlist\Model\Item as MagentoWishlistItem;
 use Magento\Wishlist\Model\ResourceModel\Item\Collection as WishlistItemCollection;
 use Magento\Wishlist\Model\ResourceModel\Item\CollectionFactory as WishlistItemCollectionFactory;
 use Magento\Wishlist\Model\ResourceModel\Wishlist\CollectionFactory as WishlistCollectionFactory;
-use Magento\Wishlist\Model\Item as MagentoWishlistItem;
+use Throwable;
 
 class Wishlist extends HistoricalEvent
 {
     /**
      * @var WishlistItemCollectionFactory
      */
-    private $wishlistItemCollectionFactory;
+    private WishlistItemCollectionFactory $wishlistItemCollectionFactory;
 
     /**
      * @var WishlistCollectionFactory
      */
-    private $wishlistCollectionFactory;
+    private WishlistCollectionFactory $wishlistCollectionFactory;
 
     /**
      * Wishlist constructor.
@@ -60,7 +60,7 @@ class Wishlist extends HistoricalEvent
         ProfileCollection $profileCollection,
         array $duration,
         array $profileCollectionArray
-    ) {
+    ): void {
         try {
             if (empty($profileCollectionArray)) {
                 return;
@@ -112,7 +112,7 @@ class Wishlist extends HistoricalEvent
      *
      * @return array
      */
-    private function getWishlistCollection(array $customerIds, ApsisCoreHelper $apsisCoreHelper)
+    private function getWishlistCollection(array $customerIds, ApsisCoreHelper $apsisCoreHelper): array
     {
         $collectionArray = [];
 
@@ -179,7 +179,7 @@ class Wishlist extends HistoricalEvent
         array $profileCollectionArray,
         ApsisCoreHelper $apsisCoreHelper,
         StoreInterface $store
-    ) {
+    ): array {
         $eventsToRegister = [];
 
         /** @var  MagentoWishlistItem $wishlistItem */

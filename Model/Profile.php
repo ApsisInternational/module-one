@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Model;
 
-use Apsis\One\Model\Sql\ExpressionFactory;
+use Magento\Framework\DB\Sql\ExpressionFactory;
 use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Model\AbstractModel;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
@@ -80,22 +80,22 @@ class Profile extends AbstractModel
     /**
      * @var DateTime
      */
-    private $dateTime;
+    private DateTime $dateTime;
 
     /**
      * @var ExpressionFactory
      */
-    private $expressionFactory;
+    private ExpressionFactory $expressionFactory;
 
     /**
      * @var Log
      */
-    private $logger;
+    private Log $logger;
 
     /**
      * @var ProfileService
      */
-    private $profileService;
+    private ProfileService $profileService;
 
     /**
      * Subscriber constructor.
@@ -143,7 +143,7 @@ class Profile extends AbstractModel
     }
 
     /**
-     * @inheritdoc
+     * @return Profile
      */
     public function afterDelete()
     {
@@ -169,7 +169,7 @@ class Profile extends AbstractModel
     }
 
     /**
-     * @inheritdoc
+     * @return $this
      */
     public function beforeSave()
     {

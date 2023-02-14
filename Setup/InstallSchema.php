@@ -15,7 +15,7 @@ class InstallSchema implements InstallSchemaInterface
     /**
      * @var ApsisLogHelper
      */
-    private $logHelper;
+    private ApsisLogHelper $logHelper;
 
     /**
      * InstallSchema constructor.
@@ -30,6 +30,8 @@ class InstallSchema implements InstallSchemaInterface
     /**
      * @param SchemaSetupInterface $setup
      * @param ModuleContextInterface $context
+     *
+     * @return void
      */
     public function install(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {
@@ -56,8 +58,10 @@ class InstallSchema implements InstallSchemaInterface
 
     /**
      * @param SchemaSetupInterface $installer
+     *
+     * @return void
      */
-    private function createApsisAbandonedTable(SchemaSetupInterface $installer)
+    private function createApsisAbandonedTable(SchemaSetupInterface $installer): void
     {
         try {
             $this->logHelper->log(__METHOD__);
@@ -251,8 +255,10 @@ class InstallSchema implements InstallSchemaInterface
 
     /**
      * @param SchemaSetupInterface $installer
+     *
+     * @return void
      */
-    private function createApsisEventTable(SchemaSetupInterface $installer)
+    private function createApsisEventTable(SchemaSetupInterface $installer): void
     {
         try {
             $this->logHelper->log(__METHOD__);
@@ -456,8 +462,10 @@ class InstallSchema implements InstallSchemaInterface
 
     /**
      * @param SchemaSetupInterface $installer
+     *
+     * @return void
      */
-    private function createApsisProfileBatchTable(SchemaSetupInterface $installer)
+    private function createApsisProfileBatchTable(SchemaSetupInterface $installer): void
     {
         try {
             $this->logHelper->log(__METHOD__);
@@ -631,8 +639,10 @@ class InstallSchema implements InstallSchemaInterface
 
     /**
      * @param SchemaSetupInterface $installer
+     *
+     * @return void
      */
-    private function createApsisProfileTable(SchemaSetupInterface $installer)
+    private function createApsisProfileTable(SchemaSetupInterface $installer): void
     {
         try {
             $this->logHelper->log(__METHOD__);
@@ -804,8 +814,10 @@ class InstallSchema implements InstallSchemaInterface
     /**
      * @param SchemaSetupInterface $installer
      * @param string $tableName
+     *
+     * @return void
      */
-    private function dropTableIfExists(SchemaSetupInterface $installer, string $tableName)
+    private function dropTableIfExists(SchemaSetupInterface $installer, string $tableName): void
     {
         try {
             $tableName = $installer->getTable($tableName);

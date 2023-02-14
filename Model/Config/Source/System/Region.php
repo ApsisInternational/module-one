@@ -16,7 +16,7 @@ class Region implements OptionSourceInterface
     /**
      * @inheritdoc
      */
-    public function toOptionArray()
+    public function toOptionArray(): array
     {
         $options = [
             ['value' => '', 'label' => __('Please select region')],

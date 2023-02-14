@@ -2,27 +2,27 @@
 
 namespace Apsis\One\Model\ResourceModel;
 
+use Apsis\One\Model\Event as EventModel;
 use Apsis\One\Model\Profile as ApsisProfile;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Throwable;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Magento\Framework\Model\ResourceModel\Db\Context;
 use Magento\Framework\Stdlib\DateTime;
-use Apsis\One\Model\Event as EventModel;
+use Throwable;
 
 class Event extends AbstractDb implements ResourceInterface
 {
     /**
      * @var DateTime
      */
-    private $dateTime;
+    private DateTime $dateTime;
 
     /**
      * @var ApsisDateHelper
      */
-    private $apsisDateHelper;
+    private ApsisDateHelper $apsisDateHelper;
 
     /**
      * Event constructor.
@@ -57,7 +57,7 @@ class Event extends AbstractDb implements ResourceInterface
      *
      * @return int
      */
-    public function insertEvents(array $events, ApsisCoreHelper $apsisCoreHelper)
+    public function insertEvents(array $events, ApsisCoreHelper $apsisCoreHelper): int
     {
         try {
             $write = $this->getConnection();
@@ -75,7 +75,7 @@ class Event extends AbstractDb implements ResourceInterface
      *
      * @return int
      */
-    public function updateEventsEmail(string $oldEmail, string $newEmail, ApsisCoreHelper $apsisCoreHelper)
+    public function updateEventsEmail(string $oldEmail, string $newEmail, ApsisCoreHelper $apsisCoreHelper): int
     {
         try {
             $write = $this->getConnection();
@@ -98,7 +98,7 @@ class Event extends AbstractDb implements ResourceInterface
      *
      * @return int
      */
-    public function updateSyncStatus(array $ids, int $status, ApsisCoreHelper $apsisCoreHelper, string $msg = '')
+    public function updateSyncStatus(array $ids, int $status, ApsisCoreHelper $apsisCoreHelper, string $msg = ''): int
     {
         if (empty($ids)) {
             return 0;
@@ -125,7 +125,7 @@ class Event extends AbstractDb implements ResourceInterface
     /**
      * @inheritdoc
      */
-    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper)
+    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper): void
     {
         // Not needed for profiles
     }
@@ -133,7 +133,7 @@ class Event extends AbstractDb implements ResourceInterface
     /**
      * @inheritdoc
      */
-    public function truncateTable(ApsisLogHelper $apsisLogHelper)
+    public function truncateTable(ApsisLogHelper $apsisLogHelper): bool
     {
         try {
             $this->getConnection()->truncateTable($this->getMainTable());
@@ -157,7 +157,7 @@ class Event extends AbstractDb implements ResourceInterface
         array $storeIds = [],
         array $ids = [],
         array $where = []
-    ) {
+    ): int {
         try {
             if (! empty($storeIds)) {
                 $where["store_id IN (?)"] = $storeIds;
@@ -195,7 +195,7 @@ class Event extends AbstractDb implements ResourceInterface
         int $configDuration,
         int $eventType,
         array $storeIds
-    ) {
+    ): int {
         try {
             $period = $this->getPeriod($apsisCoreHelper, $configDuration);
             if (empty($period)) {
@@ -229,7 +229,7 @@ class Event extends AbstractDb implements ResourceInterface
      *
      * @return array
      */
-    private function getPeriod(ApsisCoreHelper $apsisCoreHelper, int $configDuration)
+    private function getPeriod(ApsisCoreHelper $apsisCoreHelper, int $configDuration): array
     {
         try {
             $to = $this->getToDatestamp($apsisCoreHelper);
@@ -243,7 +243,6 @@ class Event extends AbstractDb implements ResourceInterface
             }
 
             return ['from' => $from, 'to' => $to];
-
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];
@@ -256,13 +255,12 @@ class Event extends AbstractDb implements ResourceInterface
      *
      * @return string
      */
-    private function getFromDatestamp(int $pastEventsDuration, ApsisCoreHelper $apsisCoreHelper)
+    private function getFromDatestamp(int $pastEventsDuration, ApsisCoreHelper $apsisCoreHelper): string
     {
         try {
             return $this->apsisDateHelper->getDateTimeFromTime()
                 ->sub($this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('P%sM', $pastEventsDuration)))
                 ->format('Y-m-d H:i:s');
-
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return '';
@@ -274,7 +272,7 @@ class Event extends AbstractDb implements ResourceInterface
      *
      * @return string
      */
-    private function getToDatestamp(ApsisCoreHelper $apsisCoreHelper)
+    private function getToDatestamp(ApsisCoreHelper $apsisCoreHelper): string
     {
         try {
             return $this->apsisDateHelper->getDateTimeFromTime()->format('Y-m-d H:i:s');

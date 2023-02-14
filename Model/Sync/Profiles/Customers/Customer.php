@@ -20,42 +20,42 @@ class Customer implements ProfileDataInterface
     /**
      * @var array
      */
-    private $customerData = [];
+    private array $customerData = [];
 
     /**
      * @var MagentoCustomer
      */
-    private $customer;
+    private MagentoCustomer $customer;
 
     /**
      * @var ApsisCoreHelper
      */
-    private $apsisCoreHelper;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
      * @var ReviewCollectionFactory
      */
-    private $reviewCollectionFactory;
+    private ReviewCollectionFactory $reviewCollectionFactory;
 
     /**
      * @var ReviewCollection
      */
-    private $reviewCollection;
+    private ReviewCollection $reviewCollection;
 
     /**
      * @var GroupFactory
      */
-    private $groupFactory;
+    private GroupFactory $groupFactory;
 
     /**
      * @var GroupResource
      */
-    private $groupResource;
+    private GroupResource $groupResource;
 
     /**
      * @var ApsisDateHelper
      */
-    private $apsisDateHelper;
+    private ApsisDateHelper $apsisDateHelper;
 
     /**
      * Customer constructor.
@@ -80,18 +80,21 @@ class Customer implements ProfileDataInterface
     /**
      * @inheritdoc
      */
-    public function setModelData(array $mappingHash, AbstractModel $customer, ApsisCoreHelper $apsisCoreHelper)
-    {
-        $this->customer = $customer;
+    public function setModelData(
+        array $mappingHash,
+        AbstractModel|MagentoCustomer $model,
+        ApsisCoreHelper $apsisCoreHelper
+    ): static {
+        $this->customer = $model;
         $this->apsisCoreHelper = $apsisCoreHelper;
         $this->setReviewCollection();
         foreach ($mappingHash as $key) {
             $function = 'get';
-            $exploded = explode('_', $key);
+            $exploded = explode('_', (string) $key);
             foreach ($exploded as $one) {
                 $function .= ucfirst($one);
             }
-            $this->customerData[$key] = call_user_func(['self', $function]);
+            $this->customerData[(string) $key] = call_user_func(['self', $function]);
         }
         return $this;
     }
@@ -99,21 +102,20 @@ class Customer implements ProfileDataInterface
     /**
      * Customer reviews.
      *
-     * @return $this
+     * @return void
      */
-    private function setReviewCollection()
+    private function setReviewCollection(): void
     {
         $this->reviewCollection = $this->reviewCollectionFactory->create()
             ->addCustomerFilter($this->customer->getId())
             ->addStatusFilter(Review::STATUS_APPROVED)
             ->setOrder('review_id', 'DESC');
-        return $this;
     }
 
     /**
      * @inheritdoc
      */
-    public function toCSVArray()
+    public function toCSVArray(): array
     {
         return array_values($this->customerData);
     }
@@ -121,7 +123,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getProfileKey()
+    private function getProfileKey(): string
     {
         return (string) $this->customer->getProfileKey();
     }
@@ -129,7 +131,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getIntegrationUid()
+    private function getIntegrationUid(): string
     {
         return (string) $this->customer->getIntegrationUid();
     }
@@ -137,7 +139,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getEmail()
+    private function getEmail(): string
     {
         return (string) $this->customer->getEmail();
     }
@@ -153,7 +155,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getStoreName()
+    private function getStoreName(): string
     {
         return (string) $this->customer->getStoreName();
     }
@@ -169,7 +171,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getWebsiteName()
+    private function getWebsiteName(): string
     {
         return (string) $this->customer->getWebsiteName();
     }
@@ -177,7 +179,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getTitle()
+    private function getTitle(): string
     {
         return (string) $this->customer->getPrefix();
     }
@@ -193,7 +195,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getFirstName()
+    private function getFirstName(): string
     {
         return (string) $this->customer->getFirstname();
     }
@@ -201,7 +203,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getLastName()
+    private function getLastName(): string
     {
         return (string) $this->customer->getLastname();
     }
@@ -209,7 +211,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getDob()
+    private function getDob(): string
     {
         return (string) $this->customer->getDob();
     }
@@ -217,7 +219,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getGender()
+    private function getGender(): string
     {
         $genderId = $this->customer->getGender();
         if (is_numeric($genderId)) {
@@ -253,7 +255,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getCustomerGroup()
+    private function getCustomerGroup(): string
     {
         $groupId = $this->customer->getGroupId();
         $groupModel = $this->groupFactory->create();
@@ -291,31 +293,31 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getBillingAddress1()
+    private function getBillingAddress1(): string
     {
         if (empty($this->customer->getBillingStreet())) {
-            return (string) $this->getStreet($this->customer->getShippingStreet(), 1);
+            return (string) $this->getStreet((string) $this->customer->getShippingStreet(), 1);
         }
 
-        return (string) $this->getStreet($this->customer->getBillingStreet(), 1);
+        return (string) $this->getStreet((string) $this->customer->getBillingStreet(), 1);
     }
 
     /**
      * @return string
      */
-    private function getBillingAddress2()
+    private function getBillingAddress2(): string
     {
         if (empty($this->customer->getBillingStreet())) {
-            return (string) $this->getStreet($this->customer->getShippingStreet(), 2);
+            return (string) $this->getStreet((string) $this->customer->getShippingStreet(), 2);
         }
 
-        return (string) $this->getStreet($this->customer->getBillingStreet(), 2);
+        return (string) $this->getStreet((string) $this->customer->getBillingStreet(), 2);
     }
 
     /**
      * @return string
      */
-    private function getBillingCity()
+    private function getBillingCity(): string
     {
         if (empty($this->customer->getBillingCity())) {
             return (string) $this->customer->getShippingCity();
@@ -327,7 +329,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getBillingCountry()
+    private function getBillingCountry(): string
     {
         if (empty($this->customer->getBillingCountryCode())) {
             return (string) $this->customer->getShippingCountryCode();
@@ -339,7 +341,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getBillingState()
+    private function getBillingState(): string
     {
         if (empty($this->customer->getBillingRegion())) {
             return (string) $this->customer->getShippingRegion();
@@ -351,7 +353,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getBillingPostcode()
+    private function getBillingPostcode(): string
     {
         if (empty($this->customer->getBillingPostcode())) {
             return (string) $this->customer->getShippingPostcode();
@@ -381,7 +383,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getBillingCompany()
+    private function getBillingCompany(): string
     {
         if (empty($this->customer->getBillingCompany())) {
             return (string) $this->customer->getShippingCompany();
@@ -393,31 +395,31 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getDeliveryAddress1()
+    private function getDeliveryAddress1(): string
     {
         if (empty($this->customer->getShippingStreet())) {
-            return (string) $this->getStreet($this->customer->getBillingStreet(), 1);
+            return (string) $this->getStreet((string) $this->customer->getBillingStreet(), 1);
         }
 
-        return (string) $this->getStreet($this->customer->getShippingStreet(), 1);
+        return (string) $this->getStreet((string) $this->customer->getShippingStreet(), 1);
     }
 
     /**
      * @return string
      */
-    private function getDeliveryAddress2()
+    private function getDeliveryAddress2(): string
     {
         if (empty($this->customer->getShippingStreet())) {
-            return (string) $this->getStreet($this->customer->getBillingStreet(), 2);
+            return (string) $this->getStreet((string) $this->customer->getBillingStreet(), 2);
         }
 
-        return (string) $this->getStreet($this->customer->getShippingStreet(), 2);
+        return (string) $this->getStreet((string) $this->customer->getShippingStreet(), 2);
     }
 
     /**
      * @return string
      */
-    private function getDeliveryCity()
+    private function getDeliveryCity(): string
     {
         if (empty($this->customer->getShippingCity())) {
             return (string) $this->customer->getBillingCity();
@@ -429,7 +431,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getDeliveryCountry()
+    private function getDeliveryCountry(): string
     {
         if (empty($this->customer->getShippingCountryCode())) {
             return (string) $this->customer->getBillingCountryCode();
@@ -441,7 +443,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getDeliveryState()
+    private function getDeliveryState(): string
     {
         if (empty($this->customer->getShippingRegion())) {
             return (string) $this->customer->getBillingRegion();
@@ -453,7 +455,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getDeliveryPostcode()
+    private function getDeliveryPostcode(): string
     {
         if (empty($this->customer->getShippingPostcode())) {
             return (string) $this->customer->getBillingPostcode();
@@ -483,7 +485,7 @@ class Customer implements ProfileDataInterface
     /**
      * @return string
      */
-    private function getDeliveryCompany()
+    private function getDeliveryCompany(): string
     {
         if (empty($this->customer->getShippingCompany())) {
             return (string) $this->customer->getBillingCompany();
@@ -498,7 +500,7 @@ class Customer implements ProfileDataInterface
      *
      * @return string
      */
-    private function getStreet($street, $line)
+    private function getStreet(string $street, int $line): string
     {
         $street = explode("\n", $street);
         if (isset($street[$line - 1])) {

@@ -795,14 +795,6 @@ class Profile extends AbstractDb implements ResourceInterface
     }
 
     /**
-     * @inheritdoc
-     */
-    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper): void
-    {
-        // Not needed for profiles
-    }
-
-    /**
      * @param ApsisCoreHelper|ApsisLogHelper $apsisHelper
      * @param string $andCondition
      *

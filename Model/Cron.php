@@ -80,34 +80,6 @@ class Cron
     }
 
     /**
-     * Cleanup process
-     *
-     * @return void
-     */
-    public function cleanup(): void
-    {
-        try {
-            $isEnabled = $this->coreHelper->isEnabled(ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 0);
-            if ($this->checkIfJobAlreadyRan('apsis_one_cleanup') || ! $isEnabled) {
-                return;
-            }
-
-            $days = $this->coreHelper->getConfigValue(
-                ApsisConfigHelper::DEVELOPER_SETTING_CLEANUP_AFTER,
-                ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-                0
-            );
-
-            if ($days) {
-                $this->abandonedResource->cleanupRecords($days, $this->coreHelper);
-                $this->profileBatchResource->cleanupRecords($days, $this->coreHelper);
-            }
-        } catch (Throwable $e) {
-            $this->coreHelper->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
      * Sync events
      *
      * @return void

@@ -8,7 +8,7 @@ use Magento\Backend\Block\Template\Context;
 use Apsis\One\Model\Service\Log;
 use Throwable;
 
-class FieldBase extends Field
+class Link extends Field
 {
     /**
      * @var Log
@@ -33,7 +33,13 @@ class FieldBase extends Field
      */
     public function _getElementHtml(AbstractElement $element)
     {
-        $element->setData('readonly', 1)
+        $text = sprintf(
+            '%s%s',
+            $this->generateBaseUrlForDynamicContent(),
+            'apsis/sample/url'
+        );
+        $element->setData('value', $text)
+            ->setData('readonly', 1)
             ->addClass('apsis-copy-helper');
         return parent::_getElementHtml($element);
     }

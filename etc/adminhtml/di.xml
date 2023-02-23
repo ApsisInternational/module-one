@@ -22,11 +22,4 @@
             <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\Profile</argument>
         </arguments>
     </virtualType>
-    <virtualType name="Apsis\One\Ui\Model\ResourceModel\ProfileBatch\Collection"
-                 type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
-        <arguments>
-            <argument name="mainTable" xsi:type="string">apsis_profile_batch</argument>
-            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\ProfileBatch</argument>
-        </arguments>
-    </virtualType>
 </config>

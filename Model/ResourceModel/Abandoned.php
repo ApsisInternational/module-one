@@ -47,22 +47,4 @@ class Abandoned extends AbstractDb implements ResourceInterface
             return false;
         }
     }
-
-    /**
-     * @inheritdoc
-     */
-    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper): void
-    {
-        try {
-            $status = $this->getConnection()->delete(
-                $this->getMainTable(),
-                ["created_at < DATE_SUB(NOW(), INTERVAL ? DAY)" => $day]
-            );
-            if ($status) {
-                $apsisCoreHelper->log(__METHOD__, [$status]);
-            }
-        } catch (Throwable $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e);
-        }
-    }
 }

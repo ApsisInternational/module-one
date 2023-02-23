@@ -3,16 +3,5 @@
       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <head>
         <script src="Apsis_One::js/TextCopyHelper.js"/>
-        <script src="Apsis_One::js/TopicLimiter.js"/>
     </head>
-    <body>
-        <referenceBlock name="after.body.start">
-            <block
-                class="Apsis\One\Block\Adminhtml\Block"
-                name="apsis_config"
-                template="Apsis_One::config.phtml"
-                cacheable="false"
-            />
-        </referenceBlock>
-    </body>
 </page>

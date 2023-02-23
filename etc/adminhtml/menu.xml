@@ -5,8 +5,6 @@
              parent="Magento_Reports::report" resource="Apsis_One::reports"/>
         <add id="Apsis_One::profile" title="Profiles Grid" module="Apsis_One" sortOrder="110"
              action="apsis_one/profile" resource="Apsis_One::profile" parent="Apsis_One::reports"/>
-        <add id="Apsis_One::batch" title="╰┈➤ Batched Profiles" module="Apsis_One" sortOrder="120"
-             action="apsis_one/profilebatch" resource="Apsis_One::batch" parent="Apsis_One::reports"/>
         <add id="Apsis_One::event" title="Events Grid" module="Apsis_One" sortOrder="130"
              action="apsis_one/event" resource="Apsis_One::event" parent="Apsis_One::reports"/>
         <add id="Apsis_One::abandoned" title="Abandoned Carts" module="Apsis_One" sortOrder="140"

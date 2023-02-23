@@ -125,14 +125,6 @@ class Event extends AbstractDb implements ResourceInterface
     /**
      * @inheritdoc
      */
-    public function cleanupRecords(int $day, ApsisCoreHelper $apsisCoreHelper): void
-    {
-        // Not needed for profiles
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function truncateTable(ApsisLogHelper $apsisLogHelper): bool
     {
         try {

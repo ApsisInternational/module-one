@@ -50,10 +50,8 @@ class Link extends Field
     public function generateBaseUrlForDynamicContent(): string
     {
         try {
-            $website = $this->_storeManager->getWebsite($this->_request->getParam('website', 0));
-            $defaultGroup = $website->getDefaultGroup();
-            $store =  (! $defaultGroup) ? null : $defaultGroup->getDefaultStore();
-            return $this->_storeManager->getStore($store)->getBaseUrl();
+            $store =  $this->_storeManager->getStore($this->_request->getParam('store'));
+            return $store->getBaseUrl() . $store->getCode() . '/';
         } catch (Throwable $e) {
             $this->logger->logError(__METHOD__, $e);
             return '';

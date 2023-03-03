@@ -53,60 +53,6 @@ class Collection extends AbstractCollection
     }
 
     /**
-     * @param string $integrationId
-     *
-     * @return DataObject|Profile|bool
-     */
-    public function loadByIntegrationId(string $integrationId)
-    {
-        $collection = $this->addFieldToFilter('integration_uid', $integrationId)
-            ->setPageSize(1);
-
-        if ($collection->getSize()) {
-            return $collection->getFirstItem();
-        }
-
-        return false;
-    }
-
-    /**
-     * @param int $storeId
-     * @param int $syncLimit
-     * @param int $subscriberStatus
-     * @param array $syncStatus
-     *
-     * @return Collection
-     */
-    public function getSubscribersToBatchByStore(
-        int $storeId,
-        int $syncLimit,
-        int $subscriberStatus,
-        array $syncStatus
-    ): Collection {
-        return $this->addFieldToSelect('*')
-            ->addFieldToFilter('subscriber_id', ['notnull' => true])
-            ->addFieldToFilter('subscriber_status', $subscriberStatus)
-            ->addFieldToFilter('subscriber_sync_status', ['in' => $syncStatus])
-            ->addFieldToFilter('subscriber_store_id', $storeId)
-            ->setPageSize($syncLimit);
-    }
-
-    /**
-     * @param int $storeId
-     * @param int $syncLimit
-     *
-     * @return Collection
-     */
-    public function getCustomerToBatchByStore(int $storeId, int $syncLimit): Collection
-    {
-        return $this->addFieldToSelect('*')
-            ->addFieldToFilter('customer_id', ['notnull' => true])
-            ->addFieldToFilter('customer_sync_status', Profile::SYNC_STATUS_PENDING)
-            ->addFieldToFilter('store_id', $storeId)
-            ->setPageSize($syncLimit);
-    }
-
-    /**
      * @param array $ids
      *
      * @return Collection
@@ -124,12 +70,7 @@ class Collection extends AbstractCollection
      */
     public function getProfileCollectionForStore(int $storeId): Collection
     {
-        return $this->addFieldToFilter(
-            ['store_id', 'subscriber_store_id'],
-            [
-                ['eq' => $storeId],
-                ['eq' => $storeId]
-            ]
-        )->addFieldToFilter('email', ['notnull' => true]);
+        return $this->addFieldToFilter('store_id', ['eq' => $storeId])
+            ->addFieldToFilter('email', ['notnull' => true]);
     }
 }

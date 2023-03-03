@@ -23,7 +23,7 @@ class Intervalminute implements OptionSourceInterface
      */
     public function toOptionArray(): array
     {
-        $interval = [['value' => 0, 'label' => __('Disable')]];
+        $interval = [];
 
         foreach ($this->times as $time) {
             $interval[] =  ['value' => $time, 'label' => __($time . ' ' . $this->timeType)];

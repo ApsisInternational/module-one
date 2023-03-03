@@ -68,41 +68,6 @@
                 </item>
             </argument>
         </filters>
-        <massaction name="listing_massaction">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="selectProvider" xsi:type="string">apsis_event_grid.apsis_event_grid.apsis_event_columns.ids</item>
-                    <item name="component" xsi:type="string">Magento_Ui/js/grid/tree-massactions</item>
-                    <item name="indexField" xsi:type="string">id</item>
-                </item>
-            </argument>
-            <action name="delete">
-                <argument name="data" xsi:type="array">
-                    <item name="config" xsi:type="array">
-                        <item name="type" xsi:type="string">delete</item>
-                        <item name="label" xsi:type="string" translate="true">Delete</item>
-                        <item name="url" xsi:type="url" path="*/*/massDelete"/>
-                        <item name="confirm" xsi:type="array">
-                            <item name="title" xsi:type="string" translate="true">Delete items</item>
-                            <item name="message" xsi:type="string" translate="true">This action will only delete record(s) from integration in Magento. Already synced record(s) still remains in APSIS One. Are you sure to delete?</item>
-                        </item>
-                    </item>
-                </argument>
-            </action>
-            <action name="reset">
-                <argument name="data" xsi:type="array">
-                    <item name="config" xsi:type="array">
-                        <item name="type" xsi:type="string">reset</item>
-                        <item name="label" xsi:type="string" translate="true">Reset</item>
-                        <item name="url" xsi:type="url" path="*/*/massReset"/>
-                        <item name="confirm" xsi:type="array">
-                            <item name="title" xsi:type="string" translate="true">Reset items</item>
-                            <item name="message" xsi:type="string" translate="true">This action will reset record(s) to re-sync. If record(s) are already synced to mapped section then there is the possibility of duplicate record(s) in APSIS One. Are you sure to reset event sync?</item>
-                        </item>
-                    </item>
-                </argument>
-            </action>
-        </massaction>
         <paging name="listing_paging">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
@@ -194,7 +159,7 @@
                 </item>
             </argument>
         </column>
-        <column name="status">
+        <column name="sync_status">
             <argument name="data" xsi:type="array">
                 <item name="options" xsi:type="object">Apsis\One\Model\Config\Source\System\EventSyncStatus</item>
                 <item name="config" xsi:type="array">

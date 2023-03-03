@@ -4,8 +4,8 @@ namespace Apsis\One\Block\Adminhtml;
 
 use Apsis\One\Model\Service\Log;
 use Magento\Backend\Block\Widget\Container;
-use Apsis\One\Model\Service\File;
 use Magento\Backend\Block\Widget\Context;
+use Magento\Framework\App\Filesystem\DirectoryList;
 use Throwable;
 
 class Logviewer extends Container
@@ -21,21 +21,21 @@ class Logviewer extends Container
     private Log $logHelper;
 
     /**
-     * @var File
+     * @var DirectoryList
      */
-    public File $file;
+    private DirectoryList $directoryList;
 
     /**
      * @param Context $context
-     * @param File $file
+     * @param DirectoryList $directoryList
      * @param Log $log
      *
      * @param array $data
      */
-    public function __construct(Context $context, File $file, Log $log, array $data = [])
+    public function __construct(Context $context, DirectoryList $directoryList, Log $log, array $data = [])
     {
-        $this->file = $file;
         $this->logHelper = $log;
+        $this->directoryList = $directoryList;
         parent::__construct($context, $data);
     }
 
@@ -45,7 +45,16 @@ class Logviewer extends Container
     public function getFileContent(): string
     {
         try {
-            return $this->file->getLogFileContent();
+            $logFile = $this->directoryList->getPath('log') . DIRECTORY_SEPARATOR . 'apsis_one.log';
+            if (! file_exists($logFile)) {
+                $contents = sprintf('Log file does not exist. File path is %s', $logFile);
+            } elseif (! is_readable($logFile)) {
+                $contents = sprintf('Log file is not readable. File path is %s', $logFile);
+            } else {
+                $size = filesize($logFile);
+                $contents = file_get_contents($logFile, false, null, '-' . $size, 2000000);
+            }
+            return $contents;
         } catch (Throwable $e) {
             $this->logHelper->logError(__METHOD__, $e);
             return $e->getMessage();

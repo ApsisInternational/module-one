@@ -48,7 +48,6 @@ class Carts extends HistoricalEvent
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper,
         ProfileCollection $profileCollection,
-        array $duration,
         array $profileCollectionArray
     ): void {
         try {
@@ -58,7 +57,6 @@ class Carts extends HistoricalEvent
 
             $quoteCollection = $this->getCollectionArray(
                 array_keys($profileCollectionArray),
-                $duration,
                 $store,
                 $apsisCoreHelper
             );
@@ -136,21 +134,18 @@ class Carts extends HistoricalEvent
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param StoreInterface $store
      * @param array $customerIds
-     * @param array $duration
      *
      * @return QuoteCollection|array
      */
     protected function createCollection(
         ApsisCoreHelper $apsisCoreHelper,
         StoreInterface $store,
-        array $customerIds,
-        array $duration
+        array $customerIds
     ) {
         try {
             return $this->quoteCollectionFactory->create()
                 ->addFieldToFilter('main_table.store_id', $store->getId())
-                ->addFieldToFilter('main_table.customer_id', ['in' => $customerIds])
-                ->addFieldToFilter('main_table.created_at', $duration);
+                ->addFieldToFilter('main_table.customer_id', ['in' => $customerIds]);
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];

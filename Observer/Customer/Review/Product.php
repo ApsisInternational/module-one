@@ -3,10 +3,8 @@
 namespace Apsis\One\Observer\Customer\Review;
 
 use Apsis\One\Model\Profile;
-use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Apsis\One\Model\Service\Event;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
@@ -16,7 +14,6 @@ use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Review\Model\Review;
 use Magento\Review\Model\ReviewFactory;
-use Magento\Store\Model\ScopeInterface;
 use Throwable;
 
 class Product implements ObserverInterface
@@ -27,14 +24,9 @@ class Product implements ObserverInterface
     private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
-     * @var ApsisCoreHelper
+     * @var ApsisLogHelper
      */
-    private ApsisCoreHelper $apsisCoreHelper;
-
-    /**
-     * @var ProfileResource
-     */
-    private ProfileResource $profileResource;
+    private ApsisLogHelper $apsisLogHelper;
 
     /**
      * @var ProductRepositoryInterface
@@ -59,8 +51,7 @@ class Product implements ObserverInterface
     /**
      * Product constructor.
      *
-     * @param ApsisCoreHelper $apsisCoreHelper
-     * @param ProfileResource $profileResource
+     * @param ApsisLogHelper $apsisLogHelper
      * @param ProductRepositoryInterface $productRepository
      * @param CustomerRepositoryInterface $customerRepository
      * @param ProfileCollectionFactory $profileCollectionFactory
@@ -68,8 +59,7 @@ class Product implements ObserverInterface
      * @param ReviewFactory $reviewFactory
      */
     public function __construct(
-        ApsisCoreHelper $apsisCoreHelper,
-        ProfileResource $profileResource,
+        ApsisLogHelper $apsisLogHelper,
         ProductRepositoryInterface $productRepository,
         CustomerRepositoryInterface $customerRepository,
         ProfileCollectionFactory $profileCollectionFactory,
@@ -81,8 +71,7 @@ class Product implements ObserverInterface
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->customerRepository = $customerRepository;
         $this->productRepository = $productRepository;
-        $this->profileResource = $profileResource;
-        $this->apsisCoreHelper = $apsisCoreHelper;
+        $this->apsisLogHelper = $apsisLogHelper;
     }
 
     /**
@@ -98,9 +87,11 @@ class Product implements ObserverInterface
             }
 
             $reviewObject = $this->reviewFactory->create()->load($dataObject->getId());
-            if (empty($reviewObject) || ! $reviewObject->getCustomerId() ||
-                ! $reviewObject->getEntityPkValue() || ! $reviewObject->getStoreId() ||
-                ! $this->isOkToProceed($reviewObject->getStoreId() || ! $reviewObject->isApproved())
+            if (empty($reviewObject) ||
+                ! $reviewObject->getCustomerId() ||
+                ! $reviewObject->getEntityPkValue() ||
+                ! $reviewObject->getStoreId() ||
+                ! $reviewObject->isApproved()
             ) {
                 return $this;
             }
@@ -116,30 +107,12 @@ class Product implements ObserverInterface
             $profile = $this->profileCollectionFactory->create()->loadByCustomerId($customer->getId());
             if ($profile) {
                 $this->eventService->registerProductReviewEvent($reviewObject, $product, $profile, $customer);
-                $profile->setCustomerSyncStatus(Profile::SYNC_STATUS_PENDING);
-                $this->profileResource->save($profile);
+                //@todo send profile update
             }
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->apsisLogHelper->logError(__METHOD__, $e);
         }
         return $this;
-    }
-
-    /**
-     * @param int $storeId
-     *
-     * @return bool
-     */
-    private function isOkToProceed(int $storeId): bool
-    {
-        $store = $this->apsisCoreHelper->getStore($storeId);
-        $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getStoreId());
-        $event = (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::EVENTS_CUSTOMER_REVIEW
-        );
-
-        return ($account && $event);
     }
 
     /**
@@ -153,7 +126,7 @@ class Product implements ObserverInterface
         try {
             return $this->productRepository->getById($productId, false, $storeId);
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->apsisLogHelper->logError(__METHOD__, $e);
             return false;
         }
     }

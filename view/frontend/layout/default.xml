@@ -4,11 +4,7 @@
       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
         <referenceBlock name="head.additional">
-            <block ifconfig="apsis_one_accounts/oauth/enabled"
-                   class="Apsis\One\Block\Script"
-                   name="apsis_script"
-                   template="Apsis_One::script.phtml"
-            />
+            <block class="Apsis\One\Block\Script" name="apsis_script" template="Apsis_One::script.phtml"/>
         </referenceBlock>
     </body>
 </page>

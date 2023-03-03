@@ -9,11 +9,11 @@ use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Store\Api\Data\StoreInterface;
 use Apsis\One\Model\Events\Historical\Orders\Data as OrderData;
-use Throwable;
 use Apsis\One\Model\Event;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
 use Magento\Sales\Model\ResourceModel\Order\Collection as OrderCollection;
 use Magento\Sales\Model\Order;
+use Throwable;
 
 class Orders extends HistoricalEvent
 {
@@ -49,7 +49,6 @@ class Orders extends HistoricalEvent
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper,
         ProfileCollection $profileCollection,
-        array $duration,
         array $profileCollectionArray
     ): void {
         try {
@@ -59,7 +58,6 @@ class Orders extends HistoricalEvent
 
             $orderCollection = $this->getCollectionArray(
                 array_keys($profileCollectionArray),
-                $duration,
                 $store,
                 $apsisCoreHelper
             );
@@ -149,14 +147,12 @@ class Orders extends HistoricalEvent
     protected function createCollection(
         ApsisCoreHelper $apsisCoreHelper,
         StoreInterface $store,
-        array $emails,
-        array $duration
+        array $emails
     ) {
         try {
             return $this->orderCollectionFactory->create()
                 ->addFieldToFilter('main_table.store_id', $store->getId())
-                ->addFieldToFilter('main_table.customer_email', ['in' => $emails])
-                ->addFieldToFilter('main_table.created_at', $duration);
+                ->addFieldToFilter('main_table.customer_email', ['in' => $emails]);
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return [];

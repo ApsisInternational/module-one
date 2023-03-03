@@ -3,14 +3,9 @@
 namespace Apsis\One\Model;
 
 use Apsis\One\Model\Abandoned\Find;
-use Apsis\One\Model\ResourceModel\Abandoned;
 use Apsis\One\Model\ResourceModel\Cron\CollectionFactory as CronCollectionFactory;
-use Apsis\One\Model\ResourceModel\ProfileBatch;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\Events;
-use Apsis\One\Model\Sync\Profiles;
-use Magento\Framework\App\Config\ScopeConfigInterface;
 use Throwable;
 
 class Cron
@@ -26,24 +21,9 @@ class Cron
     private Find $abandonedFind;
 
     /**
-     * @var Profiles
-     */
-    private Profiles $profileSyncModel;
-
-    /**
      * @var Events
      */
     private Events $eventsSyncModel;
-
-    /**
-     * @var ProfileBatch
-     */
-    private ProfileBatch $profileBatchResource;
-
-    /**
-     * @var Abandoned
-     */
-    private Abandoned $abandonedResource;
 
     /**
      * @var ApsisCoreHelper
@@ -55,26 +35,17 @@ class Cron
      *
      * @param CronCollectionFactory $cronCollectionFactory
      * @param Find $abandonedFind
-     * @param Profiles $profiles
      * @param Events $events
      * @param ApsisCoreHelper $coreHelper
-     * @param ProfileBatch $profileBatchResource
-     * @param Abandoned $abandonedResource
      */
     public function __construct(
         CronCollectionFactory $cronCollectionFactory,
         Find $abandonedFind,
-        Profiles $profiles,
         Events $events,
-        ApsisCoreHelper $coreHelper,
-        ProfileBatch $profileBatchResource,
-        Abandoned $abandonedResource
+        ApsisCoreHelper $coreHelper
     ) {
-        $this->abandonedResource = $abandonedResource;
-        $this->profileBatchResource = $profileBatchResource;
         $this->coreHelper = $coreHelper;
         $this->eventsSyncModel = $events;
-        $this->profileSyncModel = $profiles;
         $this->abandonedFind = $abandonedFind;
         $this->cronCollectionFactory = $cronCollectionFactory;
     }
@@ -109,7 +80,7 @@ class Cron
                 return;
             }
 
-            $this->profileSyncModel->process($this->coreHelper);
+            //@todo
         } catch (Throwable $e) {
             $this->coreHelper->logError(__METHOD__, $e);
         }

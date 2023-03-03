@@ -2,23 +2,19 @@
 
 namespace Apsis\One\Model\ResourceModel;
 
-use Apsis\One\Model\Profile as ApsisProfile;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Magento\Customer\Model\ResourceModel\Customer\Collection;
+use Magento\Customer\Model\ResourceModel\Customer\Collection as CustomerCollection;
 use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\DB\Sql\ExpressionFactory;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Magento\Framework\Model\ResourceModel\Db\Context;
 use Magento\Framework\Stdlib\DateTime;
-use Magento\Newsletter\Model\Subscriber;
-use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
+use Magento\Newsletter\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
 use Magento\Store\Api\Data\StoreInterface;
 use Throwable;
 
-class Profile extends AbstractDb implements ResourceInterface
+class Profile extends AbstractDb
 {
     /**
      * @var CustomerCollectionFactory
@@ -31,14 +27,14 @@ class Profile extends AbstractDb implements ResourceInterface
     private ExpressionFactory $expressionFactory;
 
     /**
-     * @var OrderCollectionFactory
-     */
-    private OrderCollectionFactory $orderCollectionFactory;
-
-    /**
      * @var DateTime
      */
     private DateTime $dateTime;
+
+    /**
+     * @var SubscriberCollectionFactory
+     */
+    private SubscriberCollectionFactory $subscriberCollectionFactory;
 
     /**
      * @inheritdoc
@@ -54,287 +50,330 @@ class Profile extends AbstractDb implements ResourceInterface
      * @param Context $context
      * @param CustomerCollectionFactory $customerCollectionFactory
      * @param ExpressionFactory $expressionFactory
-     * @param OrderCollectionFactory $orderCollectionFactory
      * @param DateTime $dateTime
+     * @param SubscriberCollectionFactory $subscriberCollectionFactory
      * @param null $connectionName
      */
     public function __construct(
         Context $context,
         CustomerCollectionFactory $customerCollectionFactory,
         ExpressionFactory $expressionFactory,
-        OrderCollectionFactory $orderCollectionFactory,
         DateTime $dateTime,
+        SubscriberCollectionFactory $subscriberCollectionFactory,
         $connectionName = null
     ) {
+        $this->subscriberCollectionFactory = $subscriberCollectionFactory;
         $this->dateTime = $dateTime;
         $this->customerCollectionFactory = $customerCollectionFactory;
         $this->expressionFactory = $expressionFactory;
-        $this->orderCollectionFactory = $orderCollectionFactory;
         parent::__construct($context, $connectionName);
     }
 
     /**
-     * @param ApsisLogHelper $apsisHelper
-     * @param array $storeIds
-     * @param array $profileIds
-     * @param int $status
-     * @param array $isEntityTypeCond
-     * @param bool $secondUpdate
-     *
-     * @return void
-     */
-    public function resetProfiles(
-        ApsisLogHelper $apsisHelper,
-        array $storeIds = [],
-        array $profileIds = [],
-        int $status = ApsisProfile::SYNC_STATUS_PENDING,
-        array $isEntityTypeCond = [],
-        bool $secondUpdate = false
-    ): void {
-        try {
-            // Update Profile type Customer
-            $this->updateCustomerSyncStatus(
-                [],
-                $status,
-                $apsisHelper,
-                '',
-                $storeIds,
-                $profileIds,
-                ['error_message' => ''],
-                $isEntityTypeCond
-            );
-
-            // Update Profile type Subscriber
-            $this->updateSubscribersSyncStatus(
-                [],
-                $status,
-                $apsisHelper,
-                '',
-                $storeIds,
-                $profileIds,
-                ['error_message' => ''],
-                $isEntityTypeCond,
-                false
-            );
-
-            //Change all Profiles status to 5 if Profile is_[PROFILE_TYPE] is 0
-            if ($secondUpdate) {
-                $this->resetProfiles(
-                    $apsisHelper,
-                    $storeIds,
-                    $profileIds,
-                    ApsisProfile::SYNC_STATUS_NA,
-                    ['condition' => 'is_', 'value' => ApsisProfile::NO_FLAG]
-                );
-            }
-        } catch (Throwable $e) {
-            $apsisHelper->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param array $subscriberIds
-     * @param int $status
-     * @param ApsisLogHelper $apsisHelper
-     * @param string $msg
-     * @param array $storeIds
-     * @param array $profileIds
-     * @param array $bind
-     * @param array $isEntityTypeCond
-     * @param bool $secondUpdate
-     *
-     * @return void
-     */
-    public function updateSubscribersSyncStatus(
-        array $subscriberIds,
-        int $status,
-        ApsisLogHelper $apsisHelper,
-        string $msg = '',
-        array $storeIds = [],
-        array $profileIds = [],
-        array $bind = [],
-        array $isEntityTypeCond = [],
-        bool $secondUpdate = true
-    ): void {
-        try {
-            $this->updateProfilSyncStatus(
-                $apsisHelper,
-                $status,
-                ApsisProfile::TYPE_SUBSCRIBER,
-                $subscriberIds,
-                $msg,
-                $storeIds,
-                $profileIds,
-                $bind,
-                $isEntityTypeCond
-            );
-
-            //Reset subscriber status to 5, if not a subscriber
-            if ($secondUpdate) {
-                $this->updateSubscribersSyncStatus(
-                    $subscriberIds,
-                    ApsisProfile::SYNC_STATUS_NA,
-                    $apsisHelper,
-                    '',
-                    [],
-                    [],
-                    ['error_message' => ''],
-                    ['condition' => 'is_', 'value' => ApsisProfile::NO_FLAG],
-                    false
-                );
-            }
-        } catch (Throwable $e) {
-            $apsisHelper->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param array $customerIds
-     * @param int $status
-     * @param ApsisLogHelper $apsisHelper
-     * @param string $msg
-     * @param array $storeIds
-     * @param array $profileIds
-     * @param array $bind
-     * @param array $isEntityTypeCond
-     *
-     * @return int
-     */
-    public function updateCustomerSyncStatus(
-        array $customerIds,
-        int $status,
-        ApsisLogHelper $apsisHelper,
-        string $msg = '',
-        array $storeIds = [],
-        array $profileIds = [],
-        array $bind = [],
-        array $isEntityTypeCond = []
-    ): int {
-        try {
-            return $this->updateProfilSyncStatus(
-                $apsisHelper,
-                $status,
-                ApsisProfile::TYPE_CUSTOMER,
-                $customerIds,
-                $msg,
-                $storeIds,
-                $profileIds,
-                $bind,
-                $isEntityTypeCond
-            );
-        } catch (Throwable $e) {
-            $apsisHelper->logError(__METHOD__, $e);
-            return 0;
-        }
-    }
-
-    /**
-     * @param ApsisLogHelper $apsisHelper
-     * @param int $status
-     * @param string $profileType
-     * @param array $entityIds
-     * @param string $msg
-     * @param array $storeIds
-     * @param array $profileIds
-     * @param array $bind
-     * @param array $isEntityTypeCond
-     *
-     * @return int
-     */
-    private function updateProfilSyncStatus(
-        ApsisLogHelper $apsisHelper,
-        int $status,
-        string $profileType,
-        array $entityIds = [],
-        string $msg = '',
-        array $storeIds = [],
-        array $profileIds = [],
-        array $bind = [],
-        array $isEntityTypeCond = []
-    ): int {
-        try {
-            $where = [];
-
-            $bind[$profileType . '_sync_status'] = $status;
-            $bind['updated_at'] = $this->dateTime->formatDate(true);
-
-            if (strlen($msg)) {
-                $bind['error_message'] = $msg;
-            }
-
-            if (! empty($storeIds)) {
-                if ($profileType == ApsisProfile::TYPE_CUSTOMER) {
-                    $where["store_id IN (?)"] = $storeIds;
-                }
-                if ($profileType == ApsisProfile::TYPE_SUBSCRIBER) {
-                    $where["subscriber_store_id IN (?)"] = $storeIds;
-                }
-            }
-
-            if (! empty($entityIds)) {
-                $where[$profileType . "_id IN (?)"] = $entityIds;
-            }
-
-            if (! empty($profileIds)) {
-                $where["id IN (?)"] = $profileIds;
-            }
-
-            if (! empty($isEntityTypeCond) && isset($isEntityTypeCond['condition']) &&
-                isset($isEntityTypeCond['value'])
-            ) {
-                if ($isEntityTypeCond['condition'] == 'is_') {
-                    $where["is_" . $profileType . " = ?"] = $isEntityTypeCond['value'];
-                }
-                if ($isEntityTypeCond['condition'] == '_sync_status') {
-                    $where[$profileType . '_sync_status = ?'] = $isEntityTypeCond['value'];
-                }
-            }
-            //$apsisCoreHelper->debug(__METHOD__, [$bind, $where]);
-
-            return $this->getConnection()->update($this->getMainTable(), $bind, $where);
-        } catch (Throwable $e) {
-            $apsisHelper->logError(__METHOD__, $e);
-            return 0;
-        }
-    }
-
-    /**
-     * @param int $storeId
-     * @param array $customerIds
+     * @param AdapterInterface $connection
+     * @param string $magentoTable
+     * @param string $apsisTable
      * @param ApsisCoreHelper $apsisCoreHelper
      *
-     * @return array|Collection
+     * @return void
      */
-    public function buildCustomerCollection(
-        int $storeId,
-        array $customerIds,
+    public function fetchAndPopulateCustomers(
+        AdapterInterface $connection,
+        string $magentoTable,
+        string $apsisTable,
         ApsisCoreHelper $apsisCoreHelper
+    ): void {
+        try {
+            $select = $connection->select()
+                ->from(
+                    ['customer' => $magentoTable],
+                    [
+                        'profile_uuid' => $this->expressionFactory->create(["expression" => ('UUID()')]),
+                        'customer_id' => 'entity_id',
+                        'email',
+                        'is_customer' => $this->expressionFactory->create(["expression" => ('1')]),
+                        'store_id',
+                        'updated_at' => $this->expressionFactory
+                            ->create(["expression" => "'" . $this->dateTime->formatDate(true) . "'"])
+                    ]
+                );
+            $sqlQuery = $select->insertFromSelect(
+                $apsisTable,
+                ['profile_uuid', 'customer_id', 'email', 'is_customer', 'store_id', 'updated_at'],
+                false
+            );
+            $connection->query($sqlQuery);
+        } catch (Throwable $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
+     * @param AdapterInterface $connection
+     * @param string $magentoTable
+     * @param string $apsisTable
+     * @param ApsisCoreHelper $apsisCoreHelper
+     *
+     * @return void
+     */
+    public function fetchAndPopulateSubscribers(
+        AdapterInterface $connection,
+        string $magentoTable,
+        string $apsisTable,
+        ApsisCoreHelper $apsisCoreHelper
+    ): void {
+        try {
+            $select = $connection->select()
+                ->from(
+                    ['subscriber' => $magentoTable],
+                    [
+                        'profile_uuid' => $this->expressionFactory->create(["expression" => ('UUID()')]),
+                        'subscriber_id',
+                        'store_id' => 'store_id',
+                        'email' => 'subscriber_email',
+                        'is_subscriber' => $this->expressionFactory->create(["expression" => ('1')]),
+                        'updated_at' => $this->expressionFactory
+                            ->create(["expression" => "'" . $this->dateTime->formatDate(true) . "'"])
+                    ]
+                )
+                ->where('customer_id = ?', 0);
+
+            $sqlQuery = $select->insertFromSelect(
+                $apsisTable,
+                [
+                    'profile_uuid',
+                    'subscriber_id',
+                    'store_id',
+                    'email',
+                    'is_subscriber',
+                    'updated_at'
+                ],
+                false
+            );
+            $connection->query($sqlQuery);
+        } catch (Throwable $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
+     * @param AdapterInterface $connection
+     * @param string $magentoTable
+     * @param string $apsisTable
+     * @param ApsisCoreHelper $apsisCoreHelper
+     *
+     * @return void
+     */
+    public function updateCustomerProfiles(
+        AdapterInterface $connection,
+        string $magentoTable,
+        string $apsisTable,
+        ApsisCoreHelper $apsisCoreHelper
+    ): void {
+        try {
+            $select = $connection->select();
+            $select
+                ->from(
+                    ['subscriber' => $magentoTable],
+                    [
+                        'subscriber_id',
+                        'is_subscriber' => $this->expressionFactory->create(["expression" => ('1')]),
+                    ]
+                )
+                ->where('subscriber.customer_id = profile.customer_id');
+
+            $sqlQuery = $select->crossUpdateFromSelect(['profile' => $apsisTable]);
+            $connection->query($sqlQuery);
+        } catch (Throwable $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
+     * @param ApsisCoreHelper $apsisCoreHelper
+     *
+     * @return void
+     */
+    public function populateProfilesTable(ApsisCoreHelper $apsisCoreHelper): void
+    {
+        try {
+            $magentoSubscriberTable = $this->getTable('newsletter_subscriber');
+
+            // Fetch customers to profile table
+            $this->fetchAndPopulateCustomers(
+                $this->getConnection(),
+                $this->getTable('customer_entity'),
+                $this->getMainTable(),
+                $apsisCoreHelper
+            );
+
+            // Fetch subscribers to profile table
+            $this->fetchAndPopulateSubscribers(
+                $this->getConnection(),
+                $magentoSubscriberTable,
+                $this->getMainTable(),
+                $apsisCoreHelper
+            );
+
+            // Update customers with profile id in profile table
+            $this->updateCustomerProfiles(
+                $this->getConnection(),
+                $magentoSubscriberTable,
+                $this->getMainTable(),
+                $apsisCoreHelper
+            );
+
+            // Fill profile data column
+            $this->fillProfileDataColumnForAllProfiles($apsisCoreHelper);
+        } catch (Throwable $e) {
+            $apsisCoreHelper->log('Unable to complete populate Profile table action.');
+            $apsisCoreHelper->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
+     * @param ApsisCoreHelper $apsisCoreHelper
+     *
+     * @return void
+     */
+    private function fillProfileDataColumnForAllProfiles(ApsisCoreHelper $apsisCoreHelper)
+    {
+        try {
+            foreach ($apsisCoreHelper->getStores() as $store) {
+                $this->fillProfileDataColumnForCustomers($store, $apsisCoreHelper);
+                $this->fillProfileDataColumnForSubscribers($store, $apsisCoreHelper);
+            }
+        } catch (Throwable $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param ApsisCoreHelper $apsisCoreHelper
+     *
+     * @return void
+     */
+    private function fillProfileDataColumnForCustomers(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
+    {
+        try {
+            $expString = $this->buildProfileDataQueryForCustomer($store, $apsisCoreHelper);
+            if (empty($expString)) {
+                return;
+            }
+
+            $select = $this->getConnection()
+                ->select()
+                ->from(
+                    ['customer' => $this->customerCollectionFactory->create()->getMainTable()],
+                    ['profile_data' => $this->expressionFactory->create(["expression" => $expString])]
+                )
+                ->where('customer.store_id = ?', $store->getId())
+                ->where('customer.entity_id = profile.customer_id');
+
+            $sqlQuery = $select->crossUpdateFromSelect(['profile' => $this->getMainTable()]);
+            $this->getConnection()->query($sqlQuery);
+        } catch (Throwable $e) {
+            $apsisCoreHelper->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param string $id
+     *
+     * @return string|null
+     */
+    public function buildProfileDataQueryForCustomer(
+        StoreInterface $store,
+        ApsisCoreHelper $apsisCoreHelper,
+        string $id = 'customer.entity_id'
     ) {
         try {
             $customerLog = $this->getTable('customer_log');
-            $customerCollection = $this->customerCollectionFactory->create()
+            $salesOrderGrid = $this->getTable('sales_order_grid');
+            $sales = $this->getTable('sales_order');
+            $eavAttributeOptionValue = $this->getTable('eav_attribute_option_value');
+            $review = $this->getTable('review');
+            $reviewDetail = $this->getTable('review_detail');
+
+            $collection = $this->customerCollectionFactory->create()
                 ->addAttributeToSelect('*')
-                ->addNameToSelect()
-                ->addAttributeToFilter('entity_id', ['in' => $customerIds]);
-            $customerCollection = $this->addBillingJoinAttributesToCustomerCollection(
-                $customerCollection,
-                $storeId,
+                ->addAttributeToFilter('store_id', $store->getId());
+
+            $collection = $this->addBillingJoinAttributesToCustomerCollection(
+                $collection,
+                $store->getId(),
                 $apsisCoreHelper
             );
-            $customerCollection = $this->addShippingJoinAttributesToCustomerCollection(
-                $customerCollection,
-                $storeId,
+            $collection = $this->addShippingJoinAttributesToCustomerCollection(
+                $collection,
+                $store->getId(),
                 $apsisCoreHelper
             );
-            $customerCollection->getSelect()->columns([
+
+            $collection->getSelect()->columns([
                 'last_logged_date' => $this->expressionFactory->create(
                     ["expression" => "(
                         SELECT last_login_at
-                        FROM  $customerLog
-                        WHERE customer_id = e.entity_id ORDER BY log_id DESC LIMIT 1
+                        FROM $customerLog
+                        WHERE customer_id = e.entity_id
+                        ORDER BY log_id DESC
+                        LIMIT 1
+                    )"]
+                ),
+                'last_order_date' => $this->expressionFactory->create(
+                    ["expression" => "(
+                        SELECT created_at
+                        FROM $salesOrderGrid
+                        WHERE customer_id = e.entity_id
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                    )"]
+                ),
+                'number_of_orders' => $this->expressionFactory->create(
+                    ["expression" => "(
+                        SELECT COUNT(*)
+                        FROM $sales
+                        WHERE customer_id = e.entity_id
+                        GROUP BY customer_id
+                        LIMIT 1
+                    )"]
+                ),
+                'gender_text' => $this->expressionFactory->create(
+                    ["expression" => "(
+                        SELECT aov.value
+                        FROM $eavAttributeOptionValue aov
+                        WHERE aov.option_id = e.gender AND aov.store_id = 0
+                        LIMIT 1
+                    )"]
+                ),
+                'last_review_date' => $this->expressionFactory->create(
+                    ["expression" => "(
+                        SELECT r.created_at
+                        FROM $review r
+                        LEFT JOIN $reviewDetail rd ON rd.review_id = r.review_id
+                        WHERE rd.customer_id = e.entity_id
+                        ORDER BY r.created_at DESC
+                        LIMIT 1
+                    )"]
+                ),
+                'review_count' => $this->expressionFactory->create(
+                    ["expression" => "(
+                        SELECT COUNT(*)
+                        FROM $review r
+                        LEFT JOIN $reviewDetail rd ON rd.review_id = r.review_id
+                        WHERE rd.customer_id = e.entity_id
+                        GROUP BY customer_id
+                        LIMIT 1
                     )"]
                 ),
             ])->joinLeft(
+                ['group' => $this->getTable('customer_group')],
+                "e.group_id = group.customer_group_id",
+                ['customer_group_code']
+            )->joinLeft(
                 ['store' => $this->getTable('store')],
                 "e.store_id = store.store_id",
                 ['store_name' => 'name']
@@ -342,28 +381,38 @@ class Profile extends AbstractDb implements ResourceInterface
                 ['website' => $this->getTable('store_website')],
                 "e.website_id = website.website_id",
                 ['website_name' => 'name']
-            );
+            )->joinLeft(
+                ['subscriber' => $this->getTable('newsletter_subscriber')],
+                "e.entity_id = subscriber.customer_id",
+                ['subscriber_id', 'subscriber_status', 'change_status_at']
+            )->joinLeft(
+                ['sales' => $sales],
+                "e.entity_id = sales.customer_id",
+                [
+                    'total_spend' => 'SUM(grand_total)',
+                    'average_order_value' => 'AVG(grand_total)'
+                ]
+            )->group(['e.entity_id', 'subscriber.subscriber_id']);
 
-            return $customerCollection;
+            return $this->getExpressionString($collection->getSelect()->assemble(), $id);
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
-            return [];
+            return null;
         }
     }
 
     /**
-     * @param Collection $customerCollection
+     * @param CustomerCollection $customerCollection
      * @param int $storeId
-     *
      * @param ApsisCoreHelper $apsisCoreHelper
      *
-     * @return Collection
+     * @return CustomerCollection
      */
     private function addShippingJoinAttributesToCustomerCollection(
-        Collection $customerCollection,
+        CustomerCollection $customerCollection,
         int $storeId,
         ApsisCoreHelper $apsisCoreHelper
-    ): Collection {
+    ) {
         try {
             return $customerCollection
                 ->joinAttribute(
@@ -423,17 +472,17 @@ class Profile extends AbstractDb implements ResourceInterface
     }
 
     /**
-     * @param Collection $customerCollection
+     * @param CustomerCollection $customerCollection
      * @param int $storeId
      * @param ApsisCoreHelper $apsisCoreHelper
      *
-     * @return Collection
+     * @return CustomerCollection
      */
     private function addBillingJoinAttributesToCustomerCollection(
-        Collection $customerCollection,
+        CustomerCollection $customerCollection,
         int $storeId,
         ApsisCoreHelper $apsisCoreHelper
-    ): Collection {
+    ) {
         try {
             return $customerCollection->joinAttribute(
                 'billing_street',
@@ -499,317 +548,145 @@ class Profile extends AbstractDb implements ResourceInterface
 
     /**
      * @param StoreInterface $store
-     * @param array $customerIds
      * @param ApsisCoreHelper $apsisCoreHelper
      *
-     * @return array
+     * @return void
      */
-    public function getSalesDataForCustomers(
-        StoreInterface $store,
-        array $customerIds,
-        ApsisCoreHelper $apsisCoreHelper
-    ): array {
-        $orderArray = [];
-
+    private function fillProfileDataColumnForSubscribers(StoreInterface $store, ApsisCoreHelper $apsisCoreHelper)
+    {
         try {
-            $orderCollection = $this->orderCollectionFactory->create();
-            $salesOrderGrid = $orderCollection->getTable('sales_order_grid');
-            $statuses = $apsisCoreHelper->getStoreConfig(
-                $store,
-                ApsisConfigHelper::PROFILE_SYNC_ORDER_STATUSES
-            );
-
-            $orderCollection->addFieldToSelect(['customer_id'])
-                ->addExpressionFieldToSelect('total_spend', 'SUM({{grand_total}})', 'grand_total')
-                ->addExpressionFieldToSelect('number_of_orders', 'COUNT({{*}})', '*')
-                ->addExpressionFieldToSelect('average_order_value', 'AVG({{grand_total}})', 'grand_total')
-                ->addFieldToFilter('customer_id', ['in' => $customerIds])
-                ->addFieldToFilter('status', ['in' => $statuses]);
-
-            $columnData = $this->buildColumnData($salesOrderGrid, $statuses, $apsisCoreHelper);
-            $orderCollection->getSelect()
-                ->columns($columnData)
-                ->group('customer_id');
-
-            foreach ($orderCollection as $item) {
-                $orderArray[$item->getCustomerId()] = $item->toArray(
-                    [
-                        'total_spend',
-                        'number_of_orders',
-                        'average_order_value',
-                        'last_order_date'
-                    ]
-                );
+            $expString = $this->buildProfileDataQueryForSubscriber($store, $apsisCoreHelper);
+            if (empty($expString)) {
+                return;
             }
+
+            $select = $this->getConnection()
+                ->select()
+                ->from(
+                    ['subscriber' => $this->subscriberCollectionFactory->create()->getMainTable()],
+                    ['profile_data' => $this->expressionFactory->create(["expression" => $expString])]
+                )
+                ->where('subscriber.store_id = ?', $store->getId())
+                ->where('subscriber.customer_id = ?', 0)
+                ->where('subscriber.subscriber_id = profile.subscriber_id');
+
+            $sqlQuery = $select->crossUpdateFromSelect(['profile' => $this->getMainTable()]);
+            $this->getConnection()->query($sqlQuery);
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
         }
-        return $orderArray;
     }
 
     /**
-     * @param string $salesOrderGrid
-     * @param string $statuses
+     * @param StoreInterface $store
      * @param ApsisCoreHelper $apsisCoreHelper
+     * @param string $id
      *
-     * @return array
+     * @return string|null
      */
-    private function buildColumnData(string $salesOrderGrid, string $statuses, ApsisCoreHelper $apsisCoreHelper): array
-    {
+    public function buildProfileDataQueryForSubscriber(
+        StoreInterface $store,
+        ApsisCoreHelper $apsisCoreHelper,
+        string $id = 'subscriber.subscriber_id'
+    ) {
         try {
-            $statusText = $this->getConnection()->quoteInto('status in (?)', explode(",", $statuses));
+            $collection = $this->subscriberCollectionFactory->create()
+                ->addFieldToSelect('*')
+                ->addFieldToFilter('main_table.store_id', $store->getId())
+                ->addFieldToFilter('main_table.customer_id', 0);
 
-            return [
-                'last_order_date' => $this->expressionFactory->create(
-                    ["expression" => "(
-                        SELECT created_at
-                        FROM $salesOrderGrid
-                        WHERE customer_id = main_table.customer_id AND $statusText
-                        ORDER BY created_at DESC
-                        LIMIT 1
-                    )"]
-                ),
-            ];
+            $collection->getSelect()
+                ->joinLeft(
+                    ['store' => $this->getTable('store')],
+                    "main_table.store_id = store.store_id",
+                    ['store_name' => 'name']
+                )->joinLeft(
+                    ['website' => $this->getTable('store_website')],
+                    "store.website_id = website.website_id",
+                    ['website_name' => 'name', 'website_id']
+                );
+
+            return $this->getExpressionString($collection->getSelect()->assemble(), $id, true);
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
-            return ['last_order_date' => ''];
+            return null;
         }
     }
 
     /**
-     * @param AdapterInterface $connection
-     * @param string $magentoTable
-     * @param string $apsisTable
-     * @param ApsisLogHelper $apsisLogHelper
+     * @param string $select
+     * @param string $id
+     * @param bool $forSubscriber
      *
-     * @return void
+     * @return string
      */
-    public function fetchAndPopulateCustomers(
-        AdapterInterface $connection,
-        string $magentoTable,
-        string $apsisTable,
-        ApsisLogHelper $apsisLogHelper
-    ): void {
-        try {
-            $select = $connection->select()
-                ->from(
-                    ['customer' => $magentoTable],
-                    [
-                        'integration_uid' => $this->expressionFactory->create(["expression" => ('UUID()')]),
-                        'customer_id' => 'entity_id',
-                        'email',
-                        'is_customer' => $this->expressionFactory->create(["expression" => ('1')]),
-                        'store_id',
-                        'updated_at' => $this->expressionFactory
-                            ->create(["expression" => "'" . $this->dateTime->formatDate(true) . "'"])
-                    ]
-                );
-            $sqlQuery = $select->insertFromSelect(
-                $apsisTable,
-                ['integration_uid', 'customer_id', 'email', 'is_customer', 'store_id', 'updated_at'],
-                false
-            );
-            $connection->query($sqlQuery);
-        } catch (Throwable $e) {
-            $apsisLogHelper->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param AdapterInterface $connection
-     * @param string $magentoTable
-     * @param string $apsisTable
-     * @param ApsisLogHelper $apsisLogHelper
-     *
-     * @return void
-     */
-    public function fetchAndPopulateSubscribers(
-        AdapterInterface $connection,
-        string $magentoTable,
-        string $apsisTable,
-        ApsisLogHelper $apsisLogHelper
-    ): void {
-        try {
-            $select = $connection->select()
-                ->from(
-                    ['subscriber' => $magentoTable],
-                    [
-                        'integration_uid' => $this->expressionFactory->create(["expression" => ('UUID()')]),
-                        'subscriber_id',
-                        'subscriber_store_id' => 'store_id',
-                        'email' => 'subscriber_email',
-                        'subscriber_status',
-                        'is_subscriber' => $this->expressionFactory->create(["expression" => ('1')]),
-                        'updated_at' => $this->expressionFactory
-                            ->create(["expression" => "'" . $this->dateTime->formatDate(true) . "'"])
-                    ]
-                )
-                ->where('subscriber_status = ?', Subscriber::STATUS_SUBSCRIBED)
-                ->where('customer_id = ?', 0);
-
-            $sqlQuery = $select->insertFromSelect(
-                $apsisTable,
-                [
-                    'integration_uid',
-                    'subscriber_id',
-                    'subscriber_store_id',
-                    'email',
-                    'subscriber_status',
-                    'is_subscriber',
-                    'updated_at'
-                ],
-                false
-            );
-            $connection->query($sqlQuery);
-        } catch (Throwable $e) {
-            $apsisLogHelper->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param AdapterInterface $connection
-     * @param string $magentoTable
-     * @param string $apsisTable
-     * @param ApsisLogHelper $apsisLogHelper
-     *
-     * @return void
-     */
-    public function updateCustomerProfiles(
-        AdapterInterface $connection,
-        string $magentoTable,
-        string $apsisTable,
-        ApsisLogHelper $apsisLogHelper
-    ): void {
-        try {
-            $select = $connection->select();
-            $select
-                ->from(
-                    ['subscriber' => $magentoTable],
-                    [
-                        'subscriber_id',
-                        'subscriber_status',
-                        'subscriber_store_id' => 'store_id',
-                        'is_subscriber' => $this->expressionFactory->create(["expression" => ('1')]),
-                    ]
-                )
-                ->where('subscriber.subscriber_status = ?', Subscriber::STATUS_SUBSCRIBED)
-                ->where('subscriber.customer_id = profile.customer_id');
-
-            $sqlQuery = $select->crossUpdateFromSelect(['profile' => $apsisTable]);
-            $connection->query($sqlQuery);
-        } catch (Throwable $e) {
-            $apsisLogHelper->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param AdapterInterface $connection
-     * @param string $magentoTable
-     * @param string $apsisTable
-     * @param ApsisLogHelper $apsisLogHelper
-     *
-     * @return void
-     */
-    public function updateSubscriberStoreId(
-        AdapterInterface $connection,
-        string $magentoTable,
-        string $apsisTable,
-        ApsisLogHelper $apsisLogHelper
-    ): void {
-        try {
-            $select = $connection->select();
-            $select->from(
-                ['subscriber' => $magentoTable],
-                [
-                    'subscriber_store_id' => 'store_id',
-                    'subscriber_sync_status' => $this->expressionFactory
-                        ->create(["expression" => (ApsisProfile::SYNC_STATUS_PENDING)]),
-                    'updated_at' => $this->expressionFactory
-                        ->create(["expression" => "'" . $this->dateTime->formatDate(true) . "'"])
-                ]
-            )->where('subscriber.subscriber_id = profile.subscriber_id');
-
-            $sqlQuery = $select->crossUpdateFromSelect(['profile' => $apsisTable]);
-            $connection->query($sqlQuery);
-        } catch (Throwable $e) {
-            $apsisLogHelper->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param ApsisLogHelper $apsisLogHelper
-     *
-     * @return bool
-     */
-    public function truncateTable(ApsisLogHelper $apsisLogHelper): bool
+    private function getExpressionString(string $select, string $id, bool $forSubscriber = false)
     {
-        try {
-            $this->getConnection()->query('SET FOREIGN_KEY_CHECKS = 0');
-            $this->getConnection()->truncateTable($this->getMainTable());
-            $this->getConnection()->query('SET FOREIGN_KEY_CHECKS = 1');
-            return true;
-        } catch (Throwable $e) {
-            $apsisLogHelper->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param ApsisLogHelper $apsisLogHelper
-     *
-     * @return bool
-     */
-    public function populateProfilesTable(ApsisLogHelper $apsisLogHelper): bool
-    {
-        try {
-            $magentoSubscriberTable = $this->getTable('newsletter_subscriber');
-
-            //Fetch customers to profile table
-            $this->fetchAndPopulateCustomers(
-                $this->getConnection(),
-                $this->getTable('customer_entity'),
-                $this->getMainTable(),
-                $apsisLogHelper
+        if ($forSubscriber) {
+            return sprintf(
+                "(SELECT
+                            JSON_OBJECT(
+                                'website_id', website_id,
+                                'store_id', store_id,
+                                'website_name', website_name,
+                                'store_name', store_name,
+                                'email', subscriber_email,
+                                'subscriber_id', subscriber_id,
+                                'subscriber_status', subscriber_status,
+                                'change_status_at', change_status_at
+                            )
+                        FROM (%s) AS q
+                        WHERE (q.subscriber_id = %s))",
+                $select,
+                $id
             );
-
-            //Fetch subscribers to profile table
-            $this->fetchAndPopulateSubscribers(
-                $this->getConnection(),
-                $magentoSubscriberTable,
-                $this->getMainTable(),
-                $apsisLogHelper
-            );
-
-            //Update customers with profile id in profile table
-            $this->updateCustomerProfiles(
-                $this->getConnection(),
-                $magentoSubscriberTable,
-                $this->getMainTable(),
-                $apsisLogHelper
-            );
-            return true;
-        } catch (Throwable $e) {
-            $apsisLogHelper->logError(__METHOD__, $e);
-            return false;
         }
-    }
 
-    /**
-     * @param ApsisCoreHelper|ApsisLogHelper $apsisHelper
-     * @param string $andCondition
-     *
-     * @return bool
-     */
-    public function deleteAllModuleConfig(ApsisLogHelper|ApsisCoreHelper $apsisHelper, string $andCondition = ''): bool
-    {
-        try {
-            $connection = $this->getConnection();
-            $connection->delete($this->getTable('core_config_data'), "path LIKE 'apsis_one%' $andCondition");
-            $apsisHelper->cleanCache();
-            return true;
-        } catch (Throwable $e) {
-            $apsisHelper->logError(__METHOD__, $e);
-            return false;
-        }
+        return sprintf(
+            "(SELECT
+                        JSON_OBJECT(
+                            'website_id', website_id,
+                            'store_id', store_id,
+                            'website_name', website_name,
+                            'store_name', store_name,
+                            'email', email,
+                            'subscriber_id', subscriber_id,
+                            'subscriber_status', subscriber_status,
+                            'change_status_at', change_status_at,
+                            'title', prefix,
+                            'customer_id', entity_id,
+                            'firstname', firstname,
+                            'lastname', lastname,
+                            'dob', dob,
+                            'gender', gender_text,
+                            'created_at', created_at,
+                            'last_logged_date', last_logged_date,
+                            'customer_group', customer_group_code,
+                            'review_count', review_count,
+                            'last_review_date', last_review_date,
+                            'billing_street', billing_street,
+                            'billing_state', billing_region,
+                            'billing_city', billing_city,
+                            'billing_country', billing_country_code,
+                            'billing_postcode', billing_postcode,
+                            'billing_telephone', billing_telephone,
+                            'billing_company', billing_company,
+                            'delivery_street', shipping_street,
+                            'delivery_city', shipping_city,
+                            'delivery_state', shipping_region,
+                            'delivery_country', shipping_country_code,
+                            'delivery_postcode', shipping_postcode,
+                            'delivery_telephone', shipping_telephone,
+                            'delivery_company', shipping_company,
+                            'last_order_date', last_order_date,
+                            'number_of_orders', number_of_orders,
+                            'average_order_value', average_order_value,
+                            'total_spend', total_spend
+                        )
+                    FROM (%s) AS q
+                    WHERE (q.entity_id = %s))",
+            $select,
+            $id
+        );
     }
 }

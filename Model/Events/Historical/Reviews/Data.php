@@ -67,8 +67,8 @@ class Data extends EventData implements EventDataInterface
             return [
                 'reviewId' => (int) $model->getReviewId(),
                 'customerId' => (int) $model->getCustomerId(),
-                'websiteName' => (string) $this->apsisCoreHelper->getWebsiteNameFromStoreId($model->getStoreId()),
-                'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($model->getStoreId()),
+                'websiteName' => (string) $this->apsisCoreHelper->getStoreWebsiteName($model->getStoreId()),
+                'storeName' => (string) $this->apsisCoreHelper->getStoreName($model->getStoreId()),
                 'nickname' => (string) $model->getNickname(),
                 'reviewTitle' => (string) $model->getTitle(),
                 'reviewDetail' => (string) $model->getDetail(),

@@ -27,8 +27,8 @@ use Magento\Framework\Stdlib\DateTime;
  * @method $this setCustomerId(int $value)
  * @method int getSubscriberId()
  * @method $this setSubscriberId(int $value)
- * @method string getCustomerEmail()
- * @method $this setCustomerEmail(string $value)
+ * @method string getEmail()
+ * @method $this setEmail(string $value)
  * @method string getToken()
  * @method $this setToken(string $value)
  * @method string getCreatedAt()
@@ -91,25 +91,6 @@ class Abandoned extends AbstractModel
     public function _construct()
     {
         $this->_init(AbandonedResource::class);
-    }
-
-    /**
-     * @return Abandoned
-     */
-    public function afterDelete()
-    {
-        if ($this->isDeleted()) {
-            //Log it
-            $info = [
-                'Message' => 'Confirmed delete.',
-                'Entity Id' => $this->getId(),
-                'Profile Table Id' => $this->getProfileId(),
-                'Store Id' => $this->getStoreId()
-            ];
-            $this->apsisLogHelper->debug(__METHOD__, $info);
-        }
-
-        return parent::afterDelete();
     }
 
     /**

@@ -2,13 +2,13 @@
 
 namespace Apsis\One\Controller\Abandoned;
 
-use Apsis\One\Model\Service\Cart as ApsisCartHelper;
+use Apsis\One\Model\Abandoned;
+use Apsis\One\Model\ResourceModel\Abandoned\CollectionFactory as AbandonedCollectionFactory;
 use Apsis\One\Model\Service\Log;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\ResponseInterface;
-use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\DataObject;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
@@ -17,6 +17,11 @@ use Throwable;
 
 class Checkout extends Action
 {
+    /**
+     * @var AbandonedCollectionFactory
+     */
+    private AbandonedCollectionFactory $abandonedCollectionFactory;
+
     /**
      * @var CartRepositoryInterface
      */
@@ -33,27 +38,22 @@ class Checkout extends Action
     private Log $log;
 
     /**
-     * @var ApsisCartHelper
-     */
-    private ApsisCartHelper $apsisCartHelper;
-
-    /**
      * Checkout constructor.
      *
      * @param Context $context
      * @param CheckoutSession $checkoutSession
      * @param CartRepositoryInterface $cartRepository
      * @param Log $log
-     * @param ApsisCartHelper $apsisCartHelper
+     * @param AbandonedCollectionFactory $abandonedCollectionFactory
      */
     public function __construct(
         Context $context,
         CheckoutSession $checkoutSession,
         CartRepositoryInterface $cartRepository,
         Log $log,
-        ApsisCartHelper $apsisCartHelper
+        AbandonedCollectionFactory $abandonedCollectionFactory
     ) {
-        $this->apsisCartHelper = $apsisCartHelper;
+        $this->abandonedCollectionFactory = $abandonedCollectionFactory;
         $this->log = $log;
         $this->cartRepository = $cartRepository;
         $this->checkoutSession = $checkoutSession;
@@ -67,8 +67,8 @@ class Checkout extends Action
     {
         try {
             $token = $this->getRequest()->getParam('token');
-            if (empty($token) || ! $this->apsisCartHelper->isClean($token) ||
-                empty($ac = $this->apsisCartHelper->getCart($token))
+            if (empty($token) || ! $this->isClean($token) ||
+                empty($ac = $this->getCart($token))
             ) {
                 return $this->_redirect('');
             }
@@ -85,6 +85,27 @@ class Checkout extends Action
             $this->log->logError(__METHOD__, $e);
             return $this->_redirect('');
         }
+    }
+
+    /**
+     * @param string $string
+     *
+     * @return bool
+     */
+    public function isClean(string $string): bool
+    {
+        return ! preg_match("/[^a-zA-Z\d-]/i", $string);
+    }
+
+    /**
+     * @param string $token
+     *
+     * @return DataObject|Abandoned|bool
+     */
+    public function getCart(string $token)
+    {
+        return $this->abandonedCollectionFactory->create()
+            ->loadByToken($token);
     }
 
     /**

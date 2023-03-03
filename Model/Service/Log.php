@@ -4,18 +4,12 @@ namespace Apsis\One\Model\Service;
 
 use Apsis\One\Logger\Logger;
 use Magento\Framework\Module\ModuleListInterface;
-use Throwable;
-use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Module\ResourceInterface;
+use Throwable;
 
 class Log
 {
     const MODULE_NAME = 'Apsis_One';
-
-    /**
-     * @var ScopeConfigInterface
-     */
-    protected ScopeConfigInterface $scopeConfig;
 
     /**
      * @var Logger
@@ -36,19 +30,16 @@ class Log
      * Log constructor.
      *
      * @param Logger $logger
-     * @param ScopeConfigInterface $scopeConfig
      * @param ResourceInterface $moduleResource
      * @param ModuleListInterface $moduleList
      */
     public function __construct(
         Logger $logger,
-        ScopeConfigInterface $scopeConfig,
         ResourceInterface $moduleResource,
         ModuleListInterface $moduleList
     ) {
         $this->moduleList = $moduleList;
         $this->logger = $logger;
-        $this->scopeConfig = $scopeConfig;
         $this->moduleResource = $moduleResource;
     }
 
@@ -125,54 +116,9 @@ class Log
     }
 
     /**
-     * @param mixed $data
-     *
-     * @return string|bool
-     */
-    public function serialize(mixed $data)
-    {
-        try {
-            return json_encode($data);
-        } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
-            return '[]';
-        }
-    }
-
-    /**
-     * @param string $string
-     *
-     * @return mixed
-     */
-    public function unserialize(string $string): mixed
-    {
-        try {
-            return json_decode($string);
-        } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
-            return [];
-        }
-    }
-
-    /**
-     * Invalidate cache by type
-     * Clean scopeCodeResolver
-     *
-     * @return void
-     */
-    public function cleanCache(): void
-    {
-        try {
-            $this->scopeConfig->clean();
-        } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
      * @return string
      */
-    public function getCurrentVersion(): string
+    private function getCurrentVersion(): string
     {
         try {
             $version = (string) $this->moduleResource->getDbVersion('Apsis_One');

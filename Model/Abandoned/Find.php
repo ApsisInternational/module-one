@@ -2,13 +2,10 @@
 
 namespace Apsis\One\Model\Abandoned;
 
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Sync\SyncInterface;
 use Throwable;
-use Magento\Store\Model\ScopeInterface;
 
-class Find implements SyncInterface
+class Find
 {
     /**
      * @var AbandonedSub
@@ -37,15 +34,13 @@ class Find implements SyncInterface
 
             foreach ($stores as $store) {
                 try {
-                    $isEnabled = $apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
                     $acDelayPeriod = $apsisCoreHelper->getStoreConfig(
                         $store,
-                        ApsisConfigHelper::EVENTS_REGISTER_ABANDONED_CART_AFTER_DURATION
+                        ApsisCoreHelper::PATH_CONFIG_AC_DURATION
                     );
-                    if (! $isEnabled || ! $acDelayPeriod) {
+                    if (! $acDelayPeriod) {
                         continue;
                     }
-
 
                     $quoteCollection = $this->abandonedSub
                         ->getQuoteCollectionByStore($store, $acDelayPeriod, $apsisCoreHelper);

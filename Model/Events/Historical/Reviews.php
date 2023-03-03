@@ -67,7 +67,6 @@ class Reviews extends HistoricalEvent
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper,
         ProfileCollection $profileCollection,
-        array $duration,
         array $profileCollectionArray
     ): void {
         try {
@@ -77,7 +76,6 @@ class Reviews extends HistoricalEvent
 
             $reviewCollection = $this->getCollectionArray(
                 array_keys($profileCollectionArray),
-                $duration,
                 $store,
                 $apsisCoreHelper
             );
@@ -207,22 +205,19 @@ class Reviews extends HistoricalEvent
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param StoreInterface $store
      * @param array $customerIds
-     * @param array $duration
      *
      * @return ProductReviewCollection|array
      */
     protected function createCollection(
         ApsisCoreHelper $apsisCoreHelper,
         StoreInterface $store,
-        array $customerIds,
-        array $duration
+        array $customerIds
     ) {
         try {
             return $this->reviewProductCollectionFactory->create()
                 ->addStoreFilter($store->getId())
                 ->addStatusFilter(Review::STATUS_APPROVED)
                 ->addFieldToFilter('main_table.entity_id', 1)
-                ->addFieldToFilter('main_table.created_at', $duration)
                 ->addFieldToFilter('customer_id', ['in' => $customerIds]);
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);

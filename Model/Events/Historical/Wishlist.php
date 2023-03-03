@@ -58,7 +58,6 @@ class Wishlist extends HistoricalEvent
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper,
         ProfileCollection $profileCollection,
-        array $duration,
         array $profileCollectionArray
     ): void {
         try {
@@ -76,7 +75,6 @@ class Wishlist extends HistoricalEvent
 
             $wishlistItemCollection = $this->getCollectionArray(
                 array_keys($wishlistArrayCollection),
-                $duration,
                 $store,
                 $apsisCoreHelper
             );
@@ -139,21 +137,18 @@ class Wishlist extends HistoricalEvent
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param StoreInterface $store
      * @param array $wishlistIds
-     * @param array $duration
      *
      * @return WishlistItemCollection|array
      */
     protected function createCollection(
         ApsisCoreHelper $apsisCoreHelper,
         StoreInterface $store,
-        array $wishlistIds,
-        array $duration
+        array $wishlistIds
     ) {
         try {
             $collection = $this->wishlistItemCollectionFactory->create()
                 ->addStoreFilter([$store->getId()])
                 ->addFieldToFilter('wishlist_id', ['in' => $wishlistIds])
-                ->addFieldToFilter('added_at', $duration)
                 ->setVisibilityFilter()
                 ->setSalableFilter();
             $collection->getSelect()->group('wishlist_item_id');

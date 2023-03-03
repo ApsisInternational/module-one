@@ -3,14 +3,11 @@
 namespace Apsis\One\Plugin\Customer;
 
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Event;
 use Apsis\One\Model\Service\Profile;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Logger as CustomerLogger;
-use Magento\Store\Api\Data\StoreInterface;
-use Magento\Store\Model\ScopeInterface;
 use Throwable;
 
 class LoggerPlugin
@@ -84,11 +81,6 @@ class LoggerPlugin
             }
 
             $store = $this->apsisCoreHelper->getStore($customer->getStoreId());
-            $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
-            if (! $account) {
-                return $result;
-            }
-
             $profile = $this->profileCollectionFactory->create()
                 ->loadByCustomerId($customer->getId());
             if (! $profile) {
@@ -97,27 +89,12 @@ class LoggerPlugin
 
             if (isset($data['last_login_at'])) {
                 $this->profileService->mergeMagentoProfileWithWebProfile($profile, $store, $customer);
-                if ($this->isEventEnabled($store)) {
-                    $this->eventService->registerCustomerLoginEvent($logger, $customerId, $profile, $customer);
-                }
+                $this->eventService->registerCustomerLoginEvent($logger, $customerId, $profile, $customer);
             }
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 
         return $result;
-    }
-
-    /**
-     * @param StoreInterface $store
-     *
-     * @return bool
-     */
-    private function isEventEnabled(StoreInterface $store): bool
-    {
-        return (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::EVENTS_CUSTOMER_LOGIN
-        );
     }
 }

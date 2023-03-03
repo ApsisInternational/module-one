@@ -2,64 +2,12 @@
 
 namespace Apsis\One\ApiClient;
 
-use Throwable;
-
 class Client extends Rest
 {
-    const MAX_PRE_FILE_IMPORT_API_LIMIT = 3;
-
     /**
      * @var array
      */
     private array $cacheContainer = [];
-
-    /**
-     * @var int
-     */
-    private int $importCountInProcessingStatus;
-
-    /**
-     * Client constructor.
-     */
-    public function __construct()
-    {
-        $this->importCountInProcessingStatus = 0;
-    }
-
-    /**
-     * @return int
-     */
-    public function getImportCountInProcessingStatus(): int
-    {
-        return $this->importCountInProcessingStatus;
-    }
-
-    /**
-     * @param int $num
-     *
-     * @return $this
-     */
-    public function setImportCountInProcessingStatus(int $num): static
-    {
-        $this->importCountInProcessingStatus = $num;
-        return $this;
-    }
-
-    /**
-     * @param bool $add
-     *
-     * @return int
-     */
-    public function countImportCountInProcessingStatus(bool $add = true): int
-    {
-        if ($add) {
-            $this->importCountInProcessingStatus += 1;
-        } elseif ($this->importCountInProcessingStatus > 0) {
-            $this->importCountInProcessingStatus -= 1;
-        }
-
-        return $this->importCountInProcessingStatus;
-    }
 
     /**
      * @param string $key
@@ -404,85 +352,6 @@ class Client extends Rest
         $url = $this->hostName . '/v2/audience/keyspaces/' . $keyspaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/consents?consent_types=opt-in&consent_types=confirmed-opt-in';
         $this->setUrl($url)
-            ->setVerb(Rest::VERB_GET);
-        return $this->executeRequestAndReturnResponse(__METHOD__);
-    }
-
-    /**
-     * EXPORTS & IMPORTS: Import profiles - Initialize
-     *
-     * Initialize importing profiles into APSIS One.
-     *
-     * @param string $sectionDiscriminator
-     * @param array $data
-     *
-     * @return mixed
-     */
-    public function initializeProfileImport(string $sectionDiscriminator, array $data): mixed
-    {
-        $this->setUrl($this->hostName . '/v2/audience/sections/' . $sectionDiscriminator . '/imports')
-            ->setVerb(Rest::VERB_POST)
-            ->buildBody($data);
-        return $this->executeRequestAndReturnResponse(__METHOD__);
-    }
-
-    /**
-     * EXPORTS & IMPORTS: Import profiles - Upload file
-     *
-     * Upload CSV file after initializeProfileImport
-     *
-     * @param string $url
-     * @param array $fields
-     * @param string $fileNameWithPath
-     *
-     * @return mixed
-     */
-    public function uploadFileForProfileImport(string $url, array $fields, string $fileNameWithPath): mixed
-    {
-        $ch = curl_init();
-        try {
-            if (function_exists('curl_file_create')) {
-                $fields['file'] = curl_file_create($fileNameWithPath, 'text/csv');
-            } else {
-                $fields['file'] = '@' . $fileNameWithPath;
-            }
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_ENCODING, "");
-            curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
-            curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, Rest::VERB_POST);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: multipart/form-data']);
-
-            $this->responseBody = $this->helper->unserialize(curl_exec($ch));
-            $this->curlError = curl_error($ch);
-            if (empty($this->curlError)) {
-                $this->responseInfo = curl_getinfo($ch);
-            }
-            curl_close($ch);
-        } catch (Throwable $e) {
-            curl_close($ch);
-            $this->curlError = $e->getMessage();
-            $this->helper->logError(__METHOD__, $e);
-        }
-        return $this->processResponse($this->responseBody, __METHOD__);
-    }
-
-    /**
-     * EXPORTS & IMPORTS: Get import status
-     *
-     * Gets a status of a profile import that has been previously requested
-     *
-     * @param string $sectionDiscriminator
-     * @param string $importId
-     *
-     * @return mixed
-     */
-    public function getImportStatus(string $sectionDiscriminator, string $importId): mixed
-    {
-        $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/imports/' . $importId)
             ->setVerb(Rest::VERB_GET);
         return $this->executeRequestAndReturnResponse(__METHOD__);
     }

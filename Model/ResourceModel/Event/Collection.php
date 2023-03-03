@@ -2,7 +2,6 @@
 
 namespace Apsis\One\Model\ResourceModel\Event;
 
-use Apsis\One\Model\Profile;
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
 use Apsis\One\Model\Event;
@@ -27,7 +26,7 @@ class Collection extends AbstractCollection
     public function getPendingEventsByStore(string $storeId, int $syncLimit): Collection
     {
         return $this->addFieldToSelect('*')
-            ->addFieldToFilter('status', Profile::SYNC_STATUS_PENDING)
+            ->addFieldToFilter('sync_status', Event::STATUS_PENDING)
             ->addFieldToFilter('store_id', $storeId)
             ->setPageSize($syncLimit);
     }

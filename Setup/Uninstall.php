@@ -7,6 +7,7 @@ use Magento\Authorization\Model\Acl\Role\Group as RoleGroup;
 use Magento\Authorization\Model\UserContextInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
+use Magento\Framework\Setup\SetupInterface;
 use Magento\Framework\Setup\UninstallInterface;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Throwable;
@@ -34,7 +35,6 @@ class Uninstall implements UninstallInterface
     protected array $apsisTablesArr = [
         ApsisCoreHelper::APSIS_ABANDONED_TABLE,
         ApsisCoreHelper::APSIS_EVENT_TABLE,
-        ApsisCoreHelper::APSIS_PROFILE_BATCH_TABLE,
         ApsisCoreHelper::APSIS_PROFILE_TABLE
     ];
 
@@ -50,24 +50,67 @@ class Uninstall implements UninstallInterface
             $this->logHelper->log(__METHOD__);
 
             //Remove all module tables
-            foreach ($this->apsisTablesArr as $tableName) {
-                $setup->getConnection()->dropTable($setup->getTable($tableName));
-            }
+            $this->removeAllModuleTables($setup);
 
-            //Remove all module config
-            $setup->getConnection()->delete($setup->getTable('core_config_data'), "path like 'apsis_one%'");
-
-            //Remove role created by the module
-            $setup->getConnection()->delete(
-                $setup->getTable('authorization_role'),
-                [
-                    'role_name = ?' => 'APSIS Support Agent',
-                    'user_type = ?' => UserContextInterface::USER_TYPE_ADMIN,
-                    'role_type = ?' => RoleGroup::ROLE_TYPE
-                ]
-            );
+            // Remove all module data from Magento tables
+            $this->removeAllModuleDataFromMagentoTables($setup);
         } catch (Throwable $e) {
             $this->logHelper->logError(__METHOD__, $e);
         }
+    }
+
+    /**
+     * @param SetupInterface $setup
+     *
+     * @return void
+     */
+    public function removeAllModuleTables(SetupInterface $setup): void
+    {
+        $this->logHelper->log(__METHOD__);
+
+        foreach ($this->apsisTablesArr as $tableName) {
+            $setup->getConnection()->dropTable($setup->getTable($tableName));
+        }
+    }
+
+    /**
+     * @param SetupInterface $setup
+     *
+     * @return void
+     */
+    public function removeAllModuleDataFromMagentoTables(SetupInterface $setup): void
+    {
+        $this->logHelper->log(__METHOD__);
+
+        //Remove all module config
+        $setup->getConnection()->delete(
+            $setup->getTable('core_config_data'),
+            "path like 'apsis_one%'"
+        );
+
+        //Remove role created by the module
+        $setup->getConnection()->delete(
+            $setup->getTable('authorization_role'),
+            [
+                'role_name = ?' => 'APSIS Support Agent',
+                'user_type = ?' => UserContextInterface::USER_TYPE_ADMIN,
+                'role_type = ?' => RoleGroup::ROLE_TYPE
+            ]
+        );
+
+        //Remove all ui bookmarks belonging to module to force rebuild new ui bookmarks
+        $setup->getConnection()->delete(
+            $setup->getTable('ui_bookmark'),
+            $setup->getConnection()->quoteInto(
+                'namespace in (?)',
+                ['apsis_abandoned_grid', 'apsis_event_grid', 'apsis_profile_grid']
+            )
+        );
+
+        //Removed all cron jobs.
+        $setup->getConnection()->delete(
+            $setup->getTable('cron_schedule'),
+            "job_code like 'apsis_one%'"
+        );
     }
 }

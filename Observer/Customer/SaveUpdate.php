@@ -2,13 +2,12 @@
 
 namespace Apsis\One\Observer\Customer;
 
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Apsis\One\Model\Service\Profile;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Registry;
-use Magento\Store\Model\ScopeInterface;
 use Throwable;
 
 class SaveUpdate implements ObserverInterface
@@ -16,9 +15,9 @@ class SaveUpdate implements ObserverInterface
     const REGISTRY_NAME = '_customer_save_after';
 
     /**
-     * @var ApsisCoreHelper
+     * @var ApsisLogHelper
      */
-    private ApsisCoreHelper $apsisCoreHelper;
+    private ApsisLogHelper $apsisLogHelper;
 
     /**
      * @var Registry
@@ -33,15 +32,15 @@ class SaveUpdate implements ObserverInterface
     /**
      * SaveUpdate constructor.
      *
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param ApsisLogHelper $apsisLogHelper
      * @param Registry $registry
      * @param Profile $profileService
      */
-    public function __construct(ApsisCoreHelper $apsisCoreHelper, Registry $registry, Profile $profileService)
+    public function __construct(ApsisLogHelper $apsisLogHelper, Registry $registry, Profile $profileService)
     {
         $this->profileService = $profileService;
         $this->registry = $registry;
-        $this->apsisCoreHelper = $apsisCoreHelper;
+        $this->apsisLogHelper = $apsisLogHelper;
     }
 
     /**
@@ -60,22 +59,18 @@ class SaveUpdate implements ObserverInterface
             if ($emailReg) {
                 return $this;
             }
+
             $this->registry->unregister($customer->getEmail() . self::REGISTRY_NAME);
             $this->registry->register($customer->getEmail() . self::REGISTRY_NAME, $customer->getEmail(), true);
+            $profile = $this->profileService->findProfileForCustomer($customer);
 
-            $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $customer->getStoreId());
-
-            if ($account) {
-                $profile = $this->profileService->findProfileForCustomer($customer);
-
-                if (! $profile) {
-                    $this->profileService->createProfileForCustomer($customer);
-                } else {
-                    $this->profileService->updateProfileForCustomer($customer, $profile);
-                }
+            if (! $profile) {
+                $this->profileService->createProfileForCustomer($customer);
+            } else {
+                $this->profileService->updateProfileForCustomer($customer, $profile);
             }
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->apsisLogHelper->logError(__METHOD__, $e);
         }
         return $this;
     }

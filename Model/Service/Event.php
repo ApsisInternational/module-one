@@ -10,7 +10,6 @@ use Apsis\One\Model\Events\Historical\Reviews\Data as ReviewData;
 use Apsis\One\Model\Events\Historical\Wishlist\Data as WishlistData;
 use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Event as EventResource;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Magento\Catalog\Model\Product;
@@ -136,8 +135,8 @@ class Event
                     ->formatDateForPlatformCompatibility($customerLog->getLastLogoutAt()),
                 'lastVisitAt' => (int) $this->apsisDateHelper
                     ->formatDateForPlatformCompatibility($customerLog->getLastVisitAt()),
-                'websiteName' => (string) $this->apsisCoreHelper->getWebsiteNameFromStoreId(),
-                'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId()
+                'websiteName' => (string) $this->apsisCoreHelper->getStoreWebsiteName($customer->getStoreId()),
+                'storeName' => (string) $this->apsisCoreHelper->getStoreName($customer->getStoreId())
             ],
             (int) $profile->getId(),
             (string) $customer->getEmail(),
@@ -149,28 +148,19 @@ class Event
     /**
      * @param Subscriber $subscriber
      * @param Profile $profile
-     * @param StoreInterface $store
      *
      * @return void
      */
-    public function registerCustomerBecomesSubscriberEvent(
-        Subscriber $subscriber,
-        Profile $profile,
-        StoreInterface $store
-    ): void {
-        $event = (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::EVENTS_CUSTOMER_2_SUBSCRIBER
-        );
-        if ($event && $profile->getIsCustomer() && ! $profile->getIsSubscriber()) {
+    public function registerCustomerBecomesSubscriberEvent(Subscriber $subscriber, Profile $profile): void
+    {
+        if ($profile->getIsCustomer() && ! $profile->getIsSubscriber()) {
             $this->registerEvent(
                 EventModel::EVENT_TYPE_CUSTOMER_BECOMES_SUBSCRIBER,
                 [
                     'subscriberId' => (int) $subscriber->getSubscriberId(),
                     'customerId' => (int) $profile->getCustomerId(),
-                    'websiteName' => (string) $this->apsisCoreHelper
-                        ->getWebsiteNameFromStoreId($subscriber->getStoreId()),
-                    'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($subscriber->getStoreId())
+                    'websiteName' => (string) $this->apsisCoreHelper->getStoreWebsiteName($subscriber->getStoreId()),
+                    'storeName' => (string) $this->apsisCoreHelper->getStoreName($subscriber->getStoreId())
                 ],
                 (int) $profile->getId(),
                 (string) $subscriber->getEmail(),
@@ -184,15 +174,11 @@ class Event
     /**
      * @param Subscriber $subscriber
      * @param Profile $profile
-     * @param StoreInterface $store
      *
      * @return void
      */
-    public function registerSubscriberUnsubscribeEvent(
-        Subscriber $subscriber,
-        Profile $profile,
-        StoreInterface $store
-    ): void {
+    public function registerSubscriberUnsubscribeEvent(Subscriber $subscriber, Profile $profile): void
+    {
         $emailReg = $this->registry->registry($subscriber->getEmail() . self::REGISTRY_NAME_SUBSCRIBER_UNSUBSCRIBE);
         if ($emailReg) {
             return;
@@ -204,25 +190,19 @@ class Event
             true
         );
 
-        if ((boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::EVENTS_SUBSCRIBER_UNSUBSCRIBE
-        )) {
-            $this->registerEvent(
-                EventModel::EVENT_TYPE_SUBSCRIBER_UNSUBSCRIBE,
-                [
-                    'subscriberId' => (int) $subscriber->getSubscriberId(),
-                    'websiteName' => (string)
-                    $this->apsisCoreHelper->getWebsiteNameFromStoreId($subscriber->getStoreId()),
-                    'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($subscriber->getStoreId())
-                ],
-                (int) $profile->getId(),
-                (string) $subscriber->getEmail(),
-                (int) $subscriber->getStoreId(),
-                0,
-                (int) $subscriber->getSubscriberId()
-            );
-        }
+        $this->registerEvent(
+            EventModel::EVENT_TYPE_SUBSCRIBER_UNSUBSCRIBE,
+            [
+                'subscriberId' => (int) $subscriber->getSubscriberId(),
+                'websiteName' => (string) $this->apsisCoreHelper->getStoreWebsiteName($subscriber->getStoreId()),
+                'storeName' => (string) $this->apsisCoreHelper->getStoreName($subscriber->getStoreId())
+            ],
+            (int) $profile->getId(),
+            (string) $subscriber->getEmail(),
+            (int) $subscriber->getStoreId(),
+            0,
+            (int) $subscriber->getSubscriberId()
+        );
     }
 
     /**
@@ -281,15 +261,12 @@ class Event
      */
     public function registerSubscriberBecomesCustomerEvent(Customer $customer, Profile $profile): void
     {
-        if ((boolean) $this->apsisCoreHelper->getStoreConfig(
-            $customer->getStore(),
-            ApsisConfigHelper::EVENTS_SUBSCRIBER_2_CUSTOMER
-        ) && $profile->getIsSubscriber() && ! $profile->getIsCustomer()) {
+        if ($profile->getIsSubscriber() && ! $profile->getIsCustomer()) {
             $eventData = [
                 'subscriberId' => (int) $profile->getSubscriberId(),
                 'customerId' => (int) $customer->getEntityId(),
-                'websiteName' => (string) $this->apsisCoreHelper->getWebsiteNameFromStoreId($customer->getStoreId()),
-                'storeName' => (string) $this->apsisCoreHelper->getStoreNameFromId($customer->getStoreId())
+                'websiteName' => (string) $this->apsisCoreHelper->getStoreWebsiteName($customer->getStoreId()),
+                'storeName' => (string) $this->apsisCoreHelper->getStoreName($customer->getStoreId())
             ];
             $this->registerEvent(
                 EventModel::EVENT_TYPE_SUBSCRIBER_BECOMES_CUSTOMER,
@@ -390,6 +367,7 @@ class Event
         array $subEventData = []
     ): void {
         try {
+            /** @var EventModel $eventModel */
             $eventModel = $this->eventFactory->create();
             $eventModel->setEventType($eventType)
                 ->setEventData($this->apsisCoreHelper->serialize($eventData))
@@ -398,7 +376,7 @@ class Event
                 ->setSubscriberId($subscriberId)
                 ->setStoreId($storeId)
                 ->setEmail($email)
-                ->setStatus(Profile::SYNC_STATUS_PENDING);
+                ->setSyncStatus(EventModel::STATUS_PENDING);
             if (! empty($subEventData)) {
                 $eventModel->setSubEventData($this->apsisCoreHelper->serialize($subEventData));
             }
@@ -421,21 +399,5 @@ class Event
             $customer->getEmail(),
             $this->apsisCoreHelper
         );
-    }
-
-    /**
-     * @param string $from
-     * @param array $storeIds
-     *
-     * @return int
-     */
-    public function resetEvents(string $from, array $storeIds): int
-    {
-        $info = [
-            'From' => $from,
-            'Store Ids' => empty($stores = implode(", ", $storeIds)) ? 'Default Scope' : $stores
-        ];
-        $this->apsisCoreHelper->debug(__METHOD__, $info);
-        return $this->eventResource->resetEvents($this->apsisCoreHelper, $storeIds);
     }
 }

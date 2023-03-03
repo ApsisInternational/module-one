@@ -57,7 +57,7 @@ abstract class Event implements EventHistoryInterface
                 'subscriber_id' => $profile->getSubscriberId(),
                 'store_id' => $storeId,
                 'email' => $profile->getEmail(),
-                'status' => EventModel::SYNC_STATUS_PENDING_HISTORICAL,
+                'sync_status' => EventModel::STATUS_PENDING,
                 'created_at' => $createdAt,
                 'updated_at' => $this->dateTime->formatDate(true)
             ];
@@ -84,7 +84,6 @@ abstract class Event implements EventHistoryInterface
 
     /**
      * @param array $filter
-     * @param array $duration
      * @param StoreInterface $store
      * @param ApsisCoreHelper $apsisCoreHelper
      *
@@ -92,7 +91,6 @@ abstract class Event implements EventHistoryInterface
      */
     protected function getCollectionArray(
         array $filter,
-        array $duration,
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper
     ): array {
@@ -100,7 +98,7 @@ abstract class Event implements EventHistoryInterface
 
         try {
             foreach (array_chunk($filter, self::QUERY_LIMIT) as $filterChunk) {
-                $collection = $this->createCollection($apsisCoreHelper, $store, $filterChunk, $duration);
+                $collection = $this->createCollection($apsisCoreHelper, $store, $filterChunk);
                 if ($collection->getSize()) {
                     foreach ($collection as $item) {
                         try {

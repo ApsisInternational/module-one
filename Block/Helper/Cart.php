@@ -2,7 +2,6 @@
 
 namespace Apsis\One\Block\Helper;
 
-use Apsis\One\Model\Service\Config;
 use Apsis\One\Model\Service\Log;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\Data\Form\FormKey;
@@ -10,8 +9,6 @@ use Throwable;
 
 class Cart extends Template
 {
-    const EMAIL_UPDATER_URL = 'apsis/cart/updater';
-
     /**
      * @var Log
      */
@@ -47,27 +44,12 @@ class Cart extends Template
             return $this->_storeManager
                 ->getStore()
                 ->getUrl(
-                    self::EMAIL_UPDATER_URL,
+                    'apsis/cart/updater',
                     ['_secure' => $this->_storeManager->getStore()->isCurrentlySecure()]
                 );
         } catch (Throwable $e) {
             $this->logger->logError(__METHOD__, $e);
             return '';
-        }
-    }
-
-    /**
-     * @return bool
-     */
-    public function isOkToProceed(): bool
-    {
-        try {
-            return (boolean) $this->_storeManager->getStore()->getConfig(
-                Config::EVENTS_REGISTER_ABANDONED_CART_AFTER_DURATION
-            );
-        } catch (Throwable $e) {
-            $this->logger->logError(__METHOD__, $e);
-            return false;
         }
     }
 

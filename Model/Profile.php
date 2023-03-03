@@ -10,31 +10,22 @@ use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime;
-use Apsis\One\Model\Service\Log;
-use Apsis\One\Model\Service\Profile as ProfileService;
+use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Throwable;
 
 /**
  * Class Profile
  *
- * @method string getIntegrationUid()
- * @method $this setIntegrationUid(string $value)
- * @method int getSubscriberStatus()
- * @method $this setSubscriberStatus(int $value)
+ * @method string getProfileUuid()
+ * @method $this setProfileUuid(string $value)
  * @method int getStoreId()
  * @method $this setStoreId(int $value)
- * @method int getSubscriberStoreId()
- * @method $this setSubscriberStoreId(int $value)
  * @method int getSubscriberId()
  * @method $this setSubscriberId(int $value)
  * @method int getCustomerId()
  * @method $this setCustomerId(int $value)
  * @method string getEmail()
  * @method $this setEmail(string $value)
- * @method int getSubscriberSyncStatus()
- * @method $this setSubscriberSyncStatus(int $value)
- * @method int getCustomerSyncStatus()
- * @method $this setCustomerSyncStatus(int $value)
  * @method int getIsSubscriber()
  * @method $this setIsSubscriber(int $value)
  * @method int getIsCustomer()
@@ -46,37 +37,6 @@ use Throwable;
  */
 class Profile extends AbstractModel
 {
-    const SYNC_STATUS_PENDING = 0;
-    const SYNC_STATUS_BATCHED = 1;
-    const SYNC_STATUS_SYNCED = 2;
-    const SYNC_STATUS_FAILED = 3;
-    const SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE = 4;
-    const SYNC_STATUS_NA = 5;
-
-    const STATUS_TEXT_MAP = [
-        self::SYNC_STATUS_PENDING => 'Pending',
-        self::SYNC_STATUS_BATCHED => 'Batched',
-        self::SYNC_STATUS_SYNCED => 'Synced',
-        self::SYNC_STATUS_FAILED => 'Failed',
-        self::SYNC_STATUS_SUBSCRIBER_PENDING_UPDATE => 'Pending Update',
-        self::SYNC_STATUS_NA => 'N/A',
-    ];
-
-    const IS_FLAG = 1;
-    const NO_FLAG = 0;
-
-    const TYPE_CUSTOMER = 'customer';
-    const TYPE_SUBSCRIBER = 'subscriber';
-
-    const PROFILE_TYPE_TEXT_MAP = [
-        ProfileBatch::BATCH_TYPE_CUSTOMER => self::TYPE_CUSTOMER,
-        ProfileBatch::BATCH_TYPE_SUBSCRIBER => self::TYPE_SUBSCRIBER
-    ];
-
-    const INTEGRATION_KEYSPACE = 'integration_uid';
-    const EMAIL_FIELD = 'email';
-    const EMAIL_CHANNEL_DISCRIMINATOR = 'com.apsis1.channels.email';
-
     /**
      * @var DateTime
      */
@@ -88,14 +48,14 @@ class Profile extends AbstractModel
     private ExpressionFactory $expressionFactory;
 
     /**
-     * @var Log
+     * @var ApsisCoreHelper
      */
-    private Log $logger;
+    private ApsisCoreHelper $apsisCoreHelper;
 
     /**
-     * @var ProfileService
+     * @var ProfileResource
      */
-    private ProfileService $profileService;
+    private ProfileResource $profileResource;
 
     /**
      * Subscriber constructor.
@@ -104,8 +64,8 @@ class Profile extends AbstractModel
      * @param Registry $registry
      * @param DateTime $dateTime
      * @param ExpressionFactory $expressionFactory
-     * @param Log $logger
-     * @param ProfileService $profileService
+     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param ProfileResource $profileResource
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -115,14 +75,14 @@ class Profile extends AbstractModel
         Registry $registry,
         DateTime $dateTime,
         ExpressionFactory $expressionFactory,
-        Log $logger,
-        ProfileService $profileService,
+        ApsisCoreHelper $apsisCoreHelper,
+        ProfileResource $profileResource,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = []
     ) {
-        $this->profileService = $profileService;
-        $this->logger = $logger;
+        $this->profileResource = $profileResource;
+        $this->apsisCoreHelper = $apsisCoreHelper;
         $this->expressionFactory = $expressionFactory;
         $this->dateTime = $dateTime;
         parent::__construct(
@@ -149,20 +109,19 @@ class Profile extends AbstractModel
     {
         try {
             if ($this->isDeleted()) {
-                //Send delete request to One
-                $this->profileService->deleteProfileFromOne($this);
+                //@todo send profile update
 
                 //Log it
                 $info = [
                     'Message' => 'Profile removed from integration table.',
                     'Entity Id' => $this->getId(),
-                    'Store Id' => $this->getStoreId() ? $this->getStoreId() : $this->getSubscriberStoreId(),
-                    'Profile Id' => $this->getIntegrationUid()
+                    'Store Id' => $this->getStoreId(),
+                    'Profile Id' => $this->getProfileUuid()
                 ];
-                $this->logger->debug(__METHOD__, $info);
+                $this->apsisCoreHelper->debug(__METHOD__, $info);
             }
         } catch (Throwable $e) {
-            $this->logger->logError(__METHOD__, $e);
+            $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
 
         return parent::afterDelete();
@@ -174,10 +133,26 @@ class Profile extends AbstractModel
     public function beforeSave()
     {
         parent::beforeSave();
+        $store = $this->apsisCoreHelper->getStore($this->getStoreId());
+
+        // Always set update at date
         $this->setUpdatedAt($this->dateTime->formatDate(true));
 
+        // Aggregate profile data column
+        if ($this->getCustomerId()) {
+            $expressionString = $this->profileResource
+                ->buildProfileDataQueryForCustomer($store, $this->apsisCoreHelper, $this->getCustomerId());
+        } elseif ($this->getSubscriberId()) {
+            $expressionString = $this->profileResource
+                ->buildProfileDataQueryForSubscriber($store, $this->apsisCoreHelper, $this->getSubscriberId());
+        }
+        if (! empty($expressionString)) {
+            $this->setProfileData($this->expressionFactory->create(["expression" => $expressionString]));
+        }
+
+        // Assign profile a UUID if object is new
         if ($this->isObjectNew()) {
-            $this->setIntegrationUid(
+            $this->setProfileUuid(
                 $this->expressionFactory->create(
                     ["expression" => "(SELECT UUID())"]
                 )

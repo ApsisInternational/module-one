@@ -170,7 +170,7 @@ class AbandonedSub
                         'profile_id' => $profile->getId(),
                         'customer_id' => $quote->getCustomerId(),
                         'subscriber_id' => $profile->getSubscriberId(),
-                        'customer_email' => $quote->getCustomerEmail(),
+                        'email' => $quote->getCustomerEmail(),
                         'token' => $uuid,
                         'created_at' => $createdAt
                     ];
@@ -188,7 +188,7 @@ class AbandonedSub
                             'subscriber_id' => $profile->getSubscriberId(),
                             'store_id' => $quote->getStoreId(),
                             'email' => $quote->getCustomerEmail(),
-                            'status' => Profile::SYNC_STATUS_PENDING,
+                            'sync_status' => Event::STATUS_PENDING,
                             'created_at' => $createdAt,
                             'updated_at' => $createdAt,
                         ];

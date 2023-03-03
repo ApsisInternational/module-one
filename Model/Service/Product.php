@@ -37,11 +37,11 @@ class Product
             return $product->getUrlModel()
                 ->getUrl(
                     $product,
-                    ['_secure' => $helper->isFrontUrlSecure($storeId), '_scope' => $storeId]
+                    ['_secure' => $helper->isStoreFrontSecure($storeId), '_scope' => $storeId]
                 );
         } catch (Throwable $e) {
             $helper->logError(__METHOD__, $e);
-            return $helper->getBaseUrl($storeId);
+            return $helper->getStoreBaseUrl($storeId);
         }
     }
 
@@ -58,11 +58,11 @@ class Product
             $productImageUrl = $this->imageHelper
                 ->init($product, 'product_page_image_large')
                 ->getUrl();
-            return $helper->isFrontUrlSecure($storeId) && str_contains($productImageUrl, 'http:') ?
+            return $helper->isStoreFrontSecure($storeId) && str_contains($productImageUrl, 'http:') ?
                 str_replace('http:', 'https:', $productImageUrl) : $productImageUrl;
         } catch (Throwable $e) {
             $helper->logError(__METHOD__, $e);
-            return $helper->getBaseUrl($storeId);
+            return $helper->getStoreBaseUrl($storeId);
         }
     }
 
@@ -80,13 +80,13 @@ class Product
             if ($store) {
                 return $store->getUrl(
                     'review/product/list',
-                    ['id' => $productId, '_secure' => $helper->isFrontUrlSecure($storeId)]
+                    ['id' => $productId, '_secure' => $helper->isStoreFrontSecure($storeId)]
                 ) . '#reviews';
             }
         } catch (Throwable $e) {
             $helper->logError(__METHOD__, $e);
         }
 
-        return $helper->getBaseUrl($storeId);
+        return $helper->getStoreBaseUrl($storeId);
     }
 }

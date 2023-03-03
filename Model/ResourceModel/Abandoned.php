@@ -3,11 +3,10 @@
 namespace Apsis\One\Model\ResourceModel;
 
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Throwable;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
+use Throwable;
 
-class Abandoned extends AbstractDb implements ResourceInterface
+class Abandoned extends AbstractDb
 {
     /**
      * @inheritdoc
@@ -31,20 +30,6 @@ class Abandoned extends AbstractDb implements ResourceInterface
         } catch (Throwable $e) {
             $apsisCoreHelper->logError(__METHOD__, $e);
             return 0;
-        }
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function truncateTable(ApsisLogHelper $apsisLogHelper): bool
-    {
-        try {
-            $this->getConnection()->truncateTable($this->getMainTable());
-            return true;
-        } catch (Throwable $e) {
-            $apsisLogHelper->logError(__METHOD__, $e);
-            return false;
         }
     }
 }

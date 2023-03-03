@@ -89,36 +89,4 @@ class Date
     {
         return new DateInterval($intervalSpec);
     }
-
-    /**
-     * @param string $inputDateTime
-     * @param int $day
-     *
-     * @return string
-     */
-    public function getFormattedDateTimeWithAddedInterval(string $inputDateTime, int $day = 1): string
-    {
-        try {
-            return $this->getDateTimeFromTimeAndTimeZone($inputDateTime)
-                ->add($this->getDateIntervalFromIntervalSpec(sprintf('P%sD', $day)))
-                ->format(Zend_Date::ISO_8601);
-        } catch (Throwable $e) {
-            return '';
-        }
-    }
-
-    /**
-     * @param string $inputDateTime
-     *
-     * @return bool
-     */
-    public function isExpired(string $inputDateTime): bool
-    {
-        try {
-            $nowDateTime = $this->getDateTimeFromTimeAndTimeZone()->format(Zend_Date::ISO_8601);
-            return ($nowDateTime > $inputDateTime);
-        } catch (Throwable $e) {
-            return false;
-        }
-    }
 }

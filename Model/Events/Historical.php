@@ -7,20 +7,16 @@ use Apsis\One\Model\Events\Historical\Carts;
 use Apsis\One\Model\Events\Historical\Orders;
 use Apsis\One\Model\Events\Historical\Reviews;
 use Apsis\One\Model\Events\Historical\Wishlist;
+use Apsis\One\Model\Profile;
 use Apsis\One\Model\ResourceModel\Profile\Collection as ProfileCollection;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Service\Date as ApsisDateHelper;
-use Apsis\One\Model\Sync\SyncInterface;
-use Apsis\One\Setup\UpgradeData;
-use Magento\Framework\App\Area;
-use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\App\EmulationFactory;
-use Magento\Store\Model\ScopeInterface;
+use Magento\Framework\App\Area;
 use Throwable;
 
-class Historical implements SyncInterface
+class Historical
 {
     const FETCH_HISTORICAL_EVENTS = [
         Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART,
@@ -28,11 +24,6 @@ class Historical implements SyncInterface
         Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW,
         Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST,
     ];
-
-    /**
-     * @var ApsisDateHelper
-     */
-    private ApsisDateHelper $apsisDateHelper;
 
     /**
      * @var ProfileCollectionFactory
@@ -71,7 +62,6 @@ class Historical implements SyncInterface
      * @param Orders $historicalOrders
      * @param Reviews $historicalReviews
      * @param Wishlist $historicalWishlist
-     * @param ApsisDateHelper $apsisDateHelper
      * @param ProfileCollectionFactory $profileCollectionFactory
      * @param EmulationFactory $emulationFactory
      */
@@ -80,13 +70,11 @@ class Historical implements SyncInterface
         Orders $historicalOrders,
         Reviews $historicalReviews,
         Wishlist $historicalWishlist,
-        ApsisDateHelper $apsisDateHelper,
         ProfileCollectionFactory $profileCollectionFactory,
         EmulationFactory $emulationFactory
     ) {
         $this->emulationFactory = $emulationFactory;
         $this->profileCollectionFactory = $profileCollectionFactory;
-        $this->apsisDateHelper = $apsisDateHelper;
         $this->historicalWishlist = $historicalWishlist;
         $this->historicalCarts = $historicalCarts;
         $this->historicalOrders = $historicalOrders;
@@ -100,16 +88,6 @@ class Historical implements SyncInterface
      */
     public function process(ApsisCoreHelper $apsisCoreHelper): void
     {
-        $period = $this->calculatePeriod($apsisCoreHelper);
-        if (empty($period)) {
-            $info = ['Message' => 'Period is empty for fetching historical events. See error'];
-            $apsisCoreHelper->debug(__METHOD__, $info);
-            return;
-        } else {
-            $info = ['Message' => 'Searching for historical event with period.'];
-            $apsisCoreHelper->debug(__METHOD__, array_merge($info, $period));
-        }
-
         foreach ($apsisCoreHelper->getStores() as $store) {
             $emulate = $this->emulationFactory->create();
             try {
@@ -119,7 +97,7 @@ class Historical implements SyncInterface
                     ->getProfileCollectionForStore($store->getId());
 
                 if ($profileCollection->getSize()) {
-                    $this->runByType($store, $apsisCoreHelper, $profileCollection, $period);
+                    $this->runByType($store, $apsisCoreHelper, $profileCollection);
                 }
             } catch (Throwable $e) {
                 $apsisCoreHelper->logError(__METHOD__, $e);
@@ -132,91 +110,57 @@ class Historical implements SyncInterface
     }
 
     /**
-     * @param ApsisCoreHelper $apsisCoreHelper
-     *
-     * @return array
-     */
-    private function calculatePeriod(ApsisCoreHelper $apsisCoreHelper): array
-    {
-        try {
-            $to = $this->apsisDateHelper->getDateTimeFromTime();
-            $from = $this->apsisDateHelper->getDateTimeFromTime()
-                ->sub($this->apsisDateHelper->getDateIntervalFromIntervalSpec('P24M'));
-
-            return [
-                'from' => $from->format('Y-m-d H:i:s'),
-                'to' => $to->format('Y-m-d H:i:s'),
-                'date' => true
-            ];
-        } catch (Throwable $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e);
-            return [];
-        }
-    }
-
-    /**
      * @param StoreInterface $store
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param ProfileCollection $profileCollection
-     * @param array $period
      *
      * @return void
      */
     private function runByType(
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper,
-        ProfileCollection $profileCollection,
-        array $period
+        ProfileCollection $profileCollection
     ): void {
         foreach (self::FETCH_HISTORICAL_EVENTS as $type) {
             try {
-                $profileCollectionArray = $this
-                    ->getFormattedProfileCollection($profileCollection, $apsisCoreHelper, $store);
+                $profileCollectionArray = $this->getFormattedProfileCollection(
+                    $profileCollection,
+                    $apsisCoreHelper,
+                    $store
+                );
 
                 switch ($type) {
                     case Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST:
-                        if (! $this->isAlreadyDoneForStore($apsisCoreHelper, $store, $type)) {
-                            $this->historicalWishlist->fetchForStore(
-                                $store,
-                                $apsisCoreHelper,
-                                $profileCollection,
-                                $period,
-                                $profileCollectionArray
-                            );
-                        }
+                        $this->historicalWishlist->fetchForStore(
+                            $store,
+                            $apsisCoreHelper,
+                            $profileCollection,
+                            $profileCollectionArray
+                        );
                         break;
                     case Event::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW:
-                        if (! $this->isAlreadyDoneForStore($apsisCoreHelper, $store, $type)) {
-                            $this->historicalReviews->fetchForStore(
-                                $store,
-                                $apsisCoreHelper,
-                                $profileCollection,
-                                $period,
-                                $profileCollectionArray
-                            );
-                        }
+                        $this->historicalReviews->fetchForStore(
+                            $store,
+                            $apsisCoreHelper,
+                            $profileCollection,
+                            $profileCollectionArray
+                        );
                         break;
                     case Event::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART:
-                        if (! $this->isAlreadyDoneForStore($apsisCoreHelper, $store, $type)) {
-                            $this->historicalCarts->fetchForStore(
-                                $store,
-                                $apsisCoreHelper,
-                                $profileCollection,
-                                $period,
-                                $profileCollectionArray
-                            );
-                        }
+                        $this->historicalCarts->fetchForStore(
+                            $store,
+                            $apsisCoreHelper,
+                            $profileCollection,
+                            $profileCollectionArray
+                        );
                         break;
                     case Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER:
-                        if (! $this->isAlreadyDoneForStore($apsisCoreHelper, $store, $type)) {
-                            $this->historicalOrders->fetchForStore(
-                                $store,
-                                $apsisCoreHelper,
-                                $profileCollection,
-                                $period,
-                                $this->getFormattedProfileCollection($profileCollection, $apsisCoreHelper, $store, true)
-                            );
-                        }
+                        $this->historicalOrders->fetchForStore(
+                            $store,
+                            $apsisCoreHelper,
+                            $profileCollection,
+                            $this->getFormattedProfileCollection($profileCollection, $apsisCoreHelper, $store, true)
+                        );
                         break;
                     default:
                         $apsisCoreHelper->log(__METHOD__, ['Unsupported type.']);
@@ -225,51 +169,6 @@ class Historical implements SyncInterface
                 $apsisCoreHelper->logError(__METHOD__, $e);
                 continue;
             }
-        }
-    }
-
-    /**
-     * @param ApsisCoreHelper $apsisCoreHelper
-     * @param StoreInterface $store
-     * @param int $type
-     *
-     * @return bool
-     */
-    private function isAlreadyDoneForStore(ApsisCoreHelper $apsisCoreHelper, StoreInterface $store, int $type): bool
-    {
-        try {
-            $contexts = [
-                ScopeInterface::SCOPE_STORES => $store->getId(),
-                ScopeInterface::SCOPE_WEBSITES => $store->getWebsiteId(),
-                ScopeConfigInterface::SCOPE_TYPE_DEFAULT => 0
-            ];
-
-            foreach ($contexts as $scope => $id) {
-                $done = (boolean) $apsisCoreHelper->getDataCollectionByContextAndPath(
-                    $scope,
-                    $id,
-                    UpgradeData::PRE_220_HISTORICAL_EVENT_DONE_CONFIGS[$type]
-                )->getSize();
-                if ($done) {
-                    break;
-                }
-            }
-
-            if ($done) {
-                $info = [
-                    'Message' => 'Skipping. In previous version already fetched events using crontab.',
-                    'Event type' => $type,
-                    'Pre 2.2.0 config path' => UpgradeData::PRE_220_HISTORICAL_EVENT_DONE_CONFIGS[$type],
-                    'Store Id' => $store->getId()
-                ];
-                $apsisCoreHelper->debug(__METHOD__, $info);
-            }
-
-            return $done;
-        } catch (Throwable $e) {
-            $apsisCoreHelper->logError(__METHOD__, $e);
-            //Worst case scenario, we do not want to create duplicate.
-            return true;
         }
     }
 
@@ -296,6 +195,7 @@ class Historical implements SyncInterface
                     ->getProfileCollectionForStore($store->getId());
             }
 
+            /** @var Profile $profile */
             foreach ($profileCollection as $profile) {
                 if ($orderType) {
                     $index = $profile->getEmail();

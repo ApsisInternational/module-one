@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Block;
 
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
+use Apsis\One\Model\Service\Core;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Magento\Framework\View\Element\Template;
 use Throwable;
@@ -40,15 +40,15 @@ class Script extends Template
         $url = '';
 
         try {
-            $isTrackingEnabled = (boolean) $this->_storeManager
-                ->getStore()
-                ->getConfig(ApsisConfigHelper::TRACKING_ENABLED);
             $trackingTextConfig = (string) $this->_storeManager
                 ->getStore()
-                ->getConfig(ApsisConfigHelper::TRACKING_SCRIPT);
+                ->getConfig(Core::PATH_CONFIG_TRACKING_SCRIPT);
+            if (empty($trackingTextConfig)) {
+                return $url;
+            }
 
             preg_match('#\bhttps?://[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#', $trackingTextConfig, $match);
-            if ($isTrackingEnabled && ! empty($match)) {
+            if (! empty($match)) {
                 $url = str_replace('.js', '', $match[0]);
             }
         } catch (Throwable $e) {

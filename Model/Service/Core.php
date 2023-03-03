@@ -5,17 +5,9 @@ namespace Apsis\One\Model\Service;
 use Apsis\One\ApiClient\Client;
 use Apsis\One\ApiClient\ClientFactory;
 use Apsis\One\Logger\Logger;
-use Apsis\One\Model\Config\Backend\Value;
-use Apsis\One\Model\Config\Source\System\Region;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Exception;
-use Magento\Config\Model\ResourceModel\Config\Data\Collection as DataCollection;
-use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as DataCollectionFactory;
-use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
-use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ModuleListInterface;
 use Magento\Framework\Module\ResourceInterface;
@@ -28,19 +20,34 @@ use Throwable;
 
 class Core extends ApsisLogHelper
 {
-    /**
-     * APSIS table names
-     */
+    // DB Tables
     const APSIS_PROFILE_TABLE = 'apsis_profile';
-    const APSIS_PROFILE_BATCH_TABLE = 'apsis_profile_batch';
     const APSIS_EVENT_TABLE = 'apsis_event';
     const APSIS_ABANDONED_TABLE = 'apsis_abandoned';
 
-    const PRODUCTION_TLD = 'one';
-    const STAGE_TLD = 'cloud';
+    // Config keys
+    const PATH_INTEGRATION_API_KEY = 'apsis_one_connect/api/key';
+    const PATH_CONFIG_AC_DURATION = 'apsis_one_configuration/abandoned_cart/duration';
+    const PATH_CONFIG_PROFILE_ORDER_STATUS = 'apsis_one_configuration/profile_sync/order_status';
+    const PATH_CONFIG_TRACKING_SCRIPT = 'apsis_one_configuration/tracking/script';
 
-    const EU_FILE_UPLOAD_URL = 'https://s3.eu-west-1.amazonaws.com';
-    const APAC_FILE_UPLOAD_URL = 'https://s3.ap-southeast-1.amazonaws.com';
+    const PATH_APSIS_CLIENT_ID = 'apsis_one/api/client_id';
+    const PATH_APSIS_CLIENT_SECRET = 'apsis_one/api/client_secret';
+    const PATH_APSIS_API_URL = 'apsis_one/api/url';
+    const PATH_APSIS_API_TOKEN = 'apsis_one/api/token';
+    const PATH_APSIS_API_TOKEN_EXPIRY = 'apsis_one/api/token_expiry';
+    const PATH_APSIS_CONFIG_SECTION = 'apsis_one/config/section';
+    const PATH_APSIS_CONFIG_PROFILE_KEY = 'apsis_one/config/profile_key';
+
+    const CONFIG_PATHS_SECURE = [
+        self::PATH_INTEGRATION_API_KEY,
+        self::PATH_APSIS_CLIENT_ID,
+        self::PATH_APSIS_CLIENT_SECRET,
+        self::PATH_APSIS_API_TOKEN
+    ];
+
+    // APSIS configs
+    const EMAIL_DISCRIMINATOR = 'com.apsis1.attributes.email';
 
     /**
      * @var StoreManagerInterface
@@ -55,7 +62,7 @@ class Core extends ApsisLogHelper
     /**
      * @var WriterInterface
      */
-    private WriterInterface $writer;
+    public WriterInterface $writer;
 
     /**
      * @var ClientFactory
@@ -63,21 +70,9 @@ class Core extends ApsisLogHelper
     private ClientFactory $apiClientFactory;
 
     /**
-     * @var DataCollectionFactory
-     */
-    private DataCollectionFactory $dataCollectionFactory;
-
-    /**
      * @var ApsisDateHelper
      */
     private Date $apsisDateHelper;
-
-    /**
-     * Request object
-     *
-     * @var RequestInterface
-     */
-    private RequestInterface $request;
 
     /**
      * @var array
@@ -88,38 +83,30 @@ class Core extends ApsisLogHelper
      * Core constructor.
      *
      * @param Logger $logger
-     * @param ScopeConfigInterface $scopeConfig
      * @param StoreManagerInterface $storeManager
      * @param EncryptorInterface $encryptor
      * @param WriterInterface $writer
      * @param ClientFactory $clientFactory
-     * @param DataCollectionFactory $dataCollectionFactory
      * @param ApsisDateHelper $apsisDateHelper
-     * @param RequestInterface $request
      * @param ResourceInterface $moduleResource
      * @param ModuleListInterface $moduleList
      */
     public function __construct(
         Logger $logger,
-        ScopeConfigInterface $scopeConfig,
         StoreManagerInterface $storeManager,
         EncryptorInterface $encryptor,
         WriterInterface $writer,
         ClientFactory $clientFactory,
-        DataCollectionFactory $dataCollectionFactory,
         ApsisDateHelper $apsisDateHelper,
-        RequestInterface $request,
         ResourceInterface $moduleResource,
         ModuleListInterface $moduleList
     ) {
-        $this->request = $request;
         $this->apsisDateHelper = $apsisDateHelper;
-        $this->dataCollectionFactory = $dataCollectionFactory;
         $this->apiClientFactory = $clientFactory;
         $this->writer = $writer;
         $this->encryptor = $encryptor;
         $this->storeManager = $storeManager;
-        parent::__construct($logger, $scopeConfig, $moduleResource, $moduleList);
+        parent::__construct($logger, $moduleResource, $moduleList);
     }
 
     /**
@@ -135,185 +122,6 @@ class Core extends ApsisLogHelper
             $this->logError(__METHOD__, $e);
             return false;
         }
-    }
-
-    /**
-     * @param null|int $storeId
-     *
-     * @return string
-     */
-    public function getStoreNameFromId(int $storeId = null): string
-    {
-        $store = $this->getStore($storeId);
-        return ($store) ? $store->getName() : '';
-    }
-
-    /**
-     * @param null|int $storeId
-     *
-     * @return string
-     */
-    public function getWebsiteNameFromStoreId(int $storeId = null): string
-    {
-        try {
-            $store = $this->getStore($storeId);
-            return ($store) ? $this->storeManager->getWebsite($store->getWebsiteId())->getName() : '';
-        } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
-            return '';
-        }
-    }
-
-    /**
-     * Get selected scope in admin
-     *
-     * @return array
-     */
-    public function getSelectedScopeInAdmin(): array
-    {
-        $scope = [];
-        $storeId = $this->request->getParam('store');
-        if ($storeId) {
-            $scope['context_scope'] = ScopeInterface::SCOPE_STORES;
-            $scope['context_scope_id'] = (int) $storeId;
-            return $scope;
-        }
-
-        $websiteId = $this->request->getParam('website', 0);
-        $contextScope = ($websiteId) ? ScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
-
-        $scope['context_scope'] = $contextScope;
-        $scope['context_scope_id'] = (int) $websiteId;
-        return $scope;
-    }
-
-    /**
-     * Get config scope value.
-     *
-     * @param string $path
-     * @param string $contextScope
-     * @param int $contextScopeId
-     *
-     * @return mixed
-     */
-    public function getConfigValue(string $path, string $contextScope, int $contextScopeId): mixed
-    {
-        try {
-            return $this->scopeConfig->getValue($path, $contextScope, $contextScopeId);
-        } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
-            return null;
-        }
-    }
-
-    /**
-     * Save config scope value.
-     *
-     * @param string $path
-     * @param string $value
-     * @param string $contextScope
-     * @param int|null $contextScopeId
-     *
-     * @return void
-     */
-    public function saveConfigValue(
-        string $path,
-        string $value,
-        string $contextScope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-        int $contextScopeId = null
-    ): void {
-        try {
-            $context = $this->getScopeForConfigUpdate($path, $contextScope, $contextScopeId);
-
-            $info = [
-                'Scope' => $context['scope'],
-                'Scope Id' => $context['id'],
-                'Config Path' => $path,
-                'Old Value' => $this->getConfigValue($path, $contextScope, $contextScopeId),
-                'New Value' => $value
-            ];
-            if (in_array($path, Config::CONFIG_PATHS_SECURE)) {
-                $info['Old Value'] = $info['New Value'] = 'An encrypted value.';
-            }
-            $this->debug(__METHOD__, $info);
-
-            $this->writer->save($path, $value, $context['scope'], $context['id']);
-        } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * Delete config by scope.
-     *
-     * @param string $path
-     * @param string $contextScope
-     * @param int $contextScopeId
-     * @param bool $isUpdate
-     *
-     * @return void
-     */
-    public function deleteConfigByScope(
-        string $path,
-        string $contextScope,
-        int $contextScopeId,
-        bool $isUpdate = true
-    ): void {
-        try {
-            if ($isUpdate) {
-                $context = $this->getScopeForConfigUpdate($path, $contextScope, $contextScopeId);
-                $scope = $context['scope'];
-                $id = $context['id'];
-            } else {
-                $scope = $contextScope;
-                $id = $contextScopeId;
-            }
-
-            $info = [
-                'Scope' => $scope,
-                'Scope Id' => $id,
-                'Config Path' => $path,
-                'Old Value' => $this->getConfigValue($path, $contextScope, $contextScopeId),
-                'New Value' => null
-            ];
-            if (in_array($path, Config::CONFIG_PATHS_SECURE)) {
-                $info['Old Value'] = 'An encrypted value';
-            }
-            $this->debug(__METHOD__, $info);
-
-            $this->writer->delete($path, $scope, $id);
-        } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param string $path
-     * @param string $contextScope
-     * @param int $scopeId
-     *
-     * @return array
-     */
-    private function getScopeForConfigUpdate(string $path, string $contextScope, int $scopeId): array
-    {
-        if ($path == Config::ACCOUNTS_OAUTH_TOKEN ||
-            $path == Config::ACCOUNTS_OAUTH_TOKEN_EXPIRE
-        ) {
-            return $this->resolveContext($contextScope, $scopeId, $path);
-        }
-
-        return ['scope' => $contextScope, 'id' => $scopeId];
-    }
-
-    /**
-     * @param string $path
-     *
-     * @return mixed
-     */
-    public function getMappedValueFromSelectedScope(string $path): mixed
-    {
-        $scope = $this->getSelectedScopeInAdmin();
-        return $this->getConfigValue($path, $scope['context_scope'], $scope['context_scope_id']);
     }
 
     /**
@@ -334,6 +142,65 @@ class Core extends ApsisLogHelper
     }
 
     /**
+     * @param null|int $storeId
+     *
+     * @return string
+     */
+    public function getStoreName(int $storeId = null): string
+    {
+        $store = $this->getStore($storeId);
+        return ($store) ? $store->getName() : '';
+    }
+
+    /**
+     * @param int $storeId
+     *
+     * @return bool
+     */
+    public function isStoreFrontSecure(int $storeId): bool
+    {
+        try {
+            $store = $this->getStore($storeId);
+            return $store instanceof StoreInterface && $store->isFrontUrlSecure();
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return false;
+        }
+    }
+
+    /**
+     * @param int $storeId
+     *
+     * @return string
+     */
+    public function getStoreBaseUrl(int $storeId): string
+    {
+        try {
+            $store = $this->getStore($storeId);
+            return $store ? $store->getBaseUrl(UrlInterface::URL_TYPE_LINK, $this->isStoreFrontSecure($storeId)) : '';
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return '';
+        }
+    }
+
+    /**
+     * @param null|int $storeId
+     *
+     * @return string
+     */
+    public function getStoreWebsiteName(int $storeId = null): string
+    {
+        try {
+            $store = $this->getStore($storeId);
+            return ($store) ? $this->storeManager->getWebsite($store->getWebsiteId())->getName() : '';
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return '';
+        }
+    }
+
+    /**
      * @param StoreInterface $store
      * @param string $path
      *
@@ -346,6 +213,33 @@ class Core extends ApsisLogHelper
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return null;
+        }
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param string $path
+     * @param string $value
+     *
+     * @return void
+     */
+    public function saveStoreConfig(StoreInterface $store, string $path, string $value): void
+    {
+        try {
+            $info = [
+                'Store Id' => $store->getId(),
+                'Config Path' => $path,
+                'Old Value' => $this->getStoreConfig($store, $path),
+                'New Value' => $value
+            ];
+            if (in_array($path, self::CONFIG_PATHS_SECURE)) {
+                $info['Old Value'] = $info['New Value'] = 'An encrypted value.';
+            }
+            $this->debug(__METHOD__, $info);
+
+            $this->writer->save($path, $value, ScopeInterface::SCOPE_STORE, $store->getId());
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
         }
     }
 
@@ -366,526 +260,33 @@ class Core extends ApsisLogHelper
     }
 
     /**
-     * @param string $contextScope
-     * @param int $scopeId
+     * @param mixed $data
      *
-     * @return string
+     * @return string|bool
      */
-    public function getRegion(string $contextScope, int $scopeId): string
+    public function serialize(mixed $data)
     {
-        return (string) $this->getConfigValue(ApsisConfigHelper::ACCOUNTS_OAUTH_REGION, $contextScope, $scopeId);
-    }
-
-    /**
-     * @param string $contextScope
-     * @param int $scopeId
-     *
-     * @return string
-     */
-    private function getClientId(string $contextScope, int $scopeId): string
-    {
-        return (string) $this->getConfigValue(ApsisConfigHelper::ACCOUNTS_OAUTH_ID, $contextScope, $scopeId);
-    }
-
-    /**
-     * @param string $contextScope
-     * @param int $scopeId
-     *
-     * @return string
-     */
-    public function getClientSecret(string $contextScope, int $scopeId): string
-    {
-        $value = $this->getConfigValue(ApsisConfigHelper::ACCOUNTS_OAUTH_SECRET, $contextScope, $scopeId);
-        return $this->encryptor->decrypt($value);
-    }
-
-    /**
-     * @return string
-     */
-    public function getSubscriptionEndpointKey(): string
-    {
-        $value = $this->getConfigValue(
-            ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENDPOINT_KEY,
-            ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            0
-        );
-        return $this->encryptor->decrypt($value);
-    }
-
-    /**
-     * @param string $contextScope
-     * @param int $scopeId
-     *
-     * @return bool
-     */
-    public function isEnabled(string $contextScope, int $scopeId): bool
-    {
-        return (boolean) $this->getConfigValue(ApsisConfigHelper::ACCOUNTS_OAUTH_ENABLED, $contextScope, $scopeId);
-    }
-
-    /**
-     * @param Client $apiClient
-     * @param string $contextScope
-     * @param int $scopeId
-     * @param bool $bypass
-     *
-     * @return string
-     */
-    private function getToken(Client $apiClient, string $contextScope, int $scopeId, bool $bypass = false): string
-    {
-        $token = '';
         try {
-            if (! $bypass) {
-                $token = $this->getTokenFromDb($contextScope, $scopeId);
-            }
-
-            if (empty($token) || $this->isTokenExpired($contextScope, $scopeId)) {
-                $response = $apiClient->getAccessToken();
-
-                //Success in generating token
-                if ($response && isset($response->access_token)) {
-                    $this->debug('Token renewed', ['Context' => $contextScope, 'Id' => $scopeId]);
-                    $this->saveTokenAndExpiry($contextScope, $scopeId, $response);
-                    return (string) $response->access_token;
-                }
-
-                //Error in generating token, disable module & remove token along with token expiry
-                if ($response && isset($response->status) &&
-                    in_array($response->status, Client::HTTP_CODES_DISABLE_MODULE)
-                ) {
-                    $this->debug(__METHOD__, (array) $response);
-
-                    if (! $bypass) {
-                        $this->disableAccountAndRemoveTokenConfig(__METHOD__, $contextScope, $scopeId);
-                    }
-                }
-            }
+            return json_encode($data);
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
+            return '[]';
         }
-        return $token;
     }
 
     /**
-     * @param string $contextScope
-     * @param int $scopeId
+     * @param string $string
      *
-     * @return string
+     * @return mixed
      */
-    private function getTokenFromDb(string $contextScope, int $scopeId): string
-    {
-        $token = '';
-        $context = $this->resolveContext($contextScope, $scopeId, ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN);
-        $collection = $this->getDataCollectionByContextAndPath(
-            $context['scope'],
-            $context['id'],
-            ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN
-        );
-
-        if ($collection->getSize()) {
-            $token = $this->encryptor->decrypt($collection->getFirstItem()->getValue());
-        }
-
-        return $token;
-    }
-
-    /**
-     * @param string $contextScope
-     * @param int $scopeId
-     *
-     * @return string
-     */
-    private function getTokenExpiryFromDb(string $contextScope, int $scopeId): string
-    {
-        $expiryTime = '';
-        $context = $this->resolveContext($contextScope, $scopeId, ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE);
-
-        $collection = $this->getDataCollectionByContextAndPath(
-            $context['scope'],
-            $context['id'],
-            ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE
-        );
-        if ($collection->getSize()) {
-            $expiryTime = (string) $collection->getFirstItem()->getValue();
-        }
-
-        return $expiryTime;
-    }
-
-    /**
-     * @param string $fromMethod
-     * @param string $contextScope
-     * @param int $scopeId
-     *
-     * @return void
-     */
-    public function disableAccountAndRemoveTokenConfig(string $fromMethod, string $contextScope, int $scopeId): void
-    {
-        $this->debug(__METHOD__, ['From' => $fromMethod]);
-
-        //Remove token configs
-        $this->removeTokenConfig(__METHOD__, $contextScope, $scopeId);
-
-        //Remove account configs
-        if ($contextScope == ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {
-            $this->deleteConfigByScope(ApsisConfigHelper::ACCOUNTS_OAUTH_ENABLED, $contextScope, $scopeId);
-        } else {
-            $this->saveConfigValue(ApsisConfigHelper::ACCOUNTS_OAUTH_ENABLED, 0, $contextScope, $scopeId);
-        }
-        $this->deleteConfigByScope(ApsisConfigHelper::ACCOUNTS_OAUTH_ID, $contextScope, $scopeId);
-        $this->deleteConfigByScope(ApsisConfigHelper::ACCOUNTS_OAUTH_SECRET, $contextScope, $scopeId);
-        $this->deleteConfigByScope(ApsisConfigHelper::ACCOUNTS_OAUTH_REGION, $contextScope, $scopeId);
-        $this->cleanCache();
-    }
-
-    /**
-     * @param string $fromMethod
-     * @param string $contextScope
-     * @param int $contextScopeId
-     * @param bool $isUpdate
-     *
-     * @return void
-     */
-    public function removeTokenConfig(
-        string $fromMethod,
-        string $contextScope,
-        int $contextScopeId,
-        bool $isUpdate = true
-    ): void {
-        $this->debug(__METHOD__, ['From' => $fromMethod]);
-
-        $this->deleteConfigByScope(
-            ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN,
-            $contextScope,
-            $contextScopeId,
-            $isUpdate
-        );
-        $this->deleteConfigByScope(
-            ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE,
-            $contextScope,
-            $contextScopeId,
-            $isUpdate
-        );
-    }
-
-    /**
-     * @param string $contextScope
-     * @param int $scopeId
-     *
-     * @return bool
-     */
-    private function isTokenExpired(string $contextScope, int $scopeId): bool
+    public function unserialize(string $string): mixed
     {
         try {
-            $expiryTime = $this->getTokenExpiryFromDb($contextScope, $scopeId);
-
-            $nowTime = $this->apsisDateHelper->getDateTimeFromTimeAndTimeZone()
-                ->add($this->apsisDateHelper->getDateIntervalFromIntervalSpec('PT15M'))
-                ->format('Y-m-d H:i:s');
-
-            $check = ($nowTime > $expiryTime);
-
-            if ($check) {
-                $info = [
-                    'Scope' => $contextScope,
-                    'Scope Id' => $scopeId,
-                    'Is Expired/Empty' => true,
-                    'Last Expiry DateTime' => $expiryTime
-                ];
-                $this->debug(__METHOD__, $info);
-            }
-
-            return $check;
-        } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
-            return true;
-        }
-    }
-
-    /**
-     * @param string $contextScope
-     * @param int $scopeId
-     * @param bool $bypass
-     * @param string $region
-     * @param string $clientId
-     * @param string $clientSecret
-     *
-     * @return Client|false
-     */
-    public function getApiClient(
-        string $contextScope,
-        int $scopeId,
-        bool $bypass = false,
-        string $region = '',
-        string $clientId = '',
-        string $clientSecret = ''
-    ) {
-        if (! $bypass) {
-            if (! $this->isEnabled($contextScope, $scopeId)) {
-                return false;
-            }
-
-            if (empty($clientId)) {
-                $clientId = $this->getClientId($contextScope, $scopeId);
-            }
-
-            if (empty($clientSecret)) {
-                $clientSecret = $this->getClientSecret($contextScope, $scopeId);
-            }
-
-            if (empty($region)) {
-                $region = $this->getRegion($contextScope, $scopeId);
-            }
-        }
-
-        if (empty($clientId) || empty($clientSecret) || empty($region)) {
-            $this->log(__METHOD__ . ' : Missing client credentials.');
-
-            $this->disableAccountAndRemoveTokenConfig(__METHOD__, $contextScope, $scopeId);
-            return false;
-        }
-
-        //Return cached apiClient object. As long as bypass is not true and token is not expired.
-        if (! $bypass && ! $this->isTokenExpired($contextScope, $scopeId) && isset($this->cachedClient[$clientId])) {
-            if ((bool) getenv('APSIS_DEVELOPER')) {
-                $this->debug("apiClient from cache.", ['Client Id' => $clientId, 'Scope Id' => $scopeId]);
-            }
-
-            return $this->cachedClient[$clientId];
-        }
-
-        $apiClient = $this->apiClientFactory->create()
-            ->setHostName($this->buildHostName($region))
-            ->setClientCredentials($clientId, $clientSecret)
-            ->setHelper($this);
-
-        $token = $this->getToken($apiClient, $contextScope, $scopeId, $bypass);
-
-        if (empty($token)) {
-            return false;
-        }
-
-        $apiClient->setToken($token);
-        return $this->cachedClient[$clientId] = $apiClient;
-    }
-
-    /**
-     * @param string $contextScope
-     * @param int $scopeId
-     * @param stdClass $request
-     *
-     * @return void
-     */
-    private function saveTokenAndExpiry(string $contextScope, int $scopeId, stdClass $request): void
-    {
-        try {
-            $this->saveConfigValue(
-                ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN,
-                $this->encryptor->encrypt($request->access_token),
-                $contextScope,
-                $scopeId
-            );
-
-            $time = $this->apsisDateHelper
-                ->getDateTimeFromTimeAndTimeZone()
-                ->add($this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('PT%sS', $request->expires_in)))
-                ->sub($this->apsisDateHelper->getDateIntervalFromIntervalSpec('PT60M'))
-                ->format('Y-m-d H:i:s');
-
-            $this->saveConfigValue(
-                ApsisConfigHelper::ACCOUNTS_OAUTH_TOKEN_EXPIRE,
-                $time,
-                $contextScope,
-                $scopeId
-            );
-        } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param string $contextScope
-     * @param int $scopeId
-     * @param string $path
-     *
-     * @return array
-     */
-    public function resolveContext(string $contextScope, int $scopeId, string $path): array
-    {
-        return match ($contextScope) {
-            ScopeInterface::SCOPE_STORES => $this->resolveContextForStore($scopeId, $path),
-            ScopeInterface::SCOPE_WEBSITES => $this->resolveContextForWebsite($scopeId, $path),
-            default => ['scope' => $contextScope, 'id' => $scopeId],
-        };
-    }
-
-    /**
-     * @param int $scopeId
-     * @param string $path
-     *
-     * @return array
-     */
-    private function resolveContextForStore(int $scopeId, string $path): array
-    {
-        $contextScope = ScopeInterface::SCOPE_STORES;
-        if (! $this->isExistInDataCollection($contextScope, $scopeId, $path)) {
-            $websiteId = (int) $this->getStore($scopeId)->getWebsiteId();
-            if ($this->isExistInDataCollection(ScopeInterface::SCOPE_WEBSITES, $websiteId, $path)) {
-                $contextScope = ScopeInterface::SCOPE_WEBSITES;
-                $scopeId = $websiteId;
-            } else {
-                $contextScope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
-                $scopeId = 0;
-            }
-        }
-        return ['scope' => $contextScope, 'id' => $scopeId];
-    }
-
-    /**
-     * @param int $scopeId
-     * @param string $path
-     *
-     * @return array
-     */
-    private function resolveContextForWebsite(int $scopeId, string $path): array
-    {
-        $contextScope = ScopeInterface::SCOPE_WEBSITES;
-        if (! $this->isExistInDataCollection($contextScope, $scopeId, $path)) {
-            $contextScope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
-            $scopeId = 0;
-        }
-        return ['scope' => $contextScope, 'id' => $scopeId];
-    }
-
-    /**
-     * @param string $contextScope
-     * @param int $scopeId
-     * @param string $path
-     *
-     * @return bool
-     */
-    private function isExistInDataCollection(string $contextScope, int $scopeId, string $path): bool
-    {
-        $collection = $this->getDataCollectionByContextAndPath($contextScope, $scopeId, $path);
-        return (boolean) $collection->getSize();
-    }
-
-    /**
-     * @param string $contextScope
-     * @param int $scopeId
-     * @param string $path
-     *
-     * @return DataCollection
-     */
-    public function getDataCollectionByContextAndPath(string $contextScope, int $scopeId, string $path): DataCollection
-    {
-        $collection = $this->dataCollectionFactory->create()
-            ->addFieldToFilter('scope', $contextScope)
-            ->addFieldToFilter('scope_id', $scopeId)
-            ->addFieldToFilter('path', $path);
-        $collection->getSelect()->limit(1);
-        return $collection;
-    }
-
-    /**
-     * @param bool $withDefault
-     *
-     * @return array
-     */
-    public function getAllStoreIds(bool $withDefault = false): array
-    {
-        $storeIds = [];
-
-        $stores = $this->getStores($withDefault);
-        foreach ($stores as $store) {
-            $storeIds[] = $store->getId();
-        }
-
-        return $storeIds;
-    }
-
-    /**
-     * @param int $websiteId
-     *
-     * @return array
-     */
-    public function getAllStoreIdsFromWebsite(int $websiteId): array
-    {
-        try {
-            return $this->storeManager->getWebsite($websiteId)->getStoreIds();
+            return json_decode($string);
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return [];
         }
-    }
-
-    /**
-     * @return array
-     */
-    public function getStoreIdsBasedOnScope(): array
-    {
-        if ($storeId = $this->request->getParam('store')) {
-            return [$storeId];
-        }
-
-        if ($websiteId = $this->request->getParam('website')) {
-            return $this->getAllStoreIdsFromWebsite($websiteId);
-        }
-
-        //Scope is default. Returning all store ids.
-        return $this->getAllStoreIds();
-    }
-
-    /**
-     * @return DataCollection
-     */
-    public function getConfigDataCollection(): DataCollection
-    {
-        return $this->dataCollectionFactory->create();
-    }
-
-    /**
-     * @param string $sectionDiscriminator
-     *
-     * @return string
-     */
-    public function getKeySpaceDiscriminator(string $sectionDiscriminator): string
-    {
-        try {
-            if (strlen($sectionDiscriminator)) {
-                $hash = substr(md5($sectionDiscriminator), 0, 8);
-                return "com.apsis1.integrations.keyspaces.$hash.magento";
-            }
-        } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
-        }
-
-        return '';
-    }
-
-    /**
-     * @param Client $client
-     * @param string $sectionDiscriminator
-     *
-     * @return array
-     */
-    public function getAttributeVersionIds(Client $client, string $sectionDiscriminator): array
-    {
-        $attributesArr = [];
-
-        $attributes = $client->getAttributes($sectionDiscriminator);
-        if ($attributes && isset($attributes->items)) {
-            foreach ($attributes->items as $attribute) {
-                foreach ($attribute->versions as $version) {
-                    if ($version->deprecated_at === null) {
-                        $attributesArr[$attribute->discriminator] = $version->id;
-                        break;
-                    }
-                }
-            }
-        }
-
-        return $attributesArr;
     }
 
     /**
@@ -923,236 +324,160 @@ class Core extends ApsisLogHelper
     }
 
     /**
-     * @param string $url
+     * @param Client $client
+     * @param string $sectionDiscriminator
      *
-     * @return void
-     *
-     * @throws Throwable
+     * @return array
      */
-    public function validateIsUrlReachable(string $url): void
+    public function getAttributeVersionIds(Client $client, string $sectionDiscriminator): array
     {
-        $ch = curl_init($url);
+        $attributesArr = [];
 
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-        curl_exec($ch);
-
-        if (curl_errno($ch)) {
-            $msg = 'CURL ERROR: ' . curl_error($ch) . '. Unable to reach URL: ' . $url;
-            curl_close($ch);
-
-            throw new Exception($msg);
-        }
-
-        curl_close($ch);
-    }
-
-    /**
-     * @param string $region
-     *
-     * @return string
-     */
-    public function buildHostName(string $region): string
-    {
-        $tld = self::PRODUCTION_TLD;
-
-        if ($region === Region::REGION_STAGE) {
-            $tld = self::STAGE_TLD;
-        }
-
-        return sprintf('https://%s.apsis.%s', $region, $tld);
-    }
-
-    /**
-     * @param string $region
-     *
-     * @return string
-     */
-    public function buildFileUploadHostName(string $region): string
-    {
-        $url = self::EU_FILE_UPLOAD_URL;
-
-        if ($region === Region::REGION_APAC) {
-            $url = self::APAC_FILE_UPLOAD_URL;
-        }
-
-        return $url;
-    }
-
-    /**
-     * @param string $scope
-     * @param int $scopeId
-     *
-     * @return void
-     */
-    public function disableProfileSync(string $scope, int $scopeId): void
-    {
-        $this->saveConfigValue(
-            ApsisConfigHelper::SYNC_SETTING_SUBSCRIBER_ENABLED,
-            0,
-            $scope,
-            $scopeId
-        );
-        $this->saveConfigValue(
-            ApsisConfigHelper::SYNC_SETTING_CUSTOMER_ENABLED,
-            0,
-            $scope,
-            $scopeId
-        );
-        $this->log('Profile sync disabled.');
-    }
-
-    /**
-     * @param string $id
-     * @param string $secret
-     * @param string $region
-     * @param string $scope
-     * @param string $scopeId
-     *
-     * @return bool|string
-     */
-    public function isApiCredentialsValid(
-        string $id,
-        string $secret,
-        string $region,
-        string $scope,
-        string $scopeId
-    ) {
-        try {
-            //Validate api host is reachable
-            try {
-                $this->validateIsUrlReachable($this->buildHostName($region));
-            } catch (Throwable $e) {
-                $this->logError(__METHOD__, $e);
-                return $e->getMessage() . '. Cannot enable account. Host for URL must be whitelisted first.';
-            }
-
-            //Validate api credential validity for integration
-            $check = $this->validateApiCredentials($id, $secret, $region, $scope, $scopeId);
-            if ($check === true) {
-                return Value::MSG_SUCCESS_ACCOUNT;
-            } else {
-                $this->debug($check);
-                return $check;
-            }
-        } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
-            return 'Something went wrong, please check logs.';
-        }
-    }
-
-    /**
-     * @param string $id
-     * @param string $secret
-     * @param string $region
-     * @param string $scope
-     * @param string $scopeId
-     *
-     * @return bool|string
-     */
-    private function validateApiCredentials(
-        string $id,
-        string $secret,
-        string $region,
-        string $scope,
-        string $scopeId
-    ) {
-        try {
-            $client = $this->getApiClient($scope, $scopeId, true, $region, $id, $secret);
-
-            if (empty($client)) {
-                return 'Unable to generate access token. Authorization has been denied for this request.';
-            } else {
-                $keySpaces = $client->getKeySpaces();
-                if (is_object($keySpaces) && isset($keySpaces->items)) {
-                    foreach ($keySpaces->items as $item) {
-                        if (str_contains($item->discriminator, 'magento')) {
-                            return true;
-                        }
+        $attributes = $client->getAttributes($sectionDiscriminator);
+        if ($attributes && isset($attributes->items)) {
+            foreach ($attributes->items as $attribute) {
+                foreach ($attribute->versions as $version) {
+                    if ($version->deprecated_at === null) {
+                        $attributesArr[$attribute->discriminator] = $version->id;
+                        break;
                     }
                 }
-                return 'API credentials are invalid for this integration. Magento keySpace does not exist.';
             }
-        } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
-            return 'Something went wrong, please check logs.';
         }
+
+        return $attributesArr;
     }
 
     /**
-     * @param array $groups
+     * @param StoreInterface $store
      *
-     * @return bool
+     * @return Client|false
      */
-    public function isInheritConfig(array $groups): bool
+    public function getApiClient(StoreInterface $store)
     {
-        $isInheritId = isset($groups['oauth']['fields']['id']['inherit']);
-        $isInheritSecret = isset($groups['oauth']['fields']['secret']['inherit']);
+        $clientId = $this->getStoreConfig($store, self::PATH_APSIS_CLIENT_ID);
+        $clientSecret = $this->encryptor->decrypt($this->getStoreConfig($store, self::PATH_APSIS_CLIENT_SECRET));
+        $apiUrl = $this->getStoreConfig($store, self::PATH_APSIS_API_URL);
 
-        return $isInheritId || $isInheritSecret;
-    }
 
-    /**
-     * @param int $storeId
-     *
-     * @return bool
-     */
-    public function isFrontUrlSecure(int $storeId): bool
-    {
-        try {
-            $store = $this->getStore($storeId);
-            return $store instanceof StoreInterface && $store->isFrontUrlSecure();
-        } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
+        if (empty($clientId) || empty($clientSecret) || empty($apiUrl)) {
+            $this->log(__METHOD__ . ' : Missing client credentials.');
             return false;
         }
-    }
 
-    /**
-     * @param int $storeId
-     *
-     * @return bool
-     */
-    public function isCurrentlySecure(int $storeId): bool
-    {
-        try {
-            $store = $this->getStore($storeId);
-            return $store instanceof StoreInterface && $store->isCurrentlySecure();
-        } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
+        if (! $this->isTokenExpired($store) && isset($this->cachedClient[$clientId])) {
+            if ((bool) getenv('APSIS_DEVELOPER')) {
+                $this->debug("apiClient from cache.", ['Client Id' => $clientId, 'Store Id' => $store->getId()]);
+            }
+
+            return $this->cachedClient[$clientId];
+        }
+
+        $apiClient = $this->apiClientFactory->create()
+            ->setHostName($apiUrl)
+            ->setClientCredentials($clientId, $clientSecret)
+            ->setHelper($this);
+
+        $token = $this->getToken($apiClient, $store);
+
+        if (empty($token)) {
             return false;
         }
+
+        $apiClient->setToken($token);
+        return $this->cachedClient[$clientId] = $apiClient;
     }
 
     /**
-     * @param int $storeId
-     *
-     * @return bool
-     */
-    public function isSecureUrl(int $storeId): bool
-    {
-        try {
-            $store = $this->getStore($storeId);
-            return $store instanceof StoreInterface && $store->isCurrentlySecure() && $store->isFrontUrlSecure();
-        } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param int $storeId
+     * @param Client $apiClient
+     * @param StoreInterface $store
      *
      * @return string
      */
-    public function getBaseUrl(int $storeId): string
+    private function getToken(Client $apiClient, StoreInterface $store): string
     {
+        $token = '';
         try {
-            $store = $this->getStore($storeId);
-            return $store ? $store->getBaseUrl(UrlInterface::URL_TYPE_LINK, $this->isFrontUrlSecure($storeId)) : '';
+            // First fetch from DB
+            $token = $this->encryptor->decrypt($this->getStoreConfig($store, self::PATH_APSIS_API_TOKEN));
+            if (empty($token) || $this->isTokenExpired($store)) {
+                $response = $apiClient->getAccessToken();
+
+                //Success in generating token
+                if ($response && isset($response->access_token)) {
+                    $this->debug('Token renewed', ['Store Id' => $store->getId()]);
+                    $this->saveTokenAndExpiry($store, $response);
+                    return (string) $response->access_token;
+                }
+
+                //Error in generating token
+                if ($response && isset($response->status) &&
+                    in_array($response->status, Client::HTTP_CODES_DISABLE_MODULE)
+                ) {
+                    $this->debug(__METHOD__, (array) $response);
+                }
+            }
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
-            return '';
+        }
+        return $token;
+    }
+
+    /**
+     * @param StoreInterface $store
+     *
+     * @return bool
+     */
+    private function isTokenExpired(StoreInterface $store): bool
+    {
+        try {
+            $expiryTime = $this->getStoreConfig($store, self::PATH_APSIS_API_TOKEN_EXPIRY);
+            $nowTime = $this->apsisDateHelper->getDateTimeFromTimeAndTimeZone()
+                ->add($this->apsisDateHelper->getDateIntervalFromIntervalSpec('PT15M'))
+                ->format('Y-m-d H:i:s');
+
+            $check = ($nowTime > $expiryTime);
+
+            if ($check) {
+                $info = [
+                    'Store Id' => $store->getId(),
+                    'Is Expired/Empty' => true,
+                    'Last Expiry DateTime' => $expiryTime
+                ];
+                $this->debug(__METHOD__, $info);
+            }
+
+            return $check;
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return true;
+        }
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param stdClass $request
+     *
+     * @return void
+     */
+    private function saveTokenAndExpiry(StoreInterface $store, stdClass $request): void
+    {
+        try {
+            $this->saveStoreConfig(
+                $store,
+                self::PATH_APSIS_API_TOKEN,
+                $this->encryptor->encrypt($request->access_token)
+            );
+
+            $time = $this->apsisDateHelper
+                ->getDateTimeFromTimeAndTimeZone()
+                ->add($this->apsisDateHelper->getDateIntervalFromIntervalSpec(sprintf('PT%sS', $request->expires_in)))
+                ->sub($this->apsisDateHelper->getDateIntervalFromIntervalSpec('PT60M'))
+                ->format('Y-m-d H:i:s');
+
+            $this->saveStoreConfig($store, self::PATH_APSIS_API_TOKEN_EXPIRY, $time);
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
         }
     }
 }

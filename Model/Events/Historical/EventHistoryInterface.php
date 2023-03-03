@@ -14,7 +14,6 @@ interface EventHistoryInterface
      * @param StoreInterface $store
      * @param ApsisCoreHelper $apsisCoreHelper
      * @param ProfileCollection $profileCollection
-     * @param array $duration
      * @param array $profileCollectionArray
      *
      * @return void
@@ -23,7 +22,6 @@ interface EventHistoryInterface
         StoreInterface $store,
         ApsisCoreHelper $apsisCoreHelper,
         ProfileCollection $profileCollection,
-        array $duration,
         array $profileCollectionArray
     ): void;
 }

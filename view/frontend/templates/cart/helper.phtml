@@ -1,5 +1,5 @@
 <?php  /** @var \Apsis\One\Block\Helper\Cart $block */ ?>
-<?php if ($block->isOkToProceed() && ! empty($url = $block->getUpdaterUrl()) && ! empty($key = $block->getKey())): ?>
+<?php if (! empty($url = $block->getUpdaterUrl()) && ! empty($key = $block->getKey())): ?>
     <script type="text/x-magento-init">
     {
         "*" : { "Apsis_One/js/helper" : { "endpoint" : "<?= $url; ?>", "form_key" : "<?= $key; ?>" } }

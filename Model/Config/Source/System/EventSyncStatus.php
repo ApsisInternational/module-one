@@ -2,31 +2,29 @@
 
 namespace Apsis\One\Model\Config\Source\System;
 
-use Apsis\One\Model\Profile;
 use Apsis\One\Model\Event;
 use Magento\Framework\Data\OptionSourceInterface;
 
-class EventSyncStatus extends SyncStatus implements OptionSourceInterface
+class EventSyncStatus implements OptionSourceInterface
 {
     /**
      * @inheritdoc
      */
     public function toOptionArray(): array
     {
-        $statusArray = parent::toOptionArray();
-
-        foreach ($statusArray as $index => $status) {
-            if (isset($status['value']) && $status['value'] === Profile::SYNC_STATUS_NA) {
-                unset($statusArray[$index]);
-            }
-
-            if (isset($status['value']) && $status['value'] === Profile::SYNC_STATUS_BATCHED) {
-                unset($statusArray[$index]);
-            }
-        }
-
-        $statusArray[] = ['value' => Event::SYNC_STATUS_PENDING_HISTORICAL, 'label' => __('Pending Historical')];
-
-        return $statusArray;
+        return [
+            [
+                'value' => Event::STATUS_PENDING,
+                'label' => __(Event::STATUS_TEXT_MAP[Event::STATUS_PENDING])
+            ],
+            [
+                'value' => Event::STATUS_SYNCED,
+                'label' => __(Event::STATUS_TEXT_MAP[Event::STATUS_SYNCED])
+            ],
+            [
+                'value' => Event::STATUS_FAILED,
+                'label' => __(Event::STATUS_TEXT_MAP[Event::STATUS_FAILED])
+            ]
+        ];
     }
 }

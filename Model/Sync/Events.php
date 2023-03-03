@@ -9,16 +9,14 @@ use Apsis\One\Model\ResourceModel\Event as EventResourceModel;
 use Apsis\One\Model\ResourceModel\Event\Collection as EventCollection;
 use Apsis\One\Model\ResourceModel\Event\CollectionFactory as EventCollectionFactory;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Magento\Store\Api\Data\StoreInterface;
-use Magento\Store\Model\ScopeInterface;
 use stdClass;
 use Throwable;
 use Zend_Date;
 
-class Events implements SyncInterface
+class Events
 {
     /**
      * Maximum collection limit per store
@@ -120,16 +118,6 @@ class Events implements SyncInterface
     private string $section = '';
 
     /**
-     * @var string
-     */
-    private string $emailAttribute = '';
-
-    /**
-     * @var string
-     */
-    private string $profileKeyAttribute = '';
-
-    /**
      * @var array
      */
     private array $attributeVerIds = [];
@@ -163,26 +151,13 @@ class Events implements SyncInterface
 
         foreach ($this->apsisCoreHelper->getStores() as $store) {
             try {
-                if (! $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId())) {
-                    continue;
-                }
-
-                $this->section = $this->apsisCoreHelper->getStoreConfig(
-                    $store,
-                    ApsisConfigHelper::MAPPINGS_SECTION_SECTION
-                );
-                $this->emailAttribute = $this->apsisCoreHelper->getStoreConfig(
-                    $store,
-                    ApsisConfigHelper::MAPPINGS_CUSTOMER_SUBSCRIBER_EMAIL
-                );
-                $this->profileKeyAttribute = $this->apsisCoreHelper->getStoreConfig(
-                    $store,
-                    ApsisConfigHelper::MAPPINGS_CUSTOMER_SUBSCRIBER_PROFILE_KEY
-                );
-                $this->keySpace = $this->apsisCoreHelper->getKeySpaceDiscriminator($this->section);
+                $this->section = $this->apsisCoreHelper
+                    ->getStoreConfig($store, ApsisCoreHelper::PATH_APSIS_CONFIG_SECTION);
+                $this->keySpace = $this->apsisCoreHelper
+                    ->getStoreConfig($store, ApsisCoreHelper::PATH_APSIS_CONFIG_PROFILE_KEY);
 
                 // Validate all things compulsory
-                if (! $this->section || ! $this->emailAttribute || ! $this->profileKeyAttribute || ! $this->keySpace) {
+                if (! $this->section || ! $this->keySpace) {
                     continue;
                 }
 
@@ -192,14 +167,16 @@ class Events implements SyncInterface
                     continue;
                 }
 
-                $client = $this->apsisCoreHelper->getApiClient(ScopeInterface::SCOPE_STORES, $store->getId());
+                $client = $this->apsisCoreHelper->getApiClient($store);
                 if (! $client) {
                     continue;
                 }
 
                 // Validate we have all necessary attribute version ids
                 $this->attributeVerIds = $this->apsisCoreHelper->getAttributeVersionIds($client, $this->section);
-                if (empty($this->attributeVerIds) || ! isset($this->attributeVerIds[$this->emailAttribute])) {
+                if (empty($this->attributeVerIds) ||
+                    ! isset($this->attributeVerIds[ApsisCoreHelper::EMAIL_DISCRIMINATOR])
+                ) {
                     continue;
                 }
 
@@ -273,6 +250,7 @@ class Events implements SyncInterface
         $groupedEvents = $this->getEventsArrayGroupedByProfile($eventCollection);
         foreach ($groupedEvents as $profileEvents) {
             try {
+                /** @var Profile $profile */
                 $profile = $profileEvents['profile'];
                 $events = $profileEvents['events'];
                 if (empty($events)) {
@@ -291,7 +269,7 @@ class Events implements SyncInterface
                     $this->eventResourceModel
                         ->updateSyncStatus(
                             array_keys($events),
-                            Profile::SYNC_STATUS_FAILED,
+                            Event::STATUS_FAILED,
                             $this->apsisCoreHelper,
                             $msg
                         );
@@ -311,7 +289,7 @@ class Events implements SyncInterface
 
                 $status = $client->addEventsToProfile(
                     $this->keySpace,
-                    $profile->getIntegrationUid(),
+                    $profile->getProfileUuid(),
                     $this->section,
                     $groupedEventArray
                 );
@@ -326,7 +304,7 @@ class Events implements SyncInterface
                     $this->eventResourceModel
                         ->updateSyncStatus(
                             array_keys($events),
-                            Profile::SYNC_STATUS_FAILED,
+                            Event::STATUS_FAILED,
                             $this->apsisCoreHelper,
                             $status
                         );
@@ -342,7 +320,7 @@ class Events implements SyncInterface
 
                 $this->eventResourceModel->updateSyncStatus(
                     array_keys($events),
-                    Profile::SYNC_STATUS_SYNCED,
+                    Event::STATUS_SYNCED,
                     $this->apsisCoreHelper
                 );
             } catch (Throwable $e) {
@@ -359,7 +337,7 @@ class Events implements SyncInterface
      */
     private function getEventArr(Event $event): array
     {
-        $isSecure = $this->apsisCoreHelper->isFrontUrlSecure($event->getStoreId());
+        $isSecure = $this->apsisCoreHelper->isStoreFrontSecure($event->getStoreId());
         $eventData = [];
         $createdAt = (string) $this->apsisDateHelper->formatDateForPlatformCompatibility(
             $event->getCreatedAt(),
@@ -457,14 +435,10 @@ class Events implements SyncInterface
      */
     private function syncProfileForEvent(Client $client, Profile $profile)
     {
-        $attributesToSync[$this->attributeVerIds[$this->emailAttribute]] = $profile->getEmail();
-        if (isset($this->attributeVerIds[$this->profileKeyAttribute])) {
-            $attributesToSync[$this->attributeVerIds[$this->profileKeyAttribute]]
-                = $profile->getIntegrationUid();
-        }
+        $attributesToSync[$this->attributeVerIds[ApsisCoreHelper::EMAIL_DISCRIMINATOR]] = $profile->getEmail();
         return $client->addAttributesToProfile(
             $this->keySpace,
-            $profile->getIntegrationUid(),
+            $profile->getProfileUuid(),
             $this->section,
             $attributesToSync
         );

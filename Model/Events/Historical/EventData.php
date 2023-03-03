@@ -137,7 +137,7 @@ abstract class EventData
                 return $this->productServiceProvider->getUrl($this->product, $this->apsisCoreHelper, $storeId);
             }
 
-            return $this->apsisCoreHelper->getBaseUrl($storeId);
+            return $this->apsisCoreHelper->getStoreBaseUrl($storeId);
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             return '';
@@ -157,7 +157,7 @@ abstract class EventData
                     ->getReviewUrl($this->apsisCoreHelper, $storeId, $this->product->getId());
             }
 
-            return $this->apsisCoreHelper->getBaseUrl($storeId);
+            return $this->apsisCoreHelper->getStoreBaseUrl($storeId);
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             return '';
@@ -176,7 +176,7 @@ abstract class EventData
                 return $this->productServiceProvider->getImageUrl($this->product, $this->apsisCoreHelper, $storeId);
             }
 
-            return $this->apsisCoreHelper->getBaseUrl($storeId);
+            return $this->apsisCoreHelper->getStoreBaseUrl($storeId);
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
             return '';

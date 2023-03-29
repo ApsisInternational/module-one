@@ -1,6 +1,6 @@
 <?php
 
-namespace Apsis\One\Controller\Abandoned;
+namespace Apsis\One\Controller\Frontend\Abandoned;
 
 use Apsis\One\Model\Abandoned;
 use Apsis\One\Model\ResourceModel\Abandoned\CollectionFactory as AbandonedCollectionFactory;
@@ -17,6 +17,8 @@ use Throwable;
 
 class Checkout extends Action
 {
+    const VALID_HTTP_METHODS = ['GET', 'HEAD'];
+
     /**
      * @var AbandonedCollectionFactory
      */
@@ -67,9 +69,8 @@ class Checkout extends Action
     {
         try {
             $token = $this->getRequest()->getParam('token');
-            if (empty($token) || ! $this->isClean($token) ||
-                empty($ac = $this->getCart($token))
-            ) {
+            if (! in_array($this->getRequest()->getMethod(), self::VALID_HTTP_METHODS) || empty($token) ||
+                ! $this->isClean($token) || empty($ac = $this->getCart($token))) {
                 return $this->_redirect('');
             }
 

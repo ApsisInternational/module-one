@@ -4,7 +4,7 @@
       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
         <referenceContainer name="before.body.end">
-            <block class="Apsis\One\Block\Helper\Cart" name="apsis_cart_updater" template="Apsis_One::cart/helper.phtml"/>
+            <block class="Apsis\One\Block\Abandoned\Helper" name="apsis_cart_updater" template="Apsis_One::abandoned/helper.phtml"/>
         </referenceContainer>
     </body>
 </page>

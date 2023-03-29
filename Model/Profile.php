@@ -16,24 +16,28 @@ use Throwable;
 /**
  * Class Profile
  *
- * @method string getProfileUuid()
- * @method $this setProfileUuid(string $value)
  * @method int getStoreId()
  * @method $this setStoreId(int $value)
- * @method int getSubscriberId()
- * @method $this setSubscriberId(int $value)
- * @method int getCustomerId()
- * @method $this setCustomerId(int $value)
+ * @method int|null getSubscriberId()
+ * @method $this setSubscriberId(int|null $value)
+ * @method int|null getCustomerId()
+ * @method $this setCustomerId(int|null $value)
+ * @method int|null getGroupId()
+ * @method $this setGroupId(int|null $value)
  * @method string getEmail()
  * @method $this setEmail(string $value)
  * @method int getIsSubscriber()
  * @method $this setIsSubscriber(int $value)
+ * @method int|null getSubscriberStatus()
+ * @method $this setSubscriberStatus(int|null $value)
  * @method int getIsCustomer()
  * @method $this setIsCustomer(int $value)
  * @method string getErrorMessage()
  * @method $this setErrorMessage(string $value)
  * @method string getUpdatedAt()
  * @method $this setUpdatedAt(string $value)
+ * @method string getProfileData()
+ * @method $this setProfileData(string $value)
  */
 class Profile extends AbstractModel
 {
@@ -105,18 +109,15 @@ class Profile extends AbstractModel
     /**
      * @return Profile
      */
-    public function afterDelete()
+    public function afterDelete(): Profile
     {
         try {
             if ($this->isDeleted()) {
-                //@todo send profile update
-
                 //Log it
                 $info = [
                     'Message' => 'Profile removed from integration table.',
-                    'Entity Id' => $this->getId(),
-                    'Store Id' => $this->getStoreId(),
-                    'Profile Id' => $this->getProfileUuid()
+                    'Profile Id' => $this->getId(),
+                    'Store Id' => $this->getStoreId()
                 ];
                 $this->apsisCoreHelper->debug(__METHOD__, $info);
             }
@@ -130,7 +131,7 @@ class Profile extends AbstractModel
     /**
      * @return $this
      */
-    public function beforeSave()
+    public function beforeSave(): static
     {
         parent::beforeSave();
         $store = $this->apsisCoreHelper->getStore($this->getStoreId());
@@ -148,15 +149,6 @@ class Profile extends AbstractModel
         }
         if (! empty($expressionString)) {
             $this->setProfileData($this->expressionFactory->create(["expression" => $expressionString]));
-        }
-
-        // Assign profile a UUID if object is new
-        if ($this->isObjectNew()) {
-            $this->setProfileUuid(
-                $this->expressionFactory->create(
-                    ["expression" => "(SELECT UUID())"]
-                )
-            );
         }
 
         return $this;

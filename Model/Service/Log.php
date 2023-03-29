@@ -118,7 +118,7 @@ class Log
     /**
      * @return string
      */
-    private function getCurrentVersion(): string
+    public function getCurrentVersion(): string
     {
         try {
             $version = (string) $this->moduleResource->getDbVersion('Apsis_One');

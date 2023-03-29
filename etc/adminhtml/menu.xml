@@ -9,7 +9,11 @@
              action="apsis_one/event" resource="Apsis_One::event" parent="Apsis_One::reports"/>
         <add id="Apsis_One::abandoned" title="Abandoned Carts" module="Apsis_One" sortOrder="130"
              action="apsis_one/abandoned" resource="Apsis_One::abandoned" parent="Apsis_One::reports"/>
-        <add id="Apsis_One::logviewer" title="APSIS Logs" module="Apsis_One" sortOrder="140"
+        <add id="Apsis_One::queue" title="Queue Processor" module="Apsis_One" sortOrder="140"
+             action="apsis_one/queue" resource="Apsis_One::queue" parent="Apsis_One::reports"/>
+        <add id="Apsis_One::webhook" title="Webhooks" module="Apsis_One" sortOrder="150"
+             action="apsis_one/webhook" resource="Apsis_One::webhook" parent="Apsis_One::reports"/>
+        <add id="Apsis_One::logviewer" title="Logs" module="Apsis_One" sortOrder="160"
              action="apsis_one/logviewer" resource="Apsis_One::logviewer" parent="Apsis_One::reports"/>
     </menu>
 </config>

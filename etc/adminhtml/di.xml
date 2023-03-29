@@ -22,4 +22,18 @@
             <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\Profile</argument>
         </arguments>
     </virtualType>
+    <virtualType name="Apsis\One\Ui\Model\ResourceModel\Queue\Collection"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">apsis_queue</argument>
+            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\Queue</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Apsis\One\Ui\Model\ResourceModel\Webhook\Collection"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">apsis_webhook</argument>
+            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\Webhook</argument>
+        </arguments>
+    </virtualType>
 </config>

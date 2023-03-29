@@ -88,8 +88,8 @@ class Profile extends AbstractDb
                 ->from(
                     ['customer' => $magentoTable],
                     [
-                        'profile_uuid' => $this->expressionFactory->create(["expression" => ('UUID()')]),
                         'customer_id' => 'entity_id',
+                        'group_id',
                         'email',
                         'is_customer' => $this->expressionFactory->create(["expression" => ('1')]),
                         'store_id',
@@ -99,7 +99,7 @@ class Profile extends AbstractDb
                 );
             $sqlQuery = $select->insertFromSelect(
                 $apsisTable,
-                ['profile_uuid', 'customer_id', 'email', 'is_customer', 'store_id', 'updated_at'],
+                ['customer_id', 'group_id', 'email', 'is_customer', 'store_id', 'updated_at'],
                 false
             );
             $connection->query($sqlQuery);
@@ -127,11 +127,11 @@ class Profile extends AbstractDb
                 ->from(
                     ['subscriber' => $magentoTable],
                     [
-                        'profile_uuid' => $this->expressionFactory->create(["expression" => ('UUID()')]),
                         'subscriber_id',
                         'store_id' => 'store_id',
                         'email' => 'subscriber_email',
                         'is_subscriber' => $this->expressionFactory->create(["expression" => ('1')]),
+                        'subscriber_status',
                         'updated_at' => $this->expressionFactory
                             ->create(["expression" => "'" . $this->dateTime->formatDate(true) . "'"])
                     ]
@@ -141,11 +141,11 @@ class Profile extends AbstractDb
             $sqlQuery = $select->insertFromSelect(
                 $apsisTable,
                 [
-                    'profile_uuid',
                     'subscriber_id',
                     'store_id',
                     'email',
                     'is_subscriber',
+                    'subscriber_status',
                     'updated_at'
                 ],
                 false
@@ -177,6 +177,7 @@ class Profile extends AbstractDb
                     ['subscriber' => $magentoTable],
                     [
                         'subscriber_id',
+                        'subscriber_status',
                         'is_subscriber' => $this->expressionFactory->create(["expression" => ('1')]),
                     ]
                 )
@@ -614,6 +615,8 @@ class Profile extends AbstractDb
     }
 
     /**
+     * Profile schema, see function getProfileSchema in class Apsis\One\Controller\Api\Schema\Profile
+     *
      * @param string $select
      * @param string $id
      * @param bool $forSubscriber

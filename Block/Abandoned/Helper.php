@@ -1,14 +1,16 @@
 <?php
 
-namespace Apsis\One\Block\Helper;
+namespace Apsis\One\Block\Abandoned;
 
 use Apsis\One\Model\Service\Log;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\Data\Form\FormKey;
 use Throwable;
 
-class Cart extends Template
+class Helper extends Template
 {
+    const EMAIL_UPDATER_URL = 'apsis/abandoned/helper';
+
     /**
      * @var Log
      */
@@ -44,7 +46,7 @@ class Cart extends Template
             return $this->_storeManager
                 ->getStore()
                 ->getUrl(
-                    'apsis/cart/updater',
+                    self::EMAIL_UPDATER_URL,
                     ['_secure' => $this->_storeManager->getStore()->isCurrentlySecure()]
                 );
         } catch (Throwable $e) {

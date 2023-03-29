@@ -86,7 +86,6 @@ class Placed implements ObserverInterface
             if ($order->getCustomerId()) {
                 $profile = $this->profileCollectionFactory->create()->loadByCustomerId($order->getCustomerId());
                 if ($profile) {
-                    //@todo send profile update
                     return $profile;
                 }
             }

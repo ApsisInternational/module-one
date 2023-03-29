@@ -41,9 +41,9 @@ class Index extends Action
         /** @var Page $resultPage */
         $resultPage = $this->resultPageFactory->create();
         $resultPage->setActiveMenu('Apsis_One::logviewer');
-        $resultPage->addBreadcrumb(__('APSIS Logs'), __('APSIS Logs'));
+        $resultPage->addBreadcrumb(__('Logs'), __('Logs'));
         $resultPage->addBreadcrumb(__('Reports'), __('Reports'));
-        $resultPage->getConfig()->getTitle()->prepend(__('APSIS Logs'));
+        $resultPage->getConfig()->getTitle()->prepend(__('Logs'));
         return $resultPage;
     }
 }

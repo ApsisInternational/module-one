@@ -5,9 +5,11 @@ namespace Apsis\One\Model\Service;
 use Apsis\One\ApiClient\Client;
 use Apsis\One\Model\Profile as ProfileModel;
 use Apsis\One\Model\ProfileFactory;
+use Apsis\One\Model\Queue;
 use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Model\Service\Queue as ApsisQueueService;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Stdlib\Cookie\PhpCookieManagerFactory;
@@ -15,7 +17,6 @@ use Magento\Framework\Stdlib\Cookie\PublicCookieMetadataFactory;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Store\Api\Data\StoreInterface;
-use Magento\Tests\NamingConvention\true\string;
 use Throwable;
 use Zend_Date;
 
@@ -65,6 +66,11 @@ class Profile
     private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
+     * @var ApsisQueueService
+     */
+    private ApsisQueueService $apsisQueueService;
+
+    /**
      * Profile constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -75,6 +81,7 @@ class Profile
      * @param Event $eventService
      * @param SubscriberFactory $subscriberFactory
      * @param ProfileCollectionFactory $profileCollectionFactory
+     * @param ApsisQueueService $apsisQueueService
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -84,7 +91,8 @@ class Profile
         ProfileFactory $profileFactory,
         Event $eventService,
         SubscriberFactory $subscriberFactory,
-        ProfileCollectionFactory $profileCollectionFactory
+        ProfileCollectionFactory $profileCollectionFactory,
+        ApsisQueueService $apsisQueueService
     ) {
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->subscriberFactory = $subscriberFactory;
@@ -94,6 +102,7 @@ class Profile
         $this->cookieMetadataFactory = $cookieMetadataFactory;
         $this->phpCookieManager = $phpCookieManager;
         $this->apsisCoreHelper = $apsisCoreHelper;
+        $this->apsisQueueService = $apsisQueueService;
     }
 
     /**
@@ -127,7 +136,7 @@ class Profile
 
                     //Create new cookie value
                     $keySpacesToMerge[1]['profile_key'] =
-                        md5($profile->getProfileUuid() . date(Zend_Date::TIMESTAMP));
+                        md5($profile->getId() . date(Zend_Date::TIMESTAMP));
 
                     //Send second merge request
                     if ($apiClient->mergeProfile($keySpacesToMerge) === null) {
@@ -154,7 +163,7 @@ class Profile
                 $keySpacesToMerge = [
                     [
                         'keyspace_discriminator' => $integrationKeySpace,
-                        'profile_key' => $profile->getProfileUuid()
+                        'profile_key' => $profile->getId()
                     ],
                     [
                         'keyspace_discriminator' => self::WEB_KEYSPACE_DISCRIMINATOR,
@@ -197,7 +206,7 @@ class Profile
                 $attributesToSync[$attrArrWithVersionIds[ApsisCoreHelper::EMAIL_DISCRIMINATOR]] = $customer->getEmail();
                 return ($apiClient->addAttributesToProfile(
                     $integrationKeySpace,
-                    $profile->getProfileUuid(),
+                    $profile->getId(),
                     $sectionDiscriminator,
                     $attributesToSync
                 ) === null);
@@ -275,24 +284,25 @@ class Profile
     public function updateProfileForSubscriber(Subscriber $subscriber, ProfileModel $profile): void
     {
         try {
-            //@todo send profile update
-            if ($profile->getIsSubscriber() && (int) $subscriber->getStatus() === Subscriber::STATUS_UNSUBSCRIBED) {
-                $this->eventService->registerSubscriberUnsubscribeEvent($subscriber, $profile);
+            $profile->setSubscriberId($subscriber->getSubscriberId())
+                ->setStoreId($subscriber->getStoreId())
+                ->setIsSubscriber(1)
+                ->setSubscriberStatus($subscriber->getSubscriberStatus())
+                ->setErrorMessage('');
+            $this->profileResource->save($profile);
 
-                $profile->setStoreId($subscriber->getStoreId())
-                    ->setIsSubscriber(0)
-                    ->setErrorMessage('');
-                $this->profileResource->save($profile);
+            if ((int) $subscriber->getSubscriberStatus() === Subscriber::STATUS_UNSUBSCRIBED) {
+                $this->eventService->registerSubscriberUnsubscribeEvent($subscriber, $profile);
+                $type = Queue::TYPE_CONSENT_OPT_OUT;
             } elseif ((int) $subscriber->getSubscriberStatus() === Subscriber::STATUS_SUBSCRIBED) {
                 if ($profile->getIsCustomer()) {
                     $this->eventService->registerCustomerBecomesSubscriberEvent($subscriber, $profile);
                 }
+                $type = Queue::TYPE_CONSENT_OPT_IN;
+            }
 
-                $profile->setSubscriberId($subscriber->getSubscriberId())
-                    ->setStoreId($subscriber->getStoreId())
-                    ->setIsSubscriber(1)
-                    ->setErrorMessage('');
-                $this->profileResource->save($profile);
+            if (isset($type)) {
+                $this->apsisQueueService->registerItem($profile, $type, $this->apsisCoreHelper);
             }
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
@@ -308,7 +318,9 @@ class Profile
     public function updateProfileForCustomer(Customer $customer, ProfileModel $profile): void
     {
         try {
-            $this->eventService->registerSubscriberBecomesCustomerEvent($customer, $profile);
+            if ($profile->getIsSubscriber()) {
+                $this->eventService->registerSubscriberBecomesCustomerEvent($customer, $profile);
+            }
 
             if ($customer->getEmail() != $profile->getEmail()) {
                 $this->eventService->updateEmailInEventsForCustomer($profile, $customer);
@@ -318,11 +330,11 @@ class Profile
             $profile->setStoreId($customer->getStoreId())
                 ->setEmail($customer->getEmail())
                 ->setCustomerId($customer->getEntityId())
+                ->setGroupId($customer->getGroupId())
                 ->setIsCustomer(1)
                 ->setErrorMessage('');
             $this->profileResource->save($profile);
-
-            //@todo send profile update
+            $this->apsisQueueService->registerItem($profile, Queue::TYPE_RECORD_UPDATED, $this->apsisCoreHelper);
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -335,12 +347,12 @@ class Profile
      */
     public function createProfileForCustomer(Customer $customer): void
     {
-        //@todo send profile update
         $this->createProfile(
             (int) $customer->getStoreId(),
             (string) $customer->getEmail(),
             null,
-            (int) $customer->getId()
+            (int) $customer->getId(),
+            (int) $customer->getGroupId()
         );
     }
 
@@ -351,11 +363,13 @@ class Profile
      */
     public function createProfileForSubscriber(Subscriber $subscriber): void
     {
-        //@todo send profile update
         $this->createProfile(
             (int) $subscriber->getStoreId(),
             (string) $subscriber->getEmail(),
-            (int) $subscriber->getSubscriberId()
+            (int) $subscriber->getSubscriberId(),
+            null,
+            null,
+            $subscriber->getSubscriberStatus()
         );
     }
 
@@ -364,6 +378,8 @@ class Profile
      * @param string $email
      * @param int|null $subscriberId
      * @param int|null $customerId
+     * @param int|null $groupId
+     * @param int|null $subscriberStatus
      *
      * @return void
      */
@@ -371,7 +387,9 @@ class Profile
         int $storeId,
         string $email,
         int $subscriberId = null,
-        int $customerId = null
+        int $customerId = null,
+        int $groupId = null,
+        int $subscriberStatus = null
     ): void {
         try {
             /** @var ProfileModel $profile */
@@ -381,15 +399,24 @@ class Profile
 
             if ($customerId) {
                 $profile->setCustomerId($customerId)
+                    ->setGroupId($groupId)
                     ->setIsCustomer(1);
             }
 
             if ($subscriberId) {
                 $profile->setSubscriberId($subscriberId)
+                    ->setSubscriberStatus($subscriberStatus)
                     ->setIsSubscriber(1);
             }
 
             $this->profileResource->save($profile);
+            $this->apsisQueueService->registerItem($profile, Queue::TYPE_RECORD_CREATED, $this->apsisCoreHelper);
+
+            if ($subscriberStatus === Subscriber::STATUS_SUBSCRIBED) {
+                $this->apsisQueueService->registerItem($profile, Queue::TYPE_CONSENT_OPT_IN, $this->apsisCoreHelper);
+            } elseif ($subscriberStatus === Subscriber::STATUS_UNSUBSCRIBED) {
+                $this->apsisQueueService->registerItem($profile, Queue::TYPE_CONSENT_OPT_OUT, $this->apsisCoreHelper);
+            }
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -452,14 +479,52 @@ class Profile
 
     /**
      * @param ProfileModel $profile
+     * @param string $deleteType
      *
      * @return void
      */
-    public function handleProfileDeleteOperation(ProfileModel $profile): void
+    public function handleProfileDeleteOperation(ProfileModel $profile, string $deleteType): void
     {
         try {
-            //@todo send profile update
-            $this->profileResource->delete($profile);
+            if (in_array($deleteType, ['customer', 'subscriber'])) {
+                if ($deleteType === 'customer') {
+                    if ($profile->getIsSubscriber()) {
+                        $profile->setCustomerId(null)
+                            ->setGroupId(null)
+                            ->setIsCustomer(0);
+                        $this->profileResource->save($profile);
+
+                        // Register record update
+                        $this->apsisQueueService
+                            ->registerItem($profile, Queue::TYPE_RECORD_UPDATED, $this->apsisCoreHelper);
+                    } else {
+                        $proceedDelete = true;
+                    }
+                }
+
+                if ($deleteType === 'subscriber') {
+                    if ($profile->getIsCustomer()) {
+                        $profile->setSubscriberId(null)
+                            ->setIsSubscriber(0)
+                            ->setSubscriberStatus(null);
+                        $this->profileResource->save($profile);
+
+                        // Register both record update and consent update
+                        $this->apsisQueueService
+                            ->registerItem($profile, Queue::TYPE_RECORD_UPDATED, $this->apsisCoreHelper);
+                        $this->apsisQueueService
+                            ->registerItem($profile, Queue::TYPE_CONSENT_OPT_OUT, $this->apsisCoreHelper);
+                    } else {
+                        $proceedDelete = true;
+                    }
+                }
+
+                if (! empty($proceedDelete)) {
+                    $this->apsisQueueService
+                        ->registerItem($profile, Queue::TYPE_RECORD_DELETED, $this->apsisCoreHelper);
+                    $this->profileResource->delete($profile);
+                }
+            }
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }

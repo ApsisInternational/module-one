@@ -52,7 +52,7 @@
                 <attribute type="expanded">1</attribute>
                 <field id="duration" translate="label" type="select" sortOrder="10" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Abandoned After</label>
-                    <source_model>Apsis\One\Model\Config\Source\Abandoned\Intervalminute</source_model>
+                    <source_model>Apsis\One\Model\Config\Source\System\Intervalminute</source_model>
                     <comment><![CDATA[Register cart as abandoned after it has been inactive for selected amount of time.]]></comment>
                 </field>
             </group>

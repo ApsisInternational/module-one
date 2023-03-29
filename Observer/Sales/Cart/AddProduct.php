@@ -83,7 +83,6 @@ class AddProduct implements ObserverInterface
 
             if ($profile) {
                 $this->eventService->registerProductCartedEvent($cart, $item, $profile);
-                //@todo send profile update
             }
         } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);

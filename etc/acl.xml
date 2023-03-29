@@ -8,7 +8,9 @@
                         <resource id="Apsis_One::profile" title="Apsis Profile" sortOrder="10"/>
                         <resource id="Apsis_One::event" title="Apsis Event" sortOrder="20"/>
                         <resource id="Apsis_One::abandoned" title="Apsis Abandoned Carts" sortOrder="30"/>
-                        <resource id="Apsis_One::logviewer" title="Log Viewer" sortOrder="40"/>
+                        <resource id="Apsis_One::queue" title="Apsis Queue Processor" sortOrder="40"/>
+                        <resource id="Apsis_One::webhook" title="Apsis Webhooks" sortOrder="50"/>
+                        <resource id="Apsis_One::logviewer" title="Log Viewer" sortOrder="60"/>
                     </resource>
                 </resource>
                 <resource id="Magento_Backend::stores">

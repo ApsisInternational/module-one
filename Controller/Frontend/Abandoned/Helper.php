@@ -1,6 +1,6 @@
 <?php
 
-namespace Apsis\One\Controller\Cart;
+namespace Apsis\One\Controller\Frontend\Abandoned;
 
 use Apsis\One\Model\Service\Log;
 use Magento\Checkout\Model\Session;
@@ -10,7 +10,7 @@ use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Quote\Model\ResourceModel\Quote;
 use Throwable;
 
-class Updater extends Action
+class Helper extends Action
 {
     /**
      * @var Quote

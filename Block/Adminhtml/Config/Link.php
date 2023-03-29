@@ -5,26 +5,25 @@ namespace Apsis\One\Block\Adminhtml\Config;
 use Magento\Config\Block\System\Config\Form\Field;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Backend\Block\Template\Context;
-use Apsis\One\Model\Service\Log;
-use Throwable;
+use Apsis\One\Model\Service\Core;
 
 class Link extends Field
 {
     /**
-     * @var Log
+     * @var Core
      */
-    private Log $logger;
+    private Core $coreHelper;
 
     /**
      * FieldBase constructor.
      *
      * @param Context $context
-     * @param Log $logger
+     * @param Core $corehelper
      * @param array $data
      */
-    public function __construct(Context $context, Log $logger, array $data = [])
+    public function __construct(Context $context, Core $corehelper, array $data = [])
     {
-        $this->logger = $logger;
+        $this->coreHelper = $corehelper;
         parent::__construct($context, $data);
     }
 
@@ -33,28 +32,9 @@ class Link extends Field
      */
     public function _getElementHtml(AbstractElement $element)
     {
-        $text = sprintf(
-            '%s%s',
-            $this->generateBaseUrlForDynamicContent(),
-            'apsis/sample/url'
-        );
-        $element->setData('value', $text)
+        $element->setData('value', $this->coreHelper->generateSystemAccessUrl($this->getRequest()))
             ->setData('readonly', 1)
             ->addClass('apsis-copy-helper');
         return parent::_getElementHtml($element);
-    }
-
-    /**
-     * @return string
-     */
-    public function generateBaseUrlForDynamicContent(): string
-    {
-        try {
-            $store =  $this->_storeManager->getStore($this->_request->getParam('store'));
-            return $store->getBaseUrl() . $store->getCode() . '/';
-        } catch (Throwable $e) {
-            $this->logger->logError(__METHOD__, $e);
-            return '';
-        }
     }
 }

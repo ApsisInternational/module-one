@@ -54,13 +54,14 @@ class Collection extends AbstractCollection
 
     /**
      * @param array $ids
+     * @param string $idField
      *
      * @return Collection
      */
-    public function getCollectionFromIds(array $ids): Collection
+    public function getCollectionFromIds(array $ids, string $idField = 'id'): Collection
     {
         return $this->addFieldToSelect('*')
-            ->addFieldToFilter('id', ['in' => $ids]);
+            ->addFieldToFilter($idField, ['in' => $ids]);
     }
 
     /**

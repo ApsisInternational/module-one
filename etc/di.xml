@@ -10,6 +10,10 @@
                       xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Event\Collection</item>
                 <item name="apsis_profile_report_grid_data_source"
                       xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Profile\Collection</item>
+                <item name="apsis_queue_report_grid_data_source"
+                      xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Queue\Collection</item>
+                <item name="apsis_webhook_report_grid_data_source"
+                      xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Webhook\Collection</item>
             </argument>
         </arguments>
     </type>

@@ -45,7 +45,7 @@ class Remove implements ObserverInterface
 
             if ($profile = $this->profileService->findProfileForCustomer($customer)) {
                 $this->apsislogHelper->log(__METHOD__);
-                $this->profileService->handleProfileDeleteOperation($profile);
+                $this->profileService->handleProfileDeleteOperation($profile, 'customer');
             }
         } catch (Throwable $e) {
             $this->apsislogHelper->logError(__METHOD__, $e);

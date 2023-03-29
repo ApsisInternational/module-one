@@ -21,7 +21,7 @@ class InvalidateDataSaveEncrypted extends Value
     /**
      * @var EncryptorInterface
      */
-    protected $encryptor;
+    protected EncryptorInterface $encryptor;
 
     /**
      * @param Context $context

@@ -88,14 +88,22 @@ class Uninstall implements UninstallInterface
             "path like 'apsis_one%'"
         );
 
+        //Remove rules belonging to APSIS role
+        $select = $setup->getConnection()->select()
+            ->from($setup->getTable('authorization_role'), 'role_id')
+            ->where('role_name = ?', 'APSIS Support Agent');
+        $role = $setup->getConnection()->fetchOne($select);
+        if ($role) {
+            $setup->getConnection()->delete(
+                $setup->getTable('authorization_rule'),
+                ['role_id = ?' => (int) $role]
+            );
+        }
+
         //Remove role created by the module
         $setup->getConnection()->delete(
             $setup->getTable('authorization_role'),
-            [
-                'role_name = ?' => 'APSIS Support Agent',
-                'user_type = ?' => UserContextInterface::USER_TYPE_ADMIN,
-                'role_type = ?' => RoleGroup::ROLE_TYPE
-            ]
+            ['role_name = ?' => 'APSIS Support Agent']
         );
 
         //Remove all ui bookmarks belonging to module to force rebuild new ui bookmarks

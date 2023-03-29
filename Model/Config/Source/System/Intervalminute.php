@@ -1,6 +1,6 @@
 <?php
 
-namespace Apsis\One\Model\Config\Source\Abandoned;
+namespace Apsis\One\Model\Config\Source\System;
 
 use Magento\Framework\Data\OptionSourceInterface;
 

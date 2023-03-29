@@ -8,6 +8,7 @@ use Apsis\One\Logger\Logger;
 use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Apsis\One\Model\Service\Log as ApsisLogHelper;
 use Magento\Framework\App\Config\Storage\WriterInterface;
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ModuleListInterface;
 use Magento\Framework\Module\ResourceInterface;
@@ -15,6 +16,7 @@ use Magento\Framework\UrlInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use libphonenumber\PhoneNumberUtil;
 use stdClass;
 use Throwable;
 
@@ -24,13 +26,16 @@ class Core extends ApsisLogHelper
     const APSIS_PROFILE_TABLE = 'apsis_profile';
     const APSIS_EVENT_TABLE = 'apsis_event';
     const APSIS_ABANDONED_TABLE = 'apsis_abandoned';
+    const APSIS_WEBHOOK_TABLE = 'apsis_webhook';
+    const APSIS_QUEUE_TABLE = 'apsis_queue';
 
-    // Config keys
-    const PATH_INTEGRATION_API_KEY = 'apsis_one_connect/api/key';
+    // Config keys, Integration
+    const PATH_CONFIG_API_KEY = 'apsis_one_connect/api/key';
     const PATH_CONFIG_AC_DURATION = 'apsis_one_configuration/abandoned_cart/duration';
     const PATH_CONFIG_PROFILE_ORDER_STATUS = 'apsis_one_configuration/profile_sync/order_status';
     const PATH_CONFIG_TRACKING_SCRIPT = 'apsis_one_configuration/tracking/script';
 
+    // Config keys, One Api
     const PATH_APSIS_CLIENT_ID = 'apsis_one/api/client_id';
     const PATH_APSIS_CLIENT_SECRET = 'apsis_one/api/client_secret';
     const PATH_APSIS_API_URL = 'apsis_one/api/url';
@@ -40,7 +45,7 @@ class Core extends ApsisLogHelper
     const PATH_APSIS_CONFIG_PROFILE_KEY = 'apsis_one/config/profile_key';
 
     const CONFIG_PATHS_SECURE = [
-        self::PATH_INTEGRATION_API_KEY,
+        self::PATH_CONFIG_API_KEY,
         self::PATH_APSIS_CLIENT_ID,
         self::PATH_APSIS_CLIENT_SECRET,
         self::PATH_APSIS_API_TOKEN
@@ -110,16 +115,16 @@ class Core extends ApsisLogHelper
     }
 
     /**
-     * @param int|null $storeId
+     * @param int|string|null $storeId
      *
      * @return bool|StoreInterface
      */
-    public function getStore(int $storeId = null)
+    public function getStore($storeId = null)
     {
         try {
             return $this->storeManager->getStore($storeId);
         } catch (Throwable $e) {
-            $this->logError(__METHOD__, $e);
+            $this->log($e->getMessage() . " Store: $storeId");
             return false;
         }
     }
@@ -244,6 +249,36 @@ class Core extends ApsisLogHelper
     }
 
     /**
+     * @param RequestInterface $request
+     *
+     * @return string
+     */
+    public function generateSystemAccessUrl(RequestInterface $request): string
+    {
+        try {
+            $store = $this->getStore($request->getParam('store'));
+            return $store->getBaseUrl() . $store->getCode() . '/apsisendpoint/';
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return '';
+        }
+    }
+
+    /**
+     * @return string
+     */
+    public function getApiKey(): string
+    {
+        try {
+            $encryptedKey = $this->getStoreConfig($this->getStore(0), self::PATH_CONFIG_API_KEY);
+            return $encryptedKey? $this->encryptor->decrypt($encryptedKey) : '';
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return '';
+        }
+    }
+
+    /**
      * @param int|float $price
      * @param int $precision
      *
@@ -270,7 +305,7 @@ class Core extends ApsisLogHelper
             return json_encode($data);
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
-            return '[]';
+            return '';
         }
     }
 
@@ -321,6 +356,33 @@ class Core extends ApsisLogHelper
             mt_rand(0, 0xffff),
             mt_rand(0, 0xffff)
         );
+    }
+
+    /**
+     * @param string $countryCode
+     * @param string $phoneNumber
+     *
+     * @return int|null
+     */
+    public function validateAndFormatMobileNumber(string $countryCode, string $phoneNumber)
+    {
+        try {
+            if (strlen($countryCode) === 2) {
+                $phoneUtil = PhoneNumberUtil::getInstance();
+                $numberProto = $phoneUtil->parse($phoneNumber, $countryCode);
+                if ($phoneUtil->isValidNumber($numberProto)) {
+                    return (int) sprintf(
+                        "%d%d",
+                        (int) $numberProto->getCountryCode(),
+                        (int) $numberProto->getNationalNumber()
+                    );
+                }
+            }
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+        }
+
+        return null;
     }
 
     /**

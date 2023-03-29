@@ -1,0 +1,11 @@
+<?php
+use Apsis\One\Block\Abandoned\Helper;
+/** @var Helper $block */
+?>
+<?php if (! empty($url = $block->getUpdaterUrl()) && ! empty($key = $block->getKey())): ?>
+    <script type="text/x-magento-init">
+    {
+        "*" : { "Apsis_One/js/abandoned/helper" : { "endpoint" : "<?= $url; ?>", "form_key" : "<?= $key; ?>" } }
+    }
+    </script>
+<?php endif; ?>

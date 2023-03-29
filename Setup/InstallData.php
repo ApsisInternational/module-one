@@ -166,7 +166,7 @@ class InstallData implements InstallDataInterface
 
             // Generate, encrypt and save 32 character long key
             $this->apsisCoreHelper->writer->save(
-                ApsisCoreHelper::PATH_INTEGRATION_API_KEY,
+                ApsisCoreHelper::PATH_CONFIG_API_KEY,
                 $this->encryptor->encrypt($this->random->getRandomString(32))
             );
 

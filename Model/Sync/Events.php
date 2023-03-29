@@ -143,7 +143,9 @@ class Events
     }
 
     /**
-     * @inheritdoc
+     * @param ApsisCoreHelper $apsisCoreHelper
+     *
+     * @return void
      */
     public function process(ApsisCoreHelper $apsisCoreHelper): void
     {
@@ -155,20 +157,16 @@ class Events
                     ->getStoreConfig($store, ApsisCoreHelper::PATH_APSIS_CONFIG_SECTION);
                 $this->keySpace = $this->apsisCoreHelper
                     ->getStoreConfig($store, ApsisCoreHelper::PATH_APSIS_CONFIG_PROFILE_KEY);
+                $client = $this->apsisCoreHelper->getApiClient($store);
 
                 // Validate all things compulsory
-                if (! $this->section || ! $this->keySpace) {
+                if (! $this->section || ! $this->keySpace || ! $client) {
                     continue;
                 }
 
                 $eventCollection = $this->eventCollectionFactory->create()
                     ->getPendingEventsByStore($store->getId(), self::COLLECTION_LIMIT);
                 if (! $eventCollection->getSize()) {
-                    continue;
-                }
-
-                $client = $this->apsisCoreHelper->getApiClient($store);
-                if (! $client) {
                     continue;
                 }
 
@@ -289,7 +287,7 @@ class Events
 
                 $status = $client->addEventsToProfile(
                     $this->keySpace,
-                    $profile->getProfileUuid(),
+                    $profile->getId(),
                     $this->section,
                     $groupedEventArray
                 );
@@ -438,7 +436,7 @@ class Events
         $attributesToSync[$this->attributeVerIds[ApsisCoreHelper::EMAIL_DISCRIMINATOR]] = $profile->getEmail();
         return $client->addAttributesToProfile(
             $this->keySpace,
-            $profile->getProfileUuid(),
+            $profile->getId(),
             $this->section,
             $attributesToSync
         );

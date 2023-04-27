@@ -49,7 +49,7 @@ abstract class Event implements EventHistoryInterface
     ): array {
         try {
             return [
-                'event_type' => $eventType,
+                'type' => $eventType,
                 'event_data' => $eventData,
                 'sub_event_data' => $eventSubData,
                 'profile_id' => $profile->getId(),

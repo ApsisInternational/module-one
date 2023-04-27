@@ -80,7 +80,11 @@ class Index extends AbstractProfile
         'created_in',
         'password_hash',
         'rp_token',
-        'rp_token_create_at'
+        'rp_token_create_at',
+        'failures_num',
+        'group_id',
+        'first_failure',
+        'lock_expires'
     ];
     const ENTITY_NAME = 'profile';
 

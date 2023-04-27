@@ -18,11 +18,17 @@ use Magento\Framework\Registry;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Customer\Model\CustomerFactory;
-use Magento\Newsletter\Model\SubscriptionManagerInterface;
 use Throwable;
 
 abstract class AbstractProfile extends AbstractApi
 {
+    const SUBSCRIBER_STATUS_MAP = [
+        Subscriber::STATUS_SUBSCRIBED => 'Subscribed',
+        Subscriber::STATUS_NOT_ACTIVE => 'Not Active',
+        Subscriber::STATUS_UNSUBSCRIBED => 'Unsubscribed',
+        Subscriber::STATUS_UNCONFIRMED => 'Unconfirmed',
+    ];
+
     /**
      * @var GroupCollectionFactory
      */
@@ -54,11 +60,6 @@ abstract class AbstractProfile extends AbstractApi
     protected SubscriberFactory $subscriberFactory;
 
     /**
-     * @var SubscriptionManagerInterface
-     */
-    protected SubscriptionManagerInterface $subscriptionManager;
-
-    /**
      * @var Registry
      */
     private Registry $registry;
@@ -74,7 +75,6 @@ abstract class AbstractProfile extends AbstractApi
      * @param ApsisDateHelper $apsisDateHelper
      * @param ProfileResource $profileResource
      * @param SubscriberFactory $subscriberFactory
-     * @param SubscriptionManagerInterface $subscriptionManager
      * @param Registry $registry
      */
     public function __construct(
@@ -88,10 +88,8 @@ abstract class AbstractProfile extends AbstractApi
         ApsisDateHelper $apsisDateHelper,
         ProfileResource $profileResource,
         SubscriberFactory $subscriberFactory,
-        SubscriptionManagerInterface $subscriptionManager,
         Registry $registry
     ) {
-        $this->subscriptionManager = $subscriptionManager;
         $this->subscriberFactory = $subscriberFactory;
         $this->profileResource = $profileResource;
         $this->apsisDateHelper = $apsisDateHelper;
@@ -164,7 +162,7 @@ abstract class AbstractProfile extends AbstractApi
     private function getProfileCollectionByGroupId(bool $addPagination)
     {
         try {
-            $collection = $this->profileCollectionFactory
+            $collection = $this->profileCollectionFactory->create()
                 ->addFieldToFilter('group_id', $this->taskId);
             $collection = $this->addStoreFilterOnCollection($collection);
             return $addPagination ? $this->setPaginationOnCollection($collection, 'id') : $collection;
@@ -227,7 +225,8 @@ abstract class AbstractProfile extends AbstractApi
     {
         try {
             if (! is_numeric($this->requestBody['record_id']) ||
-                $this->requestBody['consent_base_id'] !== ConsentsIndex::CONSENT_BASE_ID
+                $this->requestBody['consent_base_id'] !== ConsentsIndex::CONSENT_BASE_ID ||
+                $this->requestBody['has_consented'] !== false
             ) {
                 return 400;
             }
@@ -244,21 +243,14 @@ abstract class AbstractProfile extends AbstractApi
                 return 404;
             }
 
-            /** @var Subscriber $subscriber */
             $subscriber = $this->subscriberFactory->create()->load($profile->getSubscriberId());
             if (! $subscriber->getId()) {
                 return 404;
             }
 
             $this->registry->register($subscriber->getEmail() . '_subscription', true, true);
-            if ($this->requestBody['has_consented'] === true) {
-                $this->subscriptionManager->subscribe($subscriber->getEmail(), $subscriber->getStoreId());
-                $subscriberStatus = Subscriber::STATUS_SUBSCRIBED;
-            } else {
-                $subscriber->unsubscribe();
-                $subscriberStatus = Subscriber::STATUS_UNSUBSCRIBED;
-            }
-            $profile->setSubscriberStatus($subscriberStatus);
+            $subscriber->unsubscribe();
+            $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED);
             $this->profileResource->save($profile);
 
             return true;
@@ -293,7 +285,7 @@ abstract class AbstractProfile extends AbstractApi
     private function getProfileCollectionForConsents(bool $addPagination)
     {
         try {
-            $collection = $this->profileCollectionFactory
+            $collection = $this->profileCollectionFactory->create()
                 ->addFieldToFilter('is_subscriber', 1)
                 ->addFieldToFilter(
                     'subscriber_status',
@@ -375,7 +367,7 @@ abstract class AbstractProfile extends AbstractApi
             $customerAttr = $this->getCustomerAttributes();
             $schemaFields = in_array('*', $requestedFields) ?
                 array_merge(ProfilesIndex::SCHEMA, $customerAttr) :
-                array_merge(array_intersect_key(ProfilesIndex::SCHEMA, array_flip($requestedFields)), $customerAttr);
+                array_intersect_key(array_merge(ProfilesIndex::SCHEMA, $customerAttr), array_flip($requestedFields));
 
             foreach ($schemaFields as $field) {
                 if (isset($profileData[$field['code_name']])) {
@@ -426,6 +418,9 @@ abstract class AbstractProfile extends AbstractApi
             } elseif ($field['type'] === 'double') {
                 return $this->apsisCoreHelper->round($value);
             } elseif ($field['type'] === 'string') {
+                if ($codeName === 'subscriber_status' && isset(self::SUBSCRIBER_STATUS_MAP[$value])) {
+                    $value = self::SUBSCRIBER_STATUS_MAP[$value];
+                }
                 return (string) $value;
             } elseif ($field['type'] === 'boolean' && (is_bool($value) || in_array($value, [0, 1]))) {
                 return (boolean) $value;
@@ -456,6 +451,21 @@ abstract class AbstractProfile extends AbstractApi
             $value = $customer->getData($attributeCode);
             if (is_null($value)) {
                 return null;
+            }
+
+            if (in_array($attributeCode, ['default_billing', 'default_shipping'])) {
+                $address = $customer->getAddressById($value);
+                if ($address->getId()) {
+                    return sprintf(
+                        '%s, %s, %s, %s, %s, %s',
+                        $address->getName(),
+                        $address->getStreetFull(),
+                        $address->getRegion(),
+                        $address->getCity(),
+                        $address->getCountryModel()->getName(),
+                        $address->getTelephone()
+                    );
+                }
             }
 
             if (in_array($attribute->getFrontendInput(), ['select', 'multiselect'])) {
@@ -510,7 +520,7 @@ abstract class AbstractProfile extends AbstractApi
     private function getProfileCollectionForRecords(bool $addPagination)
     {
         try {
-            $collection = $this->profileCollectionFactory
+            $collection = $this->profileCollectionFactory->create()
                 ->addFieldToFilter('profile_data', ['neq' => '']);
             $collection = $this->addStoreFilterOnCollection($collection);
             return $addPagination ? $this->setPaginationOnCollection($collection, 'id') : $collection;

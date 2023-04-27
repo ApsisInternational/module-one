@@ -19,7 +19,7 @@ class EventSyncStatus implements OptionSourceInterface
             ],
             [
                 'value' => Event::STATUS_SYNCED,
-                'label' => __(Event::STATUS_TEXT_MAP[Event::STATUS_SYNCED])
+                'label' => __($this instanceof QueueSyncStatus ? 'Sent' : Event::STATUS_TEXT_MAP[Event::STATUS_SYNCED])
             ],
             [
                 'value' => Event::STATUS_FAILED,

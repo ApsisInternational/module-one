@@ -12,6 +12,290 @@ use Throwable;
 
 class InstallSchema implements InstallSchemaInterface
 {
+    const TABLES = [
+        ApsisCoreHelper::APSIS_PROFILE_TABLE => [
+            self::COMMON_COLUMNS,
+            self::COMMON_COLUMNS_PROFILE_EVENT_AC,
+            self::COLUMNS_PROFILE,
+            self::COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK
+        ],
+        ApsisCoreHelper::APSIS_EVENT_TABLE => [
+            self::COMMON_COLUMNS,
+            self::COLUMNS_EVENT,
+            self::COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK,
+            self::COMMON_COLUMNS_PROFILE_EVENT_AC,
+            self::COMMON_COLUMNS_EVENT_QUEUE,
+            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK
+        ],
+        ApsisCoreHelper::APSIS_ABANDONED_TABLE => [
+            self::COMMON_COLUMNS,
+            self::COLUMNS_AC,
+            self::COMMON_COLUMNS_PROFILE_EVENT_AC,
+            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK
+        ],
+        ApsisCoreHelper::APSIS_WEBHOOK_TABLE => [
+            self::COMMON_COLUMNS,
+            self::COLUMNS_WEBHOOK,
+            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK,
+            self::COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK
+        ],
+        ApsisCoreHelper::APSIS_QUEUE_TABLE => [
+            self::COMMON_COLUMNS,
+            self::COLUMNS_QUEUE,
+            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK,
+            self::COMMON_COLUMNS_EVENT_QUEUE
+        ]
+    ];
+    const COMMON_COLUMNS = [
+        'id' => [
+            'id',
+            Table::TYPE_INTEGER,
+            10,
+            ['primary' => true, 'identity' => true, 'unsigned' => true, 'nullable' => false],
+            'Primary Key'
+        ],
+        'store_id' => [
+            'store_id',
+            Table::TYPE_SMALLINT,
+            5,
+            ['unsigned' => true, 'nullable' => false],
+            'Store Id'
+        ]
+    ];
+    const COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK = [
+        'updated_at' => [
+            'updated_at',
+            Table::TYPE_TIMESTAMP,
+            null,
+            [],
+            'Last Update Time'
+        ]
+    ];
+    const COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK = [
+        'created_at' => [
+            'created_at',
+            Table::TYPE_TIMESTAMP,
+            null,
+            [],
+            'Created At'
+        ]
+    ];
+    const COMMON_COLUMNS_EVENT_QUEUE = [
+        'profile_id' => [
+            'profile_id',
+            Table::TYPE_INTEGER,
+            10,
+            ['unsigned' => true, 'nullable' => false],
+            'Profile Id'
+        ],
+        'sync_status' => [
+            'sync_status',
+            Table::TYPE_SMALLINT,
+            null,
+            ['nullable' => false, 'default' => '0'],
+            'Sync Status'
+        ],
+        'type' => [
+            'type',
+            Table::TYPE_SMALLINT,
+            null,
+            ['unsigned' => true, 'nullable' => false],
+            'Item Type'
+        ],
+        'error_message' => [
+            'error_message',
+            Table::TYPE_TEXT,
+            255,
+            ['nullable' => false, 'default' => ''],
+            'Error Message'
+        ]
+    ];
+    const COMMON_COLUMNS_PROFILE_EVENT_AC = [
+        'customer_id' => [
+            'customer_id',
+            Table::TYPE_INTEGER,
+            10,
+            ['unsigned' => true, 'nullable' => true, 'default' => null],
+            'Customer Id'
+        ],
+        'subscriber_id' => [
+            'subscriber_id',
+            Table::TYPE_INTEGER,
+            10,
+            ['unsigned' => true, 'nullable' => true, 'default' => null],
+            'Subscriber Id'
+        ],
+        'email' => [
+            'email',
+            Table::TYPE_TEXT,
+            255,
+            ['nullable' => false],
+            'Email'
+        ]
+    ];
+    const COLUMNS_PROFILE = [
+        'group_id' => [
+            'group_id',
+            Table::TYPE_INTEGER,
+            10,
+            ['unsigned' => true, 'nullable' => true, 'default' => null],
+            'Group Id'
+        ],
+        'is_customer' => [
+            'is_customer',
+            Table::TYPE_SMALLINT,
+            null,
+            ['nullable' => false, 'default' => '0'],
+            'Is Customer?'
+        ],
+        'is_subscriber' => [
+            'is_subscriber',
+            Table::TYPE_SMALLINT,
+            null,
+            ['nullable' => false, 'default' => '0'],
+            'Is Subscriber?'
+        ],
+        'subscriber_status' => [
+            'subscriber_status',
+            Table::TYPE_SMALLINT,
+            null,
+            ['unsigned' => true, 'nullable' => true, 'default' => null],
+            'Subscriber Status'
+        ],
+        'profile_data' => [
+            'profile_data',
+            Table::TYPE_TEXT,
+            null,
+            ['nullable' => false, 'default' => ''],
+            'Profile JSON Data'
+        ]
+    ];
+    const COLUMNS_EVENT = [
+        'event_data' => [
+            'event_data',
+            Table::TYPE_TEXT,
+            null,
+            ['nullable' => false],
+            'Event JSON Data'
+        ],
+        'sub_event_data' => [
+            'sub_event_data',
+            Table::TYPE_TEXT,
+            null,
+            ['nullable' => false],
+            'Sub Event JSON Data'
+        ]
+    ];
+    const COLUMNS_AC = [
+        'quote_id' => [
+            'quote_id',
+            Table::TYPE_INTEGER,
+            10,
+            ['unsigned' => true, 'nullable' => false],
+            'Quote Id'
+        ],
+        'profile_id' => [
+            'profile_id',
+            Table::TYPE_INTEGER,
+            10,
+            ['unsigned' => true, 'nullable' => false],
+            'Profile Id'
+        ],
+        'cart_data' => [
+            'cart_data',
+            Table::TYPE_TEXT,
+            null,
+            ['nullable' => false],
+            'Cart Data'
+        ],
+        'token' => [
+            'token',
+            Table::TYPE_TEXT,
+            255,
+            ['nullable' => false],
+            'Abandoned Cart Token'
+        ]
+    ];
+    const COLUMNS_QUEUE = [
+        'processed_at' => [
+            'processed_at',
+            Table::TYPE_TIMESTAMP,
+            null,
+            [],
+            'Processed At'
+        ]
+    ];
+    const COLUMNS_WEBHOOK = [
+        'subscription_id' => [
+            'subscription_id',
+            Table::TYPE_TEXT,
+            255,
+            ['nullable' => false],
+            'Subscription Id'
+        ],
+        'callback_url' => [
+            'callback_url',
+            Table::TYPE_TEXT,
+            null,
+            ['nullable' => false],
+            'Callback Url'
+        ],
+        'type' => [
+            'type',
+            Table::TYPE_SMALLINT,
+            null,
+            ['unsigned' => true, 'nullable' => false],
+            'Item Type'
+        ],
+        'fields' => [
+            'fields',
+            Table::TYPE_TEXT,
+            null,
+            ['nullable' => false],
+            'Fields'
+        ],
+        'secret' => [
+            'secret',
+            Table::TYPE_TEXT,
+            null,
+            ['nullable' => false],
+            'Secret'
+        ],
+        'backoff_config' => [
+            'backoff_config',
+            Table::TYPE_TEXT,
+            null,
+            ['nullable' => false, 'default' => ''],
+            'Exponential backoff config'
+        ]
+    ];
+    const TABLE_INDEXES = [
+        'id',
+        'quote_id',
+        'store_id',
+        'profile_id',
+        'customer_id',
+        'subscriber_id',
+        'email',
+        'token',
+        'created_at',
+        'event_type',
+        'sync_status',
+        'updated_at',
+        'group_id',
+        'is_customer',
+        'is_subscriber',
+        'subscriber_status',
+        'type',
+        'processed_at',
+        'subscription_id'
+    ];
+    const TABLE_FOREIGN_KEYS = [
+        'store_id' => ['table' => 'store', 'column' => 'store_id'],
+        'profile_id' => ['table' => ApsisCoreHelper::APSIS_PROFILE_TABLE, 'column' => 'id'],
+        'quote_id' => ['table' => 'quote', 'column' => 'entity_id']
+    ];
+
     /**
      * @var ApsisLogHelper
      */
@@ -39,950 +323,89 @@ class InstallSchema implements InstallSchemaInterface
             $this->logHelper->log(__METHOD__);
 
             $setup->startSetup();
-
-            // Create Profile table
-            $this->createProfileTable($setup);
-
-            // Create Event table
-            $this->createEventTable($setup);
-
-            // Create AC table
-            $this->createAbandonedTable($setup);
-
-            // Create Queue table
-            $this->createQueueTable($setup);
-
-            // Create Webhook table
-            $this->createWebhookTable($setup);
+            foreach (self::TABLES as $table => $columns) {
+                $this->createTable($table, $columns, $setup);
+            }
+            $setup->endSetup();
         } catch (Throwable $e) {
             $this->logHelper->logError(__METHOD__, $e);
+            $setup->endSetup();
         }
-
-        $setup->endSetup();
     }
 
     /**
-     * @param SchemaSetupInterface $installer
+     * @param string $table
+     * @param array $columns
      *
-     * @return void
+     * @param SchemaSetupInterface $setup
      */
-    private function createWebhookTable(SchemaSetupInterface $installer) : void
+    private function createTable(string $table, array $columns, SchemaSetupInterface $setup)
     {
         try {
             $this->logHelper->log(__METHOD__);
 
-            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_WEBHOOK_TABLE);
-            $this->dropTableIfExists($installer, $tableName);
-            $table = $installer->getConnection()->newTable($tableName);
-
-            if ($table) {
-                $table = $this->addColumnsToWebhookTable($table);
-            }
-            if ($table) {
-                $table = $this->addIndexesToWebhookTable($installer, $table);
-            }
-            if ($table) {
-                $table = $this->addForeignKeysToWebhookTable($installer, $table);
+            //Drop table if exist
+            $tableName = $setup->getTable($table);
+            if ($setup->getConnection()->isTableExists($tableName)) {
+                $setup->getConnection()->dropTable($tableName);
             }
 
-            if ($table) {
-                $table->setComment('Apsis Webhooks');
-                $installer->getConnection()->createTable($table);
+            // Create new table instance
+            $newTable = $setup->getConnection()->newTable($tableName);
+
+            // Go through all columns
+            foreach ($this->getAllColumns($columns) as $columnName => $columnDef) {
+                // Add column
+                $newTable->addColumn(
+                    $columnDef[0],
+                    $columnDef[1],
+                    $columnDef[2],
+                    $columnDef[3],
+                    $columnDef[4],
+                );
+
+                // Add index
+                if (in_array($columnName, self::TABLE_INDEXES)) {
+                    $newTable->addIndex($setup->getIdxName($tableName, [$columnName]), [$columnName]);
+                }
+
+                // Add foreign key
+                if (array_key_exists($columnName, self::TABLE_FOREIGN_KEYS)) {
+                    $rel = self::TABLE_FOREIGN_KEYS[$columnName];
+                    $newTable->addForeignKey(
+                        $setup->getFkName(
+                            $tableName,
+                            $columnName,
+                            $setup->getTable($rel['table']),
+                            $rel['column']
+                        ),
+                        $columnName,
+                        $setup->getTable($rel['table']),
+                        $rel['column'],
+                        Table::ACTION_CASCADE
+                    );
+                }
             }
+
+            // Create table
+            $newTable->setComment(ucwords(str_replace('_', ' ', $tableName)));
+            $setup->getConnection()->createTable($newTable);
         } catch (Throwable $e) {
             $this->logHelper->logError(__METHOD__, $e);
         }
     }
 
     /**
-     * @param Table $table
+     * @param array $columnsArr
      *
-     * @return Table|false
+     * @return array
      */
-    private function addColumnsToWebhookTable(Table $table)
+    private function getAllColumns(array $columnsArr): array
     {
-        try {
-            return $table->addColumn(
-                'id',
-                Table::TYPE_INTEGER,
-                10,
-                [
-                    'primary' => true,
-                    'identity' => true,
-                    'unsigned' => true,
-                    'nullable' => false
-                ],
-                'Primary Key'
-            )
-            ->addColumn(
-                'store_id',
-                Table::TYPE_SMALLINT,
-                5,
-                ['unsigned' => true, 'nullable' => false],
-                'Store Id'
-            )
-            ->addColumn(
-                'subscription_id',
-                Table::TYPE_TEXT,
-                255,
-                ['nullable' => false],
-                'Subscription Id'
-            )
-            ->addColumn(
-                'type',
-                Table::TYPE_SMALLINT,
-                5,
-                ['unsigned' => true, 'nullable' => false],
-                'Webhook Type'
-            )
-            ->addColumn(
-                'callback_url',
-                Table::TYPE_TEXT,
-                null,
-                ['nullable' => false],
-                'Callback Url'
-            )
-            ->addColumn(
-                'fields',
-                Table::TYPE_TEXT,
-                null,
-                ['nullable' => false],
-                'Fields'
-            )
-            ->addColumn(
-                'secret',
-                Table::TYPE_TEXT,
-                null,
-                ['nullable' => false],
-                'Secret'
-            )
-            ->addColumn(
-                'created_at',
-                Table::TYPE_TIMESTAMP,
-                null,
-                [],
-                'Created At'
-            );
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            return false;
+        $columns = [];
+        foreach ($columnsArr as $columnGroup) {
+            $columns = array_merge($columns, $columnGroup);
         }
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     * @param Table $table
-     *
-     * @return Table|false
-     */
-    private function addIndexesToWebhookTable(SchemaSetupInterface $installer, Table $table)
-    {
-        try {
-            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_QUEUE_TABLE);
-            return $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
-                ->addIndex($installer->getIdxName($tableName, ['subscription_id']), ['subscription_id'])
-                ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
-                ->addIndex($installer->getIdxName($tableName, ['type']), ['type'])
-                ->addIndex($installer->getIdxName($tableName, ['created_at']), ['created_at']);
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     * @param Table $table
-     *
-     * @return Table|false
-     */
-    private function addForeignKeysToWebhookTable(SchemaSetupInterface $installer, Table $table)
-    {
-        try {
-            return $table->addForeignKey(
-                $installer->getFkName(
-                    $installer->getTable(ApsisCoreHelper::APSIS_WEBHOOK_TABLE),
-                    'store_id',
-                    $installer->getTable('store'),
-                    'store_id'
-                ),
-                'store_id',
-                $installer->getTable('store'),
-                'store_id',
-                Table::ACTION_CASCADE
-            );
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     *
-     * @return void
-     */
-    private function createQueueTable(SchemaSetupInterface $installer) : void
-    {
-        try {
-            $this->logHelper->log(__METHOD__);
-
-            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_QUEUE_TABLE);
-            $this->dropTableIfExists($installer, $tableName);
-            $table = $installer->getConnection()->newTable($tableName);
-
-            if ($table) {
-                $table = $this->addColumnsToQueueTable($table);
-            }
-            if ($table) {
-                $table = $this->addIndexesToQueueTable($installer, $table);
-            }
-            if ($table) {
-                $table = $this->addForeignKeysToQueueTable($installer, $table);
-            }
-
-            if ($table) {
-                $table->setComment('Apsis Queue');
-                $installer->getConnection()->createTable($table);
-            }
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param Table $table
-     *
-     * @return Table|false
-     */
-    private function addColumnsToQueueTable(Table $table)
-    {
-        try {
-            return $table->addColumn(
-                'id',
-                Table::TYPE_INTEGER,
-                10,
-                [
-                    'primary' => true,
-                    'identity' => true,
-                    'unsigned' => true,
-                    'nullable' => false
-                ],
-                'Primary Key'
-            )
-            ->addColumn(
-                'store_id',
-                Table::TYPE_SMALLINT,
-                5,
-                ['unsigned' => true, 'nullable' => false],
-                'Store Id'
-            )
-            ->addColumn(
-                'profile_id',
-                Table::TYPE_INTEGER,
-                10,
-                ['unsigned' => true, 'nullable' => false],
-                'Profile Id'
-            )
-            ->addColumn(
-                'type',
-                Table::TYPE_SMALLINT,
-                null,
-                ['nullable' => false],
-                'Type'
-            )
-            ->addColumn(
-                'sync_status',
-                Table::TYPE_SMALLINT,
-                null,
-                ['nullable' => false, 'default' => '0'],
-                'Sync Status'
-            )
-            ->addColumn(
-                'error_message',
-                Table::TYPE_TEXT,
-                255,
-                ['nullable' => false, 'default' => ''],
-                'Error Message'
-            )
-            ->addColumn(
-                'created_at',
-                Table::TYPE_TIMESTAMP,
-                null,
-                [],
-                'Created At'
-            )
-            ->addColumn(
-                'processed_at',
-                Table::TYPE_TIMESTAMP,
-                null,
-                [],
-                'Processed At'
-            );
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     * @param Table $table
-     *
-     * @return Table|false
-     */
-    private function addIndexesToQueueTable(SchemaSetupInterface $installer, Table $table)
-    {
-        try {
-            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_QUEUE_TABLE);
-            return $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
-                ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
-                ->addIndex($installer->getIdxName($tableName, ['profile_id']), ['profile_id'])
-                ->addIndex($installer->getIdxName($tableName, ['sync_status']), ['sync_status'])
-                ->addIndex($installer->getIdxName($tableName, ['created_at']), ['created_at'])
-                ->addIndex($installer->getIdxName($tableName, ['processed_at']), ['processed_at']);
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     * @param Table $table
-     *
-     * @return Table|false
-     */
-    private function addForeignKeysToQueueTable(SchemaSetupInterface $installer, Table $table)
-    {
-        try {
-            return $table->addForeignKey(
-                $installer->getFkName(
-                    $installer->getTable(ApsisCoreHelper::APSIS_QUEUE_TABLE),
-                    'store_id',
-                    $installer->getTable('store'),
-                    'store_id'
-                ),
-                'store_id',
-                $installer->getTable('store'),
-                'store_id',
-                Table::ACTION_CASCADE
-            )->addForeignKey(
-                $installer->getFkName(
-                    $installer->getTable(ApsisCoreHelper::APSIS_QUEUE_TABLE),
-                    'profile_id',
-                    $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
-                    'id'
-                ),
-                'profile_id',
-                $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
-                'id',
-                Table::ACTION_CASCADE
-            );
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     *
-     * @return void
-     */
-    private function createAbandonedTable(SchemaSetupInterface $installer): void
-    {
-        try {
-            $this->logHelper->log(__METHOD__);
-
-            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
-            $this->dropTableIfExists($installer, $tableName);
-            $table = $installer->getConnection()->newTable($tableName);
-
-            if ($table) {
-                $table = $this->addColumnsToAbandonedTable($table);
-            }
-            if ($table) {
-                $table = $this->addIndexesToAbandonedTable($installer, $table);
-            }
-            if ($table) {
-                $table = $this->addForeignKeysToAbandonedTable($installer, $table);
-            }
-
-            if ($table) {
-                $table->setComment('Apsis Abandoned Carts');
-                $installer->getConnection()->createTable($table);
-            }
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param Table $table
-     *
-     * @return Table|false
-     */
-    private function addColumnsToAbandonedTable(Table $table)
-    {
-        try {
-            return $table->addColumn(
-                'id',
-                Table::TYPE_INTEGER,
-                10,
-                [
-                    'primary' => true,
-                    'identity' => true,
-                    'unsigned' => true,
-                    'nullable' => false
-                ],
-                'Primary Key'
-            )
-            ->addColumn(
-                'quote_id',
-                Table::TYPE_INTEGER,
-                10,
-                ['unsigned' => true, 'nullable' => false],
-                'Quote Id'
-            )
-            ->addColumn(
-                'cart_data',
-                Table::TYPE_TEXT,
-                null,
-                ['nullable' => false],
-                'Cart Data'
-            )
-            ->addColumn(
-                'store_id',
-                Table::TYPE_SMALLINT,
-                5,
-                ['unsigned' => true, 'nullable' => false],
-                'Store Id'
-            )
-            ->addColumn(
-                'profile_id',
-                Table::TYPE_INTEGER,
-                10,
-                ['unsigned' => true, 'nullable' => false],
-                'Profile Id'
-            )
-            ->addColumn(
-                'customer_id',
-                Table::TYPE_INTEGER,
-                10,
-                ['unsigned' => true, 'nullable' => true, 'default' => null],
-                'Customer ID'
-            )
-            ->addColumn(
-                'subscriber_id',
-                Table::TYPE_INTEGER,
-                10,
-                ['unsigned' => true, 'nullable' => true, 'default' => null],
-                'Customer ID'
-            )
-            ->addColumn(
-                'email',
-                Table::TYPE_TEXT,
-                255,
-                ['nullable' => false],
-                'Email'
-            )
-            ->addColumn(
-                'token',
-                Table::TYPE_TEXT,
-                255,
-                ['nullable' => false],
-                'Abandoned Cart Token'
-            )
-            ->addColumn(
-                'created_at',
-                Table::TYPE_TIMESTAMP,
-                null,
-                [],
-                'Created At'
-            );
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     * @param Table $table
-     *
-     * @return Table|false
-     */
-    private function addIndexesToAbandonedTable(SchemaSetupInterface $installer, Table $table)
-    {
-        try {
-            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE);
-            return $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
-                ->addIndex($installer->getIdxName($tableName, ['quote_id']), ['quote_id'])
-                ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
-                ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
-                ->addIndex($installer->getIdxName($tableName, ['subscriber_id']), ['subscriber_id'])
-                ->addIndex($installer->getIdxName($tableName, ['profile_id']), ['profile_id'])
-                ->addIndex($installer->getIdxName($tableName, ['email']), ['email'])
-                ->addIndex($installer->getIdxName($tableName, ['token']), ['token'])
-                ->addIndex($installer->getIdxName($tableName, ['created_at']), ['created_at']);
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     * @param Table $table
-     *
-     * @return Table|false
-     */
-    private function addForeignKeysToAbandonedTable(SchemaSetupInterface $installer, Table $table)
-    {
-        try {
-            return $table->addForeignKey(
-                $installer->getFkName(
-                    $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE),
-                    'store_id',
-                    $installer->getTable('store'),
-                    'store_id'
-                ),
-                'store_id',
-                $installer->getTable('store'),
-                'store_id',
-                Table::ACTION_CASCADE
-            )->addForeignKey(
-                $installer->getFkName(
-                    $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE),
-                    'quote_id',
-                    $installer->getTable('quote'),
-                    'entity_id'
-                ),
-                'quote_id',
-                $installer->getTable('quote'),
-                'entity_id',
-                Table::ACTION_CASCADE
-            )->addForeignKey(
-                $installer->getFkName(
-                    $installer->getTable(ApsisCoreHelper::APSIS_ABANDONED_TABLE),
-                    'profile_id',
-                    $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
-                    'id'
-                ),
-                'profile_id',
-                $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
-                'id',
-                Table::ACTION_CASCADE
-            );
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     *
-     * @return void
-     */
-    private function createEventTable(SchemaSetupInterface $installer): void
-    {
-        try {
-            $this->logHelper->log(__METHOD__);
-
-            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE);
-            $this->dropTableIfExists($installer, $tableName);
-            $table = $installer->getConnection()->newTable($tableName);
-
-            if ($table) {
-                $table = $this->addColumnsToEventTable($table);
-            }
-            if ($table) {
-                $table = $this->addIndexesToEventTable($installer, $table);
-            }
-            if ($table) {
-                $table = $this->addForeignKeysToEventTable($installer, $table);
-            }
-            if ($table) {
-                $table->setComment('Apsis Events');
-                $installer->getConnection()->createTable($table);
-            }
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param Table $table
-     *
-     * @return Table|false
-     */
-    private function addColumnsToEventTable(Table $table)
-    {
-        try {
-            return $table->addColumn(
-                'id',
-                Table::TYPE_INTEGER,
-                10,
-                [
-                    'primary' => true,
-                    'identity' => true,
-                    'unsigned' => true,
-                    'nullable' => false
-                ],
-                'Primary Key'
-            )
-            ->addColumn(
-                'event_type',
-                Table::TYPE_SMALLINT,
-                null,
-                ['unsigned' => true, 'nullable' => false],
-                'Event Type'
-            )
-            ->addColumn(
-                'event_data',
-                Table::TYPE_TEXT,
-                null,
-                ['nullable' => false],
-                'Event JSON Data'
-            )
-            ->addColumn(
-                'sub_event_data',
-                Table::TYPE_TEXT,
-                null,
-                ['nullable' => false],
-                'Sub Event JSON Data'
-            )
-            ->addColumn(
-                'profile_id',
-                Table::TYPE_INTEGER,
-                10,
-                ['unsigned' => true, 'nullable' => false],
-                'Profile Id'
-            )
-            ->addColumn(
-                'subscriber_id',
-                Table::TYPE_INTEGER,
-                10,
-                ['unsigned' => true, 'nullable' => true, 'default' => null],
-                'Subscriber Id'
-            )
-            ->addColumn(
-                'customer_id',
-                Table::TYPE_INTEGER,
-                10,
-                ['unsigned' => true, 'nullable' => true, 'default' => null],
-                'Customer Id'
-            )
-            ->addColumn(
-                'store_id',
-                Table::TYPE_SMALLINT,
-                5,
-                ['unsigned' => true, 'nullable' => false],
-                'Store ID'
-            )
-            ->addColumn(
-                'email',
-                Table::TYPE_TEXT,
-                255,
-                ['nullable' => false],
-                'Email'
-            )
-            ->addColumn(
-                'sync_status',
-                Table::TYPE_SMALLINT,
-                null,
-                ['nullable' => false, 'default' => '0'],
-                'Sync Status'
-            )
-            ->addColumn(
-                'error_message',
-                Table::TYPE_TEXT,
-                255,
-                ['nullable' => false, 'default' => ''],
-                'Error Message'
-            )
-            ->addColumn(
-                'created_at',
-                Table::TYPE_TIMESTAMP,
-                null,
-                [],
-                'Creation Time'
-            )
-            ->addColumn(
-                'updated_at',
-                Table::TYPE_TIMESTAMP,
-                null,
-                [],
-                'Update Time'
-            );
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     * @param Table $table
-     *
-     * @return Table|false
-     */
-    private function addIndexesToEventTable(SchemaSetupInterface $installer, Table $table)
-    {
-        try {
-            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE);
-            return $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
-                ->addIndex($installer->getIdxName($tableName, ['profile_id']), ['profile_id'])
-                ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
-                ->addIndex($installer->getIdxName($tableName, ['subscriber_id']), ['subscriber_id'])
-                ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
-                ->addIndex($installer->getIdxName($tableName, ['event_type']), ['event_type'])
-                ->addIndex($installer->getIdxName($tableName, ['sync_status']), ['sync_status'])
-                ->addIndex($installer->getIdxName($tableName, ['email']), ['email'])
-                ->addIndex($installer->getIdxName($tableName, ['created_at']), ['created_at'])
-                ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     * @param Table $table
-     *
-     * @return Table|false
-     */
-    private function addForeignKeysToEventTable(SchemaSetupInterface $installer, Table $table)
-    {
-        try {
-            return $table->addForeignKey(
-                $installer->getFkName(
-                    $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE),
-                    'store_id',
-                    $installer->getTable('store'),
-                    'store_id'
-                ),
-                'store_id',
-                $installer->getTable('store'),
-                'store_id',
-                Table::ACTION_CASCADE
-            )->addForeignKey(
-                $installer->getFkName(
-                    $installer->getTable(ApsisCoreHelper::APSIS_EVENT_TABLE),
-                    'profile_id',
-                    $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
-                    'id'
-                ),
-                'profile_id',
-                $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
-                'id',
-                Table::ACTION_CASCADE
-            );
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     *
-     * @return void
-     */
-    private function createProfileTable(SchemaSetupInterface $installer): void
-    {
-        try {
-            $this->logHelper->log(__METHOD__);
-
-            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
-            $this->dropTableIfExists($installer, $tableName);
-            $table = $installer->getConnection()->newTable($tableName);
-
-            if ($table) {
-                $table = $this->addColumnsToProfileTable($table);
-            }
-            if ($table) {
-                $table = $this->addIndexesToProfileTable($installer, $table);
-            }
-            if ($table) {
-                $table = $this->addForeignKeysToProfileTable($installer, $table);
-            }
-            if ($table) {
-                $table->setComment('Apsis Profiles');
-                $installer->getConnection()->createTable($table);
-            }
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param Table $table
-     *
-     * @return Table|false
-     */
-    private function addColumnsToProfileTable(Table $table)
-    {
-        try {
-            return $table->addColumn(
-                'id',
-                Table::TYPE_INTEGER,
-                10,
-                [
-                    'primary' => true,
-                    'identity' => true,
-                    'unsigned' => true,
-                    'nullable' => false
-                ],
-                'Primary Key'
-            )
-            ->addColumn(
-                'store_id',
-                Table::TYPE_SMALLINT,
-                5,
-                ['unsigned' => true, 'nullable' => false],
-                'Store ID'
-            )
-            ->addColumn(
-                'customer_id',
-                Table::TYPE_INTEGER,
-                10,
-                ['unsigned' => true, 'nullable' => true, 'default' => null],
-                'Customer Id'
-            )
-            ->addColumn(
-                'group_id',
-                Table::TYPE_INTEGER,
-                10,
-                ['unsigned' => true, 'nullable' => true, 'default' => null],
-                'Customer Id'
-            )
-            ->addColumn(
-                'subscriber_id',
-                Table::TYPE_INTEGER,
-                10,
-                ['unsigned' => true, 'nullable' => true, 'default' => null],
-                'Subscriber Id'
-            )
-            ->addColumn(
-                'email',
-                Table::TYPE_TEXT,
-                255,
-                ['nullable' => false],
-                'Email'
-            )
-            ->addColumn(
-                'is_customer',
-                Table::TYPE_SMALLINT,
-                null,
-                ['nullable' => false, 'default' => '0'],
-                'Is Customer?'
-            )
-            ->addColumn(
-                'is_subscriber',
-                Table::TYPE_SMALLINT,
-                null,
-                ['nullable' => false, 'default' => '0'],
-                'Is Subscriber?'
-            )
-            ->addColumn(
-                'subscriber_status',
-                Table::TYPE_SMALLINT,
-                null,
-                ['unsigned' => true, 'nullable' => true, 'default' => null],
-                'Subscriber Status'
-            )
-            ->addColumn(
-                'profile_data',
-                Table::TYPE_TEXT,
-                null,
-                ['nullable' => false, 'default' => ''],
-                'Profile JSON Data'
-            )
-            ->addColumn(
-                'updated_at',
-                Table::TYPE_TIMESTAMP,
-                null,
-                [],
-                'Last Update Time'
-            );
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     * @param Table $table
-     *
-     * @return Table|false
-     */
-    private function addIndexesToProfileTable(SchemaSetupInterface $installer, Table $table)
-    {
-        try {
-            $tableName = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
-            return $table->addIndex($installer->getIdxName($tableName, ['id']), ['id'])
-                ->addIndex($installer->getIdxName($tableName, ['customer_id']), ['customer_id'])
-                ->addIndex($installer->getIdxName($tableName, ['group_id']), ['group_id'])
-                ->addIndex($installer->getIdxName($tableName, ['store_id']), ['store_id'])
-                ->addIndex($installer->getIdxName($tableName, ['subscriber_id']), ['subscriber_id'])
-                ->addIndex($installer->getIdxName($tableName, ['is_subscriber']), ['is_subscriber'])
-                ->addIndex($installer->getIdxName($tableName, ['is_customer']), ['is_customer'])
-                ->addIndex($installer->getIdxName($tableName, ['subscriber_status']), ['subscriber_status'])
-                ->addIndex($installer->getIdxName($tableName, ['email']), ['email'])
-                ->addIndex($installer->getIdxName($tableName, ['updated_at']), ['updated_at']);
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     * @param Table $table
-     *
-     * @return Table|false
-     */
-    private function addForeignKeysToProfileTable(SchemaSetupInterface $installer, Table $table)
-    {
-        try {
-            return $table->addForeignKey(
-                $installer->getFkName(
-                    $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE),
-                    'store_id',
-                    $installer->getTable('store'),
-                    'store_id'
-                ),
-                'store_id',
-                $installer->getTable('store'),
-                'store_id',
-                Table::ACTION_CASCADE
-            );
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            return false;
-        }
-    }
-
-    /**
-     * @param SchemaSetupInterface $installer
-     * @param string $tableName
-     *
-     * @return void
-     */
-    public function dropTableIfExists(SchemaSetupInterface $installer, string $tableName): void
-    {
-        try {
-            $tableName = $installer->getTable($tableName);
-            if ($installer->getConnection()->isTableExists($tableName)) {
-                $installer->getConnection()->dropTable($tableName);
-            }
-        } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-        }
+        return $columns;
     }
 }

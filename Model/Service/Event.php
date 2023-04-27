@@ -4,8 +4,6 @@ namespace Apsis\One\Model\Service;
 
 use Apsis\One\Model\Event as EventModel;
 use Apsis\One\Model\EventFactory as EventModelFactory;
-use Apsis\One\Model\Queue;
-use Apsis\One\Model\Service\Queue as ApsisQueueService;
 use Apsis\One\Model\Events\Historical\Carts\Data as CartData;
 use Apsis\One\Model\Events\Historical\Orders\Data as OrderData;
 use Apsis\One\Model\Events\Historical\Reviews\Data as ReviewData;
@@ -80,11 +78,6 @@ class Event
     private ReviewData $reviewData;
 
     /**
-     * @var ApsisQueueService
-     */
-    private ApsisQueueService $apsisQueueService;
-
-    /**
      * Event constructor.
      *
      * @param ApsisCoreHelper $apsisCoreHelper
@@ -96,7 +89,6 @@ class Event
      * @param OrderData $orderData
      * @param WishlistData $wishlistData
      * @param ReviewData $reviewData
-     * @param ApsisQueueService $apsisQueueService
      */
     public function __construct(
         ApsisCoreHelper $apsisCoreHelper,
@@ -107,8 +99,7 @@ class Event
         CartData $cartData,
         OrderData $orderData,
         WishlistData $wishlistData,
-        ReviewData $reviewData,
-        ApsisQueueService $apsisQueueService
+        ReviewData $reviewData
     ) {
         $this->reviewData = $reviewData;
         $this->wishlistData = $wishlistData;
@@ -119,7 +110,6 @@ class Event
         $this->eventFactory = $eventFactory;
         $this->eventResource = $eventResource;
         $this->apsisCoreHelper = $apsisCoreHelper;
-        $this->apsisQueueService = $apsisQueueService;
     }
 
     /**
@@ -163,7 +153,7 @@ class Event
      */
     public function registerCustomerBecomesSubscriberEvent(Subscriber $subscriber, Profile $profile): void
     {
-        if ($profile->getIsCustomer() && ! $profile->getIsSubscriber()) {
+        if ($profile->getIsCustomer()) {
             $this->registerEvent(
                 EventModel::EVENT_TYPE_CUSTOMER_BECOMES_SUBSCRIBER,
                 [
@@ -261,7 +251,6 @@ class Event
                 $subData
             );
         }
-        $this->apsisQueueService->registerItem($profile, Queue::TYPE_RECORD_UPDATED, $this->apsisCoreHelper);
     }
 
     /**
@@ -353,7 +342,6 @@ class Event
                 (int) $customer->getId()
             );
         }
-        $this->apsisQueueService->registerItem($profile, Queue::TYPE_RECORD_UPDATED, $this->apsisCoreHelper);
     }
 
     /**
@@ -381,7 +369,7 @@ class Event
         try {
             /** @var EventModel $eventModel */
             $eventModel = $this->eventFactory->create();
-            $eventModel->setEventType($eventType)
+            $eventModel->setType($eventType)
                 ->setEventData($this->apsisCoreHelper->serialize($eventData))
                 ->setProfileId($profileId)
                 ->setCustomerId($customerId)

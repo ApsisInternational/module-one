@@ -110,12 +110,12 @@ class Events
     /**
      * @var string
      */
-    private string $keySpace = '';
+    private string $keySpace;
 
     /**
      * @var string
      */
-    private string $section = '';
+    private string $section;
 
     /**
      * @var array
@@ -153,9 +153,9 @@ class Events
 
         foreach ($this->apsisCoreHelper->getStores() as $store) {
             try {
-                $this->section = $this->apsisCoreHelper
+                $this->section = (string) $this->apsisCoreHelper
                     ->getStoreConfig($store, ApsisCoreHelper::PATH_APSIS_CONFIG_SECTION);
-                $this->keySpace = $this->apsisCoreHelper
+                $this->keySpace = (string) $this->apsisCoreHelper
                     ->getStoreConfig($store, ApsisCoreHelper::PATH_APSIS_CONFIG_PROFILE_KEY);
                 $client = $this->apsisCoreHelper->getApiClient($store);
 
@@ -342,9 +342,9 @@ class Events
             Zend_Date::ISO_8601
         );
         $withAddedSecond = '';
-        if ((int) $event->getEventType() === Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART ||
-            (int) $event->getEventType() === Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER) {
-            $typeArray = $this->eventsDiscriminatorMapping[$event->getEventType()];
+        if ((int) $event->getType() === Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART ||
+            (int) $event->getType() === Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER) {
+            $typeArray = $this->eventsDiscriminatorMapping[$event->getType()];
 
             if (empty($this->eventsVersionMapping[$typeArray['main']]) ||
                 empty($this->eventsVersionMapping[$typeArray['sub']])
@@ -372,13 +372,13 @@ class Events
                 ];
             }
         } else {
-            if (empty($this->eventsVersionMapping[$this->eventsDiscriminatorMapping[$event->getEventType()]])) {
+            if (empty($this->eventsVersionMapping[$this->eventsDiscriminatorMapping[$event->getType()]])) {
                 return $eventData;
             }
 
             $eventData[] = [
                 'event_time' => $createdAt,
-                'version_id' => $this->eventsVersionMapping[$this->eventsDiscriminatorMapping[$event->getEventType()]],
+                'version_id' => $this->eventsVersionMapping[$this->eventsDiscriminatorMapping[$event->getType()]],
                 'data' => (array) $this->apsisCoreHelper
                     ->unserialize($this->getData($isSecure, $event->getEventData())),
             ];

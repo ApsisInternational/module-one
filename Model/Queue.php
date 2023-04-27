@@ -31,18 +31,23 @@ use Magento\Framework\Stdlib\DateTime;
  */
 class Queue extends AbstractModel
 {
-    const TYPE_RECORD_CREATED = 1;
-    const TYPE_RECORD_UPDATED = 2;
-    const TYPE_RECORD_DELETED = 3;
-    const TYPE_CONSENT_OPT_IN = 4;
-    const TYPE_CONSENT_OPT_OUT = 5;
+    const RECORD_CREATED = 1;
+    const RECORD_UPDATED = 2;
+    const RECORD_DELETED = 3;
+    const CONSENT_OPT_IN = 4;
+    const CONSENT_OPT_OUT = 5;
 
     const TYPE_TEXT_MAP = [
-        self::TYPE_RECORD_CREATED => 'RECORD: Created',
-        self::TYPE_RECORD_UPDATED => 'RECORD: Updated',
-        self::TYPE_RECORD_DELETED => 'RECORD: Deleted',
-        self::TYPE_CONSENT_OPT_IN => 'CONSENT: Opt-in',
-        self::TYPE_CONSENT_OPT_OUT => 'CONSENT: Opt-out'
+        self::RECORD_CREATED => 'RECORD: Created',
+        self::RECORD_UPDATED => 'RECORD: Updated',
+        self::RECORD_DELETED => 'RECORD: Deleted',
+        self::CONSENT_OPT_IN => 'CONSENT: Opt-in',
+        self::CONSENT_OPT_OUT => 'CONSENT: Opt-out'
+    ];
+
+    const STATUS_EXPIRED = 3;
+    const STATUS_TEXT_MAP = [
+        self::STATUS_EXPIRED => 'Expired'
     ];
 
     /**
@@ -101,9 +106,9 @@ class Queue extends AbstractModel
     /**
      * @return $this
      */
-    public function setCurrentDateTimeOnProcessedAt()
+    public function setCurrentDateOnProcessedAt(): static
     {
-        $this->setProcessedAt($this->dateTime->formatDate(true));
+        $this->setProcessedAt((string) $this->dateTime->formatDate(true));
         return $this;
     }
 }

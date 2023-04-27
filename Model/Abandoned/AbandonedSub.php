@@ -180,7 +180,7 @@ class AbandonedSub
                         $subData = $mainData['items'];
                         unset($mainData['items']);
                         $events[] = [
-                            'event_type' => Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART,
+                            'type' => Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART,
                             'event_data' => $apsisCoreHelper->serialize($mainData),
                             'sub_event_data' => $apsisCoreHelper->serialize($subData),
                             'profile_id' => $profile->getId(),

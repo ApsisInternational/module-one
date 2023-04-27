@@ -27,8 +27,12 @@ use Apsis\One\Model\Service\Core;
  * @method $this setFields(string $value)
  * @method string getSecret()
  * @method $this setSecret(string $value)
+ * @method string getBackoffConfig()
+ * @method $this setBackoffConfig(string $value)
  * @method string getCreatedAt()
  * @method $this setCreatedAt(string $value)
+ * @method string getUpdatedAt()
+ * @method $this setUpdatedAt(string $value)
  *
  */
 class Webhook extends AbstractModel
@@ -39,6 +43,7 @@ class Webhook extends AbstractModel
         self::TYPE_RECORD => 'Record',
         self::TYPE_CONSENT => 'Consent'
     ];
+
     /**
      * @var DateTime
      */
@@ -94,11 +99,13 @@ class Webhook extends AbstractModel
     public function beforeSave()
     {
         parent::beforeSave();
+        $now = $this->dateTime->formatDate(true);
         if ($this->isObjectNew()) {
-            $this->setCreatedAt($this->dateTime->formatDate(true))
+            $this->setCreatedAt($now)
                 ->setSubscriptionId(Core::generateUniversallyUniqueIdentifier());
         }
-        $this->setSecret($this->encryptor->encrypt($this->getSecret()));
+        $this->setUpdatedAt($now)
+            ->setSecret($this->encryptor->encrypt($this->getSecret()));
         return $this;
     }
 

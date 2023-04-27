@@ -107,6 +107,8 @@ class Product implements ObserverInterface
             $profile = $this->profileCollectionFactory->create()->loadByCustomerId($customer->getId());
             if ($profile) {
                 $this->eventService->registerProductReviewEvent($reviewObject, $product, $profile, $customer);
+                $profile->setHasDataChanges(true);
+                $profile->save();
             }
         } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);

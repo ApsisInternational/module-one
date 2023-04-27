@@ -592,12 +592,52 @@ class Profile extends AbstractDb
     ) {
         try {
             $collection = $this->subscriberCollectionFactory->create()
-                ->addFieldToSelect('*')
+                ->addFieldToSelect(
+                    [
+                        'store_id',
+                        'change_status_at',
+                        'customer_id' =>$this->expressionFactory
+                            ->create(["expression" => 'IF(customer_id="0", NULL, customer_id)']),
+                        'subscriber_email',
+                        'subscriber_status'
+                    ]
+                )
                 ->addFieldToFilter('main_table.store_id', $store->getId())
                 ->addFieldToFilter('main_table.customer_id', 0);
 
             $collection->getSelect()
-                ->joinLeft(
+                ->columns(
+                    [
+                        'title' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'firstname' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'lastname' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'dob' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'gender' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'created_at' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'last_logged_date' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'customer_group' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'review_count' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'last_review_date' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'billing_street' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'billing_state' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'billing_city' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'billing_country' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'billing_postcode' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'billing_telephone' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'billing_company' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'delivery_street' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'delivery_city' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'delivery_state' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'delivery_country' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'delivery_postcode' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'delivery_telephone' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'delivery_company' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'last_order_date' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'number_of_orders' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'average_order_value' => $this->expressionFactory->create(["expression" => "NULL"]),
+                        'total_spend' => $this->expressionFactory->create(["expression" => "NULL"])
+                    ]
+                )->joinLeft(
                     ['store' => $this->getTable('store')],
                     "main_table.store_id = store.store_id",
                     ['store_name' => 'name']
@@ -636,7 +676,36 @@ class Profile extends AbstractDb
                                 'email', subscriber_email,
                                 'subscriber_id', subscriber_id,
                                 'subscriber_status', subscriber_status,
-                                'change_status_at', change_status_at
+                                'change_status_at', change_status_at,
+                                'title', title,
+                                'customer_id', customer_id,
+                                'firstname', firstname,
+                                'lastname', lastname,
+                                'dob', dob,
+                                'gender', gender,
+                                'created_at', created_at,
+                                'last_logged_date', last_logged_date,
+                                'customer_group', customer_group,
+                                'review_count', review_count,
+                                'last_review_date', last_review_date,
+                                'billing_street', billing_street,
+                                'billing_state', billing_state,
+                                'billing_city', billing_city,
+                                'billing_country', billing_country,
+                                'billing_postcode', billing_postcode,
+                                'billing_telephone', billing_telephone,
+                                'billing_company', billing_company,
+                                'delivery_street', delivery_street,
+                                'delivery_city', delivery_city,
+                                'delivery_state', delivery_state,
+                                'delivery_country', delivery_country,
+                                'delivery_postcode', delivery_postcode,
+                                'delivery_telephone', delivery_telephone,
+                                'delivery_company', delivery_company,
+                                'last_order_date', last_order_date,
+                                'number_of_orders', number_of_orders,
+                                'average_order_value', average_order_value,
+                                'total_spend', total_spend
                             )
                         FROM (%s) AS q
                         WHERE (q.subscriber_id = %s))",

@@ -14,24 +14,24 @@ class QueueTypes implements OptionSourceInterface
     {
         return [
             [
-                'value' => Queue::TYPE_RECORD_CREATED,
-                'label' => __(Queue::TYPE_TEXT_MAP[Queue::TYPE_RECORD_CREATED])
+                'value' => Queue::RECORD_CREATED,
+                'label' => __(Queue::TYPE_TEXT_MAP[Queue::RECORD_CREATED])
             ],
             [
-                'value' => Queue::TYPE_RECORD_UPDATED,
-                'label' => __(Queue::TYPE_TEXT_MAP[Queue::TYPE_RECORD_UPDATED])
+                'value' => Queue::RECORD_UPDATED,
+                'label' => __(Queue::TYPE_TEXT_MAP[Queue::RECORD_UPDATED])
             ],
             [
-                'value' => Queue::TYPE_RECORD_DELETED,
-                'label' => __(Queue::TYPE_TEXT_MAP[Queue::TYPE_RECORD_DELETED])
+                'value' => Queue::RECORD_DELETED,
+                'label' => __(Queue::TYPE_TEXT_MAP[Queue::RECORD_DELETED])
             ],
             [
-                'value' => Queue::TYPE_CONSENT_OPT_IN,
-                'label' => __(Queue::TYPE_TEXT_MAP[Queue::TYPE_CONSENT_OPT_IN])
+                'value' => Queue::CONSENT_OPT_IN,
+                'label' => __(Queue::TYPE_TEXT_MAP[Queue::CONSENT_OPT_IN])
             ],
             [
-                'value' => Queue::TYPE_CONSENT_OPT_OUT,
-                'label' => __(Queue::TYPE_TEXT_MAP[Queue::TYPE_CONSENT_OPT_OUT])
+                'value' => Queue::CONSENT_OPT_OUT,
+                'label' => __(Queue::TYPE_TEXT_MAP[Queue::CONSENT_OPT_OUT])
             ]
         ];
     }

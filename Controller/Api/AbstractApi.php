@@ -201,21 +201,23 @@ abstract class AbstractApi extends Action
     protected function getCustomerAttributes(): array
     {
         try {
+            $exclude = array_merge(
+                ProfilesIndex::EXCLUDE_CUSTOMER_ATTRIBUTES,
+                array_keys(ProfilesIndex::SCHEMA)
+            );
             $customerAttributes = [];
             foreach ($this->customerFactory->create()->getAttributes() as $attribute) {
                 if ($label = $attribute->getFrontendLabel()) {
                     $code = $attribute->getAttributeCode();
-                    $exclude = array_merge(
-                        ProfilesIndex::EXCLUDE_CUSTOMER_ATTRIBUTES,
-                        array_keys(ProfilesIndex::SCHEMA)
-                    );
-                    if (! in_array($code, $exclude)) {
-                        $customerAttributes[$code] = [
-                            'code_name' => $code,
-                            'type' => $this->getBackendTypeByInput((string) $attribute->getFrontendInput()),
-                            'display_name' => $this->escaper->escapeQuote($label)
-                        ];
+                    if (in_array($code, $exclude)) {
+                        continue;
                     }
+
+                    $customerAttributes[$code] = [
+                        'code_name' => $code,
+                        'type' => $this->getBackendTypeByInput((string) $attribute->getFrontendInput()),
+                        'display_name' => $this->escaper->escapeQuote($label)
+                    ];
                 }
             }
             return $customerAttributes;
@@ -242,9 +244,10 @@ abstract class AbstractApi extends Action
      */
     protected function setPaginationOnCollection(AbstractCollection $collection, string $field): AbstractCollection
     {
-        return $collection->setOrder($field, Collection::SORT_ORDER_ASC)
-            ->setPageSize((int) $this->queryParams['page_size'])
-            ->setCurPage((int) $this->queryParams['page'] === 0 ? 1 : (int) $this->queryParams['page']);
+        $collection->setOrder($field, Collection::SORT_ORDER_ASC)
+            ->getSelect()
+            ->limitPage((int) $this->queryParams['page'] + 1, (int) $this->queryParams['page_size']);
+        return $collection;
     }
 
     /**

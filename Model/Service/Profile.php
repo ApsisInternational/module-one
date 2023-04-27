@@ -293,16 +293,14 @@ class Profile
 
             if ((int) $subscriber->getSubscriberStatus() === Subscriber::STATUS_UNSUBSCRIBED) {
                 $this->eventService->registerSubscriberUnsubscribeEvent($subscriber, $profile);
-                $type = Queue::TYPE_CONSENT_OPT_OUT;
+                $subscription = Queue::CONSENT_OPT_OUT;
             } elseif ((int) $subscriber->getSubscriberStatus() === Subscriber::STATUS_SUBSCRIBED) {
-                if ($profile->getIsCustomer()) {
-                    $this->eventService->registerCustomerBecomesSubscriberEvent($subscriber, $profile);
-                }
-                $type = Queue::TYPE_CONSENT_OPT_IN;
+                $this->eventService->registerCustomerBecomesSubscriberEvent($subscriber, $profile);
+                $subscription = Queue::CONSENT_OPT_IN;
             }
 
-            if (isset($type)) {
-                $this->apsisQueueService->registerItem($profile, $type, $this->apsisCoreHelper);
+            if (isset($subscription)) {
+                $this->apsisQueueService->registerItem($profile, $subscription, $this->apsisCoreHelper);
             }
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
@@ -334,7 +332,6 @@ class Profile
                 ->setIsCustomer(1)
                 ->setErrorMessage('');
             $this->profileResource->save($profile);
-            $this->apsisQueueService->registerItem($profile, Queue::TYPE_RECORD_UPDATED, $this->apsisCoreHelper);
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
         }
@@ -392,7 +389,6 @@ class Profile
         int $subscriberStatus = null
     ): void {
         try {
-            /** @var ProfileModel $profile */
             $profile = $this->profileFactory->create();
             $profile->setEmail($email)
                 ->setStoreId($storeId);
@@ -410,12 +406,15 @@ class Profile
             }
 
             $this->profileResource->save($profile);
-            $this->apsisQueueService->registerItem($profile, Queue::TYPE_RECORD_CREATED, $this->apsisCoreHelper);
 
             if ($subscriberStatus === Subscriber::STATUS_SUBSCRIBED) {
-                $this->apsisQueueService->registerItem($profile, Queue::TYPE_CONSENT_OPT_IN, $this->apsisCoreHelper);
+                $subscription = Queue::CONSENT_OPT_IN;
             } elseif ($subscriberStatus === Subscriber::STATUS_UNSUBSCRIBED) {
-                $this->apsisQueueService->registerItem($profile, Queue::TYPE_CONSENT_OPT_OUT, $this->apsisCoreHelper);
+                $subscription = Queue::CONSENT_OPT_OUT;
+            }
+
+            if (isset($subscription)) {
+                $this->apsisQueueService->registerItem($profile, $subscription, $this->apsisCoreHelper);
             }
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);
@@ -493,10 +492,6 @@ class Profile
                             ->setGroupId(null)
                             ->setIsCustomer(0);
                         $this->profileResource->save($profile);
-
-                        // Register record update
-                        $this->apsisQueueService
-                            ->registerItem($profile, Queue::TYPE_RECORD_UPDATED, $this->apsisCoreHelper);
                     } else {
                         $proceedDelete = true;
                     }
@@ -509,19 +504,15 @@ class Profile
                             ->setSubscriberStatus(null);
                         $this->profileResource->save($profile);
 
-                        // Register both record update and consent update
+                        // Register consent update
                         $this->apsisQueueService
-                            ->registerItem($profile, Queue::TYPE_RECORD_UPDATED, $this->apsisCoreHelper);
-                        $this->apsisQueueService
-                            ->registerItem($profile, Queue::TYPE_CONSENT_OPT_OUT, $this->apsisCoreHelper);
+                            ->registerItem($profile, Queue::CONSENT_OPT_OUT, $this->apsisCoreHelper);
                     } else {
                         $proceedDelete = true;
                     }
                 }
 
                 if (! empty($proceedDelete)) {
-                    $this->apsisQueueService
-                        ->registerItem($profile, Queue::TYPE_RECORD_DELETED, $this->apsisCoreHelper);
                     $this->profileResource->delete($profile);
                 }
             }

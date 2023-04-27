@@ -67,6 +67,8 @@ class Placed implements ObserverInterface
             $profile = $this->findProfile($order);
             if ($profile) {
                 $this->eventService->registerOrderPlacedEvent($order, $profile);
+                $profile->setHasDataChanges(true);
+                $profile->save();
             }
         } catch (Throwable $e) {
             $this->apsisLogHelper->logError(__METHOD__, $e);

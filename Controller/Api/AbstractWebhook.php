@@ -83,7 +83,7 @@ abstract class AbstractWebhook extends AbstractApi
     {
         try {
             $subscriptionId = $this->webhookService
-                ->findWebhookSubscriptionId($this->requestBody['callback_url'], $type, $this->apsisCoreHelper);
+                ->findWebhookBySubscriptionId($this->requestBody['callback_url'], $type, $this->apsisCoreHelper);
             if (is_int($subscriptionId)) {
                 return $this->sendErrorInResponse($subscriptionId);
             }
@@ -134,7 +134,7 @@ abstract class AbstractWebhook extends AbstractApi
     {
         try {
             $records = $this->webhookService
-                ->getAllWebhooksForStoreByType($this->store->getId(), $type, $this->apsisCoreHelper);
+                ->getWebhookForStoreByType($this->store->getId(), $type, $this->apsisCoreHelper);
             if (is_int($records)) {
                 return $this->sendErrorInResponse($records);
             }

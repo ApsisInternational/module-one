@@ -13,8 +13,8 @@ use Magento\Framework\Stdlib\DateTime;
 /**
  * Class Event
  *
- * @method int getEventType()
- * @method $this setEventType(int $value)
+ * @method int getType()
+ * @method $this setType(int $value)
  * @method string getEventData()
  * @method $this setEventData(string $value)
  * @method string getSubEventData()

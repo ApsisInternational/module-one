@@ -90,6 +90,8 @@ class LoggerPlugin
             if (isset($data['last_login_at'])) {
                 $this->profileService->mergeMagentoProfileWithWebProfile($profile, $store, $customer);
                 $this->eventService->registerCustomerLoginEvent($logger, $customerId, $profile, $customer);
+                $profile->setHasDataChanges(true);
+                $profile->save();
             }
         } catch (Throwable $e) {
             $this->apsisCoreHelper->logError(__METHOD__, $e);

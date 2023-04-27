@@ -6,6 +6,7 @@ use Apsis\One\Model\Abandoned\Find;
 use Apsis\One\Model\ResourceModel\Cron\CollectionFactory as CronCollectionFactory;
 use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Apsis\One\Model\Sync\Events;
+use Apsis\One\Model\Service\Queue;
 use Throwable;
 
 class Cron
@@ -26,6 +27,11 @@ class Cron
     private Events $eventsSyncModel;
 
     /**
+     * @var Queue
+     */
+    private Queue $queueService;
+
+    /**
      * @var ApsisCoreHelper
      */
     private ApsisCoreHelper $coreHelper;
@@ -37,13 +43,16 @@ class Cron
      * @param Find $abandonedFind
      * @param Events $events
      * @param ApsisCoreHelper $coreHelper
+     * @param Queue $queueService
      */
     public function __construct(
         CronCollectionFactory $cronCollectionFactory,
         Find $abandonedFind,
         Events $events,
-        ApsisCoreHelper $coreHelper
+        ApsisCoreHelper $coreHelper,
+        Queue $queueService
     ) {
+        $this->queueService = $queueService;
         $this->coreHelper = $coreHelper;
         $this->eventsSyncModel = $events;
         $this->abandonedFind = $abandonedFind;
@@ -73,14 +82,14 @@ class Cron
      *
      * @return void
      */
-    public function syncProfiles(): void
+    public function processQueue(): void
     {
         try {
-            if ($this->checkIfJobAlreadyRan('apsis_one_sync_profiles')) {
+            if ($this->checkIfJobAlreadyRan('apsis_one_process_queue')) {
                 return;
             }
 
-            //@todo
+            $this->queueService->processQueue($this->coreHelper);
         } catch (Throwable $e) {
             $this->coreHelper->logError(__METHOD__, $e);
         }

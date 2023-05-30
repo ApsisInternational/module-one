@@ -16,7 +16,6 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use stdClass;
 use Throwable;
-use Zend_Date;
 
 class Events implements SyncInterface
 {
@@ -361,10 +360,7 @@ class Events implements SyncInterface
     {
         $isSecure = $this->apsisCoreHelper->isFrontUrlSecure($event->getStoreId());
         $eventData = [];
-        $createdAt = (string) $this->apsisDateHelper->formatDateForPlatformCompatibility(
-            $event->getCreatedAt(),
-            Zend_Date::ISO_8601
-        );
+        $createdAt = (string) $this->apsisDateHelper->formatDateForPlatformCompatibility($event->getCreatedAt(), 'c');
         $withAddedSecond = '';
         if ((int) $event->getEventType() === Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART ||
             (int) $event->getEventType() === Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER) {
@@ -389,8 +385,7 @@ class Events implements SyncInterface
                     $withAddedSecond = $createdAt;
                 }
                 $eventData[] = [
-                    'event_time' => $withAddedSecond = $this->apsisDateHelper
-                        ->addSecond($withAddedSecond, Zend_Date::ISO_8601),
+                    'event_time' => $withAddedSecond = $this->apsisDateHelper->addSecond($withAddedSecond, 'c'),
                     'version_id' => $this->eventsVersionMapping[$typeArray['sub']],
                     'data' => (array) $item,
                 ];

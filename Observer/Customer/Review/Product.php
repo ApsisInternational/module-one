@@ -100,7 +100,7 @@ class Product implements ObserverInterface
             $reviewObject = $this->reviewFactory->create()->load($dataObject->getId());
             if (empty($reviewObject) || ! $reviewObject->getCustomerId() ||
                 ! $reviewObject->getEntityPkValue() || ! $reviewObject->getStoreId() ||
-                ! $this->isOkToProceed($reviewObject->getStoreId() || ! $reviewObject->isApproved())
+                ! $this->isOkToProceed($reviewObject->getStoreId()) || ! $reviewObject->isApproved()
             ) {
                 return $this;
             }

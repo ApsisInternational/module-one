@@ -7,7 +7,6 @@ use DateTimeZone;
 use DateInterval;
 use Exception;
 use Throwable;
-use Zend_Date;
 
 class Date
 {
@@ -17,10 +16,8 @@ class Date
      *
      * @return string
      */
-    public function formatDateForPlatformCompatibility(
-        string $date = null,
-        string $format = Zend_Date::TIMESTAMP
-    ): string {
+    public function formatDateForPlatformCompatibility(string $date = null, string $format = 'U'): string
+    {
         if (empty($date)) {
             $date = 'now';
         }
@@ -38,7 +35,7 @@ class Date
      *
      * @return string
      */
-    public function addSecond(string $date = null, string $format = Zend_Date::TIMESTAMP): string
+    public function addSecond(string $date = null, string $format = 'U'): string
     {
         if (empty($date)) {
             $date = 'now';
@@ -101,7 +98,7 @@ class Date
         try {
             return $this->getDateTimeFromTimeAndTimeZone($inputDateTime)
                 ->add($this->getDateIntervalFromIntervalSpec(sprintf('P%sD', $day)))
-                ->format(Zend_Date::ISO_8601);
+                ->format('c');
         } catch (Throwable $e) {
             return '';
         }
@@ -115,7 +112,7 @@ class Date
     public function isExpired(string $inputDateTime): bool
     {
         try {
-            $nowDateTime = $this->getDateTimeFromTimeAndTimeZone()->format(Zend_Date::ISO_8601);
+            $nowDateTime = $this->getDateTimeFromTimeAndTimeZone()->format('c');
             return ($nowDateTime > $inputDateTime);
         } catch (Throwable $e) {
             return false;

@@ -18,7 +18,6 @@ use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Store\Api\Data\StoreInterface;
 use Throwable;
-use Zend_Date;
 
 class Profile
 {
@@ -135,8 +134,7 @@ class Profile
                     $this->apsisCoreHelper->debug(__METHOD__, ['Message' => 'Conflict, creating new cookie.']);
 
                     //Create new cookie value
-                    $keySpacesToMerge[1]['profile_key'] =
-                        md5($profile->getId() . date(Zend_Date::TIMESTAMP));
+                    $keySpacesToMerge[1]['profile_key'] = md5($profile->getId() . date('U'));
 
                     //Send second merge request
                     if ($apiClient->mergeProfile($keySpacesToMerge) === null) {

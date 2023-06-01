@@ -14,7 +14,6 @@ use Apsis\One\Model\Service\Date as ApsisDateHelper;
 use Magento\Store\Api\Data\StoreInterface;
 use stdClass;
 use Throwable;
-use Zend_Date;
 
 class Events
 {
@@ -337,10 +336,7 @@ class Events
     {
         $isSecure = $this->apsisCoreHelper->isStoreFrontSecure($event->getStoreId());
         $eventData = [];
-        $createdAt = (string) $this->apsisDateHelper->formatDateForPlatformCompatibility(
-            $event->getCreatedAt(),
-            Zend_Date::ISO_8601
-        );
+        $createdAt = (string) $this->apsisDateHelper->formatDateForPlatformCompatibility($event->getCreatedAt(), 'c');
         $withAddedSecond = '';
         if ((int) $event->getType() === Event::EVENT_TYPE_CUSTOMER_ABANDONED_CART ||
             (int) $event->getType() === Event::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER) {
@@ -365,8 +361,7 @@ class Events
                     $withAddedSecond = $createdAt;
                 }
                 $eventData[] = [
-                    'event_time' => $withAddedSecond = $this->apsisDateHelper
-                        ->addSecond($withAddedSecond, Zend_Date::ISO_8601),
+                    'event_time' => $withAddedSecond = $this->apsisDateHelper->addSecond($withAddedSecond, 'c'),
                     'version_id' => $this->eventsVersionMapping[$typeArray['sub']],
                     'data' => (array) $item,
                 ];

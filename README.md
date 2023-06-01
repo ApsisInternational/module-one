@@ -5,9 +5,11 @@ APSIS One integration for Magento 2
 
 ## Requirements
 
-- Magento 2.4.4+ is compatible from version 2.1.0
+- Magento 2.4.6 and above are compatible from version 2.1.1
   - PHP 8.1+
-- Magento 2.2.x, 2.3.x, 2.4.0 - 2.4.3-p3 is compatible up to version 2.0.x
+- Magento 2.4.4 & 2.4.5 is compatible with version 2.1.0
+  - PHP 8.1+
+- Magento 2.2.x, 2.3.x & 2.4.0 to 2.4.3-p3 is compatible up to version 2.0.8
   - PHP 7.1+
 - Magento module(s) dependency 
     - Newsletter
@@ -32,16 +34,16 @@ APSIS One integration for Magento 2
 It is recommended to use [composer](https://getcomposer.org) to install the module.
 
 ```bash
-# Install latest version for Magento 2.4.4+
+# Install latest version for Magento 2.4.4 and above
 $ composer require apsis/module-one
 
-# Install latest version for Magento 2.2.x, 2.3.x, 2.4.0 - 2.4.3-p3
+# Install latest version for Magento 2.2.x, 2.3.x & 2.4.0 to 2.4.3-p3
 $ composer require apsis/module-one:~2.0
 
-# Update to latest version for Magento 2.4.4+
+# Update to latest version for Magento 2.4.4 and above
 $ composer update apsis/module-one
 
-# Update to latest version for Magento 2.2.x, 2.3.x, 2.4.0 - 2.4.3-p3
+# Update to latest version for Magento 2.2.x, 2.3.x, 2.4.0  to 2.4.3-p3
 $ composer update apsis/module-one:~2.0
 ```
 If you do not use composer, ensure that you also load any dependencies that this module has, such as [giggsey/libphonenumber-for-php](https://github.com/giggsey/libphonenumber-for-php) and it's own dependencies.

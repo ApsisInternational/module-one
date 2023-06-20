@@ -8,9 +8,6 @@
             </api>
         </apsis_one_connect>
         <apsis_one_configuration>
-            <profile_sync>
-                <order_status>pending,processing,complete</order_status>
-            </profile_sync>
             <abandoned_cart>
                 <duration>15</duration>
             </abandoned_cart>

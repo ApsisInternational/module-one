@@ -2,10 +2,12 @@
 
 namespace Apsis\One\Plugin\Customer;
 
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Service\Event;
-use Apsis\One\Model\Service\Profile;
+use Apsis\One\Model\ProfileModel;
+use Apsis\One\Model\ResourceModel\Profile\ProfileCollection;
+use Apsis\One\Model\ResourceModel\ProfileResource;
+use Apsis\One\Model\ResourceModel\Profile\ProfileCollectionFactory;
+use Apsis\One\Service\ApiService;
+use Apsis\One\Service\Sub\SubEventService;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Logger as CustomerLogger;
 use Throwable;
@@ -18,46 +20,44 @@ class LoggerPlugin
     private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
-     * @var ApsisCoreHelper
-     */
-    private ApsisCoreHelper $apsisCoreHelper;
-
-    /**
      * @var CustomerRepositoryInterface
      */
     private CustomerRepositoryInterface $customerRepository;
 
     /**
-     * @var Event
+     * @var SubEventService
      */
-    private Event $eventService;
+    private SubEventService $subEventService;
 
     /**
-     * @var Profile
+     * @var ApiService
      */
-    private Profile $profileService;
+    private ApiService $apiService;
 
     /**
-     * Account constructor.
-     *
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @var ProfileResource
+     */
+    private ProfileResource $profileResource;
+
+    /**
      * @param CustomerRepositoryInterface $customerRepository
      * @param ProfileCollectionFactory $profileCollectionFactory
-     * @param Event $eventService
-     * @param Profile $profileService
+     * @param SubEventService $subEventService
+     * @param ApiService $apiService
+     * @param ProfileResource $profileResource
      */
     public function __construct(
-        ApsisCoreHelper $apsisCoreHelper,
         CustomerRepositoryInterface $customerRepository,
         ProfileCollectionFactory $profileCollectionFactory,
-        Event $eventService,
-        Profile $profileService
+        SubEventService $subEventService,
+        ApiService $apiService,
+        ProfileResource $profileResource
     ) {
-        $this->eventService = $eventService;
-        $this->profileService = $profileService;
+        $this->profileResource = $profileResource;
+        $this->subEventService = $subEventService;
+        $this->apiService = $apiService;
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->customerRepository = $customerRepository;
-        $this->apsisCoreHelper = $apsisCoreHelper;
     }
 
     /**
@@ -80,23 +80,33 @@ class LoggerPlugin
                 return $result;
             }
 
-            $store = $this->apsisCoreHelper->getStore($customer->getStoreId());
-            $profile = $this->profileCollectionFactory->create()
-                ->loadByCustomerId($customer->getId());
-            if (! $profile) {
+            $store = $this->apiService->getStore($customer->getStoreId());
+            /** @var ProfileModel $profile */
+            $profile = $this->getProfileCollection()
+                ->getFirstItemFromCollection('customer_id', $customer->getId());
+            if (empty($profile)) {
                 return $result;
             }
 
             if (isset($data['last_login_at'])) {
-                $this->profileService->mergeMagentoProfileWithWebProfile($profile, $store, $customer);
-                $this->eventService->registerCustomerLoginEvent($logger, $customerId, $profile, $customer);
+                $this->apiService->mergeProfile($store, $profile, $customer);
+                $this->subEventService
+                    ->registerCustomerLoginEvent($logger, $customerId, $profile, $customer, $this->apiService);
                 $profile->setHasDataChanges(true);
-                $profile->save();
+                $this->profileResource->save($profile);
             }
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->apiService->logError(__METHOD__, $e);
         }
 
         return $result;
+    }
+
+    /**
+     * @return ProfileCollection
+     */
+    public function getProfileCollection(): ProfileCollection
+    {
+        return $this->profileCollectionFactory->create();
     }
 }

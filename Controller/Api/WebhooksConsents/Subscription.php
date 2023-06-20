@@ -3,7 +3,7 @@
 namespace Apsis\One\Controller\Api\WebhooksConsents;
 
 use Apsis\One\Controller\Api\AbstractWebhook;
-use Apsis\One\Model\Webhook;
+use Apsis\One\Model\WebhookModel;
 use Magento\Framework\App\ResponseInterface;
 
 class Subscription extends AbstractWebhook
@@ -34,7 +34,7 @@ class Subscription extends AbstractWebhook
      */
     protected function getProfileConsentsWebhook(): ResponseInterface
     {
-        return $this->getWebhookByType(Webhook::TYPE_CONSENT);
+        return $this->getWebhookByType(WebhookModel::TYPE_CONSENT);
     }
 
     /**
@@ -42,7 +42,7 @@ class Subscription extends AbstractWebhook
      */
     protected function patchProfileConsentsWebhook(): ResponseInterface
     {
-        return $this->patchWebhookByType(Webhook::TYPE_CONSENT);
+        return $this->patchWebhookByType(WebhookModel::TYPE_CONSENT);
     }
 
     /**
@@ -50,6 +50,6 @@ class Subscription extends AbstractWebhook
      */
     protected function deleteProfileConsentsWebhook(): ResponseInterface
     {
-        return $this->deleteWebhookByType(Webhook::TYPE_CONSENT);
+        return $this->deleteWebhookByType(WebhookModel::TYPE_CONSENT);
     }
 }

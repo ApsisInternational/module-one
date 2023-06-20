@@ -1,7 +1,7 @@
-<?php /** @var \Apsis\One\Block\Script $block */ ?>
+<?php /** @var \Apsis\One\Block\ScriptLoaderBlock $block */ ?>
 <?php if (strlen($url = $block->getTrackingUrl())): ?>
     <script>
-        require.config({paths: {'apsist':  "<?= $block->escapeUrl($url) ?>"}});
+        require.config({paths: {'apsist':  "<?= $block->escaper->escapeUrl($url) ?>"}});
     </script>
     <script type="text/x-magento-init">
         {"*": {"apsist": {}}}

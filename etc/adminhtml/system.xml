@@ -15,13 +15,13 @@
                 <attribute type="expanded">1</attribute>
                 <field id="endpoint" translate="label" sortOrder="10" type="text" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Endpoint</label>
-                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Link</frontend_model>
-                    <backend_model>Apsis\One\Model\Config\Backend\InvalidateDataSave</backend_model>
+                    <frontend_model>Apsis\One\Block\Adminhtml\Config\EndpointGeneratorBlock</frontend_model>
+                    <backend_model>Apsis\One\Model\Adminhtml\Config\Backend\InvalidateDataSaveBackendModel</backend_model>
                 </field>
                 <field id="key" translate="label" sortOrder="20" type="text" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Key</label>
-                    <frontend_model>Apsis\One\Block\Adminhtml\Config\Key</frontend_model>
-                    <backend_model>Apsis\One\Model\Config\Backend\InvalidateDataSaveEncrypted</backend_model>
+                    <frontend_model>Apsis\One\Block\Adminhtml\Config\SharedKeyBlock</frontend_model>
+                    <backend_model>Apsis\One\Model\Adminhtml\Config\Backend\InvalidateDataSaveEncryptedBackendModel</backend_model>
                 </field>
             </group>
         </section>
@@ -30,15 +30,6 @@
             <label>Configuration</label>
             <tab>apsis_one</tab>
             <resource>Apsis_One::config</resource>
-            <group id="profile_sync" translate="label" sortOrder="10" showInDefault="0" showInWebsite="0" showInStore="1">
-                <label>Profile Sync</label>
-                <attribute type="expanded">1</attribute>
-                <field id="order_status" translate="comment label" sortOrder="10" type="multiselect" showInDefault="0" showInWebsite="0" showInStore="1">
-                    <label>Sales Attributes Calculation With Order Status</label>
-                    <source_model>Apsis\One\Model\Config\Source\System\OrderStatus</source_model>
-                    <comment><![CDATA[Select multiple statuses by pressing Ctrl button while selecting]]></comment>
-                </field>
-            </group>
             <group id="event_sync" translate="label" sortOrder="20" showInDefault="0" showInWebsite="0" showInStore="1">
                 <label>Event Sync</label>
                 <attribute type="expanded">1</attribute>
@@ -52,7 +43,7 @@
                 <attribute type="expanded">1</attribute>
                 <field id="duration" translate="label" type="select" sortOrder="10" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Abandoned After</label>
-                    <source_model>Apsis\One\Model\Config\Source\System\Intervalminute</source_model>
+                    <source_model>Apsis\One\Model\Adminhtml\Config\Source\System\IntervalMinuteSourceModel</source_model>
                     <comment><![CDATA[Register cart as abandoned after it has been inactive for selected amount of time.]]></comment>
                 </field>
             </group>

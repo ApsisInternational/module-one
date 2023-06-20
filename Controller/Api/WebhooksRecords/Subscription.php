@@ -3,7 +3,7 @@
 namespace Apsis\One\Controller\Api\WebhooksRecords;
 
 use Apsis\One\Controller\Api\AbstractWebhook;
-use Apsis\One\Model\Webhook;
+use Apsis\One\Model\WebhookModel;
 use Magento\Framework\App\ResponseInterface;
 
 class Subscription extends AbstractWebhook
@@ -34,7 +34,7 @@ class Subscription extends AbstractWebhook
      */
     protected function getProfileRecordsWebhook(): ResponseInterface
     {
-        return $this->getWebhookByType(Webhook::TYPE_RECORD);
+        return $this->getWebhookByType(WebhookModel::TYPE_RECORD);
     }
 
     /**
@@ -42,7 +42,7 @@ class Subscription extends AbstractWebhook
      */
     protected function patchProfileRecordsWebhook(): ResponseInterface
     {
-        return $this->patchWebhookByType(Webhook::TYPE_RECORD);
+        return $this->patchWebhookByType(WebhookModel::TYPE_RECORD);
     }
 
     /**
@@ -50,6 +50,6 @@ class Subscription extends AbstractWebhook
      */
     protected function deleteProfileRecordsWebhook(): ResponseInterface
     {
-        return $this->deleteWebhookByType(Webhook::TYPE_RECORD);
+        return $this->deleteWebhookByType(WebhookModel::TYPE_RECORD);
     }
 }

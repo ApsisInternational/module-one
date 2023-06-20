@@ -3,7 +3,7 @@
 namespace Apsis\One\Controller\Api\WebhooksRecords;
 
 use Apsis\One\Controller\Api\AbstractWebhook;
-use Apsis\One\Model\Webhook;
+use Apsis\One\Model\WebhookModel;
 use Magento\Framework\App\ResponseInterface;
 
 class Index extends AbstractWebhook
@@ -36,7 +36,7 @@ class Index extends AbstractWebhook
      */
     protected function postProfileRecordsWebhook(): ResponseInterface
     {
-        return $this->postWebhookByType(Webhook::TYPE_RECORD);
+        return $this->postWebhookByType(WebhookModel::TYPE_RECORD);
     }
 
     /**
@@ -44,6 +44,6 @@ class Index extends AbstractWebhook
      */
     protected function getAllRecordsWebhook(): ResponseInterface
     {
-        return $this->getAllWebhooksByType(Webhook::TYPE_RECORD);
+        return $this->getAllWebhooksByType(WebhookModel::TYPE_RECORD);
     }
 }

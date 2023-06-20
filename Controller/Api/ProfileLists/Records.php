@@ -4,6 +4,7 @@ namespace Apsis\One\Controller\Api\ProfileLists;
 
 use Apsis\One\Controller\Api\AbstractProfile;
 use Magento\Framework\App\ResponseInterface;
+use Throwable;
 
 class Records extends AbstractProfile
 {
@@ -33,16 +34,21 @@ class Records extends AbstractProfile
      */
     protected function getProfileListsRecords(): ResponseInterface
     {
-        $status = $this->doesGroupIdExist((int) $this->taskId);
-        if (is_int($status)) {
-            return $this->sendErrorInResponse($status);
-        }
+        try {
+            $status = $this->doesGroupIdExist((int) $this->taskId);
+            if (is_int($status)) {
+                return $this->sendErrorInResponse($status);
+            }
 
-        $records = $this->getGroupRecords();
-        if (is_int($records)) {
-            return $this->sendErrorInResponse($records);
+            $records = $this->getGroupRecords();
+            if (is_int($records)) {
+                return $this->sendErrorInResponse($records);
+            }
+            return $this->sendResponse(200, null, json_encode($records));
+        } catch (Throwable $e) {
+            $this->service->logError(__METHOD__, $e);
+            return $this->sendErrorInResponse(500);
         }
-        return $this->sendResponse(200, null, $this->apsisCoreHelper->serialize($records));
     }
 
     /**
@@ -50,15 +56,20 @@ class Records extends AbstractProfile
      */
     protected function getProfileListsRecordsCount(): ResponseInterface
     {
-        $status = $this->doesGroupIdExist((int) $this->taskId);
-        if (is_int($status)) {
-            return $this->sendErrorInResponse($status);
-        }
+        try {
+            $status = $this->doesGroupIdExist((int) $this->taskId);
+            if (is_int($status)) {
+                return $this->sendErrorInResponse($status);
+            }
 
-        $count = $this->getGroupRecordsCount();
-        if (is_int($count)) {
-            return $this->sendErrorInResponse($count);
+            $count = $this->getGroupRecordsCount();
+            if (is_int($count)) {
+                return $this->sendErrorInResponse($count);
+            }
+            return $this->sendResponse(200, null, json_encode($count));
+        } catch (Throwable $e) {
+            $this->service->logError(__METHOD__, $e);
+            return $this->sendErrorInResponse(500);
         }
-        return $this->sendResponse(200, null, $this->apsisCoreHelper->serialize($count));
     }
 }

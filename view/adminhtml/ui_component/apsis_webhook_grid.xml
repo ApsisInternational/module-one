@@ -80,7 +80,7 @@
             </argument>
         </paging>
     </container>
-    <columns name="apsis_webhook_columns" class="Apsis\One\Block\Adminhtml\Ui\DataSource">
+    <columns name="apsis_webhook_columns" class="Apsis\One\Block\Adminhtml\Ui\DataSourceBlock">
         <selectionsColumn name="ids">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
@@ -114,7 +114,7 @@
         </column>
         <column name="type">
             <argument name="data" xsi:type="array">
-                <item name="options" xsi:type="object">Apsis\One\Model\Config\Source\System\WebhookTypes</item>
+                <item name="options" xsi:type="object">Apsis\One\Model\Adminhtml\Config\Source\System\WebhookTypesSourceModel</item>
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">select</item>
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>

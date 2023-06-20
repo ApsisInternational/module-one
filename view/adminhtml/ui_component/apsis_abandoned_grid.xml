@@ -80,7 +80,7 @@
             </argument>
         </paging>
     </container>
-    <columns name="apsis_abandoned_columns" class="Apsis\One\Block\Adminhtml\Ui\DataSource">
+    <columns name="apsis_abandoned_columns" class="Apsis\One\Block\Adminhtml\Ui\DataSourceBlock">
         <selectionsColumn name="ids">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">

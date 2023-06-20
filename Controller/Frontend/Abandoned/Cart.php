@@ -2,21 +2,21 @@
 
 namespace Apsis\One\Controller\Frontend\Abandoned;
 
-use Apsis\One\Block\Abandoned\Cart as CartBlock;
-use Apsis\One\Model\Abandoned;
-use Apsis\One\Model\Service\Cart as ApsisCartHelper;
-use Apsis\One\Model\Service\Log as ApsisLogHelper;
-use Magento\Framework\App\Action\Action;
-use Magento\Framework\App\Action\Context;
+use Apsis\One\Block\Abandoned\CartBlock;
+use Apsis\One\Controller\AbstractAction;
+use Apsis\One\Model\AbandonedModel;
+use Apsis\One\Model\ResourceModel\Abandoned\AbandonedCollectionFactory;
+use Apsis\One\Service\BaseService;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\Result\JsonFactory;
-use Magento\Framework\Controller\Result\Raw;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
-use Magento\Framework\DataObject;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Framework\View\LayoutInterface;
 use Throwable;
 
-class Cart extends Action
+class Cart extends AbstractAction
 {
     const VALID_HTTP_METHODS = ['GET', 'HEAD'];
 
@@ -26,19 +26,9 @@ class Cart extends Action
     private JsonFactory $resultJsonFactory;
 
     /**
-     * @var ApsisCartHelper
+     * @var ResultInterface
      */
-    private ApsisCartHelper $apsisCartHelper;
-
-    /**
-     * @var ApsisLogHelper
-     */
-    private ApsisLogHelper $apsisLogHelper;
-
-    /**
-     * @var Raw|ResultInterface
-     */
-    private Raw|ResultInterface $resultRaw;
+    private ResultInterface $resultRaw;
 
     /**
      * @var StoreManagerInterface
@@ -46,34 +36,47 @@ class Cart extends Action
     private StoreManagerInterface $storeManager;
 
     /**
-     * Cart constructor.
-     *
-     * @param Context $context
+     * @var AbandonedCollectionFactory
+     */
+    private AbandonedCollectionFactory $abandonedCollectionFactory;
+
+    /**
+     * @var LayoutInterface
+     */
+    private LayoutInterface $layout;
+
+    /**
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param BaseService $service
      * @param StoreManagerInterface $storeManager
      * @param JsonFactory $resultJsonFactory
-     * @param ApsisCartHelper $apsisCartHelper
-     * @param ApsisLogHelper $apsisLogHelper
+     * @param AbandonedCollectionFactory $abandonedCollectionFactory
+     * @param LayoutInterface $layout
+     * @param ResultFactory $resultFactory
      */
     public function __construct(
-        Context $context,
+        RequestInterface $request,
+        ResponseInterface $response,
+        BaseService $service,
         StoreManagerInterface $storeManager,
         JsonFactory $resultJsonFactory,
-        ApsisCartHelper $apsisCartHelper,
-        ApsisLogHelper $apsisLogHelper
+        AbandonedCollectionFactory $abandonedCollectionFactory,
+        LayoutInterface $layout,
+        ResultFactory $resultFactory
     ) {
-        parent::__construct($context);
-
         $this->storeManager = $storeManager;
-        $this->apsisCartHelper = $apsisCartHelper;
         $this->resultJsonFactory = $resultJsonFactory;
-        $this->apsisLogHelper = $apsisLogHelper;
-        $this->resultRaw = $this->resultFactory->create(ResultFactory::TYPE_RAW);
+        $this->abandonedCollectionFactory = $abandonedCollectionFactory;
+        $this->layout = $layout;
+        $this->resultRaw = $resultFactory->create(ResultFactory::TYPE_RAW);
+        parent::__construct($request, $response, $service);
     }
 
     /**
      * @inheritdoc
      */
-    public function execute()
+    public function execute(): ResultInterface
     {
         try {
             //Validate http method against allowed one.
@@ -82,53 +85,61 @@ class Cart extends Action
             }
 
             $token = (string) $this->getRequest()->getParam('token');
-            if (empty($token) || ! $this->apsisCartHelper->isClean($token)) {
+            if (empty($token) || ! $this->service->isClean($token)) {
                 return $this->sendResponse($this->resultRaw, 400);
             }
 
-            $cart = $this->apsisCartHelper->getCart($token);
+            $cart = $this->getCart($token);
             if (empty($cart) || empty($cart->getCartData()) || ! $this->isJson($cart->getCartData())) {
                 return $this->sendResponse($this->resultRaw, 404);
             }
 
             return $this->renderOutput($cart);
         } catch (Throwable $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return $this->handleException();
         }
     }
 
     /**
-     * @param DataObject|Abandoned $cart
+     * @param string $token
+     *
+     * @return AbandonedModel|bool
+     */
+    private function getCart(string $token): AbandonedModel|bool
+    {
+        return $this->abandonedCollectionFactory->create()
+            ->getFirstItemFromCollection('token', $token);
+    }
+
+    /**
+     * @param AbandonedModel $cart
      *
      * @return ResultInterface
      */
-    private function renderOutput(DataObject|Abandoned $cart): ResultInterface
+    private function renderOutput(AbandonedModel $cart): ResultInterface
     {
         try {
             $cart->setCartData($this->getData($cart->getCartData(), $cart->getStoreId()));
             $output = $this->getRequest()->getParam('output');
-            return match ($output) {
-                'html' => $this->renderHtml($cart),
-                default => $this->renderJson($cart),
-            };
+            return $output === 'html' ? $this->renderHtml($cart) : $this->renderJson($cart);
         } catch (Throwable $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return $this->handleException();
         }
     }
 
     /**
-     * @param DataObject $cart
+     * @param AbandonedModel $cart
      *
      * @return ResultInterface
      */
-    private function renderHtml(DataObject $cart): ResultInterface
+    private function renderHtml(AbandonedModel $cart): ResultInterface
     {
         try {
             /** @var CartBlock $block */
-            $block = $this->_view->getLayout()->createBlock(CartBlock::class)->setCacheable(false);
-            $html = $block->setCart($cart)
+            $block = $this->layout->createBlock(CartBlock::class)->setCacheable(false);
+            $html = $block->setAbandonedModel($cart)
                 ->setTemplate('Apsis_One::abandoned/cart.phtml')
                 ->toHtml();
 
@@ -138,17 +149,17 @@ class Cart extends Action
 
             return $this->sendResponse($this->resultRaw, 200);
         } catch (Throwable $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return $this->handleException();
         }
     }
 
     /**
-     * @param DataObject $cart
+     * @param AbandonedModel $cart
      *
      * @return ResultInterface
      */
-    private function renderJson(DataObject $cart): ResultInterface
+    private function renderJson(AbandonedModel $cart): ResultInterface
     {
         try {
             $resultJson = $this->resultJsonFactory
@@ -156,7 +167,7 @@ class Cart extends Action
                 ->setJsonData('[' . $cart->getCartData() . ']');
             return $this->sendResponse($resultJson, 200);
         } catch (Throwable $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return $this->handleException();
         }
     }
@@ -178,7 +189,7 @@ class Cart extends Action
                     true
                 );
         } catch (Throwable $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return $this->handleException();
         }
     }
@@ -194,7 +205,7 @@ class Cart extends Action
             json_decode($string);
             return (json_last_error() == JSON_ERROR_NONE);
         } catch (Throwable $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return false;
         }
     }
@@ -212,7 +223,7 @@ class Cart extends Action
             $isSecureNeeded = $store->isCurrentlySecure() && $store->isFrontUrlSecure() && str_contains($data, 'http:');
             return $isSecureNeeded ? str_replace('http:', 'https:', $data) : $data;
         } catch (Throwable $e) {
-            $this->apsisLogHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return $data;
         }
     }

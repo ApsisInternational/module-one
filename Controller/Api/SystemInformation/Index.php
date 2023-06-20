@@ -3,6 +3,7 @@
 namespace Apsis\One\Controller\Api\SystemInformation;
 
 use Apsis\One\Controller\Api\AbstractApi;
+use Apsis\One\Service\BaseService;
 use Magento\Framework\App\ResponseInterface;
 
 class Index extends AbstractApi
@@ -29,12 +30,12 @@ class Index extends AbstractApi
     {
         $info = [
             'system_id' => 'magento',
-            'system_access_url' => $this->apsisCoreHelper->generateSystemAccessUrl($this->getRequest()),
-            'system_version' => $this->apsisCoreHelper->getCurrentVersion(),
+            'system_access_url' => $this->service->generateSystemAccessUrl($this->getRequest()),
+            'system_version' => BaseService::MODULE_VERSION,
             'supported_integration_versions' => ['v2.0'],
             'supported_features' => ['PROFILE_SYNC', 'PROFILE_LIST_SYNC'],
             'supported_marketing_automation_nodes' => []
         ];
-        return $this->sendResponse(200, null, $this->apsisCoreHelper->serialize($info));
+        return $this->sendResponse(200, null, json_encode($info));
     }
 }

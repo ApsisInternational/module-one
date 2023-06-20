@@ -34,7 +34,7 @@
         <plugin name="apsis_logger_log_plugin" type="Apsis\One\Plugin\Customer\LoggerPlugin" />
     </type>
     <type name="Magento\Framework\App\Request\CsrfValidator">
-        <plugin name="csrf_validator_skip" type="Apsis\One\Plugin\Action\CsrfValidatorSkip" />
+        <plugin name="csrf_validator_skip" type="Apsis\One\Plugin\Action\CsrfValidatorSkipPlugin" />
     </type>
     <preference for="Magento\Config\Model\Config\Structure\SearchInterface"
                 type="Magento\Config\Model\Config\Structure" />

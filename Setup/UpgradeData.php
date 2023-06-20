@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Setup;
 
-use Apsis\One\Model\Service\Log as logHelper;
+use Apsis\One\Service\BaseService;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\UpgradeDataInterface;
@@ -11,9 +11,9 @@ use Throwable;
 class UpgradeData implements UpgradeDataInterface
 {
     /**
-     * @var logHelper
+     * @var BaseService
      */
-    private logHelper $logHelper;
+    private BaseService $baseService;
 
     /**
      * @var InstallData
@@ -21,12 +21,12 @@ class UpgradeData implements UpgradeDataInterface
     private InstallData $installData;
 
     /**
-     * @param logHelper $logHelper
+     * @param BaseService $baseService
      * @param InstallData $installData
      */
-    public function __construct(logHelper $logHelper, InstallData $installData)
+    public function __construct(BaseService $baseService, InstallData $installData)
     {
-        $this->logHelper = $logHelper;
+        $this->baseService = $baseService;
         $this->installData = $installData;
     }
 
@@ -40,16 +40,15 @@ class UpgradeData implements UpgradeDataInterface
     public function upgrade(ModuleDataSetupInterface $setup, ModuleContextInterface $context): void
     {
         try {
-            $this->logHelper->log(__METHOD__);
+            $this->baseService->log(__METHOD__);
             $setup->startSetup();
             if ($context->getVersion() && version_compare($context->getVersion(), '3.0.0', '<')) {
                 // v3.0.0, uninstalling and starting fresh install.
                 $this->installData->install($setup, $context);
             }
         } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
+            $this->baseService->logError(__METHOD__, $e);
         }
-
         $setup->endSetup();
     }
 }

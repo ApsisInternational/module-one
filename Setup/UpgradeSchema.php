@@ -2,7 +2,7 @@
 
 namespace Apsis\One\Setup;
 
-use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Apsis\One\Service\BaseService;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Magento\Framework\Setup\UpgradeSchemaInterface;
@@ -11,9 +11,9 @@ use Throwable;
 class UpgradeSchema implements UpgradeSchemaInterface
 {
     /**
-     * @var ApsisLogHelper
+     * @var BaseService
      */
-    private ApsisLogHelper $logHelper;
+    private BaseService $baseService;
 
     /**
      * @var InstallSchema
@@ -21,14 +21,12 @@ class UpgradeSchema implements UpgradeSchemaInterface
     private InstallSchema $installSchema;
 
     /**
-     * UpgradeSchema constructor.
-     *
-     * @param ApsisLogHelper $logHelper
+     * @param BaseService $baseService
      * @param InstallSchema $installSchema
      */
-    public function __construct(ApsisLogHelper $logHelper, InstallSchema $installSchema)
+    public function __construct(BaseService $baseService, InstallSchema $installSchema)
     {
-        $this->logHelper = $logHelper;
+        $this->baseService = $baseService;
         $this->installSchema = $installSchema;
     }
 
@@ -41,16 +39,15 @@ class UpgradeSchema implements UpgradeSchemaInterface
     public function upgrade(SchemaSetupInterface $setup, ModuleContextInterface $context): void
     {
         try {
-            $this->logHelper->log(__METHOD__);
+            $this->baseService->log(__METHOD__);
             $setup->startSetup();
             if ($context->getVersion() && version_compare($context->getVersion(), '3.0.0', '<')) {
-                $this->logHelper->log('v3.0.0, uninstalling and starting fresh install.');
+                $this->baseService->log('v3.0.0, uninstalling and starting fresh install.');
                 $this->installSchema->install($setup, $context);
             }
         } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
+            $this->baseService->logError(__METHOD__, $e);
         }
-
         $setup->endSetup();
     }
 }

@@ -2,15 +2,16 @@
 
 namespace Apsis\One\Controller\Frontend\Abandoned;
 
-use Apsis\One\Model\Service\Log;
+use Apsis\One\Controller\AbstractAction;
+use Apsis\One\Service\BaseService;
 use Magento\Checkout\Model\Session;
-use Magento\Framework\App\Action\Action;
-use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Quote\Model\ResourceModel\Quote;
 use Throwable;
 
-class Helper extends Action
+class Helper extends AbstractAction
 {
     /**
      * @var Quote
@@ -23,42 +24,36 @@ class Helper extends Action
     private Session $cartSession;
 
     /**
-     * @var Log
-     */
-    private Log $log;
-
-    /**
      * @var Validator
      */
     private Validator $formKeyValidator;
 
     /**
-     * Updater constructor.
-     *
-     * @param Context $context
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param BaseService $service
      * @param Validator $formKeyValidator
-     * @param Log $log
      * @param Quote $quoteResource
      * @param Session $session
      */
     public function __construct(
-        Context $context,
+        RequestInterface $request,
+        ResponseInterface $response,
+        BaseService $service,
         Validator $formKeyValidator,
-        Log $log,
         Quote $quoteResource,
         Session $session
     ) {
         $this->formKeyValidator = $formKeyValidator;
-        $this->log = $log;
         $this->quoteResource = $quoteResource;
         $this->cartSession = $session;
-        parent::__construct($context);
+        parent::__construct($request, $response, $service);
     }
 
     /**
-     * @return void
+     * @return ResponseInterface
      */
-    public function execute()
+    public function execute(): ResponseInterface
     {
         try {
             if ($this->formKeyValidator->validate($this->getRequest()) &&
@@ -73,7 +68,8 @@ class Helper extends Action
                 $this->quoteResource->save($quote);
             }
         } catch (Throwable $e) {
-            $this->log->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
         }
+        return $this->getResponse();
     }
 }

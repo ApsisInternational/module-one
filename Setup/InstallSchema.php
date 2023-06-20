@@ -2,24 +2,23 @@
 
 namespace Apsis\One\Setup;
 
-use Apsis\One\Model\Service\Log as ApsisLogHelper;
+use Apsis\One\Service\BaseService;
 use Magento\Framework\Setup\InstallSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
 use Magento\Framework\DB\Ddl\Table;
 use Throwable;
 
 class InstallSchema implements InstallSchemaInterface
 {
     const TABLES = [
-        ApsisCoreHelper::APSIS_PROFILE_TABLE => [
+        BaseService::APSIS_PROFILE_TABLE => [
             self::COMMON_COLUMNS,
             self::COMMON_COLUMNS_PROFILE_EVENT_AC,
             self::COLUMNS_PROFILE,
             self::COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK
         ],
-        ApsisCoreHelper::APSIS_EVENT_TABLE => [
+        BaseService::APSIS_EVENT_TABLE => [
             self::COMMON_COLUMNS,
             self::COLUMNS_EVENT,
             self::COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK,
@@ -27,19 +26,19 @@ class InstallSchema implements InstallSchemaInterface
             self::COMMON_COLUMNS_EVENT_QUEUE,
             self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK
         ],
-        ApsisCoreHelper::APSIS_ABANDONED_TABLE => [
+        BaseService::APSIS_ABANDONED_TABLE => [
             self::COMMON_COLUMNS,
             self::COLUMNS_AC,
             self::COMMON_COLUMNS_PROFILE_EVENT_AC,
             self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK
         ],
-        ApsisCoreHelper::APSIS_WEBHOOK_TABLE => [
+        BaseService::APSIS_WEBHOOK_TABLE => [
             self::COMMON_COLUMNS,
             self::COLUMNS_WEBHOOK,
             self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK,
             self::COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK
         ],
-        ApsisCoreHelper::APSIS_QUEUE_TABLE => [
+        BaseService::APSIS_QUEUE_TABLE => [
             self::COMMON_COLUMNS,
             self::COLUMNS_QUEUE,
             self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK,
@@ -217,12 +216,12 @@ class InstallSchema implements InstallSchemaInterface
         ]
     ];
     const COLUMNS_QUEUE = [
-        'processed_at' => [
-            'processed_at',
+        'updated_at' => [
+            'updated_at',
             Table::TYPE_TIMESTAMP,
             null,
             [],
-            'Processed At'
+            'Updated At'
         ]
     ];
     const COLUMNS_WEBHOOK = [
@@ -287,28 +286,33 @@ class InstallSchema implements InstallSchemaInterface
         'is_subscriber',
         'subscriber_status',
         'type',
-        'processed_at',
+        'updated_at',
         'subscription_id'
     ];
     const TABLE_FOREIGN_KEYS = [
         'store_id' => ['table' => 'store', 'column' => 'store_id'],
-        'profile_id' => ['table' => ApsisCoreHelper::APSIS_PROFILE_TABLE, 'column' => 'id'],
+        'profile_id' => ['table' => BaseService::APSIS_PROFILE_TABLE, 'column' => 'id'],
         'quote_id' => ['table' => 'quote', 'column' => 'entity_id']
     ];
 
     /**
-     * @var ApsisLogHelper
+     * @var BaseService
      */
-    private ApsisLogHelper $logHelper;
+    private BaseService $baseService;
 
     /**
-     * InstallSchema constructor.
-     *
-     * @param ApsisLogHelper $logHelper
+     * @var Uninstall
      */
-    public function __construct(ApsisLogHelper $logHelper)
+    private Uninstall $uninstallSchema;
+
+    /**
+     * @param BaseService $baseService
+     * @param Uninstall $uninstallSchema
+     */
+    public function __construct(BaseService $baseService, Uninstall $uninstallSchema)
     {
-        $this->logHelper = $logHelper;
+        $this->baseService = $baseService;
+        $this->uninstallSchema = $uninstallSchema;
     }
 
     /**
@@ -317,38 +321,40 @@ class InstallSchema implements InstallSchemaInterface
      *
      * @return void
      */
-    public function install(SchemaSetupInterface $setup, ModuleContextInterface $context)
+    public function install(SchemaSetupInterface $setup, ModuleContextInterface $context): void
     {
         try {
-            $this->logHelper->log(__METHOD__);
+            $this->baseService->log(__METHOD__);
 
             $setup->startSetup();
+
+            // Remove all module tables from Magento DB
+            $this->uninstallSchema->removeAllModuleTables($setup);
+
             foreach (self::TABLES as $table => $columns) {
                 $this->createTable($table, $columns, $setup);
             }
             $setup->endSetup();
         } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
-            $setup->endSetup();
+            $this->baseService->logError(__METHOD__, $e);
         }
+        $setup->endSetup();
     }
 
     /**
      * @param string $table
      * @param array $columns
-     *
      * @param SchemaSetupInterface $setup
+     *
+     * @return void
      */
-    private function createTable(string $table, array $columns, SchemaSetupInterface $setup)
+    private function createTable(string $table, array $columns, SchemaSetupInterface $setup): void
     {
         try {
-            $this->logHelper->log(__METHOD__);
+            $this->baseService->log(__METHOD__, [$table]);
 
-            //Drop table if exist
+            // Create new table instance
             $tableName = $setup->getTable($table);
-            if ($setup->getConnection()->isTableExists($tableName)) {
-                $setup->getConnection()->dropTable($tableName);
-            }
 
             // Create new table instance
             $newTable = $setup->getConnection()->newTable($tableName);
@@ -391,7 +397,7 @@ class InstallSchema implements InstallSchemaInterface
             $newTable->setComment(ucwords(str_replace('_', ' ', $tableName)));
             $setup->getConnection()->createTable($newTable);
         } catch (Throwable $e) {
-            $this->logHelper->logError(__METHOD__, $e);
+            $this->baseService->logError(__METHOD__, $e);
         }
     }
 

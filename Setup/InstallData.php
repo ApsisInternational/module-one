@@ -2,12 +2,15 @@
 
 namespace Apsis\One\Setup;
 
-use Apsis\One\Model\Events\Historical;
-use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Service\Data;
+use Apsis\One\Model\ResourceModel\ProfileResource;
+use Apsis\One\Service\BaseService;
 use Magento\Authorization\Model\Acl\Role\Group as RoleGroup;
 use Magento\Authorization\Model\RulesFactory;
+use Magento\Authorization\Model\Rules;
 use Magento\Authorization\Model\RoleFactory;
+use Magento\Authorization\Model\Role;
+use Magento\Authorization\Model\ResourceModel\Role as RoleResource;
 use Magento\Authorization\Model\UserContextInterface;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
@@ -26,9 +29,9 @@ class InstallData implements InstallDataInterface
     private ProfileResource $profileResource;
 
     /**
-     * @var ApsisCoreHelper
+     * @var BaseService
      */
-    private ApsisCoreHelper $apsisCoreHelper;
+    private BaseService $baseService;
 
     /**
      * @var Random
@@ -56,9 +59,9 @@ class InstallData implements InstallDataInterface
     private RulesFactory $rulesFactory;
 
     /**
-     * @var Historical
+     * @var Data\HistoricalEvents
      */
-    private Historical $historicalEvents;
+    private Data\HistoricalEvents $historicalEvents;
 
     /**
      * @var State
@@ -66,36 +69,44 @@ class InstallData implements InstallDataInterface
     private State $appState;
 
     /**
+     * @var RoleResource
+     */
+    private RoleResource $roleResource;
+
+    /**
      * @param ProfileResource $profileResource
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param BaseService $baseService
      * @param Random $random
      * @param EncryptorInterface $encryptor
      * @param RoleFactory $roleFactory
      * @param RulesFactory $rulesFactory
      * @param Uninstall $uninstallSchema
-     * @param Historical $historicalEvents
+     * @param Data\HistoricalEvents $historicalEvents
      * @param State $appState
+     * @param RoleResource $roleResource
      */
     public function __construct(
         ProfileResource $profileResource,
-        ApsisCoreHelper $apsisCoreHelper,
+        BaseService $baseService,
         Random $random,
         EncryptorInterface $encryptor,
         RoleFactory $roleFactory,
         RulesFactory $rulesFactory,
         Uninstall $uninstallSchema,
-        Historical $historicalEvents,
-        State $appState
+        Data\HistoricalEvents $historicalEvents,
+        State $appState,
+        RoleResource $roleResource
     ) {
         $this->appState = $appState;
         $this->historicalEvents = $historicalEvents;
         $this->profileResource = $profileResource;
-        $this->apsisCoreHelper = $apsisCoreHelper;
+        $this->baseService = $baseService;
         $this->random = $random;
         $this->encryptor = $encryptor;
         $this->roleFactory = $roleFactory;
         $this->rulesFactory = $rulesFactory;
         $this->uninstallSchema = $uninstallSchema;
+        $this->roleResource = $roleResource;
     }
 
     /**
@@ -104,18 +115,17 @@ class InstallData implements InstallDataInterface
      *
      * @return void
      */
-    public function install(ModuleDataSetupInterface $setup, ModuleContextInterface $context)
+    public function install(ModuleDataSetupInterface $setup, ModuleContextInterface $context): void
     {
+        $this->baseService->log(__METHOD__);
+
         try {
-            $this->apsisCoreHelper->log(__METHOD__);
             $this->appState->setAreaCode(Area::AREA_GLOBAL);
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->baseService->logError(__METHOD__, $e);
         }
 
         try {
-            $this->apsisCoreHelper->log(__METHOD__);
-
             $setup->startSetup();
 
             // Remove all module data from Magento tables
@@ -128,11 +138,10 @@ class InstallData implements InstallDataInterface
             $this->identifyAndMigrateProfiles($setup);
 
             // Find historical Events
-            $this->historicalEvents->process($this->apsisCoreHelper);
+            $this->historicalEvents->process($this->baseService);
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->baseService->logError(__METHOD__, $e);
         }
-
         $setup->endSetup();
     }
 
@@ -144,16 +153,32 @@ class InstallData implements InstallDataInterface
     private function identifyAndMigrateProfiles(ModuleDataSetupInterface $installer): void
     {
         try {
-            $this->apsisCoreHelper->log(__METHOD__);
+            $this->baseService->log(__METHOD__);
 
-            $apsisProfileTable = $installer->getTable(ApsisCoreHelper::APSIS_PROFILE_TABLE);
+            $apsisProfileTable = $installer->getTable(BaseService::APSIS_PROFILE_TABLE);
             $installer->getConnection()->truncateTable($apsisProfileTable);
 
             //Populate table with Customers and Subscribers
-            $this->profileResource->populateProfilesTable($this->apsisCoreHelper);
+            $this->profileResource->populateProfilesTable($this->baseService);
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->baseService->logError(__METHOD__, $e);
         }
+    }
+
+    /**
+     * @return Role
+     */
+    private function getRoleModel(): Role
+    {
+        return $this->roleFactory->create();
+    }
+
+    /**
+     * @return Rules
+     */
+    private function getRulesModel(): Rules
+    {
+        return $this->rulesFactory->create();
     }
 
     /**
@@ -162,24 +187,24 @@ class InstallData implements InstallDataInterface
     public function createDataInMagentoTables(): void
     {
         try {
-            $this->apsisCoreHelper->log(__METHOD__);
+            $this->baseService->log(__METHOD__);
 
             // Generate, encrypt and save 32 character long key
-            $this->apsisCoreHelper->writer->save(
-                ApsisCoreHelper::PATH_CONFIG_API_KEY,
+            $this->baseService->saveDefaultConfig(
+                BaseService::PATH_CONFIG_API_KEY,
                 $this->encryptor->encrypt($this->random->getRandomString(32))
             );
 
             //Create Role for APSIS Support
-            $role = $this->roleFactory->create()
+            $role = $this->getRoleModel()
                 ->setRoleName('APSIS Support Agent')
                 ->setUserType(UserContextInterface::USER_TYPE_ADMIN)
                 ->setUserId(0)
                 ->setRoleType(RoleGroup::ROLE_TYPE)
                 ->setSortOrder(0)
                 ->setTreeLevel(1)
-                ->setParentId(0)
-                ->save();
+                ->setParentId(0);
+            $this->roleResource->save($role);
 
             $resource = [
                 'Apsis_One::reports',
@@ -190,12 +215,12 @@ class InstallData implements InstallDataInterface
                 'Apsis_One::config',
             ];
 
-            $this->rulesFactory->create()
+            $this->getRulesModel()
                 ->setRoleId($role->getId())
                 ->setResources($resource)
                 ->saveRel();
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->baseService->logError(__METHOD__, $e);
         }
     }
 }

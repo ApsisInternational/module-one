@@ -4,6 +4,7 @@ namespace Apsis\One\Controller\Api\Consents;
 
 use Apsis\One\Controller\Api\AbstractProfile;
 use Magento\Framework\App\ResponseInterface;
+use Throwable;
 
 class Index extends AbstractProfile
 {
@@ -43,7 +44,12 @@ class Index extends AbstractProfile
      */
     protected function getProfileConsentBases(): ResponseInterface
     {
-        return $this->sendResponse(200, null, $this->apsisCoreHelper->serialize(self::CONSENT_BASES));
+        try {
+            return $this->sendResponse(200, null, json_encode(self::CONSENT_BASES));
+        } catch (Throwable $e) {
+            $this->service->logError(__METHOD__, $e);
+            return $this->sendErrorInResponse(500);
+        }
     }
 
     /**
@@ -51,11 +57,16 @@ class Index extends AbstractProfile
      */
     protected function getProfileConsents(): ResponseInterface
     {
-        $consents = $this->getConsents();
-        if (is_int($consents)) {
-            return $this->sendErrorInResponse($consents);
+        try {
+            $consents = $this->getConsents();
+            if (is_int($consents)) {
+                return $this->sendErrorInResponse($consents);
+            }
+            return $this->sendResponse(200, null, json_encode($consents));
+        } catch (Throwable $e) {
+            $this->service->logError(__METHOD__, $e);
+            return $this->sendErrorInResponse(500);
         }
-        return $this->sendResponse(200, null, $this->apsisCoreHelper->serialize($consents));
     }
 
     /**
@@ -63,11 +74,16 @@ class Index extends AbstractProfile
      */
     protected function getProfileConsentsCount(): ResponseInterface
     {
-        $count = $this->getConsentsCount();
-        if (is_int($count)) {
-            return $this->sendErrorInResponse($count);
+        try {
+            $count = $this->getConsentsCount();
+            if (is_int($count)) {
+                return $this->sendErrorInResponse($count);
+            }
+            return $this->sendResponse(200, null, json_encode($count));
+        } catch (Throwable $e) {
+            $this->service->logError(__METHOD__, $e);
+            return $this->sendErrorInResponse(500);
         }
-        return $this->sendResponse(200, null, $this->apsisCoreHelper->serialize($count));
     }
 
     /**
@@ -75,10 +91,15 @@ class Index extends AbstractProfile
      */
     protected function patchProfileConsents(): ResponseInterface
     {
-        $status = $this->updateConsent();
-        if (is_int($status)) {
-            return $this->sendErrorInResponse($status);
+        try {
+            $status = $this->updateConsent();
+            if (is_int($status)) {
+                return $this->sendErrorInResponse($status);
+            }
+            return $this->sendResponse(200);
+        } catch (Throwable $e) {
+            $this->service->logError(__METHOD__, $e);
+            return $this->sendErrorInResponse(500);
         }
-        return $this->sendResponse(200);
     }
 }

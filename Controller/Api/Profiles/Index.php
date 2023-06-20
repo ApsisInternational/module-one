@@ -4,10 +4,11 @@ namespace Apsis\One\Controller\Api\Profiles;
 
 use Apsis\One\Controller\Api\AbstractProfile;
 use Magento\Framework\App\ResponseInterface;
+use Throwable;
 
 class Index extends AbstractProfile
 {
-    // Profile schema, see function getExpressionString in class Apsis\One\Model\ResourceModel\Profile
+    // Profile schema, see function getExpressionString class Apsis\One\Model\ResourceModel\ProfileResource
     const SCHEMA = [
         'profile_id' => ['code_name' => 'profile_id', 'type' => 'integer', 'display_name' => 'Profile Id'],
         'website_id' => ['code_name' => 'website_id', 'type' => 'integer', 'display_name' => 'Website Id'],
@@ -120,7 +121,12 @@ class Index extends AbstractProfile
      */
     protected function getProfileEntities(): ResponseInterface
     {
-        return $this->sendResponse(200, null, $this->apsisCoreHelper->serialize([self::ENTITY_NAME]));
+        try {
+            return $this->sendResponse(200, null, json_encode([self::ENTITY_NAME]));
+        } catch (Throwable $e) {
+            $this->service->logError(__METHOD__, $e);
+            return $this->sendErrorInResponse(500);
+        }
     }
 
     /**
@@ -128,8 +134,13 @@ class Index extends AbstractProfile
      */
     protected function getProfileSchema(): ResponseInterface
     {
-        $schema = array_merge(array_values(self::SCHEMA), array_values($this->getCustomerAttributes()));
-        return $this->sendResponse(200, null, $this->apsisCoreHelper->serialize($schema));
+        try {
+            $schema = array_merge(array_values(self::SCHEMA), array_values($this->getCustomerAttributes()));
+            return $this->sendResponse(200, null, json_encode($schema));
+        } catch (Throwable $e) {
+            $this->service->logError(__METHOD__, $e);
+            return $this->sendErrorInResponse(500);
+        }
     }
 
     /**
@@ -137,11 +148,16 @@ class Index extends AbstractProfile
      */
     protected function getProfileRecords(): ResponseInterface
     {
-        $records = $this->getProfiles();
-        if (is_int($records)) {
-            return $this->sendErrorInResponse($records);
+        try {
+            $records = $this->getProfiles();
+            if (is_int($records)) {
+                return $this->sendErrorInResponse($records);
+            }
+            return $this->sendResponse(200, null, json_encode($records));
+        } catch (Throwable $e) {
+            $this->service->logError(__METHOD__, $e);
+            return $this->sendErrorInResponse(500);
         }
-        return $this->sendResponse(200, null, $this->apsisCoreHelper->serialize($records));
     }
 
     /**
@@ -149,10 +165,15 @@ class Index extends AbstractProfile
      */
     protected function getProfileRecordsCount(): ResponseInterface
     {
-        $count = $this->getProfilesCount();
-        if (is_int($count)) {
-            return $this->sendErrorInResponse($count);
+        try {
+            $count = $this->getProfilesCount();
+            if (is_int($count)) {
+                return $this->sendErrorInResponse($count);
+            }
+            return $this->sendResponse(200, null, json_encode($count));
+        } catch (Throwable $e) {
+            $this->service->logError(__METHOD__, $e);
+            return $this->sendErrorInResponse(500);
         }
-        return $this->sendResponse(200, null, $this->apsisCoreHelper->serialize($count));
     }
 }

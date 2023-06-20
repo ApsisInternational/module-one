@@ -14,9 +14,9 @@ use Magento\Framework\Code\NameBuilder;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\App\Router\ActionList;
 use Magento\Framework\App\Router\PathConfigInterface;
-use Apsis\One\Model\Service\Log;
-use Apsis\One\Block\Abandoned\Helper;
-use Apsis\One\Block\Abandoned\Cart;
+use Apsis\One\Service\BaseService;
+use Apsis\One\Block\Abandoned\CheckoutHelperBlock;
+use Apsis\One\Block\Abandoned\CartBlock;
 use Throwable;
 
 class Router extends Base
@@ -133,25 +133,25 @@ class Router extends Base
             ]
         ]
     ];
-    const OLD_STATIC_PATH_TO_ACTION_MAP = [
+    const INTERNAL_STATIC_PATH_TO_ACTION_MAP = [
         'apsis/abandoned/cart' => [
             'actionPath' => 'frontend_abandoned',
             'action' => 'cart'
         ],
-        Cart::APSIS_CART_CHECKOUT_ENDPOINT => [
+        CartBlock::CHECKOUT_ENDPOINT => [
             'actionPath' => 'frontend_abandoned',
             'action' => 'checkout'
         ],
-        Helper::EMAIL_UPDATER_URL => [
+        CheckoutHelperBlock::UPDATER_URL => [
             'actionPath' => 'frontend_abandoned',
             'action' => 'helper'
         ],
     ];
 
     /**
-     * @var Log
+     * @var BaseService
      */
-    private Log $logger;
+    private BaseService $baseService;
 
     /**
      * @param ActionList $actionList
@@ -162,7 +162,7 @@ class Router extends Base
      * @param UrlInterface $url
      * @param NameBuilder $nameBuilder
      * @param PathConfigInterface $pathConfig
-     * @param Log $logger
+     * @param BaseService $baseService
      */
     public function __construct(
         ActionList $actionList,
@@ -173,9 +173,8 @@ class Router extends Base
         UrlInterface $url,
         NameBuilder $nameBuilder,
         PathConfigInterface $pathConfig,
-        Log $logger
+        BaseService $baseService
     ) {
-        $this->logger = $logger;
         parent::__construct(
             $actionList,
             $actionFactory,
@@ -186,19 +185,18 @@ class Router extends Base
             $nameBuilder,
             $pathConfig
         );
+        $this->baseService = $baseService;
     }
 
     /**
-     * @param RequestInterface $request
-     *
-     * @return ActionInterface|null
+     * @inerhitDoc
      */
-    public function match(RequestInterface $request)
+    public function match(RequestInterface $request): ?ActionInterface
     {
         try {
             // If path is related to old links
             $requestPath = trim($request->getPathInfo(), '/');
-            foreach (self::OLD_STATIC_PATH_TO_ACTION_MAP as $path => $config) {
+            foreach (self::INTERNAL_STATIC_PATH_TO_ACTION_MAP as $path => $config) {
                 if (str_contains($requestPath, $path)) {
                     return $this->forwardRequest($request, $config, []);
                 }
@@ -212,7 +210,7 @@ class Router extends Base
             // No match found
             $match = $this->findMatchAndGetConfig($request);
             if (empty($match)) {
-                return $this->forwardError($request, 400);
+                return $this->forwardError($request);
             }
 
             // Set full route params based on endpoint config
@@ -221,38 +219,37 @@ class Router extends Base
 
             // If path params do not match
             if (! $this->isRequiredAndParsedRouteParamsMatches($routeParams)) {
-                return $this->forwardError($request, 400);
+                return $this->forwardError($request);
             }
 
             // Validate storeCode, always required and need to be a number
             if (empty($routeParams['storeCode'])) {
-                return $this->forwardError($request, 400);
+                return $this->forwardError($request);
             }
 
             // Validate taskId, if required and need to be a number
             if (in_array('taskId', $this->_requiredParams) && (empty($routeParams['taskId']))) {
-                return $this->forwardError($request, 400);
+                return $this->forwardError($request);
             }
 
             return $this->forwardRequest($request, $match, $routeParams);
         } catch (Throwable $e) {
-            $this->logger->logError(__METHOD__, $e);
+            $this->baseService->logError(__METHOD__, $e);
             return parent::match($request);
         }
     }
 
     /**
      * @param RequestInterface $request
-     * @param int $httpCode
      *
      * @return ActionInterface
      */
-    private function forwardError(RequestInterface $request, int $httpCode): ActionInterface
+    private function forwardError(RequestInterface $request): ActionInterface
     {
         $config = [
             'actionPath' => 'api',
             'action' => 'error',
-            'httpCode' => $httpCode
+            'httpCode' => 400
         ];
         return $this->forwardRequest($request, $config, []);
     }
@@ -288,7 +285,7 @@ class Router extends Base
 
             return $this->actionFactory->create(Forward::class);
         } catch (Throwable $e) {
-            $this->logger->logError(__METHOD__, $e);
+            $this->baseService->logError(__METHOD__, $e);
             return parent::match($request);
         }
     }
@@ -366,7 +363,7 @@ class Router extends Base
             }
             return $configsMap;
         } catch (Throwable $e) {
-            $this->logger->logError(__METHOD__, $e);
+            $this->baseService->logError(__METHOD__, $e);
             return [];
         }
     }

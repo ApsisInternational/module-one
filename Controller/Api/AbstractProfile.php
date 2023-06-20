@@ -4,20 +4,21 @@ namespace Apsis\One\Controller\Api;
 
 use Apsis\One\Controller\Api\Profiles\Index as ProfilesIndex;
 use Apsis\One\Controller\Api\Consents\Index as ConsentsIndex;
-use Apsis\One\Model\Profile;
-use Apsis\One\Model\ResourceModel\Profile as ProfileResource;
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
+use Apsis\One\Model\ProfileModel;
+use libphonenumber\PhoneNumberUtil;
+use Magento\Customer\Model\ResourceModel\Group\Collection as GroupCollection;
 use Magento\Customer\Model\ResourceModel\Group\CollectionFactory as GroupCollectionFactory;
-use Apsis\One\Model\Service\Date as ApsisDateHelper;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
+use Apsis\One\Service\ProfileService;
 use Magento\Eav\Model\Config as EavConfig;
-use Magento\Framework\App\Action\Context;
-use Magento\Framework\Escaper;
-use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
-use Magento\Framework\Registry;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\ResponseInterface;
+use Magento\Framework\Data\Collection;
+use Magento\Framework\Encryption\EncryptorInterface;
+use Apsis\One\Model\ResourceModel\AbstractCollection;
+use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection as MagentoAbstractCollection;
 use Magento\Newsletter\Model\Subscriber;
-use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Customer\Model\CustomerFactory;
+use Magento\Customer\Model\ResourceModel\Customer as CustomerResource;
 use Throwable;
 
 abstract class AbstractProfile extends AbstractApi
@@ -35,69 +36,47 @@ abstract class AbstractProfile extends AbstractApi
     protected GroupCollectionFactory $groupCollectionFactory;
 
     /**
-     * @var ProfileCollectionFactory
-     */
-    protected ProfileCollectionFactory $profileCollectionFactory;
-
-    /**
      * @var EavConfig
      */
     protected EavConfig $eavConfig;
 
     /**
-     * @var ApsisDateHelper
+     * @var CustomerResource
      */
-    protected ApsisDateHelper $apsisDateHelper;
+    protected CustomerResource $customerResource;
 
     /**
-     * @var ProfileResource
-     */
-    protected ProfileResource $profileResource;
-
-    /**
-     * @var SubscriberFactory
-     */
-    protected SubscriberFactory $subscriberFactory;
-
-    /**
-     * @var Registry
-     */
-    private Registry $registry;
-
-    /**
-     * @param Context $context
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param ProfileService $service
      * @param CustomerFactory $customerFactory
-     * @param Escaper $escaper
+     * @param EncryptorInterface $encryptor
      * @param GroupCollectionFactory $groupCollectionFactory
-     * @param ProfileCollectionFactory $profileCollectionFactory
      * @param EavConfig $eavConfig
-     * @param ApsisDateHelper $apsisDateHelper
-     * @param ProfileResource $profileResource
-     * @param SubscriberFactory $subscriberFactory
-     * @param Registry $registry
+     * @param CustomerResource $customerResource
      */
     public function __construct(
-        Context $context,
-        ApsisCoreHelper $apsisCoreHelper,
+        RequestInterface $request,
+        ResponseInterface $response,
+        ProfileService $service,
         CustomerFactory $customerFactory,
-        Escaper $escaper,
+        EncryptorInterface $encryptor,
         GroupCollectionFactory $groupCollectionFactory,
-        ProfileCollectionFactory $profileCollectionFactory,
         EavConfig $eavConfig,
-        ApsisDateHelper $apsisDateHelper,
-        ProfileResource $profileResource,
-        SubscriberFactory $subscriberFactory,
-        Registry $registry
+        CustomerResource $customerResource
     ) {
-        $this->subscriberFactory = $subscriberFactory;
-        $this->profileResource = $profileResource;
-        $this->apsisDateHelper = $apsisDateHelper;
+        $this->customerResource = $customerResource;
         $this->eavConfig = $eavConfig;
-        $this->profileCollectionFactory = $profileCollectionFactory;
         $this->groupCollectionFactory = $groupCollectionFactory;
-        $this->registry = $registry;
-        parent::__construct($context, $apsisCoreHelper, $customerFactory, $escaper);
+        parent::__construct($request, $response, $service, $customerFactory, $encryptor);
+    }
+
+    /**
+     * @return GroupCollection
+     */
+    protected function getGroupCollection(): GroupCollection
+    {
+        return $this->groupCollectionFactory->create();
     }
 
     /**
@@ -105,14 +84,14 @@ abstract class AbstractProfile extends AbstractApi
      *
      * @return bool|int
      */
-    protected function doesGroupIdExist(int $id)
+    protected function doesGroupIdExist(int $id): bool|int
     {
         try {
-            $collection = $this->groupCollectionFactory->create()
+            $collection = $this->getGroupCollection()
                 ->addFieldToFilter('main_table.customer_group_id', $id);
             return $collection->getSize() ? true : 404;
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return 500;
         }
     }
@@ -120,13 +99,13 @@ abstract class AbstractProfile extends AbstractApi
     /**
      * @return array|int
      */
-    protected function getGroupRecordsCount()
+    protected function getGroupRecordsCount(): int|array
     {
         try {
             $collection = $this->getProfileCollectionByGroupId(false);
             return is_int($collection) ? $collection : ['count' => $collection->getSize()];
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return 500;
         }
     }
@@ -134,7 +113,7 @@ abstract class AbstractProfile extends AbstractApi
     /**
      * @return array|int
      */
-    protected function getGroupRecords()
+    protected function getGroupRecords(): int|array
     {
         try {
             $collection = $this->getProfileCollectionByGroupId(true);
@@ -143,13 +122,13 @@ abstract class AbstractProfile extends AbstractApi
             }
 
             $records = [];
-            /** @var Profile $profile */
+            /** @var ProfileModel $profile */
             foreach ($collection as $profile) {
                 $records[] = [ProfilesIndex::ENTITY_NAME => $profile->getId()];
             }
             return $records;
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return 500;
         }
     }
@@ -159,29 +138,51 @@ abstract class AbstractProfile extends AbstractApi
      *
      * @return int|AbstractCollection
      */
-    private function getProfileCollectionByGroupId(bool $addPagination)
+    private function getProfileCollectionByGroupId(bool $addPagination): AbstractCollection|int
     {
         try {
-            $collection = $this->profileCollectionFactory->create()
-                ->addFieldToFilter('group_id', $this->taskId);
-            $collection = $this->addStoreFilterOnCollection($collection);
-            return $addPagination ? $this->setPaginationOnCollection($collection, 'id') : $collection;
+            $collection = $this->service
+                ->getProfileCollection()
+                ->getCollection(['group_id' => $this->taskId, 'store_id' => $this->store->getId()]);
+            return $addPagination ? $this->setPaginationOnCollection($collection) : $collection;
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return 500;
         }
     }
 
     /**
+     * @param AbstractCollection|MagentoAbstractCollection $collection
+     * @param string $field
+     *
+     * @return AbstractCollection|MagentoAbstractCollection
+     */
+    protected function setPaginationOnCollection(
+        AbstractCollection|MagentoAbstractCollection $collection,
+        string $field = 'id'
+    ): AbstractCollection|MagentoAbstractCollection {
+        $page = (int) $this->queryParams['page'] + 1;
+        $pageSize = (int) $this->queryParams['page_size'];
+
+        if ($collection instanceof AbstractCollection) {
+            return $collection->setPaginationOnCollection($page, $pageSize, $field);
+        }
+
+        $collection->setOrder($field, Collection::SORT_ORDER_ASC);
+        $collection->getSelect()->limitPage($page, $pageSize);
+        return $collection;
+    }
+
+    /**
      * @return array|int
      */
-    protected function getConsentsCount()
+    protected function getConsentsCount(): int|array
     {
         try {
             $collection = $this->getProfileCollectionForConsents(false);
             return is_int($collection) ? $collection : ['count' => $collection->getSize()];
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return 500;
         }
     }
@@ -189,7 +190,7 @@ abstract class AbstractProfile extends AbstractApi
     /**
      * @return array|int
      */
-    protected function getConsents()
+    protected function getConsents(): int|array
     {
         try {
             $collection = $this->getProfileCollectionForConsents(true);
@@ -198,7 +199,7 @@ abstract class AbstractProfile extends AbstractApi
             }
 
             $consents = [];
-            /** @var Profile $profile */
+            /** @var ProfileModel $profile */
             foreach ($collection as $profile) {
                 $consented = $this->getConsentedStatus($profile);
                 if ($consented === null) {
@@ -213,7 +214,7 @@ abstract class AbstractProfile extends AbstractApi
             }
             return $consents;
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return 500;
         }
     }
@@ -221,7 +222,7 @@ abstract class AbstractProfile extends AbstractApi
     /**
      * @return bool|int
      */
-    protected function updateConsent()
+    protected function updateConsent(): bool|int
     {
         try {
             if (! is_numeric($this->requestBody['record_id']) ||
@@ -231,41 +232,19 @@ abstract class AbstractProfile extends AbstractApi
                 return 400;
             }
 
-            $collection = $this->profileCollectionFactory->create()
-                ->addFieldToFilter('id', (int) $this->requestBody['record_id']);
-            if (! $collection->getSize()) {
-                return 404;
-            }
-
-            /** @var Profile $profile */
-            $profile = $collection->getFirstItem();
-            if (! $profile->getSubscriberId()) {
-                return 404;
-            }
-
-            $subscriber = $this->subscriberFactory->create()->load($profile->getSubscriberId());
-            if (! $subscriber->getId()) {
-                return 404;
-            }
-
-            $this->registry->register($subscriber->getEmail() . '_subscription', true, true);
-            $subscriber->unsubscribe();
-            $profile->setSubscriberStatus(Subscriber::STATUS_UNSUBSCRIBED);
-            $this->profileResource->save($profile);
-
-            return true;
+            return $this->service->updateSubscription((int) $this->requestBody['record_id']);
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return 500;
         }
     }
 
     /**
-     * @param Profile $profile
+     * @param ProfileModel $profile
      *
      * @return bool|null
      */
-    private function getConsentedStatus(Profile $profile)
+    private function getConsentedStatus(ProfileModel $profile): ?bool
     {
         $consented = null;
         if ($profile->getSubscriberStatus() == Subscriber::STATUS_SUBSCRIBED) {
@@ -282,20 +261,20 @@ abstract class AbstractProfile extends AbstractApi
      *
      * @return int|AbstractCollection
      */
-    private function getProfileCollectionForConsents(bool $addPagination)
+    private function getProfileCollectionForConsents(bool $addPagination): AbstractCollection|int
     {
         try {
-            $collection = $this->profileCollectionFactory->create()
-                ->addFieldToFilter('is_subscriber', 1)
-                ->addFieldToFilter(
-                    'subscriber_status',
-                    ['in' => [Subscriber::STATUS_SUBSCRIBED, Subscriber::STATUS_UNSUBSCRIBED]]
-                )
-                ->addFieldToFilter('subscriber_id', ['notnull' => true]);
-            $collection = $this->addStoreFilterOnCollection($collection);
-            return $addPagination ? $this->setPaginationOnCollection($collection, 'id') : $collection;
+            $fields = [
+                'is_subscriber' => 1,
+                'subscriber_status' => [Subscriber::STATUS_SUBSCRIBED, Subscriber::STATUS_UNSUBSCRIBED],
+                'store_id' => $this->store->getId()
+            ];
+            $collection = $this->service
+                ->getProfileCollection()
+                ->getCollection($fields);
+            return $addPagination ? $this->setPaginationOnCollection($collection) : $collection;
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return 500;
         }
     }
@@ -303,13 +282,13 @@ abstract class AbstractProfile extends AbstractApi
     /**
      * @return array|int
      */
-    protected function getProfilesCount()
+    protected function getProfilesCount(): int|array
     {
         try {
             $collection = $this->getProfileCollectionForRecords(false);
             return is_int($collection) ? $collection : ['count' => $collection->getSize()];
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return 500;
         }
     }
@@ -317,7 +296,7 @@ abstract class AbstractProfile extends AbstractApi
     /**
      * @return array|int
      */
-    protected function getProfiles()
+    protected function getProfiles(): int|array
     {
         try {
             $collection = $this->getProfileCollectionForRecords(true);
@@ -325,7 +304,7 @@ abstract class AbstractProfile extends AbstractApi
                 return $collection;
             }
 
-            // If ids are provided than filter by it on collection
+            // If ids are provided than filter by ids on collection
             $ids = ! empty($this->queryParams['ids']) ? explode(',', (string) $this->queryParams['ids']) : null;
             if (is_array($ids) && ! empty($ids)) {
                 $collection->addFieldToFilter('id', ['in' => $ids]);
@@ -344,18 +323,18 @@ abstract class AbstractProfile extends AbstractApi
             }
             return $records;
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return 500;
         }
     }
 
     /**
-     * @param Profile $profile
+     * @param ProfileModel $profile
      * @param array $requestedFields
      *
      * @return array
      */
-    private function getProfileDataArr(Profile $profile, array $requestedFields): array
+    private function getProfileDataArr(ProfileModel $profile, array $requestedFields): array
     {
         try {
             $dataArr = [];
@@ -380,7 +359,7 @@ abstract class AbstractProfile extends AbstractApi
             }
             return $dataArr;
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return [];
         }
     }
@@ -391,7 +370,7 @@ abstract class AbstractProfile extends AbstractApi
      *
      * @return bool|float|int|string|null
      */
-    private function getSchemaFieldValue(array $field, array $profileData)
+    private function getSchemaFieldValue(array $field, array $profileData): float|bool|int|string|null
     {
         try {
             $codeName = $field['code_name'];
@@ -402,7 +381,7 @@ abstract class AbstractProfile extends AbstractApi
             $value = $profileData[$codeName];
             if ($field['type'] === 'integer') {
                 if (in_array($codeName, ProfilesIndex::DATETIME_FIELDS)) {
-                    $value = $this->apsisDateHelper->formatDateForPlatformCompatibility($value);
+                    $value = $this->service->formatDateForPlatformCompatibility($value);
                 } elseif (in_array($codeName, ProfilesIndex::PHONE_FIELDS)) {
                     if ($codeName === 'billing_telephone' && isset($profileData['billing_country'])) {
                         $country = $profileData['billing_country'];
@@ -411,12 +390,12 @@ abstract class AbstractProfile extends AbstractApi
                     }
 
                     if (isset($country)) {
-                        $value = $this->apsisCoreHelper->validateAndFormatMobileNumber($country, $value);
+                        $value = $this->validateAndFormatMobileNumber($country, $value);
                     }
                 }
                 return is_null($value) || $value === '' ? null : (integer) $value;
             } elseif ($field['type'] === 'double') {
-                return $this->apsisCoreHelper->round($value);
+                return round($value, 2);
             } elseif ($field['type'] === 'string') {
                 if ($codeName === 'subscriber_status' && isset(self::SUBSCRIBER_STATUS_MAP[$value])) {
                     $value = self::SUBSCRIBER_STATUS_MAP[$value];
@@ -428,26 +407,27 @@ abstract class AbstractProfile extends AbstractApi
 
             return null;
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return null;
         }
     }
 
     /**
-     * @param Profile $profile
+     * @param ProfileModel $profile
      * @param string $attributeCode
      *
      * @return bool|float|int|string|null
      */
-    private function getCustomerAttributeValue(Profile $profile, string $attributeCode)
+    private function getCustomerAttributeValue(ProfileModel $profile, string $attributeCode): float|bool|int|string|null
     {
         try {
-            $attribute = $this->eavConfig->getAttribute('customer', $attributeCode);
+            $attribute = $this->eavConfig->getAttribute(ProfileService::ENTITY_CUSTOMER, $attributeCode);
             if (! $attribute->getId()) {
                 return null;
             }
 
-            $customer = $this->customerFactory->create()->load($profile->getCustomerId());
+            $customer = $this->getCustomerModel();
+            $this->customerResource->load($customer, $profile->getCustomerId());
             $value = $customer->getData($attributeCode);
             if (is_null($value)) {
                 return null;
@@ -494,11 +474,11 @@ abstract class AbstractProfile extends AbstractApi
             }
 
             if (in_array($attribute->getFrontendInput(), ['date', 'datetime'])) {
-                return (int) $this->apsisDateHelper->formatDateForPlatformCompatibility($value);
+                return (int) $this->service->formatDateForPlatformCompatibility($value);
             }
 
             if (in_array($attribute->getFrontendInput(), ['price', 'weight'])) {
-                return $this->apsisCoreHelper->round($value);
+                return round($value, 2);
             }
 
             if ($attribute->getFrontendInput() === 'boolean' && (is_bool($value) || in_array($value, [0, 1]))) {
@@ -507,7 +487,7 @@ abstract class AbstractProfile extends AbstractApi
 
             return (string) $value;
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return null;
         }
     }
@@ -517,16 +497,43 @@ abstract class AbstractProfile extends AbstractApi
      *
      * @return int|AbstractCollection
      */
-    private function getProfileCollectionForRecords(bool $addPagination)
+    private function getProfileCollectionForRecords(bool $addPagination): AbstractCollection|int
     {
         try {
-            $collection = $this->profileCollectionFactory->create()
-                ->addFieldToFilter('profile_data', ['neq' => '']);
-            $collection = $this->addStoreFilterOnCollection($collection);
-            return $addPagination ? $this->setPaginationOnCollection($collection, 'id') : $collection;
+            $collection = $this->service
+                ->getProfileCollection()
+                ->getCollection('store_id', $this->store->getId());
+            return $addPagination ? $this->setPaginationOnCollection($collection) : $collection;
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return 500;
         }
+    }
+
+    /**
+     * @param string $countryCode
+     * @param string $phoneNumber
+     *
+     * @return int|null
+     */
+    private function validateAndFormatMobileNumber(string $countryCode, string $phoneNumber): ?int
+    {
+        try {
+            if (strlen($countryCode) === 2) {
+                $phoneUtil = PhoneNumberUtil::getInstance();
+                $numberProto = $phoneUtil->parse($phoneNumber, $countryCode);
+                if ($phoneUtil->isValidNumber($numberProto)) {
+                    return (int) sprintf(
+                        '%d%d',
+                        (int) $numberProto->getCountryCode(),
+                        (int) $numberProto->getNationalNumber()
+                    );
+                }
+            }
+        } catch (Throwable $e) {
+            $this->service->logError(__METHOD__, $e);
+        }
+
+        return null;
     }
 }

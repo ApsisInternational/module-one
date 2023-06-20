@@ -5,35 +5,35 @@
                  type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
         <arguments>
             <argument name="mainTable" xsi:type="string">apsis_abandoned</argument>
-            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\Abandoned</argument>
+            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\AbandonedResource</argument>
         </arguments>
     </virtualType>
     <virtualType name="Apsis\One\Ui\Model\ResourceModel\Event\Collection"
                  type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
         <arguments>
             <argument name="mainTable" xsi:type="string">apsis_event</argument>
-            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\Event</argument>
+            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\EventResource</argument>
         </arguments>
     </virtualType>
     <virtualType name="Apsis\One\Ui\Model\ResourceModel\Profile\Collection"
                  type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
         <arguments>
             <argument name="mainTable" xsi:type="string">apsis_profile</argument>
-            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\Profile</argument>
+            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\ProfileResource</argument>
         </arguments>
     </virtualType>
     <virtualType name="Apsis\One\Ui\Model\ResourceModel\Queue\Collection"
                  type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
         <arguments>
             <argument name="mainTable" xsi:type="string">apsis_queue</argument>
-            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\Queue</argument>
+            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\QueueResource</argument>
         </arguments>
     </virtualType>
     <virtualType name="Apsis\One\Ui\Model\ResourceModel\Webhook\Collection"
                  type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
         <arguments>
             <argument name="mainTable" xsi:type="string">apsis_webhook</argument>
-            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\Webhook</argument>
+            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\WebhookResource</argument>
         </arguments>
     </virtualType>
 </config>

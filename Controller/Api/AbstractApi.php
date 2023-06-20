@@ -2,27 +2,28 @@
 
 namespace Apsis\One\Controller\Api;
 
+use Apsis\One\Controller\AbstractAction;
 use Apsis\One\Controller\Api\ProfileLists\Records;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Magento\Framework\App\Action\Action;
-use Magento\Framework\App\Action\Context;
+use Apsis\One\Service\BaseService;
+use Apsis\One\Service\ProfileService;
+use Apsis\One\Service\WebhookService;
+use Magento\Customer\Model\Customer;
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Customer\Model\CustomerFactory;
-use Magento\Framework\Data\Collection;
-use Magento\Framework\Escaper;
-use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
+use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Apsis\One\Controller\Api\Profiles\Index as ProfilesIndex;
 use Throwable;
 
-abstract class AbstractApi extends Action
+abstract class AbstractApi extends AbstractAction
 {
     const REQUIRE_BODY = ['POST', 'PATCH'];
 
     /**
-     * @var ApsisCoreHelper
+     * @var BaseService|ProfileService|WebhookService
      */
-    protected ApsisCoreHelper $apsisCoreHelper;
+    protected BaseService|ProfileService|WebhookService $service;
 
     /**
      * @var StoreInterface
@@ -35,10 +36,9 @@ abstract class AbstractApi extends Action
     protected CustomerFactory $customerFactory;
 
     /**
-     * @var Escaper
+     * @var EncryptorInterface
      */
-    protected Escaper $escaper;
-
+    protected EncryptorInterface $encryptor;
 
     /**
      * @var bool
@@ -71,27 +71,29 @@ abstract class AbstractApi extends Action
     protected array $requestBody = [];
 
     /**
-     * @param Context $context
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param BaseService $service
      * @param CustomerFactory $customerFactory
-     * @param Escaper $escaper
+     * @param EncryptorInterface $encryptor
      */
     public function __construct(
-        Context $context,
-        ApsisCoreHelper $apsisCoreHelper,
+        RequestInterface $request,
+        ResponseInterface $response,
+        BaseService $service,
         CustomerFactory $customerFactory,
-        Escaper $escaper
+        EncryptorInterface $encryptor
     ) {
-        $this->escaper = $escaper;
         $this->customerFactory = $customerFactory;
-        $this->apsisCoreHelper = $apsisCoreHelper;
-        parent::__construct($context);
+        $this->service = $service;
+        $this->encryptor = $encryptor;
+        parent::__construct($request, $response, $service);
     }
 
     /**
      * @inheritDoc
      */
-    public function execute()
+    public function execute(): ResponseInterface
     {
         try {
             // Get all params
@@ -130,13 +132,16 @@ abstract class AbstractApi extends Action
             }
 
             // Authenticate key
-            $apiKey = $this->getRequest()->getHeader('X-Api-Key');
-            if (empty($apiKey) || $this->apsisCoreHelper->getApiKey() !== $apiKey) {
+            $RequestApiKey = $this->getRequest()->getHeader('X-Api-Key');
+            $ConfigEncryptedKey = $this->service
+                ->getStoreConfig($this->service->getStore(0), BaseService::PATH_CONFIG_API_KEY);
+            $ConfigUnencryptedKey = $ConfigEncryptedKey ? $this->encryptor->decrypt($ConfigEncryptedKey) : null;
+            if (empty($RequestApiKey) || empty($ConfigUnencryptedKey) || $ConfigUnencryptedKey !== $RequestApiKey) {
                 return $this->sendErrorInResponse(401);
             }
 
             // Validate if store exist using store code
-            $store = $this->apsisCoreHelper->getStore($this->getRequest()->getParam('storeCode'));
+            $store = $this->service->getStore($this->getRequest()->getParam('storeCode'));
             if (! $store instanceof StoreInterface) {
                 return $this->sendErrorInResponse(404);
             }
@@ -155,9 +160,17 @@ abstract class AbstractApi extends Action
 
             return call_user_func([$this, $classMethod]);
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return $this->sendErrorInResponse(500);
         }
+    }
+
+    /**
+     * @return Customer
+     */
+    protected function getCustomerModel(): Customer
+    {
+        return $this->customerFactory->create();
     }
 
     /**
@@ -206,7 +219,7 @@ abstract class AbstractApi extends Action
                 array_keys(ProfilesIndex::SCHEMA)
             );
             $customerAttributes = [];
-            foreach ($this->customerFactory->create()->getAttributes() as $attribute) {
+            foreach ($this->getCustomerModel()->getAttributes() as $attribute) {
                 if ($label = $attribute->getFrontendLabel()) {
                     $code = $attribute->getAttributeCode();
                     if (in_array($code, $exclude)) {
@@ -216,38 +229,15 @@ abstract class AbstractApi extends Action
                     $customerAttributes[$code] = [
                         'code_name' => $code,
                         'type' => $this->getBackendTypeByInput((string) $attribute->getFrontendInput()),
-                        'display_name' => $this->escaper->escapeQuote($label)
+                        'display_name' => BaseService::escapeQuote($label)
                     ];
                 }
             }
             return $customerAttributes;
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return [];
         }
-    }
-
-    /**
-     * @param AbstractCollection $collection
-     * @return AbstractCollection
-     */
-    protected function addStoreFilterOnCollection(AbstractCollection $collection): AbstractCollection
-    {
-        return $collection->addFieldToFilter('store_id', $this->store->getId());
-    }
-
-    /**
-     * @param AbstractCollection $collection
-     * @param string $field
-     *
-     * @return AbstractCollection
-     */
-    protected function setPaginationOnCollection(AbstractCollection $collection, string $field): AbstractCollection
-    {
-        $collection->setOrder($field, Collection::SORT_ORDER_ASC)
-            ->getSelect()
-            ->limitPage((int) $this->queryParams['page'] + 1, (int) $this->queryParams['page_size']);
-        return $collection;
     }
 
     /**

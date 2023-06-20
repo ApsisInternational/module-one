@@ -2,12 +2,13 @@
 
 namespace Apsis\One\Controller\Frontend\Abandoned;
 
-use Apsis\One\Model\Abandoned;
-use Apsis\One\Model\ResourceModel\Abandoned\CollectionFactory as AbandonedCollectionFactory;
-use Apsis\One\Model\Service\Log;
+use Apsis\One\Controller\AbstractAction;
+use Apsis\One\Model\AbandonedModel;
+use Apsis\One\Model\ResourceModel\Abandoned\AbandonedCollectionFactory;
+use Apsis\One\Service\BaseService;
 use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Framework\App\Action\Action;
-use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\Response\RedirectInterface;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\DataObject;
 use Magento\Quote\Api\CartManagementInterface;
@@ -15,7 +16,7 @@ use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
 use Throwable;
 
-class Checkout extends Action
+class Checkout extends AbstractAction
 {
     const VALID_HTTP_METHODS = ['GET', 'HEAD'];
 
@@ -35,78 +36,70 @@ class Checkout extends Action
     private CheckoutSession $checkoutSession;
 
     /**
-     * @var Log
+     * @var RedirectInterface
      */
-    private Log $log;
+    protected RedirectInterface $redirect;
 
     /**
-     * Checkout constructor.
-     *
-     * @param Context $context
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param BaseService $service
      * @param CheckoutSession $checkoutSession
      * @param CartRepositoryInterface $cartRepository
-     * @param Log $log
      * @param AbandonedCollectionFactory $abandonedCollectionFactory
+     * @param RedirectInterface $redirect
      */
     public function __construct(
-        Context $context,
+        RequestInterface $request,
+        ResponseInterface $response,
+        BaseService $service,
         CheckoutSession $checkoutSession,
         CartRepositoryInterface $cartRepository,
-        Log $log,
-        AbandonedCollectionFactory $abandonedCollectionFactory
+        AbandonedCollectionFactory $abandonedCollectionFactory,
+        RedirectInterface $redirect
     ) {
+        $this->redirect = $redirect;
         $this->abandonedCollectionFactory = $abandonedCollectionFactory;
-        $this->log = $log;
         $this->cartRepository = $cartRepository;
         $this->checkoutSession = $checkoutSession;
-        parent::__construct($context);
+        parent::__construct($request, $response, $service);
     }
 
     /**
-     * @inheritdoc
+     * @return ResponseInterface
      */
-    public function execute()
+    public function execute(): ResponseInterface
     {
         try {
             $token = $this->getRequest()->getParam('token');
             if (! in_array($this->getRequest()->getMethod(), self::VALID_HTTP_METHODS) || empty($token) ||
-                ! $this->isClean($token) || empty($ac = $this->getCart($token))) {
-                return $this->_redirect('');
+                ! $this->service->isClean($token) || empty($ac = $this->getCart($token))
+            ) {
+                return $this->redirect('');
             }
 
             /** @var Quote $quoteModel */
             $quoteModel = $this->cartRepository->get($ac->getQuoteId());
-
             if (! $quoteModel->getId() || ! $quoteModel->hasItems()) {
-                return $this->_redirect('');
+                return $this->redirect('');
             }
 
             return $this->handleCartRebuildRequest($quoteModel, $ac);
         } catch (Throwable $e) {
-            $this->log->logError(__METHOD__, $e);
-            return $this->_redirect('');
+            $this->service->logError(__METHOD__, $e);
+            return $this->redirect('');
         }
-    }
-
-    /**
-     * @param string $string
-     *
-     * @return bool
-     */
-    public function isClean(string $string): bool
-    {
-        return ! preg_match("/[^a-zA-Z\d-]/i", $string);
     }
 
     /**
      * @param string $token
      *
-     * @return DataObject|Abandoned|bool
+     * @return AbandonedModel|bool
      */
-    public function getCart(string $token)
+    private function getCart(string $token): AbandonedModel|bool
     {
         return $this->abandonedCollectionFactory->create()
-            ->loadByToken($token);
+            ->getFirstItemFromCollection('token', $token);
     }
 
     /**
@@ -136,12 +129,24 @@ class Checkout extends Action
                 'Cart Id' => $ac->getQuoteId(),
                 'Store Id' => $ac->getStoreId()
             ];
-            $this->log->debug(__METHOD__, $info);
+            $this->service->debug(__METHOD__, $info);
 
-            return $this->_redirect($quoteModel->getStore()->getUrl('checkout/cart'));
+            return $this->redirect($quoteModel->getStore()->getUrl('checkout/cart'));
         } catch (Throwable $e) {
-            $this->log->logError(__METHOD__, $e);
-            return $this->_redirect('');
+            $this->service->logError(__METHOD__, $e);
+            return $this->redirect('');
         }
+    }
+
+    /**
+     * @param string $path
+     * @param array $arguments
+     *
+     * @return ResponseInterface
+     */
+    protected function redirect(string $path, array $arguments = []): ResponseInterface
+    {
+        $this->redirect->redirect($this->getResponse(), $path, $arguments);
+        return $this->getResponse();
     }
 }

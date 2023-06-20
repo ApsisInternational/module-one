@@ -29,22 +29,21 @@ class Index extends AbstractProfile
     protected function getProfileLists(): ResponseInterface
     {
         try {
-            $collection = $this->groupCollectionFactory->create()
-                ->setRealGroupsFilter();
+            $collection = $this->groupCollectionFactory->create()->setRealGroupsFilter();
             $collection = $this->setPaginationOnCollection($collection, 'customer_group_id');
 
             $groups = [];
             foreach ($collection as $item) {
                 $groups[] = [
                     'list_name' => $item->getCustomerGroupCode(),
-                    "list_id" => $item->getCustomerGroupId(),
-                    "list_entity" => "profile",
-                    "is_dynamic" => false
+                    'list_id' => $item->getCustomerGroupId(),
+                    'list_entity' => 'profile',
+                    'is_dynamic' => false
                 ];
             }
-            return $this->sendResponse(200, null, $this->apsisCoreHelper->serialize($groups));
+            return $this->sendResponse(200, null, json_encode($groups));
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->service->logError(__METHOD__, $e);
             return $this->sendErrorInResponse(500);
         }
     }

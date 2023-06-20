@@ -3,7 +3,7 @@
 namespace Apsis\One\Controller\Api\WebhooksConsents;
 
 use Apsis\One\Controller\Api\AbstractWebhook;
-use Apsis\One\Model\Webhook;
+use Apsis\One\Model\WebhookModel;
 use Magento\Framework\App\ResponseInterface;
 
 class Index extends AbstractWebhook
@@ -36,7 +36,7 @@ class Index extends AbstractWebhook
      */
     protected function postProfileConsentsWebhook(): ResponseInterface
     {
-        return $this->postWebhookByType(Webhook::TYPE_CONSENT);
+        return $this->postWebhookByType(WebhookModel::TYPE_CONSENT);
     }
 
     /**
@@ -44,6 +44,6 @@ class Index extends AbstractWebhook
      */
     protected function getAllConsentsWebhook(): ResponseInterface
     {
-        return $this->getAllWebhooksByType(Webhook::TYPE_CONSENT);
+        return $this->getAllWebhooksByType(WebhookModel::TYPE_CONSENT);
     }
 }

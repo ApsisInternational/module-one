@@ -30,6 +30,12 @@ class Router extends Base
             'method' => 'SystemInformation',
             'requiredRouteParams' => []
         ],
+        self::API_PREFIX . 'system_information/config' => [
+            'actionPath' => 'api_systeminformation',
+            'action' => 'index',
+            'method' => 'Config',
+            'requiredRouteParams' => ['action']
+        ],
         self::API_PREFIX . 'profile_entities' => [
             'actionPath' => 'api_profiles',
             'action' => 'index',

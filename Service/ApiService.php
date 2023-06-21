@@ -187,7 +187,7 @@ class ApiService extends BaseService
     public function mergeProfile(StoreInterface $store, ProfileModel $profile, CustomerInterface $customer): void
     {
         $sectionDiscriminator = $this->getStoreConfig($store, BaseService::PATH_APSIS_CONFIG_SECTION);
-        $integrationKeySpace = $this->getStoreConfig($store, BaseService::PATH_APSIS_CONFIG_PROFILE_KEY);
+        $integrationKeySpace = $this->getStoreConfig($store, BaseService::PATH_APSIS_CONFIG_KEYSPACE);
         if (empty($sectionDiscriminator) || empty($integrationKeySpace)) {
             return;
         }

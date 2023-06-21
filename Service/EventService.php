@@ -167,7 +167,7 @@ class EventService extends AbstractCronService
             }
 
             $this->section = (string) $this->getStoreConfig($store, BaseService::PATH_APSIS_CONFIG_SECTION);
-            $this->keySpace = (string) $this->getStoreConfig($store, BaseService::PATH_APSIS_CONFIG_PROFILE_KEY);
+            $this->keySpace = (string) $this->getStoreConfig($store, BaseService::PATH_APSIS_CONFIG_KEYSPACE);
             $client = $this->apiService->getApiClient($store);
 
             // Validate all things compulsory

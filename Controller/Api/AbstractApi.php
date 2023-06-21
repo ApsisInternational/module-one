@@ -96,17 +96,24 @@ abstract class AbstractApi extends AbstractAction
     public function execute(): ResponseInterface
     {
         try {
-            // Get all params
-            $this->queryParams = (array) $this->getRequest()->getQuery();
             $httpMethod = $this->getRequest()->getMethod();
             $actionMethod = $this->getRequest()->getParam('actionMethod');
-            if (in_array($httpMethod, self::REQUIRE_BODY)) {
-                $this->requestBody = json_decode((string) $this->getRequest()->getContent(), true);
+            if (empty($httpMethod) || empty($actionMethod)) {
+                return $this->sendErrorInResponse(500);
             }
 
             // Validate request http method allowed
             if (! in_array($httpMethod, $this->allowedHttpMethods[$actionMethod] ?? [])) {
                 return $this->sendErrorInResponse(405);
+            }
+
+            // Get all params
+            $this->queryParams = (array) $this->getRequest()->getQuery();
+            if (in_array($httpMethod, self::REQUIRE_BODY)) {
+                $body = json_decode((string) $this->getRequest()->getContent(), true);
+                if (is_array($body) && ! empty($body)) {
+                    $this->requestBody = (array) json_decode((string) $this->getRequest()->getContent(), true);
+                }
             }
 
             // Single classMethod for both HEAD and GET
@@ -150,9 +157,7 @@ abstract class AbstractApi extends AbstractAction
             // Set task id if required
             if ($this->isTaskIdRequired) {
                 $taskId = $this->getRequest()->getParam('taskId');
-                if (($this instanceof Records && ! is_numeric($taskId)) ||
-                    (! $this instanceof Records && empty($taskId))
-                ) {
+                if (empty($taskId) || ($this instanceof Records && ! is_numeric($taskId))) {
                     return $this->sendErrorInResponse(400);
                 }
                 $this->taskId = $taskId;

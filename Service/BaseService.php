@@ -40,11 +40,10 @@ class BaseService
     const PATH_APSIS_API_TOKEN = 'apsis_one/api/token';
     const PATH_APSIS_API_TOKEN_EXPIRY = 'apsis_one/api/token_expiry';
     const PATH_APSIS_CONFIG_SECTION = 'apsis_one/config/section';
-    const PATH_APSIS_CONFIG_PROFILE_KEY = 'apsis_one/config/profile_key';
+    const PATH_APSIS_CONFIG_KEYSPACE = 'apsis_one/config/profile_key';
 
     const CONFIG_PATHS_SECURE = [
         self::PATH_CONFIG_API_KEY,
-        self::PATH_APSIS_CLIENT_ID,
         self::PATH_APSIS_CLIENT_SECRET,
         self::PATH_APSIS_API_TOKEN
     ];
@@ -347,31 +346,34 @@ class BaseService
 
     /**
      * @param StoreInterface $store
-     * @param string $path
-     * @param string $value
+     * @param array $configs
      *
-     * @return void
+     * @return bool|string
      */
-    public function saveStoreConfig(StoreInterface $store, string $path, string $value): void
+    public function saveStoreConfig(StoreInterface $store, array $configs): bool|string
     {
         try {
-            $info = [
-                'Store Id' => $store->getId(),
-                'Config Path' => $path,
-                'Old Value' => $this->getStoreConfig($store, $path),
-                'New Value' => $value
-            ];
-            if (in_array($path, self::CONFIG_PATHS_SECURE)) {
-                $info['Old Value'] = $info['New Value'] = 'An encrypted value.';
-            }
-            $this->debug(__METHOD__, $info);
+            foreach ($configs as $path => $value) {
+                $this->writer->save($path, $value, ScopeInterface::SCOPE_STORES, $store->getId());
 
-            $this->writer->save($path, $value, ScopeInterface::SCOPE_STORES, $store->getId());
+                $info = [
+                    'Store Id' => $store->getId(),
+                    'Config Path' => $path,
+                    'Old Value' => $this->getStoreConfig($store, $path),
+                    'New Value' => $value
+                ];
+                if (in_array($path, self::CONFIG_PATHS_SECURE)) {
+                    $info['Old Value'] = $info['New Value'] = 'An encrypted value.';
+                }
+                $this->debug(__METHOD__, $info);
+            }
 
             // Reset config after save
             $store->resetConfig();
+            return true;
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
+            return $e->getMessage();
         }
     }
 

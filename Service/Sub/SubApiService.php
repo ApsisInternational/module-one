@@ -94,8 +94,7 @@ class SubApiService
                 //Success in generating token
                 if ($response && isset($response->access_token)) {
                     $apiService->debug('Token renewed', ['Store Id' => $store->getId()]);
-                    $this->saveTokenAndExpiry($store, $response, $apiService);
-                    return (string) $response->access_token;
+                    return $this->saveTokenConfigAndReturn($store, $response, $apiService);
                 }
 
                 //Error in generating token, remove API configs
@@ -103,11 +102,17 @@ class SubApiService
                     in_array($response->status, AbstractRestApi::HTTP_CODES_DISABLE_MODULE)
                 ) {
                     $apiService->debug(__METHOD__, (array) $response);
-                    $apiService->saveStoreConfig($store, BaseService::PATH_APSIS_CLIENT_ID, '');
-                    $apiService->saveStoreConfig($store, BaseService::PATH_APSIS_CLIENT_SECRET, '');
-                    $apiService->saveStoreConfig($store, BaseService::PATH_APSIS_API_TOKEN_EXPIRY, '');
-                    $apiService->saveStoreConfig($store, BaseService::PATH_APSIS_API_TOKEN, '');
-                    $apiService->log('All API configs removed', ['Store Id' => $store->getId()]);
+                    $configs = [
+                        BaseService::PATH_APSIS_CLIENT_ID => '',
+                        BaseService::PATH_APSIS_CLIENT_SECRET => '',
+                        BaseService::PATH_APSIS_API_TOKEN_EXPIRY => '',
+                        BaseService::PATH_APSIS_API_TOKEN => '',
+                    ];
+                    $check = $apiService->saveStoreConfig($store, $configs);
+                    $apiService->log(
+                        $check === true ? 'All API configs removed' : 'Unable to remove api configs',
+                        ['Store Id' => $store->getId()]
+                    );
                 }
             }
         } catch (Throwable $e) {
@@ -150,28 +155,38 @@ class SubApiService
 
     /**
      * @param StoreInterface $store
-     * @param stdClass $request
+     * @param stdClass $response
      * @param ApiService $apiService
      *
-     * @return void
+     * @return string
      */
-    public function saveTokenAndExpiry(StoreInterface $store, stdClass $request, ApiService $apiService): void
+    public function saveTokenConfigAndReturn(StoreInterface $store, stdClass $response, ApiService $apiService): string
     {
         try {
-            $apiService->saveStoreConfig(
-                $store,
-                BaseService::PATH_APSIS_API_TOKEN,
-                $this->encryptor->encrypt($request->access_token)
-            );
+            $encryptedToken = $this->encryptor->encrypt($response->access_token);
+            if (empty($encryptedToken)) {
+                return '';
+            }
+
+            $check = $apiService->saveStoreConfig($store, [BaseService::PATH_APSIS_API_TOKEN => $encryptedToken]);
+            if ($check !== true) {
+                return '';
+            }
 
             $time = $apiService->getDateTimeFromTimeAndTimeZone()
-                ->add($apiService->getDateIntervalFromIntervalSpec(sprintf('PT%sS', $request->expires_in)))
+                ->add($apiService->getDateIntervalFromIntervalSpec(sprintf('PT%sS', $response->expires_in)))
                 ->sub($apiService->getDateIntervalFromIntervalSpec('PT60M'))
                 ->format('Y-m-d H:i:s');
 
-            $apiService->saveStoreConfig($store, BaseService::PATH_APSIS_API_TOKEN_EXPIRY, $time);
+            $check = $apiService->saveStoreConfig($store, [BaseService::PATH_APSIS_API_TOKEN_EXPIRY => $time]);
+            if ($check !== true) {
+                return '';
+            }
+
+            return (string) $response->access_token;
         } catch (Throwable $e) {
             $apiService->logError(__METHOD__, $e);
+            return '';
         }
     }
 }

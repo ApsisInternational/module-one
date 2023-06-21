@@ -50,15 +50,10 @@ If you do not use composer, ensure that you also load any dependencies that this
 
 ## Support
 
-Full support documentation and setup guides available [here](https://knowledge.apsis.com/hc/en-us/articles/360012942780-Magento).
+Full support documentation and setup guides available [here](https://help.apsis.one/en/).
 
 ## Contribution
 
 You are welcome to contribute to our APSIS One integration module for Magento 2. You can either:
 - Report a bug: Create a [GitHub issue](https://github.com/ApsisInternational/module-one/issues/new) including detailed description, steps to reproduce issue, Magento version including edition and module version number.
 - To request a feature: Please contact us through [support](https://www.apsis.com/services/support)
-
-## Internal Docs
-- [Attributes Definition](https://docs.google.com/document/d/1Oyr2-hy-8WzILVUXrec5qZ50mcF2EYCFrGQniF1tYBs/)
-- [Events Definition](https://docs.google.com/document/d/1BqLGaFxIfeaqOCMapfjUCy_49u9WxpywAk_1EqNtckg/)  
-- [Endpoints Definition](https://docs.google.com/document/d/1vyhZceOLvbzrWtbCIRnTMwEZEJ8D6sANMi0mL7DY-Mw/)

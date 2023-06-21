@@ -5,11 +5,14 @@
         <tab id="apsis_one" translate="label" sortOrder="500">
             <label>APSIS One</label>
         </tab>
-        <section id="apsis_one_connect" translate="label" sortOrder="10" showInDefault="0" showInWebsite="0" showInStore="1">
+        <section id="apsis_one_connect" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
             <class>separator-top</class>
             <label>API</label>
             <tab>apsis_one</tab>
             <resource>Apsis_One::config</resource>
+            <group id="info" translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                <frontend_model>Apsis\One\Block\Adminhtml\Ui\InfoGroupBlock</frontend_model>
+            </group>
             <group id="api" translate="label" sortOrder="10" showInDefault="0" showInWebsite="0" showInStore="1">
                 <label>API</label>
                 <attribute type="expanded">1</attribute>
@@ -25,11 +28,14 @@
                 </field>
             </group>
         </section>
-        <section id="apsis_one_configuration" translate="label" sortOrder="50" showInDefault="0" showInWebsite="0" showInStore="1">
+        <section id="apsis_one_configuration" translate="label" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
             <class>separator-top</class>
             <label>Configuration</label>
             <tab>apsis_one</tab>
             <resource>Apsis_One::config</resource>
+            <group id="info" translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                <frontend_model>Apsis\One\Block\Adminhtml\Ui\InfoGroupBlock</frontend_model>
+            </group>
             <group id="event_sync" translate="label" sortOrder="20" showInDefault="0" showInWebsite="0" showInStore="1">
                 <label>Event Sync</label>
                 <attribute type="expanded">1</attribute>

@@ -61,9 +61,9 @@ abstract class AbstractObserver implements ObserverInterface
      * @param Observer $observer
      * @param string $type
      *
-     * @return Customer|Subscriber|null
+     * @return AbstractModel|Customer|Subscriber|null
      */
-    protected function getModelFromObserver(Observer $observer, string $type): Customer|Subscriber|null
+    protected function getModelFromObserver(Observer $observer, string $type): AbstractModel|Customer|Subscriber|null
     {
         try {
             if ($type === ProfileService::ENTITY_CUSTOMER) {
@@ -121,7 +121,6 @@ abstract class AbstractObserver implements ObserverInterface
                     return $this;
                 }
 
-                $this->profileService->log(__METHOD__);
                 $this->profileService->deleteProfile($profile, $type);
                 return $this;
             }

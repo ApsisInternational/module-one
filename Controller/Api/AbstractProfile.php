@@ -155,22 +155,27 @@ abstract class AbstractProfile extends AbstractApi
      * @param AbstractCollection|MagentoAbstractCollection $collection
      * @param string $field
      *
-     * @return AbstractCollection|MagentoAbstractCollection
+     * @return AbstractCollection|MagentoAbstractCollection|int
      */
     protected function setPaginationOnCollection(
         AbstractCollection|MagentoAbstractCollection $collection,
         string $field = 'id'
-    ): AbstractCollection|MagentoAbstractCollection {
-        $page = (int) $this->queryParams['page'] + 1;
-        $pageSize = (int) $this->queryParams['page_size'];
+    ): AbstractCollection|MagentoAbstractCollection|int {
+        try {
+            $page = (int) $this->queryParams['page'] + 1;
+            $pageSize = (int) $this->queryParams['page_size'];
 
-        if ($collection instanceof AbstractCollection) {
-            return $collection->setPaginationOnCollection($page, $pageSize, $field);
+            if ($collection instanceof AbstractCollection) {
+                return $collection->setPaginationOnCollection($page, $pageSize, $field);
+            }
+
+            $collection->setOrder($field, Collection::SORT_ORDER_ASC);
+            $collection->getSelect()->limitPage($page, $pageSize);
+            return $collection;
+        } catch (Throwable $e) {
+            $this->service->logError(__METHOD__, $e);
+            return 500;
         }
-
-        $collection->setOrder($field, Collection::SORT_ORDER_ASC);
-        $collection->getSelect()->limitPage($page, $pageSize);
-        return $collection;
     }
 
     /**

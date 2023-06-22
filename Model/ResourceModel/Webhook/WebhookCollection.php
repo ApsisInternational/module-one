@@ -55,7 +55,7 @@ class WebhookCollection extends AbstractCollection
      * @param int $type
      * @param BaseService $service
      *
-     * @return string|int|false
+     * @return string|int|bool
      */
     public function findWebhookByCallbackUrlForType(
         string $callbackUrl,
@@ -67,7 +67,7 @@ class WebhookCollection extends AbstractCollection
             if ($collection->getSize()) {
                 /** @var WebhookModel $item */
                 $item = $collection->getFirstItem();
-                return $item->getSubscriptionId();
+                return (string) $item->getSubscriptionId();
             } else {
                 return false;
             }

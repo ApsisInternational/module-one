@@ -31,6 +31,9 @@ class Index extends AbstractProfile
         try {
             $collection = $this->groupCollectionFactory->create()->setRealGroupsFilter();
             $collection = $this->setPaginationOnCollection($collection, 'customer_group_id');
+            if (is_int($collection)) {
+                return $this->sendErrorInResponse(500);
+            }
 
             $groups = [];
             foreach ($collection as $item) {

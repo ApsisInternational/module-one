@@ -20,7 +20,7 @@ class EventResource extends AbstractResource
     {
         try {
             $write = $this->getConnection();
-            return $write->update(
+            return (int) $write->update(
                 $this->getMainTable(),
                 ['email' => $newEmail],
                 $this->getConnection()->quoteInto('email = ?', $oldEmail)

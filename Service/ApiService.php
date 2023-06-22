@@ -186,36 +186,40 @@ class ApiService extends BaseService
      */
     public function mergeProfile(StoreInterface $store, ProfileModel $profile, CustomerInterface $customer): void
     {
-        $sectionDiscriminator = $this->getStoreConfig($store, BaseService::PATH_APSIS_CONFIG_SECTION);
-        $integrationKeySpace = $this->getStoreConfig($store, BaseService::PATH_APSIS_CONFIG_KEYSPACE);
-        if (empty($sectionDiscriminator) || empty($integrationKeySpace)) {
-            return;
-        }
+        try {
+            $sectionDiscriminator = $this->getStoreConfig($store, BaseService::PATH_APSIS_CONFIG_SECTION);
+            $integrationKeySpace = $this->getStoreConfig($store, BaseService::PATH_APSIS_CONFIG_KEYSPACE);
+            if (empty($sectionDiscriminator) || empty($integrationKeySpace)) {
+                return;
+            }
 
-        $apiClient = $this->getApiClient($store);
-        if (empty($apiClient)) {
-            return;
-        }
+            $apiClient = $this->getApiClient($store);
+            if (empty($apiClient)) {
+                return;
+            }
 
-        $keySpacesToMerge = $this->getKeySpacesToMerge($profile, $integrationKeySpace);
-        if (empty($keySpacesToMerge)) {
-            return;
-        }
+            $keySpacesToMerge = $this->getKeySpacesToMerge($profile, $integrationKeySpace);
+            if (empty($keySpacesToMerge)) {
+                return;
+            }
 
-        if ($this->syncProfile($apiClient, $sectionDiscriminator, $profile, $customer, $integrationKeySpace)) {
-            //If conflict on merge then set new cookie value for web keyspace
-            if ($apiClient->mergeProfile($keySpacesToMerge) === Api\AbstractRestApi::HTTP_CODE_CONFLICT) {
-                //Log it
-                $this->debug(__METHOD__, ['Message' => 'Conflict, creating new cookie.']);
+            if ($this->syncProfile($apiClient, $sectionDiscriminator, $profile, $customer, $integrationKeySpace)) {
+                //If conflict on merge then set new cookie value for web keyspace
+                if ($apiClient->mergeProfile($keySpacesToMerge) === Api\AbstractRestApi::HTTP_CODE_CONFLICT) {
+                    //Log it
+                    $this->debug(__METHOD__, ['Message' => 'Conflict, creating new cookie.']);
 
-                //Create new cookie value
-                $keySpacesToMerge[1]['profile_key'] = md5($profile->getId() . date('U'));
+                    //Create new cookie value
+                    $keySpacesToMerge[1]['profile_key'] = md5($profile->getId() . date('U'));
 
-                //Send second merge request
-                if ($apiClient->mergeProfile($keySpacesToMerge) === null) {
-                    $this->setNewCookieValue($keySpacesToMerge, $store);
+                    //Send second merge request
+                    if ($apiClient->mergeProfile($keySpacesToMerge) === null) {
+                        $this->setNewCookieValue($keySpacesToMerge, $store);
+                    }
                 }
             }
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
         }
     }
 

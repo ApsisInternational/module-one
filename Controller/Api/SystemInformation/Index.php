@@ -5,6 +5,7 @@ namespace Apsis\One\Controller\Api\SystemInformation;
 use Apsis\One\Controller\Api\AbstractApi;
 use Apsis\One\Service\BaseService;
 use Magento\Framework\App\ResponseInterface;
+use Throwable;
 
 class Index extends AbstractApi
 {
@@ -75,20 +76,25 @@ class Index extends AbstractApi
      */
     private function postPatchConfig(): ResponseInterface
     {
-        $configs = [
-            BaseService::PATH_APSIS_CLIENT_ID => $this->requestBody['client_id'],
-            BaseService::PATH_APSIS_CLIENT_SECRET => $this->encryptor->encrypt($this->requestBody['client_secret']),
-            BaseService::PATH_APSIS_API_URL => $this->requestBody['api_base_url'],
-            BaseService::PATH_APSIS_CONFIG_SECTION => $this->requestBody['section_discriminator'],
-            BaseService::PATH_APSIS_CONFIG_KEYSPACE => $this->requestBody['keyspace_discriminator'],
-            BaseService::PATH_APSIS_API_TOKEN_EXPIRY => '', // Need to clear it since api credentials has changed
-            BaseService::PATH_APSIS_API_TOKEN => '', // Need to clear it since api credentials has changed
-        ];
-        $check = $this->service->saveStoreConfig($this->store, $configs);
-        if (is_string($check)) {
+        try {
+            $configs = [
+                BaseService::PATH_APSIS_CLIENT_ID => $this->requestBody['client_id'],
+                BaseService::PATH_APSIS_CLIENT_SECRET => $this->encryptor->encrypt($this->requestBody['client_secret']),
+                BaseService::PATH_APSIS_API_URL => $this->requestBody['api_base_url'],
+                BaseService::PATH_APSIS_CONFIG_SECTION => $this->requestBody['section_discriminator'],
+                BaseService::PATH_APSIS_CONFIG_KEYSPACE => $this->requestBody['keyspace_discriminator'],
+                BaseService::PATH_APSIS_API_TOKEN_EXPIRY => '', // Need to clear it since api credentials has changed
+                BaseService::PATH_APSIS_API_TOKEN => '', // Need to clear it since api credentials has changed
+            ];
+            $check = $this->service->saveStoreConfig($this->store, $configs);
+            if (is_string($check)) {
+                return $this->sendErrorInResponse(500);
+            }
+
+            return $this->sendResponse(204);
+        } catch (Throwable $e) {
+            $this->service->logError(__METHOD__, $e);
             return $this->sendErrorInResponse(500);
         }
-
-        return $this->sendResponse(204);
     }
 }

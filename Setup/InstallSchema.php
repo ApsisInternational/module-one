@@ -376,7 +376,7 @@ class InstallSchema implements InstallSchemaInterface
                 }
 
                 // Add foreign key
-                if (array_key_exists($columnName, self::TABLE_FOREIGN_KEYS)) {
+                if ($this->isAllowedForeignKey($columnName, $table)) {
                     $rel = self::TABLE_FOREIGN_KEYS[$columnName];
                     $newTable->addForeignKey(
                         $setup->getFkName(
@@ -399,6 +399,25 @@ class InstallSchema implements InstallSchemaInterface
         } catch (Throwable $e) {
             $this->baseService->logError(__METHOD__, $e);
         }
+    }
+
+    /**
+     * @param string $column
+     * @param string $table
+     *
+     * @return bool
+     */
+    private function isAllowedForeignKey(string $column, string $table): bool
+    {
+        if ($table === BaseService::APSIS_QUEUE_TABLE && $column === 'profile_id') {
+            return false;
+        }
+
+        if (array_key_exists($column, self::TABLE_FOREIGN_KEYS)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

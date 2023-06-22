@@ -340,7 +340,6 @@ class EventService extends AbstractCronService
             $eventData = [];
             $createdAt = (string) $this->formatDateForPlatformCompatibility($event->getCreatedAt(), 'c');
             $withAddedSecond = '';
-            $parentId = 'P' . $event->getId();
             if ((int) $event->getType() === EventModel::EVENT_TYPE_CUSTOMER_ABANDONED_CART ||
                 (int) $event->getType() === EventModel::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER) {
                 $typeArray = $this->eventsDiscriminatorMapping[$event->getType()];
@@ -357,7 +356,7 @@ class EventService extends AbstractCronService
                     'event_time' => $createdAt,
                     'version_id' => $this->eventsVersionMapping[$typeArray['main']],
                     'data' => $mainData,
-                    'external_id' => $parentId
+                    'external_id' => $event->getId()
                 ];
                 foreach ($subData as $index => $item) {
                     if (empty($withAddedSecond)) {
@@ -367,7 +366,7 @@ class EventService extends AbstractCronService
                         'event_time' => $withAddedSecond = $this->addSecond($withAddedSecond, 'c'),
                         'version_id' => $this->eventsVersionMapping[$typeArray['sub']],
                         'data' => (array) $item,
-                        'external_id' => 'C' . $index
+                        'external_id' => $event->getId() . '-' . $index
                     ];
                 }
             } else {
@@ -379,7 +378,7 @@ class EventService extends AbstractCronService
                     'event_time' => $createdAt,
                     'version_id' => $this->eventsVersionMapping[$this->eventsDiscriminatorMapping[$event->getType()]],
                     'data' => json_decode($this->getData($isSecure, $event->getEventData()), true),
-                    'external_id' => $parentId
+                    'external_id' => $event->getId()
                 ];
             }
 
@@ -399,7 +398,7 @@ class EventService extends AbstractCronService
     private function getData(bool $isSecure, string $data): string
     {
         $isSecureNeeded = $isSecure && str_contains($data, 'http:');
-        return $isSecureNeeded ? str_replace('http:', 'https:', $data) : $data;
+        return $isSecureNeeded ? (string) str_replace('http:', 'https:', $data) : $data;
     }
 
     /**

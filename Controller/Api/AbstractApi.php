@@ -160,7 +160,7 @@ abstract class AbstractApi extends AbstractAction
                 if (empty($taskId) || ($this instanceof Records && ! is_numeric($taskId))) {
                     return $this->sendErrorInResponse(400);
                 }
-                $this->taskId = $taskId;
+                $this->taskId = (string) $taskId;
             }
 
             return call_user_func([$this, $classMethod]);

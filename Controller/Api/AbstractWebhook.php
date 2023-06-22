@@ -81,16 +81,14 @@ abstract class AbstractWebhook extends AbstractApi
                 return $this->sendErrorInResponse($subscriptionId);
             }
             if (strlen((string) $subscriptionId)) {
-                $data = ['subscription_id' => $subscriptionId];
-                return $this->sendResponse(409, null, json_encode($data));
+                return $this->sendResponse(409, null, json_encode(['subscription_id' => $subscriptionId]));
             }
 
             $subscriptionId = $this->service->createWebhook($this->requestBody, $this->store->getId(), $type);
             if (is_int($subscriptionId)) {
                 return $this->sendErrorInResponse($subscriptionId);
             }
-            $data = ['subscription_id' => $subscriptionId];
-            return $this->sendResponse(201, null, json_encode($data));
+            return $this->sendResponse(201, null, json_encode(['subscription_id' => $subscriptionId]));
         } catch (Throwable $e) {
             $this->service->logError(__METHOD__, $e);
             return $this->sendErrorInResponse(500);

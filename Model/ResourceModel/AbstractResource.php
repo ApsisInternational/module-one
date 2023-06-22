@@ -43,7 +43,7 @@ abstract class AbstractResource extends AbstractDb
     public function insertMultipleItems(array $items, BaseService $service): int
     {
         try {
-            return $this->getConnection()->insertMultiple($this->getMainTable(), $items);
+            return (int) $this->getConnection()->insertMultiple($this->getMainTable(), $items);
         } catch (Throwable $e) {
             $service->logError(__METHOD__, $e);
             return 0;
@@ -68,12 +68,8 @@ abstract class AbstractResource extends AbstractDb
                 $bind['updated_at'] = $this->dateTime->formatDate(true);
             }
 
-            return $this->getConnection()
-                ->update(
-                    $this->getMainTable(),
-                    $bind,
-                    ['id IN (?)' => $ids]
-                );
+            return (int) $this->getConnection()
+                ->update($this->getMainTable(), $bind, ['id IN (?)' => $ids]);
         } catch (Throwable $e) {
             $service->logError(__METHOD__, $e);
             return 0;

@@ -102,8 +102,8 @@ class SubQueueService
             }
 
             if ($queueItem === false) {
-                $queueItem = $this->getQueueModel();
-                $queueItem->setProfileId($profile->getId())
+                $queueItem = $this->getQueueModel()
+                    ->setProfileId($profile->getId())
                     ->setStoreId($profile->getStoreId())
                     ->setType($type);
             }

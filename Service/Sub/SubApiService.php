@@ -51,7 +51,7 @@ class SubApiService
     public function getClientSecret(StoreInterface $store, ApiService $apiService): ?string
     {
         try {
-            return $this->encryptor
+            return (string) $this->encryptor
                 ->decrypt($apiService->getStoreConfig($store, BaseService::PATH_APSIS_CLIENT_SECRET));
         } catch (Throwable $e) {
             $apiService->logError(__METHOD__, $e);

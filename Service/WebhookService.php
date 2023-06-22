@@ -100,7 +100,7 @@ class WebhookService extends BaseService
                 ->setFields(implode(',', $config[$type === WebhookModel::TYPE_RECORD ? 'fields' : 'consent_base_ids']))
                 ->setSecret($config['secret']);
             $this->webhookResource->save($webhook);
-            return $webhook->getSubscriptionId();
+            return (string) $webhook->getSubscriptionId();
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return 500;

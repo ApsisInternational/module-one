@@ -228,7 +228,7 @@ class Router extends Base
                 return $this->forwardError($request);
             }
 
-            // Validate storeCode, always required and need to be a number
+            // Validate storeCode, always required
             if (empty($routeParams['storeCode'])) {
                 return $this->forwardError($request);
             }

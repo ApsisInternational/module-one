@@ -34,6 +34,7 @@ class Index extends AbstractProfile
         'getProfileConsentBases' => ['query' => ['page_size' => 'int', 'page' => 'int']],
         'getProfileConsents' => ['query' => ['page_size' => 'int', 'page' => 'int']],
         'patchProfileConsents' => [
+            'query' => [],
             'post' => ['consent_base_id' => 'string', 'record_id' => 'string', 'has_consented' => 'bool']
         ],
         'getProfileConsentsCount' => ['query' => []]

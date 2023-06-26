@@ -35,8 +35,8 @@ class Index extends AbstractApi
      */
     protected array $requiredParams = [
         'getSystemInformation' => ['query' => []],
-        'postConfig' => ['post' => self::CONFIG_PARAMS],
-        'patchConfig' => ['post' => self::CONFIG_PARAMS]
+        'postConfig' => ['query' => [], 'post' => self::CONFIG_PARAMS],
+        'patchConfig' => ['query' => [], 'post' => self::CONFIG_PARAMS]
     ];
 
     /**

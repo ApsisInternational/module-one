@@ -26,6 +26,7 @@ class Index extends AbstractWebhook
      */
     protected array $requiredParams = [
         'postProfileConsentsWebhook' => [
+            'query' => [],
             'post' => ['callback_url' => 'string', 'consent_base_ids' => 'array', 'secret' => 'string']
         ],
         'getAllConsentsWebhook' => ['query' => ['entity' => 'string']]

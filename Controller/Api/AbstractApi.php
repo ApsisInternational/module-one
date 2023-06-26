@@ -18,8 +18,6 @@ use Throwable;
 
 abstract class AbstractApi extends AbstractAction
 {
-    const REQUIRE_BODY = ['POST', 'PATCH'];
-
     /**
      * @var BaseService|ProfileService|WebhookService
      */
@@ -96,71 +94,38 @@ abstract class AbstractApi extends AbstractAction
     public function execute(): ResponseInterface
     {
         try {
-            $httpMethod = $this->getRequest()->getMethod();
-            $actionMethod = $this->getRequest()->getParam('actionMethod');
-            if (empty($httpMethod) || empty($actionMethod)) {
+            $httpMethod = (string) $this->getRequest()->getMethod();
+            $httpMethod = $httpMethod === 'HEAD' ? 'GET' : $httpMethod;
+            $actionMethod = (string) $this->getRequest()->getParam('actionMethod');
+            $classMethod = strtolower($httpMethod) . $actionMethod;
+            $storeCode = (string) $this->getRequest()->getParam('storeCode');
+
+            if (! $this->isAllNeededDataExist($httpMethod, $actionMethod, $classMethod, $storeCode)) {
                 return $this->sendErrorInResponse(500);
             }
 
-            // Validate request http method allowed
-            if (! in_array($httpMethod, $this->allowedHttpMethods[$actionMethod] ?? [])) {
-                return $this->sendErrorInResponse(405);
-            }
-
-            // Get all params
-            $this->queryParams = (array) $this->getRequest()->getQuery();
-            if (in_array($httpMethod, self::REQUIRE_BODY)) {
-                $body = json_decode((string) $this->getRequest()->getContent(), true);
-                if (is_array($body) && ! empty($body)) {
-                    $this->requestBody = (array) json_decode((string) $this->getRequest()->getContent(), true);
-                }
-            }
-
-            // Single classMethod for both HEAD and GET
-            if ($httpMethod === 'HEAD') {
-                $httpMethod = 'GET';
-            }
-
-            // Validate query params
-            $classMethod = strtolower($httpMethod) . $actionMethod;
-            if (! in_array($httpMethod, self::REQUIRE_BODY) &&
-                (! empty(array_diff_key($this->requiredParams[$classMethod]['query'], $this->queryParams)) ||
-                ! $this->validateParamType($this->requiredParams[$classMethod]['query'], $this->queryParams))
-            ) {
-                return $this->sendErrorInResponse(400);
-            }
-
-            // Validate body
-            if (in_array($httpMethod, self::REQUIRE_BODY) &&
-                (! empty(array_diff_key($this->requiredParams[$classMethod]['post'], $this->requestBody)) ||
-                    ! $this->validateParamType($this->requiredParams[$classMethod]['post'], $this->requestBody))
-            ) {
-                return $this->sendErrorInResponse(400);
-            }
-
-            // Authenticate key
-            $RequestApiKey = $this->getRequest()->getHeader('X-Api-Key');
-            $ConfigEncryptedKey = $this->service
-                ->getStoreConfig($this->service->getStore(0), BaseService::PATH_CONFIG_API_KEY);
-            $ConfigUnencryptedKey = $ConfigEncryptedKey ? $this->encryptor->decrypt($ConfigEncryptedKey) : null;
-            if (empty($RequestApiKey) || empty($ConfigUnencryptedKey) || $ConfigUnencryptedKey !== $RequestApiKey) {
+            if (! $this->isRequestAuthentic()) {
                 return $this->sendErrorInResponse(401);
             }
 
-            // Validate if store exist using store code
-            $store = $this->service->getStore($this->getRequest()->getParam('storeCode'));
-            if (! $store instanceof StoreInterface) {
-                return $this->sendErrorInResponse(404);
+            if (! in_array($httpMethod, $this->allowedHttpMethods[$actionMethod])) {
+                return $this->sendErrorInResponse(405);
             }
-            $this->store = $store;
 
-            // Set task id if required
-            if ($this->isTaskIdRequired) {
-                $taskId = $this->getRequest()->getParam('taskId');
-                if (empty($taskId) || ($this instanceof Records && ! is_numeric($taskId))) {
-                    return $this->sendErrorInResponse(400);
-                }
-                $this->taskId = (string) $taskId;
+            if (! $this->isStoreExist($storeCode)) {
+                return $this->sendErrorInResponse(400);
+            }
+
+            if (! $this->validateTaskId()) {
+                return $this->sendErrorInResponse(400);
+            }
+
+            if (! $this->validateParams($classMethod, 'query')) {
+                return $this->sendErrorInResponse(400);
+            }
+
+            if (in_array($httpMethod, ['POST', 'PATCH']) && ! $this->validateParams($classMethod, 'post')) {
+                return $this->sendErrorInResponse(400);
             }
 
             return call_user_func([$this, $classMethod]);
@@ -179,15 +144,83 @@ abstract class AbstractApi extends AbstractAction
     }
 
     /**
-     * @param array $requiredParams
-     * @param array $requestParam
+     * @param string $storeCode
      *
      * @return bool
      */
-    private function validateParamType(array $requiredParams, array $requestParam): bool
+    protected function isStoreExist(string $storeCode): bool
     {
+        $store = $this->service->getStore($storeCode);
+        if (! $store instanceof StoreInterface) {
+            return false;
+        }
+        $this->store = $store;
+        return true;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isRequestAuthentic(): bool
+    {
+        $RequestApiKey = $this->getRequest()->getHeader('X-Api-Key');
+        $ConfigEncryptedKey = $this->service
+            ->getStoreConfig($this->service->getStore(0), BaseService::PATH_CONFIG_API_KEY);
+        $ConfigUnencryptedKey = $ConfigEncryptedKey ? $this->encryptor->decrypt($ConfigEncryptedKey) : null;
+        if (empty($RequestApiKey) || empty($ConfigUnencryptedKey) || $ConfigUnencryptedKey !== $RequestApiKey) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * @param string $httpMethod
+     * @param string $actionMethod
+     * @param string $classMethod
+     * @param string $storeCode
+     *
+     * @return bool
+     */
+    protected function isAllNeededDataExist(
+        string $httpMethod,
+        string $actionMethod,
+        string $classMethod,
+        string $storeCode
+    ): bool {
+        if (empty($httpMethod) || empty($actionMethod) || ! isset($this->allowedHttpMethods[$actionMethod]) ||
+            ! isset($this->requiredParams[$classMethod]['query']) || ! method_exists($this, $classMethod) ||
+            (in_array($httpMethod, ['POST', 'PATCH']) && ! isset($this->requiredParams[$classMethod]['post'])) ||
+            empty($storeCode)
+        ) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * @param string $classMethod
+     * @param string $type
+     *
+     * @return bool
+     */
+    protected function validateParams(string $classMethod, string $type): bool
+    {
+        $requestParam = [];
+        if ($type === 'query') {
+            $this->queryParams = $requestParam = (array) $this->getRequest()->getQuery();
+        } elseif ($type === 'post') {
+            $body = json_decode((string) $this->getRequest()->getContent(), true);
+            if (is_array($body) && ! empty($body)) {
+                $this->requestBody = $requestParam = $body;
+            }
+        }
+
+        if (! empty(array_diff_key($this->requiredParams[$classMethod][$type], $requestParam))) {
+            return false;
+        }
+
         $types = ['int', 'string', 'array', 'bool'];
-        foreach ($requiredParams as $param => $type) {
+        foreach ($this->requiredParams[$classMethod][$type] as $param => $type) {
             if (! in_array($type, $types)) {
                 return false;
             }
@@ -209,6 +242,21 @@ abstract class AbstractApi extends AbstractAction
             if ($type === 'bool' && ! is_bool($requestParam[$param])) {
                 return false;
             }
+        }
+        return true;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function validateTaskId(): bool
+    {
+        $taskId = (string) $this->getRequest()->getParam('taskId');
+        if ($this->isTaskIdRequired && ! empty($taskId)) {
+            if ($this instanceof Records && ! is_numeric($taskId)) {
+                return false;
+            }
+            $this->taskId = $taskId;
         }
         return true;
     }

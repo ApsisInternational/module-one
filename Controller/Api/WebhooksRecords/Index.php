@@ -26,6 +26,7 @@ class Index extends AbstractWebhook
      */
     protected array $requiredParams = [
         'postProfileRecordsWebhook' => [
+            'query' => [],
             'post' => ['callback_url' => 'string', 'fields' => 'array', 'secret' => 'string']
         ],
         'getAllRecordsWebhook' => ['query' => ['entity' => 'string']]

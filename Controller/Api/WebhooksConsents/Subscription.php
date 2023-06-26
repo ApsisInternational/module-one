@@ -24,6 +24,7 @@ class Subscription extends AbstractWebhook
     protected array $requiredParams = [
         'getProfileConsentsWebhook' => ['query' => []],
         'patchProfileConsentsWebhook' => [
+            'query' => [],
             'post' => ['callback_url' => 'string', 'consent_base_ids' => 'array', 'secret' => 'string']
         ],
         'deleteProfileConsentsWebhook' => ['query' => []]

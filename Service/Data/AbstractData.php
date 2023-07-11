@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Service\Data;
 
+use Apsis\One\Model\ProfileModel;
 use Apsis\One\Service\BaseService;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
@@ -10,6 +11,7 @@ use Magento\Catalog\Model\Product;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Quote\Model\Quote\Item as QuoteItem;
 use Magento\Sales\Model\Order\Item as OrderItem;
+use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory;
 use Throwable;
 
 abstract class AbstractData
@@ -30,11 +32,21 @@ abstract class AbstractData
     protected Image $imageHelper;
 
     /**
+     * @var CollectionFactory
+     */
+    protected CollectionFactory $categoryCollection;
+
+    /**
      * @param ProductRepositoryInterface $productRepository
      * @param Image $imageHelper
+     * @param CollectionFactory $categoryCollection
      */
-    public function __construct(ProductRepositoryInterface $productRepository, Image $imageHelper)
-    {
+    public function __construct(
+        ProductRepositoryInterface $productRepository,
+        Image $imageHelper,
+        CollectionFactory $categoryCollection
+    ) {
+        $this->categoryCollection = $categoryCollection;
         $this->imageHelper = $imageHelper;
         $this->productRepository = $productRepository;
     }
@@ -140,26 +152,6 @@ abstract class AbstractData
      *
      * @return string
      */
-    protected function getProductReviewUrl(int $storeId, BaseService $baseService): string
-    {
-        try {
-            if ($this->isProductSet($baseService)) {
-                return $this->getReviewUrl($baseService, $storeId, $this->product->getId());
-            }
-
-            return $baseService->getStoreBaseUrl($storeId);
-        } catch (Throwable $e) {
-            $baseService->logError(__METHOD__, $e);
-            return '';
-        }
-    }
-
-    /**
-     * @param int $storeId
-     * @param BaseService $baseService
-     *
-     * @return string
-     */
     protected function getProductImageUrl(int $storeId, BaseService $baseService): string
     {
         try {
@@ -217,26 +209,104 @@ abstract class AbstractData
     }
 
     /**
-     * @param BaseService $baseService
+     * @param ProfileModel $profile
      * @param int $storeId
-     * @param int $productId
+     * @param BaseService $baseService
+     *
+     * @return array
+     */
+    protected function getCommonProdDataArray(
+        ProfileModel $profile,
+        int $storeId,
+        BaseService $baseService
+    ): array {
+        try {
+            return [
+                'profile_id' => (string) $profile->getId(),
+                'product_id' => $this->isProductSet($baseService) ? (string) $this->product->getId() : '',
+                'product_sku' => $this->isProductSet($baseService) ? (string) $this->product->getSku() : '',
+                'product_name' => $this->isProductSet($baseService) ? (string) $this->product->getName() : '',
+                'product_image_link' => (string) $this->getProductImageUrl($storeId, $baseService),
+                'product_link' => (string) $this->getProductUrl($storeId, $baseService),
+                'product_price' => $this->isProductSet($baseService) ? round($this->product->getPrice(), 2) : 0.00,
+                'product_category' => $this->getProductCategoriesName($baseService),
+                'shop_currency' => (string) $baseService->getStoreCurrency($storeId),
+                'shop_name' => (string) $baseService->getStoreName($storeId),
+                'shop_id' => (string) $storeId
+            ];
+        } catch (Throwable $e) {
+            $baseService->logError(__METHOD__, $e);
+            return [];
+        }
+    }
+
+    /**
+     * @param BaseService $baseService
      *
      * @return string
      */
-    protected function getReviewUrl(BaseService $baseService, int $storeId, int $productId): string
+    protected function getProductCategoriesName(BaseService $baseService): string
     {
         try {
-            $store = $baseService->getStore($storeId);
-            if ($store) {
-                return $store->getUrl(
-                    'review/product/list',
-                    ['id' => $productId, '_secure' => $baseService->isStoreFrontSecure($storeId)]
-                ) . '#reviews';
+            if ($this->isProductSet($baseService)) {
+                $categories = $this->categoryCollection->create()
+                    ->addAttributeToSelect('*')
+                    ->addAttributeToFilter('entity_id', $this->product->getCategoryIds());
+
+                $categoryNames = [];
+                foreach ($categories as $category) {
+                    try {
+                        $categoryNames[] = $category->getName();
+                    } catch (Throwable $e) {
+                        $baseService->logError(__METHOD__, $e);
+                        continue;
+                    }
+                }
+                return implode(',', $categoryNames);
             }
         } catch (Throwable $e) {
             $baseService->logError(__METHOD__, $e);
         }
+        return '';
+    }
 
-        return $baseService->getStoreBaseUrl($storeId);
+    /**
+     * @param QuoteItem|OrderItem $item
+     * @param BaseService $baseService
+     *
+     * @return void
+     */
+    protected function fetchAndSetProductFromItem(QuoteItem|OrderItem $item, BaseService $baseService): void
+    {
+        try {
+            if ($item->getProductId()) {
+                $product = $this->loadProduct($item->getProductId(), $item->getStoreId(), $baseService);
+            }
+
+            if (isset($product) && $product instanceof Product) {
+                $this->fetchProduct($product, $baseService);
+            } else {
+                $this->fetchProduct($item, $baseService);
+            }
+        } catch (Throwable $e) {
+            $baseService->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
+     * @param BaseService $baseService
+     * @param string $countryCode
+     * @param string $phone
+     *
+     * @return int
+     */
+    protected function getFormattedPhone(BaseService $baseService, string $countryCode, string $phone): int
+    {
+        try {
+            return (int) $baseService->validateAndFormatMobileNumber($countryCode, $phone);
+        } catch (Throwable $e) {
+            $baseService->logError(__METHOD__, $e);
+            return 0;
+        }
     }
 }

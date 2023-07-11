@@ -173,7 +173,7 @@ abstract class AbstractRestApi
     /**
      * @param CurlHandle $ch
      *
-     * @param void
+     * @return void
      */
     private function executePatch(CurlHandle $ch): void
     {
@@ -187,7 +187,7 @@ abstract class AbstractRestApi
     /**
      * @param CurlHandle $ch
      *
-     * @param void
+     * @return void
      */
     private function executePut(CurlHandle $ch): void
     {
@@ -213,7 +213,7 @@ abstract class AbstractRestApi
 
     /**
      * @param CurlHandle $ch
-     * @param array headers
+     * @param array $headers
      *
      * @return void
      */

@@ -16,6 +16,7 @@ use Apsis\One\Model\ResourceModel\Webhook\WebhookCollectionFactory;
 use Apsis\One\Model\WebhookModel;
 use Apsis\One\Model\QueueModel;
 use Magento\Framework\App\Config\Storage\WriterInterface;
+use Magento\Framework\Module\ModuleListInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Throwable;
@@ -89,6 +90,7 @@ class QueueService extends AbstractCronService
      * @param StoreManagerInterface $storeManager
      * @param WriterInterface $writer
      * @param CronCollectionFactory $cronCollectionFactory
+     * @param ModuleListInterface $moduleList
      * @param QueueResource $queueResource
      * @param QueueCollectionFactory $queueCollectionFactory
      * @param WebhookCollectionFactory $webhookCollectionFactory
@@ -100,13 +102,14 @@ class QueueService extends AbstractCronService
         StoreManagerInterface $storeManager,
         WriterInterface $writer,
         CronCollectionFactory $cronCollectionFactory,
+        ModuleListInterface $moduleList,
         QueueResource $queueResource,
         QueueCollectionFactory $queueCollectionFactory,
         WebhookCollectionFactory $webhookCollectionFactory,
         WebhookResource $webhookResource,
         SubWebhookService $subWebhookService
     ) {
-        parent::__construct($logger, $storeManager, $writer, $cronCollectionFactory);
+        parent::__construct($logger, $storeManager, $writer, $cronCollectionFactory, $moduleList);
         $this->queueCollectionFactory = $queueCollectionFactory;
         $this->queueResource = $queueResource;
         $this->webhookCollectionFactory = $webhookCollectionFactory;
@@ -175,7 +178,7 @@ class QueueService extends AbstractCronService
 
             $collection = $this->getQueueCollection()
                 ->getCollectionForStoreByWebhookType($store->getId(), array_keys(self::WEBHOOK_QUEUE_TYPES[$type]));
-            if ($collection && $collection->getSize()) {
+            if ($collection->getSize()) {
                 $items = [];
                 foreach ($collection as $item) {
                     $itemDataArr = $this->getItemDataArr($item, $type);
@@ -224,7 +227,6 @@ class QueueService extends AbstractCronService
             } else {
                 // Not enough time has passed, so no retry.
                 unset($backoffConfig);
-                $status = false;
             }
 
             if (isset($backoffConfig)) {

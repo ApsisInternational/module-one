@@ -13,7 +13,7 @@ abstract class AbstractResource extends AbstractDb
     /**
      * @inheritdoc
      */
-    protected function _construct()
+    protected function _construct(): void
     {
         $this->_init(static::RESOURCE_MODEL, 'id');
     }

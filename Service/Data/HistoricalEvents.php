@@ -16,21 +16,15 @@ use Throwable;
 class HistoricalEvents
 {
     const FETCH_HISTORICAL_EVENTS = [
-        EventModel::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART,
-        EventModel::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER,
-        EventModel::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW,
-        EventModel::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST,
+        EventModel::EVENT_PLACED_ORDER,
+        EventModel::EVENT_PRODUCT_REVIEWED,
+        EventModel::EVENT_PRODUCT_WISHED,
     ];
 
     /**
      * @var ProfileCollectionFactory
      */
     private ProfileCollectionFactory $profileCollectionFactory;
-
-    /**
-     * @var CartEvents
-     */
-    private CartEvents $historicalCarts;
 
     /**
      * @var OrderEvents
@@ -55,7 +49,6 @@ class HistoricalEvents
     /**
      * Historical constructor.
      *
-     * @param CartEvents $historicalCarts
      * @param OrderEvents $historicalOrders
      * @param ReviewEvents $historicalReviews
      * @param WishlistEvents $historicalWishlist
@@ -63,7 +56,6 @@ class HistoricalEvents
      * @param EmulationFactory $emulationFactory
      */
     public function __construct(
-        CartEvents $historicalCarts,
         OrderEvents $historicalOrders,
         ReviewEvents $historicalReviews,
         WishlistEvents $historicalWishlist,
@@ -73,7 +65,6 @@ class HistoricalEvents
         $this->emulationFactory = $emulationFactory;
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->historicalWishlist = $historicalWishlist;
-        $this->historicalCarts = $historicalCarts;
         $this->historicalOrders = $historicalOrders;
         $this->historicalReviews = $historicalReviews;
     }
@@ -123,10 +114,9 @@ class HistoricalEvents
     private function getEventEntityObject(int $entityTypeId): ?AbstractEvents
     {
         $eventTypeObjects = [
-            EventModel::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART => $this->historicalCarts,
-            EventModel::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER => $this->historicalOrders,
-            EventModel::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW => $this->historicalReviews,
-            EventModel::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST => $this->historicalWishlist,
+            EventModel::EVENT_PLACED_ORDER => $this->historicalOrders,
+            EventModel::EVENT_PRODUCT_REVIEWED => $this->historicalReviews,
+            EventModel::EVENT_PRODUCT_WISHED => $this->historicalWishlist,
         ];
         return $eventTypeObjects[$entityTypeId] ?? null;
     }
@@ -143,27 +133,40 @@ class HistoricalEvents
         BaseService $baseService,
         ProfileCollection $profileCollection
     ): void {
-        foreach (self::FETCH_HISTORICAL_EVENTS as $type) {
-            try {
-                if ($type === EventModel::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER) {
-                    $profileCollectionArray = $this
-                        ->getFormattedProfileCollection($profileCollection, $baseService, $store, true);
-                } else {
-                    $profileCollectionArray = $this->getFormattedProfileCollection(
-                        $profileCollection,
-                        $baseService,
-                        $store
-                    );
-                }
+        try {
+            $toTime = $baseService->getDateTimeFromTimeAndTimeZone();
+            $fromTime = clone $toTime;
+            $fromTime->sub($baseService->getDateIntervalFromIntervalSpec('P1Y'));
+            $fetchDuration = [
+                'from' => $fromTime->format('Y-m-d H:i:s'),
+                'to' => $toTime->format('Y-m-d H:i:s'),
+                'date' => true,
+            ];
+            foreach (self::FETCH_HISTORICAL_EVENTS as $type) {
+                try {
+                    if ($type === EventModel::EVENT_PLACED_ORDER) {
+                        $profileCollectionArray = $this
+                            ->getFormattedProfileCollection($profileCollection, $baseService, $store, true);
+                    } else {
+                        $profileCollectionArray = $this->getFormattedProfileCollection(
+                            $profileCollection,
+                            $baseService,
+                            $store
+                        );
+                    }
 
-                $object = $this->getEventEntityObject($type);
-                if ($object instanceof AbstractEvents) {
-                    $object->process($store, $baseService, $profileCollectionArray);
+                    $object = $this->getEventEntityObject($type);
+                    if ($object instanceof AbstractEvents) {
+                        $object->setFetchDuration($fetchDuration)
+                            ->process($store, $baseService, $profileCollectionArray);
+                    }
+                } catch (Throwable $e) {
+                    $baseService->logError(__METHOD__, $e);
+                    continue;
                 }
-            } catch (Throwable $e) {
-                $baseService->logError(__METHOD__, $e);
-                continue;
             }
+        } catch (Throwable $e) {
+            $baseService->logError(__METHOD__, $e);
         }
     }
 

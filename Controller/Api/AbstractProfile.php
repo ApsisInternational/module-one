@@ -5,7 +5,6 @@ namespace Apsis\One\Controller\Api;
 use Apsis\One\Controller\Api\Profiles\Index as ProfilesIndex;
 use Apsis\One\Controller\Api\Consents\Index as ConsentsIndex;
 use Apsis\One\Model\ProfileModel;
-use libphonenumber\PhoneNumberUtil;
 use Magento\Customer\Model\ResourceModel\Group\Collection as GroupCollection;
 use Magento\Customer\Model\ResourceModel\Group\CollectionFactory as GroupCollectionFactory;
 use Apsis\One\Service\ProfileService;
@@ -387,16 +386,8 @@ abstract class AbstractProfile extends AbstractApi
             if ($field['type'] === 'integer') {
                 if (in_array($codeName, ProfilesIndex::DATETIME_FIELDS)) {
                     $value = $this->service->formatDateForPlatformCompatibility($value);
-                } elseif (in_array($codeName, ProfilesIndex::PHONE_FIELDS)) {
-                    if ($codeName === 'billing_telephone' && isset($profileData['billing_country'])) {
-                        $country = $profileData['billing_country'];
-                    } elseif ($codeName === 'delivery_telephone' && isset($profileData['delivery_country'])) {
-                        $country = $profileData['delivery_country'];
-                    }
-
-                    if (isset($country)) {
-                        $value = $this->validateAndFormatMobileNumber($country, $value);
-                    }
+                } elseif ($codeName === 'phone' && ! empty($profileData['country'])) {
+                    $value = $this->service->validateAndFormatMobileNumber($profileData['country'], (string) $value);
                 }
                 return is_null($value) || $value === '' ? null : (integer) $value;
             } elseif ($field['type'] === 'double') {
@@ -426,7 +417,7 @@ abstract class AbstractProfile extends AbstractApi
     private function getCustomerAttributeValue(ProfileModel $profile, string $attributeCode): float|bool|int|string|null
     {
         try {
-            $attribute = $this->eavConfig->getAttribute(ProfileService::ENTITY_CUSTOMER, $attributeCode);
+            $attribute = $this->eavConfig->getAttribute(ProfileService::TYPE_CUSTOMER, $attributeCode);
             if (! $attribute->getId()) {
                 return null;
             }
@@ -513,32 +504,5 @@ abstract class AbstractProfile extends AbstractApi
             $this->service->logError(__METHOD__, $e);
             return 500;
         }
-    }
-
-    /**
-     * @param string $countryCode
-     * @param string $phoneNumber
-     *
-     * @return int|null
-     */
-    private function validateAndFormatMobileNumber(string $countryCode, string $phoneNumber): ?int
-    {
-        try {
-            if (strlen($countryCode) === 2) {
-                $phoneUtil = PhoneNumberUtil::getInstance();
-                $numberProto = $phoneUtil->parse($phoneNumber, $countryCode);
-                if ($phoneUtil->isValidNumber($numberProto)) {
-                    return (int) sprintf(
-                        '%d%d',
-                        (int) $numberProto->getCountryCode(),
-                        (int) $numberProto->getNationalNumber()
-                    );
-                }
-            }
-        } catch (Throwable $e) {
-            $this->service->logError(__METHOD__, $e);
-        }
-
-        return null;
     }
 }

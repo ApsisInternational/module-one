@@ -47,9 +47,9 @@ class Index extends AbstractApi
         $info = [
             'system_id' => 'magento',
             'system_access_url' => $this->service->generateSystemAccessUrl($this->getRequest()),
-            'system_version' => BaseService::MODULE_VERSION,
+            'system_version' => $this->service->getCurrentVersion(),
             'supported_integration_versions' => ['v2.0'],
-            'supported_features' => ['PROFILE_SYNC', 'PROFILE_LIST_SYNC', 'UTILIZES_ONE_API'],
+            'supported_features' => ['PROFILE_SYNC', 'PROFILE_LIST_SYNC', 'UTILIZES_ONE_API', 'ECOMMERCE_EVENTS'],
             'supported_marketing_automation_nodes' => []
         ];
         return $this->sendResponse(200, null, json_encode($info));

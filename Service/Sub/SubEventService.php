@@ -23,8 +23,6 @@ use Magento\Quote\Model\Quote\Item;
 use Magento\Review\Model\Review;
 use Magento\Sales\Model\Order;
 use Magento\Store\Api\Data\StoreInterface;
-use Magento\Wishlist\Model\Item as WishlistItem;
-use Magento\Wishlist\Model\Wishlist;
 use Apsis\One\Model\EventModelFactory;
 use Throwable;
 
@@ -101,7 +99,7 @@ class SubEventService
      *
      * @return void
      */
-    public function registerCustomerLoginEvent(
+    public function registerLoggedInEvent(
         CustomerLogger $logger,
         int $customerId,
         ProfileModel $profile,
@@ -111,15 +109,11 @@ class SubEventService
         try {
             $customerLog = $logger->get($customerId);
             $this->registerEvent(
-                EventModel::EVENT_TYPE_CUSTOMER_LOGIN,
+                EventModel::EVENT_LOGGED_IN,
                 [
-                    'customerId' => (int) $customerLog->getCustomerId(),
-                    'lastLogoutAt' => (int) $baseService
-                        ->formatDateForPlatformCompatibility($customerLog->getLastLogoutAt()),
-                    'lastVisitAt' => (int) $baseService
-                        ->formatDateForPlatformCompatibility($customerLog->getLastVisitAt()),
-                    'websiteName' => (string) $baseService->getStoreWebsiteName($customer->getStoreId()),
-                    'storeName' => (string) $baseService->getStoreName($customer->getStoreId())
+                    'profileId' => (string) $profile->getId(),
+                    'shopName' => (string) $baseService->getStoreName($customer->getStoreId()),
+                    'shop_id' => (string) $customer->getStoreId()
                 ],
                 $baseService,
                 (int) $profile->getId(),
@@ -134,70 +128,38 @@ class SubEventService
 
     /**
      * @param Subscriber $subscriber
+     * @param bool $subscribed
      * @param ProfileModel $profile
      * @param BaseService $baseService
      *
      * @return void
      */
-    public function registerCustomerBecomesSubscriberEvent(
+    public function registerSubscriptionChangedEvent(
         Subscriber $subscriber,
-        ProfileModel $profile,
-        BaseService $baseService
-    ): void {
-        try {
-            if ($profile->getIsCustomer()) {
-                $this->registerEvent(
-                    EventModel::EVENT_TYPE_CUSTOMER_BECOMES_SUBSCRIBER,
-                    [
-                        'subscriberId' => (int) $subscriber->getSubscriberId(),
-                        'customerId' => (int) $profile->getCustomerId(),
-                        'websiteName' => (string) $baseService->getStoreWebsiteName($subscriber->getStoreId()),
-                        'storeName' => (string) $baseService->getStoreName($subscriber->getStoreId())
-                    ],
-                    $baseService,
-                    (int) $profile->getId(),
-                    (string) $subscriber->getEmail(),
-                    (int) $subscriber->getStoreId(),
-                    (int) $profile->getCustomerId(),
-                    (int) $subscriber->getSubscriberId()
-                );
-            }
-        } catch (Throwable $e) {
-            $baseService->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param Subscriber $subscriber
-     * @param ProfileModel $profile
-     * @param BaseService $baseService
-     *
-     * @return void
-     */
-    public function registerSubscriberUnsubscribeEvent(
-        Subscriber $subscriber,
+        bool $subscribed,
         ProfileModel $profile,
         BaseService $baseService
     ): void {
         try {
             $emailReg = $this->registry
-                ->registry($subscriber->getEmail() . EventService::REGISTRY_NAME_SUBSCRIBER_UNSUBSCRIBE);
+                ->registry($subscriber->getEmail() . EventService::REGISTRY_NAME_SUBSCRIBER_UPDATE);
             if ($emailReg) {
                 return;
             }
-            $this->registry->unregister($subscriber->getEmail() . EventService::REGISTRY_NAME_SUBSCRIBER_UNSUBSCRIBE);
+            $this->registry->unregister($subscriber->getEmail() . EventService::REGISTRY_NAME_SUBSCRIBER_UPDATE);
             $this->registry->register(
-                $subscriber->getEmail() . EventService::REGISTRY_NAME_SUBSCRIBER_UNSUBSCRIBE,
+                $subscriber->getEmail() . EventService::REGISTRY_NAME_SUBSCRIBER_UPDATE,
                 $subscriber->getEmail(),
                 true
             );
 
             $this->registerEvent(
-                EventModel::EVENT_TYPE_SUBSCRIBER_UNSUBSCRIBE,
+                EventModel::EVENT_SUBSCRIPTION_CHANGED,
                 [
-                    'subscriberId' => (int) $subscriber->getSubscriberId(),
-                    'websiteName' => (string) $baseService->getStoreWebsiteName($subscriber->getStoreId()),
-                    'storeName' => (string) $baseService->getStoreName($subscriber->getStoreId())
+                    'profile_id' => (string) $profile->getId(),
+                    'subscribed' => $subscribed,
+                    'shop_name' => (string) $baseService->getStoreName($profile->getStoreId()),
+                    'shop_id' => (string) $profile->getStoreId()
                 ],
                 $baseService,
                 (int) $profile->getId(),
@@ -226,10 +188,10 @@ class SubEventService
         BaseService $baseService
     ): void {
         try {
-            $eventData = $this->cartData->getDataArr($cart, $item, $baseService);
+            $eventData = $this->cartData->getCartedData($profile, $cart, $item, $baseService);
             if (! empty($eventData)) {
                 $this->registerEvent(
-                    EventModel::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART,
+                    EventModel::EVENT_PRODUCT_CARTED,
                     $eventData,
                     $baseService,
                     (int) $profile->getId(),
@@ -254,20 +216,20 @@ class SubEventService
     public function registerOrderPlacedEvent(Order $order, ProfileModel $profile, BaseService $baseService): void
     {
         try {
-            $mainData = $this->orderData->getDataArr($order, $baseService, (int) $profile->getSubscriberId());
-            if (! empty($mainData) && ! empty($mainData['items'])) {
-                $subData = $mainData['items'];
-                unset($mainData['items']);
+            $dataArr = $this->orderData->getDataArr($order, $profile, $baseService);
+            if (! empty($dataArr)) {
+                $items = $dataArr['items'];
+                unset($dataArr['items']);
                 $this->registerEvent(
-                    EventModel::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER,
-                    $mainData,
+                    EventModel::EVENT_PLACED_ORDER,
+                    $dataArr,
                     $baseService,
                     (int) $profile->getId(),
                     (string) $order->getCustomerEmail(),
                     (int) $order->getStore()->getId(),
                     (int) $order->getCustomerId(),
                     (int) $profile->getSubscriberId(),
-                    $subData
+                    $items
                 );
             }
         } catch (Throwable $e) {
@@ -276,55 +238,19 @@ class SubEventService
     }
 
     /**
-     * @param Customer $customer
-     * @param ProfileModel $profile
-     * @param BaseService $baseService
-     *
-     * @return void
-     */
-    public function registerSubscriberBecomesCustomerEvent(
-        Customer $customer,
-        ProfileModel $profile,
-        BaseService $baseService
-    ): void {
-        try {
-            $eventData = [
-                'subscriberId' => (int) $profile->getSubscriberId(),
-                'customerId' => (int) $customer->getEntityId(),
-                'websiteName' => (string) $baseService->getStoreWebsiteName($customer->getStoreId()),
-                'storeName' => (string) $baseService->getStoreName($customer->getStoreId())
-            ];
-            $this->registerEvent(
-                EventModel::EVENT_TYPE_SUBSCRIBER_BECOMES_CUSTOMER,
-                $eventData,
-                $baseService,
-                (int) $profile->getId(),
-                (string) $customer->getEmail(),
-                (int) $customer->getStoreId(),
-                (int) $customer->getId(),
-                (int) $profile->getSubscriberId()
-            );
-        } catch (Throwable $e) {
-            $baseService->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
      * @param Observer $observer
-     * @param Wishlist $wishlist
      * @param StoreInterface $store
      * @param ProfileModel $profile
-     * @param CustomerInterface $customer
+     * @param Customer $customer
      * @param BaseService $baseService
      *
      * @return void
      */
-    public function registerWishlistEvent(
+    public function registerProductWishedEvent(
         Observer $observer,
-        Wishlist $wishlist,
         StoreInterface $store,
         ProfileModel $profile,
-        CustomerInterface $customer,
+        Customer $customer,
         BaseService $baseService
     ): void {
         try {
@@ -334,12 +260,10 @@ class SubEventService
                 return;
             }
 
-            /** @var WishlistItem $item */
-            $item = $observer->getEvent()->getItem();
-            $eventData = $this->wishlistData->getDataArr($wishlist, $store, $item, $product, $baseService);
+            $eventData = $this->wishlistData->getWishedData($profile, $store->getId(), $product, $baseService);
             if (! empty($eventData)) {
                 $this->registerEvent(
-                    EventModel::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST,
+                    EventModel::EVENT_PRODUCT_WISHED,
                     $eventData,
                     $baseService,
                     (int) $profile->getId(),
@@ -357,23 +281,23 @@ class SubEventService
      * @param Review $reviewObject
      * @param Product $product
      * @param ProfileModel $profile
-     * @param CustomerInterface $customer
+     * @param Customer $customer
      * @param BaseService $baseService
      *
      * @return void
      */
-    public function registerProductReviewEvent(
+    public function registerProductReviewedEvent(
         Review $reviewObject,
         Product $product,
         ProfileModel $profile,
-        CustomerInterface $customer,
+        Customer $customer,
         BaseService $baseService
     ): void {
         try {
-            $eventData = $this->reviewData->getDataArr($reviewObject, $product, $baseService);
+            $eventData = $this->reviewData->getReviewData($profile, $reviewObject, $product, $baseService);
             if (! empty($eventData)) {
                 $this->registerEvent(
-                    EventModel::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW,
+                    EventModel::EVENT_PRODUCT_REVIEWED,
                     $eventData,
                     $baseService,
                     (int) $profile->getId(),

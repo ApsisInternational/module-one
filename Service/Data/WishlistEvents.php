@@ -44,7 +44,7 @@ class WishlistEvents extends AbstractEvents
     public function process(StoreInterface $store, BaseService $baseService, array $profileColArray): void
     {
         $eventsToRegister = $this->findAndRegister($store, $baseService, $profileColArray);
-        $this->registerEvents($eventsToRegister, $baseService, $store->getId(), 'Wishlist Item');
+        $this->registerEvents($eventsToRegister, $baseService, $store->getId(), 'Product Wished');
     }
 
     /**
@@ -111,10 +111,9 @@ class WishlistEvents extends AbstractEvents
                     continue;
                 }
 
-                $eventData = $this->eventData->getDataArr(
-                    $wishList,
-                    $store,
-                    $wishlistItem,
+                $eventData = $this->eventData->getWishedData(
+                    $profile,
+                    $store->getId(),
                     $product,
                     $baseService
                 );
@@ -123,7 +122,7 @@ class WishlistEvents extends AbstractEvents
                     $eventDataForEvent = $this->getFormattedEventDataForRecord(
                         $wishlistItem->getStoreId(),
                         $profile,
-                        EventModel::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST,
+                        EventModel::EVENT_PRODUCT_WISHED,
                         $wishlistItem->getAddedAt(),
                         json_encode($eventData),
                         $baseService

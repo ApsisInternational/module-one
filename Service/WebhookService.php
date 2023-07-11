@@ -10,6 +10,7 @@ use Apsis\One\Model\ResourceModel\WebhookResource;
 use Apsis\One\Model\ResourceModel\Webhook\WebhookCollectionFactory;
 use Apsis\One\Service\Sub\SubWebhookService;
 use Magento\Framework\App\Config\Storage\WriterInterface;
+use Magento\Framework\Module\ModuleListInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Throwable;
 
@@ -39,6 +40,7 @@ class WebhookService extends BaseService
      * @param Logger $logger
      * @param StoreManagerInterface $storeManager
      * @param WriterInterface $writer
+     * @param ModuleListInterface $moduleList
      * @param SubWebhookService $subWebhookService
      * @param WebhookModelFactory $webhookModelFactory
      * @param WebhookResource $webhookResource
@@ -48,12 +50,13 @@ class WebhookService extends BaseService
         Logger $logger,
         StoreManagerInterface $storeManager,
         WriterInterface $writer,
+        ModuleListInterface $moduleList,
         SubWebhookService $subWebhookService,
         WebhookModelFactory $webhookModelFactory,
         WebhookResource $webhookResource,
         WebhookCollectionFactory $webhookCollectionFactory
     ) {
-        parent::__construct($logger, $storeManager, $writer);
+        parent::__construct($logger, $storeManager, $writer, $moduleList);
         $this->webhookCollectionFactory = $webhookCollectionFactory;
         $this->webhookModelFactory = $webhookModelFactory;
         $this->webhookResource = $webhookResource;

@@ -13,6 +13,7 @@ use Apsis\One\Service\Sub\SubProfileService;
 use Apsis\One\Service\Sub\SubQueueService;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\App\Config\Storage\WriterInterface;
+use Magento\Framework\Module\ModuleListInterface;
 use Magento\Framework\Registry;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Newsletter\Model\ResourceModel\Subscriber as SubscriberResource;
@@ -22,13 +23,18 @@ use Throwable;
 
 class ProfileService extends BaseService
 {
-    const ENTITY_CUSTOMER = 'customer';
-    const ENTITY_TYPE_SUBSCRIBER = 'subscriber';
+    const TYPE_CUSTOMER = 'customer';
+    const TYPE_SUBSCRIBER = 'subscriber';
+    const TYPE_ADDRESS = 'customer_address';
     const ENTITY_TYPES = [
-        self::ENTITY_CUSTOMER,
-        self::ENTITY_TYPE_SUBSCRIBER
+        self::TYPE_CUSTOMER,
+        self::TYPE_SUBSCRIBER
     ];
-    const PROFILE_DELETE = 'delete';
+    const OP_DELETE = 'delete';
+    const QUEUE_CONSENT_TYPE_CONSENTED_MAP = [
+        QueueModel::CONSENT_OPT_IN => true,
+        QueueModel::CONSENT_OPT_OUT => false
+    ];
 
     /**
      * @var SubEventService
@@ -69,6 +75,7 @@ class ProfileService extends BaseService
      * @param Logger $logger
      * @param StoreManagerInterface $storeManager
      * @param WriterInterface $writer
+     * @param ModuleListInterface $moduleList
      * @param SubEventService $subEventService
      * @param SubscriberFactory $subscriberFactory
      * @param ProfileCollectionFactory $profileCollectionFactory
@@ -81,6 +88,7 @@ class ProfileService extends BaseService
         Logger $logger,
         StoreManagerInterface $storeManager,
         WriterInterface $writer,
+        ModuleListInterface $moduleList,
         SubEventService $subEventService,
         SubscriberFactory $subscriberFactory,
         ProfileCollectionFactory $profileCollectionFactory,
@@ -89,7 +97,7 @@ class ProfileService extends BaseService
         SubProfileService $subProfileService,
         SubscriberResource $subscriberResource
     ) {
-        parent::__construct($logger, $storeManager, $writer);
+        parent::__construct($logger, $storeManager, $writer, $moduleList);
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->subscriberFactory = $subscriberFactory;
         $this->subEventService = $subEventService;
@@ -177,8 +185,14 @@ class ProfileService extends BaseService
 
                 if (isset($subscription) && $profile instanceof ProfileModel) {
                     $this->subQueueService->registerItem($profile, $this, $subscription);
+                    $this->subEventService->registerSubscriptionChangedEvent(
+                        $object,
+                        self::QUEUE_CONSENT_TYPE_CONSENTED_MAP[$subscription],
+                        $profile,
+                        $this
+                    );
                 }
-            } elseif ($object instanceof Customer) {
+            } else {
                 $this->subProfileService->createProfile(
                     (int) $object->getStoreId(),
                     (string) $object->getEmail(),
@@ -202,32 +216,31 @@ class ProfileService extends BaseService
     public function updateProfile(Subscriber|Customer $object, ProfileModel $profile): void
     {
         try {
+            if ($object->getEmail() != $profile->getEmail()) {
+                $this->subEventService
+                    ->eventResource
+                    ->updateEventsEmail($profile->getEmail(), $object->getEmail(), $this);
+                $profile->setEmail($object->getEmail());
+            }
+
             if ($object instanceof Subscriber) {
                 if ((int) $object->getSubscriberStatus() === Subscriber::STATUS_UNSUBSCRIBED) {
-                    $this->subEventService->registerSubscriberUnsubscribeEvent($object, $profile, $this);
                     $subscription = QueueModel::CONSENT_OPT_OUT;
                 } elseif ((int) $object->getSubscriberStatus() === Subscriber::STATUS_SUBSCRIBED) {
                     $subscription = QueueModel::CONSENT_OPT_IN;
-                    if ($profile->getIsCustomer() && ! $profile->getIsSubscriber()) {
-                        $this->subEventService->registerCustomerBecomesSubscriberEvent($object, $profile, $this);
-                    }
                 }
 
                 if (isset($subscription)) {
                     $this->subQueueService->registerItem($profile, $this, $subscription);
-                }
-            } elseif ($object instanceof Customer) {
-                if ($profile->getIsSubscriber() && ! $profile->getIsCustomer()) {
-                    $this->subEventService->registerSubscriberBecomesCustomerEvent($object, $profile, $this);
-                }
-
-                if ($object->getEmail() != $profile->getEmail()) {
-                    $this->subEventService
-                        ->eventResource
-                        ->updateEventsEmail($profile->getEmail(), $object->getEmail(), $this);
-                    $profile->setEmail($object->getEmail());
+                    $this->subEventService->registerSubscriptionChangedEvent(
+                        $object,
+                        self::QUEUE_CONSENT_TYPE_CONSENTED_MAP[$subscription],
+                        $profile,
+                        $this
+                    );
                 }
             }
+
             $this->subProfileService->updateProfile($profile, $object, $this);
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
@@ -244,8 +257,7 @@ class ProfileService extends BaseService
     {
         try {
             $status = $this->subProfileService->deleteProfile($profile, $type, $this);
-            if ($type === self::ENTITY_TYPE_SUBSCRIBER && $status === false) {
-                // Register consent update
+            if ($type === self::TYPE_SUBSCRIBER && $status === false) {
                 $this->subQueueService->registerItem($profile, $this, QueueModel::CONSENT_OPT_OUT);
             }
         } catch (Throwable $e) {

@@ -7,8 +7,10 @@ use DateTime;
 use DateTimeZone;
 use DateInterval;
 use Exception;
+use libphonenumber\PhoneNumberUtil;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Module\ModuleListInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -17,9 +19,6 @@ use Throwable;
 
 class BaseService
 {
-    const MODULE_NAME = 'Apsis_One';
-    const MODULE_VERSION = '3.0.0';
-
     // DB Tables
     const APSIS_PROFILE_TABLE = 'apsis_profile';
     const APSIS_EVENT_TABLE = 'apsis_event';
@@ -67,12 +66,17 @@ class BaseService
     protected Logger $logger;
 
     /**
-     * @param Logger $logger
-     * @param StoreManagerInterface $storeManager
-     * @param WriterInterface $writer
+     * @var ModuleListInterface
      */
-    public function __construct(Logger $logger, StoreManagerInterface $storeManager, WriterInterface $writer)
-    {
+    private ModuleListInterface $moduleList;
+
+    public function __construct(
+        Logger $logger,
+        StoreManagerInterface $storeManager,
+        WriterInterface $writer,
+        ModuleListInterface $moduleList
+    ) {
+        $this->moduleList = $moduleList;
         $this->logger = $logger;
         $this->storeManager = $storeManager;
         $this->writer = $writer;
@@ -146,7 +150,24 @@ class BaseService
      */
     private function addModuleVersionToMessage(string $message): string
     {
-        return '(Module v' . self::MODULE_VERSION . ') ' . $message;
+        return '(Module v' . $this->getCurrentVersion() . ') ' . $message;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCurrentVersion(): string
+    {
+        try {
+            $moduleInfo = $this->moduleList->getOne('Apsis_One');
+            if (is_array($moduleInfo) && ! empty($moduleInfo['setup_version'])) {
+                return (string) $moduleInfo['setup_version'];
+            }
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+        }
+
+        return 'unknown';
     }
 
     /**
@@ -257,7 +278,7 @@ class BaseService
     /**
      * @param bool $withDefault
      *
-     * @return array
+     * @return StoreInterface[]
      */
     public function getStores(bool $withDefault = false): array
     {
@@ -278,6 +299,17 @@ class BaseService
     {
         $store = $this->getStore($storeId);
         return ($store) ? $store->getName() : '';
+    }
+
+    /**
+     * @param null|int $storeId
+     *
+     * @return string
+     */
+    public function getStoreCurrency(int $storeId = null): string
+    {
+        $store = $this->getStore($storeId);
+        return ($store) ? $this->getStoreConfig($store, 'currency/options/default') : '';
     }
 
     /**
@@ -491,5 +523,32 @@ class BaseService
     public static function escapeQuote($data): string
     {
         return htmlspecialchars($data, ENT_QUOTES|ENT_SUBSTITUTE, null, false);
+    }
+
+    /**
+     * @param string $countryCode
+     * @param string $phoneNumber
+     *
+     * @return int|null
+     */
+    public function validateAndFormatMobileNumber(string $countryCode, string $phoneNumber): ?int
+    {
+        try {
+            if (strlen($countryCode) === 2) {
+                $phoneUtil = PhoneNumberUtil::getInstance();
+                $numberProto = $phoneUtil->parse($phoneNumber, $countryCode);
+                if ($phoneUtil->isValidNumber($numberProto)) {
+                    return (int) sprintf(
+                        '%d%d',
+                        (int) $numberProto->getCountryCode(),
+                        (int) $numberProto->getNationalNumber()
+                    );
+                }
+            }
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+        }
+
+        return null;
     }
 }

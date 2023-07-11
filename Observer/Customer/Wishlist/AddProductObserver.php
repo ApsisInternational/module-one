@@ -30,7 +30,13 @@ class AddProductObserver extends AbstractObserver
                 ->getProfile((int) $customer->getStoreId(), (string) $customer->getEmail(), (int) $customer->getId());
             if ($profile) {
                 $this->subEventService
-                    ->registerWishlistEvent($observer, $wishlist, $store, $profile, $customer, $this->profileService);
+                    ->registerProductWishedEvent(
+                        $observer,
+                        $store,
+                        $profile,
+                        $customer,
+                        $this->profileService
+                    );
             }
         } catch (Throwable $e) {
             $this->profileService->logError(__METHOD__, $e);

@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Block\Abandoned;
 
+use Apsis\One\Service\AbandonedService;
 use Apsis\One\Service\BaseService;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
@@ -10,8 +11,6 @@ use Throwable;
 
 class CheckoutHelperBlock extends Template
 {
-    const UPDATER_URL = 'apsis/abandoned/helper';
-
     /**
      * @var BaseService
      */
@@ -44,7 +43,7 @@ class CheckoutHelperBlock extends Template
             return $this->_storeManager
                 ->getStore()
                 ->getUrl(
-                    self::UPDATER_URL,
+                    AbandonedService::UPDATER_URL,
                     ['_secure' => $this->_storeManager->getStore()->isCurrentlySecure()]
                 );
         } catch (Throwable $e) {

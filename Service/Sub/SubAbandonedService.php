@@ -6,7 +6,6 @@ use Apsis\One\Model\EventModel;
 use Apsis\One\Model\ResourceModel\AbandonedResource;
 use Apsis\One\Model\ResourceModel\EventResource;
 use Apsis\One\Service\AbandonedService;
-use Apsis\One\Service\BaseService;
 use Apsis\One\Service\ProfileService;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\ResourceModel\Quote\Collection;
@@ -74,9 +73,8 @@ class SubAbandonedService
         int $storeId,
         AbandonedService $abandonedService
     ): void {
-        $abandonedCarts = [];
-        $events = [];
-        $createdAt = $abandonedService->formatCurrentDateToInternalFormat();
+        $createdAt = (string) $abandonedService->formatCurrentDateToInternalFormat();
+        $acData = [];
 
         /** @var Quote $quote */
         foreach ($quoteCollection as $quote) {
@@ -87,40 +85,39 @@ class SubAbandonedService
                         (string) $quote->getCustomerEmail(),
                         (int) $quote->getCustomerId()
                     );
-                $cartData = $this->getCartContentDataModel()
-                    ->getCartData($quote, $this->profileService);
+                if (! $profile) {
+                    continue;
+                }
 
-                if (! empty($cartData) && ! empty($cartData['items']) && $profile) {
-                    $uuid = BaseService::generateUniversallyUniqueIdentifier();
-                    $abandonedCarts[] = [
+                $cartData = $this->getCartContentDataModel()->getCartData($quote, $profile, $this->profileService);
+                if (isset($cartData['cart_content']) && isset($cartData['cart_event'])) {
+                    $acData['carts'][] = [
                         'quote_id' => (int) $quote->getId(),
-                        'cart_data' => (string) json_encode($cartData),
+                        'cart_data' => (string) json_encode($cartData['cart_content']),
                         'store_id' => (int) $quote->getStoreId(),
                         'profile_id' => (int) $profile->getId(),
                         'customer_id' => (int) $quote->getCustomerId(),
                         'subscriber_id' => (int) $profile->getSubscriberId(),
                         'email' => (string) $quote->getCustomerEmail(),
-                        'token' => (string) $uuid,
-                        'created_at' => (string) $createdAt
+                        'token' => $cartData['cart_content']['token'],
+                        'created_at' => $createdAt
                     ];
-                    $mainData = $this->getDataForEventFromAcData($cartData, $uuid, $abandonedService);
-                    if (! empty($mainData)) {
-                        $subData = $mainData['items'];
-                        unset($mainData['items']);
-                        $events[] = [
-                            'type' => EventModel::EVENT_TYPE_CUSTOMER_ABANDONED_CART,
-                            'event_data' => (string) json_encode($mainData),
-                            'sub_event_data' => (string) json_encode($subData),
-                            'profile_id' => (int) $profile->getId(),
-                            'customer_id' => (int) $quote->getCustomerId(),
-                            'subscriber_id' => (int) $profile->getSubscriberId(),
-                            'store_id' => (int) $quote->getStoreId(),
-                            'email' => (string) $quote->getCustomerEmail(),
-                            'sync_status' => EventModel::STATUS_PENDING,
-                            'created_at' => (string) $createdAt,
-                            'updated_at' => (string) $createdAt,
-                        ];
-                    }
+
+                    $subEventData = $cartData['cart_event']['items'];
+                    unset($cartData['cart_event']['items']);
+                    $acData['events'][] = [
+                        'type' => EventModel::EVENT_CART_ABANDONED,
+                        'event_data' => (string) json_encode($cartData['cart_event']),
+                        'sub_event_data' => (string) json_encode($subEventData),
+                        'profile_id' => (int) $profile->getId(),
+                        'customer_id' => (int) $quote->getCustomerId(),
+                        'subscriber_id' => (int) $profile->getSubscriberId(),
+                        'store_id' => (int) $quote->getStoreId(),
+                        'email' => (string) $quote->getCustomerEmail(),
+                        'sync_status' => EventModel::STATUS_PENDING,
+                        'created_at' => $createdAt,
+                        'updated_at' => $createdAt,
+                    ];
                 }
             } catch (Throwable $e) {
                 $abandonedService->logError(__METHOD__, $e);
@@ -128,58 +125,19 @@ class SubAbandonedService
             }
         }
 
-        if (! empty($abandonedCarts)) {
-            $result = $this->abandonedResource->insertMultipleItems($abandonedCarts, $abandonedService);
-            if ($result && ! empty($events)) {
-                $status = $this->eventResource->insertMultipleItems($events, $abandonedService);
+        try {
+            if (! empty($acData)) {
+                $this->abandonedResource->insertMultipleItems($acData['carts'], $abandonedService);
+                $this->eventResource->insertMultipleItems($acData['events'], $abandonedService);
                 $info = [
-                    'Total ACs Inserted' => count($abandonedCarts),
-                    'Total AC Events Inserted' => $status,
+                    'Total ACs Inserted' => count($acData['carts']),
+                    'Total AC Events Inserted' => count($acData['events']),
                     'Store Id' => $storeId
                 ];
                 $abandonedService->debug(__METHOD__, $info);
             }
-        }
-    }
-
-    /**
-     * @param array $acData
-     * @param string $uuid
-     * @param AbandonedService $abandonedService
-     *
-     * @return array
-     */
-    public function getDataForEventFromAcData(array $acData, string $uuid, AbandonedService $abandonedService): array
-    {
-        try {
-            $items = [];
-            foreach ($acData['items'] as $item) {
-                $items [] = [
-                    'cartId' => (int) $acData['cart_id'],
-                    'productId' => (int) $item['product_id'],
-                    'sku' => (string) $item['sku'],
-                    'name' => (string) $item['name'],
-                    'productUrl' => (string) $item['product_url'],
-                    'productImageUrl' => (string) $item['product_image_url'],
-                    'qtyOrdered' => (float) $item['qty_ordered'],
-                    'priceAmount' => (float) $item['price_amount'],
-                    'rowTotalAmount' => (float) $item['row_total_amount'],
-                ];
-            }
-            return [
-                'cartId' => (int) $acData['cart_id'],
-                'customerId' => (int) $acData['customer_info']['customer_id'],
-                'storeName' => (string) $acData['store_name'],
-                'websiteName' => (string) $acData['website_name'],
-                'grandTotalAmount' => (float) $acData['grand_total_amount'],
-                'itemsCount' => (float) $acData['items_count'],
-                'currencyCode' => (string) $acData['currency_code'],
-                'token' => (string) $uuid,
-                'items' => $items
-            ];
         } catch (Throwable $e) {
             $abandonedService->logError(__METHOD__, $e);
-            return [];
         }
     }
 }

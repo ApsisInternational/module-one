@@ -5,6 +5,7 @@ namespace Apsis\One\Service;
 use Apsis\One\Logger\Logger;
 use Apsis\One\Service\Api\ClientApi;
 use Magento\Customer\Api\Data\CustomerInterface;
+use Magento\Framework\Module\ModuleListInterface;
 use Magento\Framework\Stdlib\Cookie\PhpCookieManagerFactory;
 use Magento\Framework\Stdlib\Cookie\PublicCookieMetadataFactory;
 use Apsis\One\Model\ProfileModel;
@@ -49,6 +50,7 @@ class ApiService extends BaseService
      * @param Logger $logger
      * @param StoreManagerInterface $storeManager
      * @param WriterInterface $writer
+     * @param ModuleListInterface $moduleList
      * @param ClientApiFactory $clientFactory
      * @param SubApiService $subApiService
      * @param PhpCookieManagerFactory $phpCookieManager
@@ -58,12 +60,13 @@ class ApiService extends BaseService
         Logger $logger,
         StoreManagerInterface $storeManager,
         WriterInterface $writer,
+        ModuleListInterface $moduleList,
         ClientApiFactory $clientFactory,
         SubApiService $subApiService,
         PhpCookieManagerFactory $phpCookieManager,
         PublicCookieMetadataFactory $cookieMetadataFactory
     ) {
-        parent::__construct($logger, $storeManager, $writer);
+        parent::__construct($logger, $storeManager, $writer, $moduleList);
         $this->cookieMetadataFactory = $cookieMetadataFactory;
         $this->phpCookieManager = $phpCookieManager;
         $this->clientFactory = $clientFactory;

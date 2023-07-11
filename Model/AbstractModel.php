@@ -56,7 +56,7 @@ abstract class AbstractModel extends MagentoAbstractModel
     /**
      * @inerhitDoc
      */
-    protected function _construct()
+    protected function _construct(): void
     {
         $this->_init(static::RESOURCE_MODEL);
     }

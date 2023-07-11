@@ -14,41 +14,33 @@ class EventTypesSourceModel implements OptionSourceInterface
     {
         return [
             [
-                'value' => EventModel::EVENT_TYPE_CUSTOMER_ABANDONED_CART,
-                'label' => __('Customer Abandoned Cart')
+                'value' => EventModel::EVENT_PRODUCT_REVIEWED,
+                'label' => __('Product Reviewed')
             ],
             [
-                'value' => EventModel::EVENT_TYPE_SUBSCRIBER_BECOMES_CUSTOMER,
-                'label' => __('Subscriber Becomes Customer')
+                'value' => EventModel::EVENT_PRODUCT_WISHED,
+                'label' => __('Product Wished')
             ],
             [
-                'value' => EventModel::EVENT_TYPE_CUSTOMER_BECOMES_SUBSCRIBER,
-                'label' => __('Customer Becomes Subscriber')
+                'value' => EventModel::EVENT_PRODUCT_CARTED,
+                'label' => __('Product Carted')
             ],
             [
-                'value' => EventModel::EVENT_TYPE_SUBSCRIBER_UNSUBSCRIBE,
-                'label' => __('Subscriber Unsubscribe')
+                'value' => EventModel::EVENT_CART_ABANDONED,
+                'label' => __('Cart Abandoned')
             ],
             [
-                'value' => EventModel::EVENT_TYPE_CUSTOMER_LOGIN,
-                'label' => __('Customer Login')
+                'value' => EventModel::EVENT_PLACED_ORDER,
+                'label' => __('Order Placed')
             ],
             [
-                'value' => EventModel::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER,
-                'label' => __('Customer/Subscriber Placed An Order')
+                'value' => EventModel::EVENT_SUBSCRIPTION_CHANGED,
+                'label' => __('Subscription Changed')
             ],
             [
-                'value' => EventModel::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW,
-                'label' => __('Customer Left Product Review')
+                'value' => EventModel::EVENT_LOGGED_IN,
+                'label' => __('Logged In')
             ],
-            [
-                'value' => EventModel::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST,
-                'label' => __('Customer Added Product To Wishlist')
-            ],
-            [
-                'value' => EventModel::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART,
-                'label' => __('Customer Added Product To Cart')
-            ]
         ];
     }
 }

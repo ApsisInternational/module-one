@@ -2,7 +2,6 @@
 
 namespace Apsis\One\Controller\Frontend\Abandoned;
 
-use Apsis\One\Block\Abandoned\CartBlock;
 use Apsis\One\Controller\AbstractAction;
 use Apsis\One\Model\AbandonedModel;
 use Apsis\One\Model\ResourceModel\Abandoned\AbandonedCollectionFactory;
@@ -13,7 +12,6 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\Framework\View\LayoutInterface;
 use Throwable;
 
 class Cart extends AbstractAction
@@ -41,18 +39,12 @@ class Cart extends AbstractAction
     private AbandonedCollectionFactory $abandonedCollectionFactory;
 
     /**
-     * @var LayoutInterface
-     */
-    private LayoutInterface $layout;
-
-    /**
      * @param RequestInterface $request
      * @param ResponseInterface $response
      * @param BaseService $service
      * @param StoreManagerInterface $storeManager
      * @param JsonFactory $resultJsonFactory
      * @param AbandonedCollectionFactory $abandonedCollectionFactory
-     * @param LayoutInterface $layout
      * @param ResultFactory $resultFactory
      */
     public function __construct(
@@ -62,13 +54,11 @@ class Cart extends AbstractAction
         StoreManagerInterface $storeManager,
         JsonFactory $resultJsonFactory,
         AbandonedCollectionFactory $abandonedCollectionFactory,
-        LayoutInterface $layout,
         ResultFactory $resultFactory
     ) {
         $this->storeManager = $storeManager;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->abandonedCollectionFactory = $abandonedCollectionFactory;
-        $this->layout = $layout;
         $this->resultRaw = $resultFactory->create(ResultFactory::TYPE_RAW);
         parent::__construct($request, $response, $service);
     }
@@ -79,7 +69,6 @@ class Cart extends AbstractAction
     public function execute(): ResultInterface
     {
         try {
-            //Validate http method against allowed one.
             if (! in_array($this->getRequest()->getMethod(), self::VALID_HTTP_METHODS)) {
                 return $this->sendResponse($this->resultRaw, 405);
             }
@@ -89,12 +78,16 @@ class Cart extends AbstractAction
                 return $this->sendResponse($this->resultRaw, 400);
             }
 
-            $cart = $this->getCart($token);
+            $cart = $this->getAbandonedCart($token);
             if (empty($cart) || empty($cart->getCartData()) || ! $this->isJson($cart->getCartData())) {
                 return $this->sendResponse($this->resultRaw, 404);
             }
 
-            return $this->renderOutput($cart);
+            $cart->setCartData($this->getUpdatedData($cart->getCartData(), $cart->getStoreId()));
+            return $this->sendResponse(
+                $this->resultJsonFactory->create()->setJsonData('[' . $cart->getCartData() . ']'),
+                200
+            );
         } catch (Throwable $e) {
             $this->service->logError(__METHOD__, $e);
             return $this->handleException();
@@ -106,70 +99,10 @@ class Cart extends AbstractAction
      *
      * @return AbandonedModel|bool
      */
-    private function getCart(string $token): AbandonedModel|bool
+    private function getAbandonedCart(string $token): AbandonedModel|bool
     {
         return $this->abandonedCollectionFactory->create()
             ->getFirstItemFromCollection('token', $token);
-    }
-
-    /**
-     * @param AbandonedModel $cart
-     *
-     * @return ResultInterface
-     */
-    private function renderOutput(AbandonedModel $cart): ResultInterface
-    {
-        try {
-            $cart->setCartData($this->getData($cart->getCartData(), $cart->getStoreId()));
-            $output = $this->getRequest()->getParam('output');
-            return $output === 'html' ? $this->renderHtml($cart) : $this->renderJson($cart);
-        } catch (Throwable $e) {
-            $this->service->logError(__METHOD__, $e);
-            return $this->handleException();
-        }
-    }
-
-    /**
-     * @param AbandonedModel $cart
-     *
-     * @return ResultInterface
-     */
-    private function renderHtml(AbandonedModel $cart): ResultInterface
-    {
-        try {
-            /** @var CartBlock $block */
-            $block = $this->layout->createBlock(CartBlock::class)->setCacheable(false);
-            $html = $block->setAbandonedModel($cart)
-                ->setTemplate('Apsis_One::abandoned/cart.phtml')
-                ->toHtml();
-
-            $this->resultRaw
-                ->setHeader('Content-Type', 'text/html; charset=UTF-8', true)
-                ->setContents($html);
-
-            return $this->sendResponse($this->resultRaw, 200);
-        } catch (Throwable $e) {
-            $this->service->logError(__METHOD__, $e);
-            return $this->handleException();
-        }
-    }
-
-    /**
-     * @param AbandonedModel $cart
-     *
-     * @return ResultInterface
-     */
-    private function renderJson(AbandonedModel $cart): ResultInterface
-    {
-        try {
-            $resultJson = $this->resultJsonFactory
-                ->create()
-                ->setJsonData('[' . $cart->getCartData() . ']');
-            return $this->sendResponse($resultJson, 200);
-        } catch (Throwable $e) {
-            $this->service->logError(__METHOD__, $e);
-            return $this->handleException();
-        }
     }
 
     /**
@@ -216,7 +149,7 @@ class Cart extends AbstractAction
      *
      * @return string
      */
-    private function getData(string $data, int $storeId): string
+    private function getUpdatedData(string $data, int $storeId): string
     {
         try {
             $store = $this->storeManager->getStore($storeId);

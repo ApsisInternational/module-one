@@ -45,6 +45,11 @@ abstract class AbstractEvents
     protected AbstractData $eventData;
 
     /**
+     * @var array
+     */
+    protected array $fetchDuration = [];
+
+    /**
      * @param DateTime $dateTime
      * @param EventResource $eventResource
      * @param QuoteColFactory|OrderColFactory|ProductReviewColFactory|WishlistItemColFactory $collectionFactory
@@ -89,6 +94,17 @@ abstract class AbstractEvents
         array $profileCollectionArray,
         StoreInterface $store
     ): array;
+
+    /**
+     * @param array $duration
+     *
+     * @return AbstractEvents
+     */
+    public function setFetchDuration(array $duration): AbstractEvents
+    {
+        $this->fetchDuration = $duration;
+        return $this;
+    }
 
     /**
      * @param StoreInterface $store
@@ -187,7 +203,9 @@ abstract class AbstractEvents
             $info = [
                 'Total Events Inserted' => $status,
                 'Store Id' => $storeId,
-                'Type' => $type
+                'Type' => $type,
+                'Fetch From' => $this->fetchDuration['from'] ?? null,
+                'Fetch To' => $this->fetchDuration['to'] ?? null
             ];
             $baseService->debug(__METHOD__, $info);
         }
@@ -238,9 +256,14 @@ abstract class AbstractEvents
     private function getCollection(BaseService $baseService, int $storeId, array $values): AbstractCollection|null
     {
         try {
+            if (empty($this->fetchDuration)) {
+                return null;
+            }
+
             $collection =  $this->collectionFactory->create();
             if ($collection instanceof QuoteCollection || $collection instanceof OrderCollection) {
-                $collection->addFieldToFilter('main_table.store_id', $storeId);
+                $collection->addFieldToFilter('main_table.store_id', $storeId)
+                    ->addFieldToFilter('main_table.updated_at', $this->fetchDuration);
             }
 
             if ($collection instanceof ProductReviewCollection || $collection instanceof WishlistItemCollection) {
@@ -258,11 +281,13 @@ abstract class AbstractEvents
             if ($collection instanceof ProductReviewCollection) {
                 $collection->addStatusFilter(Review::STATUS_APPROVED)
                     ->addFieldToFilter('customer_id', ['in' => $values])
-                    ->addFieldToFilter('main_table.entity_id', 1);
+                    ->addFieldToFilter('main_table.entity_id', 1)
+                    ->addFieldToFilter('main_table.created_at', $this->fetchDuration);
             }
 
             if ($collection instanceof WishlistItemCollection) {
                 $collection->addFieldToFilter('wishlist_id', ['in' => $values])
+                    ->addFieldToFilter('main_table.added_at', $this->fetchDuration)
                     ->setVisibilityFilter()
                     ->setSalableFilter();
                 $collection->getSelect()->group('wishlist_item_id');

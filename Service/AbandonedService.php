@@ -5,6 +5,7 @@ namespace Apsis\One\Service;
 use Apsis\One\Logger\Logger;
 use Apsis\One\Service\Sub\SubAbandonedService;
 use Magento\Framework\App\Config\Storage\WriterInterface;
+use Magento\Framework\Module\ModuleListInterface;
 use Magento\Quote\Model\ResourceModel\Quote\Collection;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
@@ -15,6 +16,10 @@ use Throwable;
 
 class AbandonedService extends AbstractCronService
 {
+    const CART_CONTENT_ENDPOINT = 'apsis/abandoned/cart';
+    const CHECKOUT_ENDPOINT = 'apsis/abandoned/checkout';
+    const UPDATER_URL = 'apsis/abandoned/helper';
+
     /**
      * @var QuoteCollectionFactory
      */
@@ -28,20 +33,22 @@ class AbandonedService extends AbstractCronService
     /**
      * @param Logger $logger
      * @param StoreManagerInterface $storeManager
-     * @param CronCollectionFactory $cronCollectionFactory
      * @param WriterInterface $writer
+     * @param CronCollectionFactory $cronCollectionFactory
+     * @param ModuleListInterface $moduleList
      * @param QuoteCollectionFactory $quoteCollectionFactory
      * @param SubAbandonedService $subAbandonedService
      */
     public function __construct(
         Logger $logger,
         StoreManagerInterface $storeManager,
-        CronCollectionFactory $cronCollectionFactory,
         WriterInterface $writer,
+        CronCollectionFactory $cronCollectionFactory,
+        ModuleListInterface $moduleList,
         QuoteCollectionFactory $quoteCollectionFactory,
         SubAbandonedService $subAbandonedService
     ) {
-        parent::__construct($logger, $storeManager, $writer, $cronCollectionFactory);
+        parent::__construct($logger, $storeManager, $writer, $cronCollectionFactory, $moduleList);
         $this->quoteCollectionFactory = $quoteCollectionFactory;
         $this->subAbandonedService = $subAbandonedService;
     }

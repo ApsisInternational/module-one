@@ -300,39 +300,12 @@ abstract class AbstractApi extends AbstractAction
      */
     protected function getBackendTypeByInput(string $input): string
     {
-        // Default type
-        $type = 'string';
-
-        switch ($input) {
-            case 'text':
-            case 'gallery':
-            case 'media_image':
-            case 'image':
-            case 'textarea':
-            case 'multiselect':
-            case 'select':
-                $type = 'string';
-                break;
-
-            case 'date':
-            case 'datetime':
-                $type = 'integer';
-                break;
-
-            case 'boolean':
-                $type = 'boolean';
-                break;
-
-            case 'price':
-            case 'weight':
-                $type = 'double';
-                break;
-
-            default:
-                break;
-        }
-
-        return $type;
+        return match ($input) {
+            'date', 'datetime' => 'integer',
+            'boolean' => 'boolean',
+            'price', 'weight' => 'double',
+            default => 'string',
+        };
     }
 
     /**

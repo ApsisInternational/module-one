@@ -6,6 +6,7 @@ use Apsis\One\Logger\Logger;
 use Magento\Cron\Model\ResourceModel\Schedule\Collection as CronCollection;
 use Magento\Cron\Model\ResourceModel\Schedule\CollectionFactory as CronCollectionFactory;
 use Magento\Framework\App\Config\Storage\WriterInterface;
+use Magento\Framework\Module\ModuleListInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Throwable;
@@ -22,14 +23,16 @@ abstract class AbstractCronService extends BaseService
      * @param StoreManagerInterface $storeManager
      * @param WriterInterface $writer
      * @param CronCollectionFactory $cronCollectionFactory
+     * @param ModuleListInterface $moduleList
      */
     public function __construct(
         Logger $logger,
         StoreManagerInterface $storeManager,
         WriterInterface $writer,
-        CronCollectionFactory $cronCollectionFactory
+        CronCollectionFactory $cronCollectionFactory,
+        ModuleListInterface $moduleList
     ) {
-        parent::__construct($logger, $storeManager, $writer);
+        parent::__construct($logger, $storeManager, $writer, $moduleList);
         $this->cronCollectionFactory = $cronCollectionFactory;
     }
 

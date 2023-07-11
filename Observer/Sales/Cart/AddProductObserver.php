@@ -7,7 +7,8 @@ use Apsis\One\Service\ProfileService;
 use Apsis\One\Service\Sub\SubEventService;
 use Magento\Catalog\Model\Product;
 use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Customer\Api\CustomerRepositoryInterface;
+use Magento\Customer\Model\CustomerRegistry;
+use Magento\Customer\Model\Session;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Registry;
 use Magento\Quote\Model\Quote\Item;
@@ -23,18 +24,20 @@ class AddProductObserver extends AbstractObserver
     /**
      * @param ProfileService $profileService
      * @param Registry $registry
-     * @param CustomerRepositoryInterface $customerRepository
+     * @param CustomerRegistry $customerRegistry
      * @param SubEventService $subEventService
+     * @param Session $session
      * @param CheckoutSession $checkoutSession
      */
     public function __construct(
         ProfileService $profileService,
         Registry $registry,
-        CustomerRepositoryInterface $customerRepository,
+        CustomerRegistry $customerRegistry,
         SubEventService $subEventService,
+        Session $session,
         CheckoutSession $checkoutSession
     ) {
-        parent::__construct($profileService, $registry, $customerRepository, $subEventService);
+        parent::__construct($profileService, $registry, $customerRegistry, $subEventService, $session);
         $this->checkoutSession = $checkoutSession;
     }
 
@@ -45,7 +48,7 @@ class AddProductObserver extends AbstractObserver
     {
         try {
             $cart = $this->checkoutSession->getQuote();
-            if (empty($cart) || $cart->getCustomerIsGuest() || ! $cart->getCustomerId()) {
+            if (empty($cart)) {
                 return $this;
             }
 

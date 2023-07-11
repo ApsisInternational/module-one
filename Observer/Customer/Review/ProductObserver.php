@@ -8,7 +8,8 @@ use Apsis\One\Service\Sub\SubEventService;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product as MagentoProduct;
-use Magento\Customer\Api\CustomerRepositoryInterface;
+use Magento\Customer\Model\CustomerRegistry;
+use Magento\Customer\Model\Session;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Registry;
 use Magento\Review\Model\Review;
@@ -36,8 +37,9 @@ class ProductObserver extends AbstractObserver
     /**
      * @param ProfileService $profileService
      * @param Registry $registry
-     * @param CustomerRepositoryInterface $customerRepository
+     * @param CustomerRegistry $customerRegistry
      * @param SubEventService $subEventService
+     * @param Session $session
      * @param ProductRepositoryInterface $productRepository
      * @param ReviewFactory $reviewFactory
      * @param ReviewResourceModel $reviewResourceModel
@@ -45,13 +47,14 @@ class ProductObserver extends AbstractObserver
     public function __construct(
         ProfileService $profileService,
         Registry $registry,
-        CustomerRepositoryInterface $customerRepository,
+        CustomerRegistry $customerRegistry,
         SubEventService $subEventService,
+        Session $session,
         ProductRepositoryInterface  $productRepository,
         ReviewFactory $reviewFactory,
         ReviewResourceModel $reviewResourceModel
     ) {
-        parent::__construct($profileService, $registry, $customerRepository, $subEventService);
+        parent::__construct($profileService, $registry, $customerRegistry, $subEventService, $session);
         $this->reviewFactory = $reviewFactory;
         $this->productRepository = $productRepository;
         $this->reviewResourceModel = $reviewResourceModel;
@@ -69,19 +72,15 @@ class ProductObserver extends AbstractObserver
                 return $this;
             }
 
-            $reviewObject = $this->getReviewModel();
-            $this->reviewResourceModel->load($reviewObject, $dataObject->getId());
-            if (empty($reviewObject) ||
-                ! $reviewObject->getCustomerId() ||
-                ! $reviewObject->getEntityPkValue() ||
-                ! $reviewObject->getStoreId()
-            ) {
+            $review = $this->getReviewModel();
+            $this->reviewResourceModel->load($review, $dataObject->getId());
+            if (! $review->getCustomerId() || ! $review->getEntityPkValue() || ! $review->getStoreId()) {
                 return $this;
             }
 
             /** @var MagentoProduct $product */
-            $product = $this->getProductById($reviewObject->getEntityPkValue(), $reviewObject->getStoreId());
-            $customer = $this->getCustomer($reviewObject->getCustomerId());
+            $product = $this->getProductById($review->getEntityPkValue(), $review->getStoreId());
+            $customer = $this->getCustomer($review->getCustomerId());
             if (empty($product) || ! $product->getId() || empty($customer) || ! $customer->getId()) {
                 return $this;
             }
@@ -89,8 +88,8 @@ class ProductObserver extends AbstractObserver
             $profile = $this->profileService
                 ->getProfile((int) $customer->getStoreId(), (string) $customer->getEmail(), (int) $customer->getId());
             if ($profile) {
-                $this->subEventService->registerProductReviewEvent(
-                    $reviewObject,
+                $this->subEventService->registerProductReviewedEvent(
+                    $review,
                     $product,
                     $profile,
                     $customer,

@@ -9,7 +9,7 @@ use Throwable;
 
 class SaveUpdateObserver extends AbstractObserver
 {
-    const REGISTRY_NAME = '_customer_save_after';
+    const REGISTRY_NAME = '_apsis_customer_save_after';
 
     /**
      * @inheritdoc
@@ -17,12 +17,7 @@ class SaveUpdateObserver extends AbstractObserver
     public function execute(Observer $observer)
     {
         try {
-            $customer = $this->getModelFromObserver($observer, ProfileService::ENTITY_CUSTOMER);
-            if (! $customer) {
-                return $this;
-            }
-
-            return $this->executeForCustomerAndSubscriber($customer);
+            return $this->executeForCustomerAndSubscriber($observer, ProfileService::TYPE_CUSTOMER);
         } catch (Throwable $e) {
             $this->profileService->logError(__METHOD__, $e);
             return $this;

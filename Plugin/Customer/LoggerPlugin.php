@@ -91,7 +91,7 @@ class LoggerPlugin
             if (isset($data['last_login_at'])) {
                 $this->apiService->mergeProfile($store, $profile, $customer);
                 $this->subEventService
-                    ->registerCustomerLoginEvent($logger, $customerId, $profile, $customer, $this->apiService);
+                    ->registerLoggedInEvent($logger, $customerId, $profile, $customer, $this->apiService);
                 $profile->setHasDataChanges(true);
                 $this->profileResource->save($profile);
             }

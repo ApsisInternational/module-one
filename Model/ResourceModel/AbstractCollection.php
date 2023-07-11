@@ -11,7 +11,7 @@ abstract class AbstractCollection extends MagentoAbstractCollection
     /**
      * @inheritdoc
      */
-    protected function _construct()
+    protected function _construct(): void
     {
         $this->_idFieldName = 'id';
         $this->_init(static::MODEL, static::RESOURCE_MODEL);

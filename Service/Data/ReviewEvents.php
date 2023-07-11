@@ -63,7 +63,7 @@ class ReviewEvents extends AbstractEvents
     public function process(StoreInterface $store, BaseService $baseService, array $profileColArray): void
     {
         $eventsToRegister = $this->findAndRegister($store, $baseService, $profileColArray);
-        $this->registerEvents($eventsToRegister, $baseService, $store->getId(), 'Review');
+        $this->registerEvents($eventsToRegister, $baseService, $store->getId(), 'Product Reviewed');
     }
 
     /**
@@ -106,7 +106,8 @@ class ReviewEvents extends AbstractEvents
                     continue;
                 }
 
-                $eventData = $this->eventData->getDataArr(
+                $eventData = $this->eventData->getReviewData(
+                    $profile,
                     $review,
                     $product,
                     $baseService
@@ -116,7 +117,7 @@ class ReviewEvents extends AbstractEvents
                     $eventDataForEvent = $this->getFormattedEventDataForRecord(
                         $review->getStoreId(),
                         $profile,
-                        EventModel::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW,
+                        EventModel::EVENT_PRODUCT_REVIEWED,
                         $review->getCreatedAt(),
                         json_encode($eventData),
                         $baseService

@@ -35,7 +35,7 @@ class OrderEvents extends AbstractEvents
     public function process(StoreInterface $store, BaseService $baseService, array $profileColArray): void
     {
         $eventsToRegister = $this->findAndRegister($store, $baseService, $profileColArray);
-        $this->registerEvents($eventsToRegister, $baseService, $store->getId(), 'Order');
+        $this->registerEvents($eventsToRegister, $baseService, $store->getId(), 'Order Placed');
     }
 
     /**
@@ -53,24 +53,23 @@ class OrderEvents extends AbstractEvents
         foreach ($entityCollectionArr as $order) {
             try {
                 if (isset($profileCollectionArray[$order->getCustomerEmail()])) {
-                    $mainData = $this->eventData->getDataArr(
+                    $orderDataArr = $this->eventData->getDataArr(
                         $order,
-                        $baseService,
-                        (int) $profileCollectionArray[$order->getCustomerEmail()]->getSubscriberId()
+                        $profileCollectionArray[$order->getCustomerEmail()],
+                        $baseService
                     );
 
-                    if (! empty($mainData) && ! empty($mainData['items'])) {
-                        $subData = $mainData['items'];
-                        unset($mainData['items']);
-
+                    if (! empty($orderDataArr)) {
+                        $items = $orderDataArr['items'];
+                        unset($orderDataArr['items']);
                         $eventDataForEvent = $this->getFormattedEventDataForRecord(
                             $store->getStoreId(),
                             $profileCollectionArray[$order->getCustomerEmail()],
-                            EventModel::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER,
+                            EventModel::EVENT_PLACED_ORDER,
                             $order->getCreatedAt(),
-                            json_encode($mainData),
+                            json_encode($orderDataArr),
                             $baseService,
-                            json_encode($subData)
+                            json_encode($items)
                         );
 
                         if (! empty($eventDataForEvent)) {

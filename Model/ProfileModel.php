@@ -112,7 +112,7 @@ class ProfileModel extends AbstractModel
     /**
      * @inheritdoc
      */
-    protected function _construct()
+    protected function _construct(): void
     {
         $this->_init(ProfileResource::class);
     }
@@ -150,14 +150,15 @@ class ProfileModel extends AbstractModel
                 $this->oldProfileJson = (string) $this->getProfileData();
             }
             $store = $this->baseService->getStore($this->getStoreId());
+            $currency = (string) $this->baseService->getStoreConfig($store, 'currency/options/default');
 
             // Aggregate profile data column
             if ($this->getCustomerId()) {
                 $expressionString = $this->profileResource
-                    ->buildProfileDataQueryForCustomer($store, $this->baseService, $this->getCustomerId());
+                    ->buildDataQueryForCustomer($store, $this->baseService, $currency, $this->getCustomerId());
             } elseif ($this->getSubscriberId()) {
                 $expressionString = $this->profileResource
-                    ->buildProfileDataQueryForSubscriber($store, $this->baseService, $this->getSubscriberId());
+                    ->buildDataQueryForSubscriber($store, $this->baseService, $currency, $this->getSubscriberId());
             }
             if (! empty($expressionString)) {
                 $this->setProfileData($this->getExpressionModel($expressionString));

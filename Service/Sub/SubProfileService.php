@@ -131,7 +131,7 @@ class SubProfileService
     public function deleteProfile(ProfileModel $profile, string $deleteType, BaseService $baseService): ?bool
     {
         try {
-            if ($deleteType === ProfileService::ENTITY_CUSTOMER) {
+            if ($deleteType === ProfileService::TYPE_CUSTOMER) {
                 if ($profile->getIsSubscriber()) {
                     $profile->setCustomerId(null)
                         ->setGroupId(null)
@@ -142,7 +142,7 @@ class SubProfileService
                 }
             }
 
-            if ($deleteType === ProfileService::ENTITY_TYPE_SUBSCRIBER) {
+            if ($deleteType === ProfileService::TYPE_SUBSCRIBER) {
                 if ($profile->getIsCustomer()) {
                     $profile->setSubscriberId(null)
                         ->setIsSubscriber(0)

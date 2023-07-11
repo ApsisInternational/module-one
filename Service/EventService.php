@@ -8,6 +8,7 @@ use Apsis\One\Model\EventModel;
 use Apsis\One\Model\ProfileModel;
 use Apsis\One\Model\ResourceModel\EventResource;
 use Magento\Framework\App\Config\Storage\WriterInterface;
+use Magento\Framework\Module\ModuleListInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Apsis\One\Model\ResourceModel\Event\EventCollection;
@@ -15,12 +16,11 @@ use Apsis\One\Model\ResourceModel\Event\EventCollectionFactory;
 use Apsis\One\Model\ResourceModel\Profile\ProfileCollectionFactory;
 use Apsis\One\Model\ResourceModel\Profile\ProfileCollection;
 use Magento\Cron\Model\ResourceModel\Schedule\CollectionFactory as CronCollectionFactory;
-use stdClass;
 use Throwable;
 
 class EventService extends AbstractCronService
 {
-    const REGISTRY_NAME_SUBSCRIBER_UNSUBSCRIBE = '_subscriber_save_after';
+    const REGISTRY_NAME_SUBSCRIBER_UPDATE = '_subscriber_save_after';
 
     /**
      * Maximum collection limit per store
@@ -34,19 +34,15 @@ class EventService extends AbstractCronService
     /**
      * Event discriminators
      */
-    const UNSUBSCRIBED_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.subscriber-unsubscribe';
-    const SUBSCRIBER_2_CUSTOMER_EVENT_DISCRIMINATOR =
-        'com.apsis1.integrations.magento.events.subscriber-register-as-customer';
-    const CUSTOMER_LOGIN_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.login';
-    const WISHLIST_PRODUCT_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.wishlist-product';
-    const PRODUCT_REVIEW_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.product-review';
-    const AC_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.abandoned-cart';
-    const AC_PRODUCT_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.abandoned-product';
-    const CUSTOMER_2_SUBSCRIBER_EVENT_DISCRIMINATOR =
-        'com.apsis1.integrations.magento.events.customer-becomes-subscriber';
-    const ORDER_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.order';
-    const ORDER_PRODUCT_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.order-product';
-    const PRODUCT_CARTED_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.product-carted';
+    const SUBSCRIPTION_CHANGED_DISCRIMINATOR = 'SUBSCRIPTION_CHANGED_DISCRIMINATOR'; //@todo
+    const LOGGED_IN_DISCRIMINATOR = 'LOGGED_IN_DISCRIMINATOR'; //@todo
+    const PRODUCT_WISHED__DISCRIMINATOR = 'PRODUCT_WISHED__DISCRIMINATOR'; //@todo
+    const PRODUCT_REVIEWED_DISCRIMINATOR = 'PRODUCT_REVIEWED_DISCRIMINATOR'; //@todo
+    const CART_ABANDONED_DISCRIMINATOR = 'CART_ABANDONED_DISCRIMINATOR'; //@todo
+    const CART_ABANDONED_PRODUCT_DISCRIMINATOR = 'CART_ABANDONED_PRODUCT_DISCRIMINATOR'; //@todo
+    const ORDER_PLACED_DISCRIMINATOR = 'ORDER_PLACED_DISCRIMINATOR'; //@todo
+    const ORDER_PLACED_PRODUCT_DISCRIMINATOR = 'ORDER_PLACED_PRODUCT_DISCRIMINATOR'; //@todo
+    const PRODUCT_CARTED_DISCRIMINATOR = 'PRODUCT_CARTED_DISCRIMINATOR'; //@todo
 
     /**
      * @var EventResource
@@ -72,38 +68,34 @@ class EventService extends AbstractCronService
      * @var array
      */
     private array $eventsDiscriminatorMapping = [
-        EventModel::EVENT_TYPE_SUBSCRIBER_UNSUBSCRIBE => self::UNSUBSCRIBED_EVENT_DISCRIMINATOR,
-        EventModel::EVENT_TYPE_SUBSCRIBER_BECOMES_CUSTOMER => self::SUBSCRIBER_2_CUSTOMER_EVENT_DISCRIMINATOR,
-        EventModel::EVENT_TYPE_CUSTOMER_LOGIN => self::CUSTOMER_LOGIN_EVENT_DISCRIMINATOR,
-        EventModel::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_WISHLIST => self::WISHLIST_PRODUCT_EVENT_DISCRIMINATOR,
-        EventModel::EVENT_TYPE_CUSTOMER_LEFT_PRODUCT_REVIEW => self::PRODUCT_REVIEW_EVENT_DISCRIMINATOR,
-        EventModel::EVENT_TYPE_CUSTOMER_ABANDONED_CART => [
-            'main' => self::AC_EVENT_DISCRIMINATOR,
-            'sub' => self::AC_PRODUCT_EVENT_DISCRIMINATOR
+        EventModel::EVENT_SUBSCRIPTION_CHANGED => self::SUBSCRIPTION_CHANGED_DISCRIMINATOR,
+        EventModel::EVENT_LOGGED_IN => self::LOGGED_IN_DISCRIMINATOR,
+        EventModel::EVENT_PRODUCT_WISHED => self::PRODUCT_WISHED__DISCRIMINATOR,
+        EventModel::EVENT_PRODUCT_REVIEWED => self::PRODUCT_REVIEWED_DISCRIMINATOR,
+        EventModel::EVENT_CART_ABANDONED => [
+            'main' => self::CART_ABANDONED_DISCRIMINATOR,
+            'sub' => self::CART_ABANDONED_PRODUCT_DISCRIMINATOR
         ],
-        EventModel::EVENT_TYPE_CUSTOMER_BECOMES_SUBSCRIBER => self::CUSTOMER_2_SUBSCRIBER_EVENT_DISCRIMINATOR,
-        EventModel::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER => [
-            'main' => self::ORDER_EVENT_DISCRIMINATOR,
-            'sub' => self::ORDER_PRODUCT_EVENT_DISCRIMINATOR
+        EventModel::EVENT_PLACED_ORDER => [
+            'main' => self::ORDER_PLACED_DISCRIMINATOR,
+            'sub' => self::ORDER_PLACED_PRODUCT_DISCRIMINATOR
         ],
-        EventModel::EVENT_TYPE_CUSTOMER_ADDED_PRODUCT_TO_CART => self::PRODUCT_CARTED_EVENT_DISCRIMINATOR,
+        EventModel::EVENT_PRODUCT_CARTED => self::PRODUCT_CARTED_DISCRIMINATOR,
     ];
 
     /**
      * @var array
      */
     private array $eventsVersionMapping = [
-        self::UNSUBSCRIBED_EVENT_DISCRIMINATOR => false,
-        self::SUBSCRIBER_2_CUSTOMER_EVENT_DISCRIMINATOR => false,
-        self::CUSTOMER_LOGIN_EVENT_DISCRIMINATOR => false,
-        self::WISHLIST_PRODUCT_EVENT_DISCRIMINATOR => false,
-        self::PRODUCT_REVIEW_EVENT_DISCRIMINATOR => false,
-        self::AC_EVENT_DISCRIMINATOR => false,
-        self::AC_PRODUCT_EVENT_DISCRIMINATOR => false,
-        self::CUSTOMER_2_SUBSCRIBER_EVENT_DISCRIMINATOR => false,
-        self::ORDER_EVENT_DISCRIMINATOR => false,
-        self::ORDER_PRODUCT_EVENT_DISCRIMINATOR => false,
-        self::PRODUCT_CARTED_EVENT_DISCRIMINATOR => false
+        self::SUBSCRIPTION_CHANGED_DISCRIMINATOR => false,
+        self::LOGGED_IN_DISCRIMINATOR => false,
+        self::PRODUCT_WISHED__DISCRIMINATOR => false,
+        self::PRODUCT_REVIEWED_DISCRIMINATOR => false,
+        self::CART_ABANDONED_DISCRIMINATOR => false,
+        self::CART_ABANDONED_PRODUCT_DISCRIMINATOR => false,
+        self::ORDER_PLACED_DISCRIMINATOR => false,
+        self::ORDER_PLACED_PRODUCT_DISCRIMINATOR => false,
+        self::PRODUCT_CARTED_DISCRIMINATOR => false
     ];
 
     /**
@@ -126,6 +118,7 @@ class EventService extends AbstractCronService
      * @param StoreManagerInterface $storeManager
      * @param WriterInterface $writer
      * @param CronCollectionFactory $cronCollectionFactory
+     * @param ModuleListInterface $moduleList
      * @param EventResource $eventResource
      * @param EventCollectionFactory $eventCollectionFactory
      * @param ProfileCollectionFactory $profileCollectionFactory
@@ -136,12 +129,13 @@ class EventService extends AbstractCronService
         StoreManagerInterface $storeManager,
         WriterInterface $writer,
         CronCollectionFactory $cronCollectionFactory,
+        ModuleListInterface $moduleList,
         EventResource $eventResource,
         EventCollectionFactory $eventCollectionFactory,
         ProfileCollectionFactory $profileCollectionFactory,
         ApiService $apiService
     ) {
-        parent::__construct($logger, $storeManager, $writer, $cronCollectionFactory);
+        parent::__construct($logger, $storeManager, $writer, $cronCollectionFactory, $moduleList);
         $this->apiService = $apiService;
         $this->eventResource = $eventResource;
         $this->profileCollectionFactory = $profileCollectionFactory;
@@ -340,8 +334,8 @@ class EventService extends AbstractCronService
             $eventData = [];
             $createdAt = (string) $this->formatDateForPlatformCompatibility($event->getCreatedAt(), 'c');
             $withAddedSecond = '';
-            if ((int) $event->getType() === EventModel::EVENT_TYPE_CUSTOMER_ABANDONED_CART ||
-                (int) $event->getType() === EventModel::EVENT_TYPE_CUSTOMER_SUBSCRIBER_PLACED_ORDER) {
+            if ((int) $event->getType() === EventModel::EVENT_CART_ABANDONED ||
+                (int) $event->getType() === EventModel::EVENT_PLACED_ORDER) {
                 $typeArray = $this->eventsDiscriminatorMapping[$event->getType()];
 
                 if (empty($this->eventsVersionMapping[$typeArray['main']]) ||

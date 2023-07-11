@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Controller;
 
+use Apsis\One\Service\AbandonedService;
 use Magento\Framework\App\Action\Forward;
 use Magento\Framework\App\ActionFactory;
 use Magento\Framework\App\ActionInterface;
@@ -15,8 +16,6 @@ use Magento\Framework\UrlInterface;
 use Magento\Framework\App\Router\ActionList;
 use Magento\Framework\App\Router\PathConfigInterface;
 use Apsis\One\Service\BaseService;
-use Apsis\One\Block\Abandoned\CheckoutHelperBlock;
-use Apsis\One\Block\Abandoned\CartBlock;
 use Throwable;
 
 class Router extends Base
@@ -140,15 +139,15 @@ class Router extends Base
         ]
     ];
     const INTERNAL_STATIC_PATH_TO_ACTION_MAP = [
-        'apsis/abandoned/cart' => [
+        AbandonedService::CART_CONTENT_ENDPOINT => [
             'actionPath' => 'frontend_abandoned',
             'action' => 'cart'
         ],
-        CartBlock::CHECKOUT_ENDPOINT => [
+        AbandonedService::CHECKOUT_ENDPOINT => [
             'actionPath' => 'frontend_abandoned',
             'action' => 'checkout'
         ],
-        CheckoutHelperBlock::UPDATER_URL => [
+        AbandonedService::UPDATER_URL => [
             'actionPath' => 'frontend_abandoned',
             'action' => 'helper'
         ],

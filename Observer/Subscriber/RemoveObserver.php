@@ -9,7 +9,7 @@ use Throwable;
 
 class RemoveObserver extends AbstractObserver
 {
-    const REGISTRY_NAME = '_subscriber_delete_after';
+    const REGISTRY_NAME = '_apsis__subscriber_delete_after';
 
     /**
      * @inheritdoc
@@ -17,12 +17,11 @@ class RemoveObserver extends AbstractObserver
     public function execute(Observer $observer)
     {
         try {
-            $subscriber = $this->getModelFromObserver($observer, ProfileService::ENTITY_TYPE_SUBSCRIBER);
-            if (! $subscriber) {
-                return $this;
-            }
-
-            return $this->executeForCustomerAndSubscriber($subscriber, ProfileService::PROFILE_DELETE);
+            return $this->executeForCustomerAndSubscriber(
+                $observer,
+                ProfileService::TYPE_SUBSCRIBER,
+                ProfileService::OP_DELETE
+            );
         } catch (Throwable $e) {
             $this->profileService->logError(__METHOD__, $e);
             return $this;

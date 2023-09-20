@@ -70,7 +70,7 @@ class ReviewData extends AbstractData
             return array_merge(
                 $commonDataArray,
                 [
-                    'review_rating' => $this->getTranslatedRating($voteCollection, $baseService),
+                    'review_rating' => $voteCollection->getSize() ? (int) $voteCollection->getFirstItem()->getValue():0,
                     'review_text' => (string) $review->getDetail()
                 ]
             );
@@ -78,27 +78,5 @@ class ReviewData extends AbstractData
             $baseService->logError(__METHOD__, $e);
             return [];
         }
-    }
-
-    /**
-     * @param Collection $voteCollection
-     * @param BaseService $baseService
-     *
-     * @return int
-     */
-    private function getTranslatedRating(Collection $voteCollection, BaseService $baseService): int
-    {
-        $rating = 0;
-        try {
-            if ($voteCollection->getSize()) {
-                $rating = (int) $voteCollection->getFirstItem()->getValue();
-                if ($rating > 0) {
-                    $rating *= 20;
-                }
-            }
-        } catch (Throwable $e) {
-            $baseService->logError(__METHOD__, $e);
-        }
-        return $rating;
     }
 }

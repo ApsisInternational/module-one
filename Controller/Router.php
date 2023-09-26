@@ -136,17 +136,21 @@ class Router extends Base
                     'requiredRouteParams' => ['action', 'taskId', 'task', 'subTask']
                 ]
             ]
-        ]
-    ];
-    const INTERNAL_STATIC_PATH_TO_ACTION_MAP = [
+        ],
         AbandonedService::CART_CONTENT_ENDPOINT => [
-            'actionPath' => 'frontend_abandoned',
-            'action' => 'cart'
+            'actionPath' => 'api_abandoned',
+            'action' => 'index',
+            'method' => 'getCartContent',
+            'requiredRouteParams' => ['action', 'task', 'taskId']
         ],
         AbandonedService::CHECKOUT_ENDPOINT => [
-            'actionPath' => 'frontend_abandoned',
-            'action' => 'checkout'
+            'actionPath' => 'api_abandoned',
+            'action' => 'index',
+            'method' => 'rebuildCartCheckout',
+            'requiredRouteParams' => ['action', 'task', 'taskId']
         ],
+    ];
+    const INTERNAL_STATIC_PATH_TO_ACTION_MAP = [
         AbandonedService::UPDATER_URL => [
             'actionPath' => 'frontend_abandoned',
             'action' => 'helper'
@@ -199,8 +203,9 @@ class Router extends Base
     public function match(RequestInterface $request): ?ActionInterface
     {
         try {
-            // If path is related to old links
             $requestPath = trim($request->getPathInfo(), '/');
+
+            // If path is related to old links
             foreach (self::INTERNAL_STATIC_PATH_TO_ACTION_MAP as $path => $config) {
                 if (str_contains($requestPath, $path)) {
                     return $this->forwardRequest($request, $config, []);
@@ -232,7 +237,7 @@ class Router extends Base
                 return $this->forwardError($request);
             }
 
-            // Validate taskId, if required and need to be a number
+            // Validate taskId, if required
             if (in_array('taskId', $this->_requiredParams) && (empty($routeParams['taskId']))) {
                 return $this->forwardError($request);
             }

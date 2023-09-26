@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Service;
 
+use Apsis\One\Controller\Router;
 use Apsis\One\Logger\Logger;
 use Apsis\One\Service\Sub\SubAbandonedService;
 use Magento\Framework\App\Config\Storage\WriterInterface;
@@ -16,8 +17,8 @@ use Throwable;
 
 class AbandonedService extends AbstractCronService
 {
-    const CART_CONTENT_ENDPOINT = 'apsis/abandoned/cart';
-    const CHECKOUT_ENDPOINT = 'apsis/abandoned/checkout';
+    const CART_CONTENT_ENDPOINT = Router::API_PREFIX . 'abandoned/cart';
+    const CHECKOUT_ENDPOINT = Router::API_PREFIX . 'abandoned/checkout';
     const UPDATER_URL = 'apsis/abandoned/helper';
 
     /**

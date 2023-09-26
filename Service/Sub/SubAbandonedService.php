@@ -90,35 +90,37 @@ class SubAbandonedService
                 }
 
                 $cartData = $this->getCartContentDataModel()->getCartData($quote, $profile, $this->profileService);
-                if (isset($cartData['cart_content']) && isset($cartData['cart_event'])) {
-                    $acData['carts'][] = [
-                        'quote_id' => (int) $quote->getId(),
-                        'cart_data' => (string) json_encode($cartData['cart_content']),
-                        'store_id' => (int) $quote->getStoreId(),
-                        'profile_id' => (int) $profile->getId(),
-                        'customer_id' => (int) $quote->getCustomerId(),
-                        'subscriber_id' => (int) $profile->getSubscriberId(),
-                        'email' => (string) $quote->getCustomerEmail(),
-                        'token' => $cartData['cart_content']['token'],
-                        'created_at' => $createdAt
-                    ];
-
-                    $subEventData = $cartData['cart_event']['items'];
-                    unset($cartData['cart_event']['items']);
-                    $acData['events'][] = [
-                        'type' => EventModel::EVENT_CART_ABANDONED,
-                        'event_data' => (string) json_encode($cartData['cart_event']),
-                        'sub_event_data' => (string) json_encode($subEventData),
-                        'profile_id' => (int) $profile->getId(),
-                        'customer_id' => (int) $quote->getCustomerId(),
-                        'subscriber_id' => (int) $profile->getSubscriberId(),
-                        'store_id' => (int) $quote->getStoreId(),
-                        'email' => (string) $quote->getCustomerEmail(),
-                        'sync_status' => EventModel::STATUS_PENDING,
-                        'created_at' => $createdAt,
-                        'updated_at' => $createdAt,
-                    ];
+                if (empty($cartData['cart_content']) || empty($cartData['cart_event']) || empty($cartData['token'])) {
+                    continue;
                 }
+
+                $acData['carts'][] = [
+                    'quote_id' => (int) $quote->getId(),
+                    'cart_data' => (string) json_encode($cartData['cart_content']),
+                    'store_id' => (int) $quote->getStoreId(),
+                    'profile_id' => (int) $profile->getId(),
+                    'customer_id' => (int) $quote->getCustomerId(),
+                    'subscriber_id' => (int) $profile->getSubscriberId(),
+                    'email' => (string) $quote->getCustomerEmail(),
+                    'token' => $cartData['token'],
+                    'created_at' => $createdAt
+                ];
+
+                $subEventData = $cartData['cart_event']['items'];
+                unset($cartData['cart_event']['items']);
+                $acData['events'][] = [
+                    'type' => EventModel::EVENT_CART_ABANDONED,
+                    'event_data' => (string) json_encode($cartData['cart_event']),
+                    'sub_event_data' => (string) json_encode($subEventData),
+                    'profile_id' => (int) $profile->getId(),
+                    'customer_id' => (int) $quote->getCustomerId(),
+                    'subscriber_id' => (int) $profile->getSubscriberId(),
+                    'store_id' => (int) $quote->getStoreId(),
+                    'email' => (string) $quote->getCustomerEmail(),
+                    'sync_status' => EventModel::STATUS_PENDING,
+                    'created_at' => $createdAt,
+                    'updated_at' => $createdAt,
+                ];
             } catch (Throwable $e) {
                 $abandonedService->logError(__METHOD__, $e);
                 continue;

@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Service;
 
+use Apsis\One\Controller\Router;
 use Apsis\One\Logger\Logger;
 use DateTime;
 use DateTimeZone;
@@ -444,7 +445,7 @@ class BaseService
     {
         try {
             $store = $this->getStore($request->getParam('store'));
-            return $store->getBaseUrl() . $store->getCode() . '/apsisendpoint/';
+            return $store->getBaseUrl() . $store->getCode() . '/' . Router::API_PREFIX;
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return '';

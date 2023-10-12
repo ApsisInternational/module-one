@@ -46,7 +46,9 @@ class Index extends AbstractProfile
     protected function getProfileConsentBases(): ResponseInterface
     {
         try {
-            return $this->sendResponse(200, null, json_encode(self::CONSENT_BASES));
+            return (int) $this->queryParams['page'] === 0 ?
+                $this->sendResponse(200, null, json_encode(self::CONSENT_BASES)) :
+                $this->sendResponse(200, null, json_encode([]));
         } catch (Throwable $e) {
             $this->service->logError(__METHOD__, $e);
             return $this->sendErrorInResponse(500);

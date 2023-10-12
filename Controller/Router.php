@@ -21,7 +21,9 @@ use Throwable;
 class Router extends Base
 {
     const DEFAULT_ROUTER_PARAMS = ['storeCode', 'moduleFrontName', 'area', 'actionPath'];
-    const API_PREFIX = 'apsisendpoint/v1/';
+    const API_VERSION = 'v1';
+    const API_ROUTE = 'apsisendpoint';
+    const API_PREFIX = self::API_ROUTE . '/' . self::API_VERSION. '/';
     const API_STATIC_PATH_TO_ACTION_MAP = [
         self::API_PREFIX . 'system_information' => [
             'actionPath' => 'api_systeminformation',

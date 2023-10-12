@@ -445,7 +445,7 @@ class BaseService
     {
         try {
             $store = $this->getStore($request->getParam('store'));
-            return $store->getBaseUrl() . $store->getCode() . '/' . Router::API_PREFIX;
+            return $store->getBaseUrl() . $store->getCode() . '/' . Router::API_ROUTE;
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return '';

@@ -94,9 +94,6 @@ abstract class AbstractApi extends AbstractAction
     public function execute(): ResponseInterface
     {
         try {
-            /** @todo remove */
-            $this->service->log($this->getRequest());
-
             $httpMethod = (string) $this->getRequest()->getMethod();
             $httpMethod = $httpMethod === 'HEAD' ? 'GET' : $httpMethod;
             $actionMethod = (string) $this->getRequest()->getParam('actionMethod');
@@ -131,10 +128,7 @@ abstract class AbstractApi extends AbstractAction
                 return $this->sendErrorInResponse(400);
             }
 
-            $return = call_user_func([$this, $classMethod]);
-            /** @todo remove */
-            $this->service->log($return);
-            return $return;
+            return call_user_func([$this, $classMethod]);
         } catch (Throwable $e) {
             $this->service->logError(__METHOD__, $e);
             return $this->sendErrorInResponse(500);

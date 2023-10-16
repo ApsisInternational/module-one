@@ -68,6 +68,7 @@ class Index extends AbstractProfile
         'rp_token',
     ];
     const ENTITY_NAME = 'profile';
+    const ENTITY_PRIMARY_COL = 'profile_id';
 
     /**
      * @inheirtDoc

@@ -123,7 +123,7 @@ abstract class AbstractProfile extends AbstractApi
             $records = [];
             /** @var ProfileModel $profile */
             foreach ($collection as $profile) {
-                $records[] = [ProfilesIndex::ENTITY_NAME => $profile->getId()];
+                $records[] = [ProfilesIndex::ENTITY_PRIMARY_COL => $profile->getId()];
             }
             return $records;
         } catch (Throwable $e) {

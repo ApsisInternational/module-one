@@ -16,6 +16,6 @@ class Index extends AbstractIndex
      */
     protected function getLabelTitle(): string
     {
-        return 'Webhook Queue';
+        return 'DeltaSync Queue';
     }
 }

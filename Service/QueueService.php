@@ -428,7 +428,7 @@ class QueueService extends AbstractCronService
             if (empty($payload) || empty($key)) {
                 return null;
             }
-            return base64_encode(hash_hmac('sha256', $payload, $key, true));
+            return 'sha256=' . hash_hmac('sha256', $payload, $key);
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return null;

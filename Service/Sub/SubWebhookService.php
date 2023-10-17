@@ -39,7 +39,6 @@ class SubWebhookService
             $webhooks = [];
             /** @var WebhookModel $item */
             foreach ($collection as $item) {
-                $item->afterLoad();
                 if ($object) {
                     $webhook['object'] = $item;
                 } else {

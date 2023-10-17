@@ -95,7 +95,7 @@ abstract class AbstractApi extends AbstractAction
     {
         try {
             if (getenv('APSIS_DEVELOPER')) {
-                $this->service->log($this->getRequest());
+                $this->service->debug('request_info', ['request' => $this->getRequest()]);
             }
 
             $httpMethod = (string) $this->getRequest()->getMethod();
@@ -339,7 +339,7 @@ abstract class AbstractApi extends AbstractAction
             ->setHeader('Content-Type', 'application/json', true);
 
         if (getenv('APSIS_DEVELOPER')) {
-            $this->service->log($response);
+            $this->service->debug('response_info', ['response' => $response]);
         }
 
         return $response;

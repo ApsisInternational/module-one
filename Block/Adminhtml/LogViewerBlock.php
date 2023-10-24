@@ -55,7 +55,7 @@ class LogViewerBlock extends Container
                 $contents = sprintf('Log file is not readable. File path is %s', $logFile);
             } else {
                 $size = filesize($logFile);
-                $contents = file_get_contents($logFile, false, null, '-' . $size, 2000000);
+                $contents = file_get_contents($logFile, false, null, '-' . $size);
             }
             return $contents;
         } catch (Throwable $e) {

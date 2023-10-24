@@ -34,15 +34,15 @@ class EventService extends AbstractCronService
     /**
      * Event discriminators
      */
-    const SUBSCRIPTION_CHANGED_DISCRIMINATOR = 'SUBSCRIPTION_CHANGED_DISCRIMINATOR'; //@todo
-    const LOGGED_IN_DISCRIMINATOR = 'LOGGED_IN_DISCRIMINATOR'; //@todo
-    const PRODUCT_WISHED__DISCRIMINATOR = 'PRODUCT_WISHED__DISCRIMINATOR'; //@todo
-    const PRODUCT_REVIEWED_DISCRIMINATOR = 'PRODUCT_REVIEWED_DISCRIMINATOR'; //@todo
-    const CART_ABANDONED_DISCRIMINATOR = 'CART_ABANDONED_DISCRIMINATOR'; //@todo
-    const CART_ABANDONED_PRODUCT_DISCRIMINATOR = 'CART_ABANDONED_PRODUCT_DISCRIMINATOR'; //@todo
-    const ORDER_PLACED_DISCRIMINATOR = 'ORDER_PLACED_DISCRIMINATOR'; //@todo
-    const ORDER_PLACED_PRODUCT_DISCRIMINATOR = 'ORDER_PLACED_PRODUCT_DISCRIMINATOR'; //@todo
-    const PRODUCT_CARTED_DISCRIMINATOR = 'PRODUCT_CARTED_DISCRIMINATOR'; //@todo
+    const SUBSCRIPTION_CHANGED_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.subscription-changed';
+    const LOGGED_IN_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.logged-in';
+    const PRODUCT_WISHED__DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.product-wished';
+    const PRODUCT_REVIEWED_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.product-reviewed';
+    const CART_ABANDONED_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.cart-abandoned-cart';
+    const CART_ABANDONED_PRODUCT_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.cart-abandoned-product';
+    const ORDER_PLACED_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.order-placed-order';
+    const ORDER_PLACED_PRODUCT_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.order-placed-product';
+    const PRODUCT_CARTED_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.product-carted';
 
     /**
      * @var EventResource

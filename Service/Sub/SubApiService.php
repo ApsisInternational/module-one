@@ -109,8 +109,9 @@ class SubApiService
                         BaseService::PATH_APSIS_API_TOKEN => '',
                     ];
                     $check = $apiService->saveStoreConfig($store, $configs);
-                    $apiService->log(
-                        $check === true ? 'All API configs removed' : 'Unable to remove api configs'
+                    $apiService->debug(
+                        $check === true ? 'All API configs removed' : 'Unable to remove api configs',
+                        ['Store Id' => $store->getId()]
                     );
                 }
             }

@@ -94,9 +94,7 @@ abstract class AbstractApi extends AbstractAction
     public function execute(): ResponseInterface
     {
         try {
-            if (getenv('APSIS_DEVELOPER')) {
-                $this->service->log($this->getRequest());
-            }
+            $this->logRequestResponse($this->getRequest());
 
             $httpMethod = (string) $this->getRequest()->getMethod();
             $httpMethod = $httpMethod === 'HEAD' ? 'GET' : $httpMethod;
@@ -338,10 +336,23 @@ abstract class AbstractApi extends AbstractAction
             ->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0', true)
             ->setHeader('Content-Type', 'application/json', true);
 
-        if (getenv('APSIS_DEVELOPER')) {
-            $this->service->log($response);
-        }
+        $this->logRequestResponse($response);
 
         return $response;
+    }
+
+    /**
+     * @param ResponseInterface|RequestInterface $object
+     *
+     * @return void
+     */
+    protected function logRequestResponse(ResponseInterface|RequestInterface $object): void
+    {
+        if (getenv('APSIS_DEVELOPER')) {
+            $this->service->debug(
+                $object instanceof ResponseInterface? 'API Response' : 'API Request',
+                [str_replace(PHP_EOL, PHP_EOL . '        ', PHP_EOL . $object->toString())]
+            );
+        }
     }
 }

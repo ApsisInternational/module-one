@@ -351,7 +351,7 @@ class InstallSchema implements InstallSchemaInterface
     private function createTable(string $table, array $columns, SchemaSetupInterface $setup): void
     {
         try {
-            $this->baseService->log(__METHOD__, [$table]);
+            $this->baseService->log(__METHOD__);
 
             // Create new table instance
             $tableName = $setup->getTable($table);

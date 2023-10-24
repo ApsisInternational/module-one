@@ -365,7 +365,7 @@ abstract class AbstractRestApi
             }
 
             //Log error
-            $this->service->debug($method, (array) $response);
+            $this->service->debug($method, (array)$response);
 
             //All other error response handling
             return (in_array($response->status, self::HTTP_ERROR_CODE_TO_RETRY)) ? false : (string) $response->detail;

@@ -85,53 +85,43 @@ class BaseService
 
     /**
      * @param string $message
-     * @param array $extra
      *
      * @return void
      */
-    public function log(string $message, array $extra = []): void
+    public function log(string $message): void
     {
-        $this->logger->info($this->addModuleVersionToMessage($message), $extra);
+        $this->logger->info($this->addModuleVersionToMessage($message));
     }
 
     /**
      * @param string $message
      * @param array $response
-     * @param array $extra
      *
      * @return void
      */
-    public function debug(string $message, array $response = [], array $extra = []): void
+    public function debug(string $message, array $response = []): void
     {
-        $this->logger->debug($this->getStringForLog(['Message' => $message, 'Information' => $response]), $extra);
+        $info = [
+            'Message' => $message,
+            'Information' => $response
+        ];
+        $this->logger->debug($this->getStringForLog($info));
     }
 
     /**
      * @param string $classMethodName
      * @param Throwable $e
-     * @param array $extra
      *
      * @return void
      */
-    public function logError(string $classMethodName, Throwable $e, array $extra = []): void
+    public function logError(string $classMethodName, Throwable $e): void
     {
         $info = [
             'Method' => $classMethodName,
             'Exception|Error' => $e->getMessage(),
             'Trace' => str_replace(PHP_EOL, PHP_EOL . '        ', PHP_EOL . $e->getTraceAsString())
         ];
-        $this->error($this->getStringForLog($info), $extra);
-    }
-
-    /**
-     * @param string $message
-     * @param array $extra
-     *
-     * @return void
-     */
-    public function error(string $message, array $extra = []): void
-    {
-        $this->logger->error($this->addModuleVersionToMessage($message), $extra);
+        $this->logger->error($this->getStringForLog($info));
     }
 
     /**
@@ -151,7 +141,7 @@ class BaseService
      */
     private function addModuleVersionToMessage(string $message): string
     {
-        return '(Module v' . $this->getCurrentVersion() . ') ' . $message;
+        return '(Module v' . $this->getCurrentVersion() . ') ' . $message . PHP_EOL . '*** -------------------- ***';
     }
 
     /**

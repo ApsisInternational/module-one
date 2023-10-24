@@ -101,7 +101,7 @@ class SubApiService
                 if ($response && isset($response->status) &&
                     in_array($response->status, AbstractRestApi::HTTP_CODES_DISABLE_MODULE)
                 ) {
-                    $apiService->debug(__METHOD__, (array) $response);
+                    $apiService->debug(__METHOD__, (array)$response);
                     $configs = [
                         BaseService::PATH_APSIS_CLIENT_ID => '',
                         BaseService::PATH_APSIS_CLIENT_SECRET => '',
@@ -110,8 +110,7 @@ class SubApiService
                     ];
                     $check = $apiService->saveStoreConfig($store, $configs);
                     $apiService->log(
-                        $check === true ? 'All API configs removed' : 'Unable to remove api configs',
-                        ['Store Id' => $store->getId()]
+                        $check === true ? 'All API configs removed' : 'Unable to remove api configs'
                     );
                 }
             }

@@ -59,7 +59,7 @@ abstract class AbstractWebhook extends AbstractApi
             if (is_int($status)) {
                 return $this->sendErrorInResponse($status);
             }
-            return $this->sendResponse(204);
+            return $this->sendResponse(200);
         } catch (Throwable $e) {
             $this->service->logError(__METHOD__, $e);
             return $this->sendErrorInResponse(500);

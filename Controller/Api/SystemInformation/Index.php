@@ -120,7 +120,7 @@ class Index extends AbstractApi
                 return $this->sendErrorInResponse(500);
             }
 
-            return $this->sendResponse(204);
+            return $this->sendResponse(200);
         } catch (Throwable $e) {
             $this->service->logError(__METHOD__, $e);
             return $this->sendErrorInResponse(500);

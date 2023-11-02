@@ -16,6 +16,6 @@ class Index extends AbstractIndex
      */
     protected function getLabelTitle(): string
     {
-        return 'Logs';
+        return 'Integration Logs';
     }
 }

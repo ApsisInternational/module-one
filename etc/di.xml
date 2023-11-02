@@ -14,6 +14,8 @@
                       xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Queue\Collection</item>
                 <item name="apsis_webhook_report_grid_data_source"
                       xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Webhook\Collection</item>
+                <item name="apsis_config_report_grid_data_source"
+                      xsi:type="string">Apsis\One\Ui\Model\ResourceModel\Config\Collection</item>
             </argument>
         </arguments>
     </type>

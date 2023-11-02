@@ -77,7 +77,6 @@ class WebhookModel extends AbstractModel
             $resourceCollection,
             $data
         );
-        $this->dateTime = $dateTime;
         $this->encryptor = $encryptor;
     }
 

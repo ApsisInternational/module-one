@@ -26,6 +26,7 @@ class BaseService
     const APSIS_ABANDONED_TABLE = 'apsis_abandoned';
     const APSIS_WEBHOOK_TABLE = 'apsis_webhook';
     const APSIS_QUEUE_TABLE = 'apsis_queue';
+    const APSIS_CONFIG_TABLE = 'apsis_config';
 
     // Config keys, Integration
     const PATH_CONFIG_API_KEY = 'apsis_one_connect/api/key';
@@ -33,19 +34,8 @@ class BaseService
     const PATH_CONFIG_AC_DURATION = 'apsis_one_configuration/abandoned_cart/duration';
     const PATH_CONFIG_TRACKING_SCRIPT = 'apsis_one_configuration/tracking/script';
 
-    // Config keys, One Api
-    const PATH_APSIS_CLIENT_ID = 'apsis_one/api/client_id';
-    const PATH_APSIS_CLIENT_SECRET = 'apsis_one/api/client_secret';
-    const PATH_APSIS_API_URL = 'apsis_one/api/url';
-    const PATH_APSIS_API_TOKEN = 'apsis_one/api/token';
-    const PATH_APSIS_API_TOKEN_EXPIRY = 'apsis_one/api/token_expiry';
-    const PATH_APSIS_CONFIG_SECTION = 'apsis_one/config/section';
-    const PATH_APSIS_CONFIG_KEYSPACE = 'apsis_one/config/profile_key';
-
     const CONFIG_PATHS_SECURE = [
-        self::PATH_CONFIG_API_KEY,
-        self::PATH_APSIS_CLIENT_SECRET,
-        self::PATH_APSIS_API_TOKEN
+        self::PATH_CONFIG_API_KEY
     ];
 
     // APSIS configs

@@ -27,7 +27,6 @@ class WebhookCollection extends AbstractCollection
         BaseService $service,
         int $storeId = 0
     ): WebhookModel|int {
-        $item = 500;
         try {
             $filters = ['type' => $type];
             if (strlen($subscriptionId)) {
@@ -44,10 +43,12 @@ class WebhookCollection extends AbstractCollection
             } else {
                 $item = 404;
             }
+
+            return $item;
         } catch (Throwable $e) {
             $service->logError(__METHOD__, $e);
+            return 500;
         }
-        return $item;
     }
 
     /**

@@ -10,7 +10,7 @@ abstract class AbstractRestApi
 {
     const HTTP_CODE_CONFLICT = 409;
     const HTTP_ERROR_CODE_TO_RETRY = [500, 501, 503, 408, 429];
-    const HTTP_CODES_DISABLE_MODULE = [400, 401, 403];
+    const HTTP_CODES_DISABLE = [400, 401, 403];
     const HTTP_CODES_FORCE_GENERATE_TOKEN = [401, 403];
 
     /**

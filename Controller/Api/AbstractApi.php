@@ -5,6 +5,7 @@ namespace Apsis\One\Controller\Api;
 use Apsis\One\Controller\AbstractAction;
 use Apsis\One\Controller\Api\ProfileLists\Records;
 use Apsis\One\Service\BaseService;
+use Apsis\One\Service\ConfigService;
 use Apsis\One\Service\ProfileService;
 use Apsis\One\Service\WebhookService;
 use Magento\Customer\Model\Customer;
@@ -19,9 +20,9 @@ use Throwable;
 abstract class AbstractApi extends AbstractAction
 {
     /**
-     * @var BaseService|ProfileService|WebhookService
+     * @var BaseService|ProfileService|WebhookService|ConfigService
      */
-    protected BaseService|ProfileService|WebhookService $service;
+    protected BaseService|ProfileService|WebhookService|ConfigService $service;
 
     /**
      * @var StoreInterface
@@ -189,11 +190,22 @@ abstract class AbstractApi extends AbstractAction
         string $classMethod,
         string $storeCode
     ): bool {
-        if (empty($httpMethod) || empty($actionMethod) || ! isset($this->allowedHttpMethods[$actionMethod]) ||
-            ! isset($this->requiredParams[$classMethod]['query']) || ! method_exists($this, $classMethod) ||
-            (in_array($httpMethod, ['POST', 'PATCH']) && ! isset($this->requiredParams[$classMethod]['post'])) ||
-            empty($storeCode)
+        if (empty($httpMethod) || empty($actionMethod) || empty($classMethod) || empty($storeCode) ||
+            ! isset($this->allowedHttpMethods[$actionMethod]) || ! isset($this->requiredParams[$classMethod]) ||
+            ! method_exists($this, $classMethod)
         ) {
+            $this->service->debug(
+                'Not everything exist',
+                [
+                    'httpMethod' => $httpMethod,
+                    'actionMethod' => $actionMethod,
+                    'classMethod' => $classMethod,
+                    'storeCode' => $storeCode,
+                    'allowedHttpMethods' => $this->allowedHttpMethods,
+                    'requiredParams' => $this->requiredParams,
+                    'class methods list' => get_class_methods($this)
+                ]
+            );
             return false;
         }
         return true;

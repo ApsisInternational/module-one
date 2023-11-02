@@ -18,16 +18,5 @@
                 <script></script>
             </tracking>
         </apsis_one_configuration>
-        <apsis_one>
-            <api>
-                <url></url>
-                <client_id></client_id>
-                <client_secret></client_secret>
-                <token></token>
-                <token_expiry></token_expiry>
-                <section></section>
-                <profile_key></profile_key>
-            </api>
-        </apsis_one>
     </default>
 </config>

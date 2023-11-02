@@ -3,6 +3,7 @@
 namespace Apsis\One\Service;
 
 use Apsis\One\Logger\Logger;
+use Apsis\One\Model\ConfigModel;
 use Apsis\One\Service\Api\ClientApi;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\Module\ModuleListInterface;
@@ -10,10 +11,10 @@ use Magento\Framework\Stdlib\Cookie\PhpCookieManagerFactory;
 use Magento\Framework\Stdlib\Cookie\PublicCookieMetadataFactory;
 use Apsis\One\Model\ProfileModel;
 use Apsis\One\Service\Api\ClientApiFactory;
-use Apsis\One\Service\Sub\SubApiService;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Apsis\One\Service\Api\AbstractRestApi;
 use Throwable;
 
 class ApiService extends BaseService
@@ -37,9 +38,9 @@ class ApiService extends BaseService
     private ClientApiFactory $clientFactory;
 
     /**
-     * @var SubApiService
+     * @var ConfigService
      */
-    private SubApiService $subApiService;
+    public ConfigService $configService;
 
     /**
      * @var array
@@ -52,9 +53,9 @@ class ApiService extends BaseService
      * @param WriterInterface $writer
      * @param ModuleListInterface $moduleList
      * @param ClientApiFactory $clientFactory
-     * @param SubApiService $subApiService
      * @param PhpCookieManagerFactory $phpCookieManager
      * @param PublicCookieMetadataFactory $cookieMetadataFactory
+     * @param ConfigService $configService
      */
     public function __construct(
         Logger $logger,
@@ -62,15 +63,15 @@ class ApiService extends BaseService
         WriterInterface $writer,
         ModuleListInterface $moduleList,
         ClientApiFactory $clientFactory,
-        SubApiService $subApiService,
         PhpCookieManagerFactory $phpCookieManager,
-        PublicCookieMetadataFactory $cookieMetadataFactory
+        PublicCookieMetadataFactory $cookieMetadataFactory,
+        ConfigService $configService
     ) {
         parent::__construct($logger, $storeManager, $writer, $moduleList);
         $this->cookieMetadataFactory = $cookieMetadataFactory;
         $this->phpCookieManager = $phpCookieManager;
         $this->clientFactory = $clientFactory;
-        $this->subApiService = $subApiService;
+        $this->configService = $configService;
     }
 
     /**
@@ -89,15 +90,19 @@ class ApiService extends BaseService
     public function getApiClient(StoreInterface $store): ClientApi|bool
     {
         try {
-            $clientId = $this->subApiService->getClientId($store, $this);
-            $clientSecret = $this->subApiService->getClientSecret($store, $this);
-            $apiUrl = $this->subApiService->getApiUrl($store, $this);
+            $configModel = $this->configService->getActiveConfigForStore($store->getId());
+            if (empty($configModel) || empty($configModel->getApiConfig())) {
+                return false;
+            }
 
+            $clientId = $configModel->getApiConfig()->getClientId();
+            $clientSecret = $configModel->getApiConfig()->getClientSecret();
+            $apiUrl = $configModel->getApiConfig()->getApiUrl();
             if (empty($clientId) || empty($clientSecret) || empty($apiUrl)) {
                 return false;
             }
 
-            if (! $this->subApiService->isTokenExpired($store, $this) && isset($this->cachedClient[$clientId])) {
+            if (! $this->isTokenExpired($configModel) && isset($this->cachedClient[$clientId])) {
                 if (getenv('APSIS_DEVELOPER')) {
                     $this->debug('apiClient from cache.', ['Client Id' => $clientId, 'Store Id' => $store->getId()]);
                 }
@@ -109,7 +114,7 @@ class ApiService extends BaseService
                 ->setClientCredentials($clientId, $clientSecret)
                 ->setService($this);
 
-            $token = $this->subApiService->getToken($apiClient, $store, $this);
+            $token = $this->getToken($apiClient, $configModel);
             if (empty($token)) {
                 return false;
             }
@@ -190,8 +195,13 @@ class ApiService extends BaseService
     public function mergeProfile(StoreInterface $store, ProfileModel $profile, CustomerInterface $customer): void
     {
         try {
-            $sectionDiscriminator = $this->getStoreConfig($store, BaseService::PATH_APSIS_CONFIG_SECTION);
-            $integrationKeySpace = $this->getStoreConfig($store, BaseService::PATH_APSIS_CONFIG_KEYSPACE);
+            $configModel = $this->configService->getActiveConfigForStore($store->getId());
+            if (empty($configModel) || empty($configModel->getApiConfig())) {
+                return;
+            }
+
+            $sectionDiscriminator = $configModel->getApiConfig()->getSectionDiscriminator();
+            $integrationKeySpace = $configModel->getApiConfig()->getKeyspaceDiscriminator();
             if (empty($sectionDiscriminator) || empty($integrationKeySpace)) {
                 return;
             }
@@ -326,5 +336,62 @@ class ApiService extends BaseService
             $this->logError(__METHOD__, $e);
         }
         return false;
+    }
+
+    public function getToken(ClientApi $apiClient, ConfigModel $configModel): string
+    {
+        try {
+            $token = $configModel->getApiToken();
+            if (empty($token) || $this->isTokenExpired($configModel)) {
+                $response = $apiClient->getAccessToken();
+                // Successfully renewed
+                if ($response && isset($response->access_token)) {
+                    $this->debug('Token renewed', ['Store Id' => $configModel->getStoreId()]);
+                    return $this->configService->saveApiTokenAndExpiry($configModel, $response);
+                }
+
+                // Error in generating token
+                if ($response && isset($response->status) &&
+                    in_array($response->status, AbstractRestApi::HTTP_CODES_DISABLE)
+                ) {
+                    $this->debug('Unable to renew token', (array) $response);
+                    $this->configService->markConfigInactive($configModel, $response);
+                }
+            }
+            return $token;
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return '';
+        }
+    }
+
+    /**
+     * @param ConfigModel $configModel
+     *
+     * @return bool
+     */
+    public function isTokenExpired(ConfigModel $configModel): bool
+    {
+        try {
+            $expiryTime = $configModel->getApiTokenExpiry();
+            $nowTime = $this->getDateTimeFromTimeAndTimeZone()
+                ->add($this->getDateIntervalFromIntervalSpec('PT15M'))
+                ->format('Y-m-d H:i:s');
+
+            $check = ($nowTime > $expiryTime);
+            if ($check) {
+                $info = [
+                    'Store Id' => $configModel->getStoreId(),
+                    'Is Expired/Empty' => true,
+                    'Last Expiry DateTime' => $expiryTime
+                ];
+                $this->debug(__METHOD__, $info);
+            }
+
+            return $check;
+        } catch (Throwable $e) {
+            $this->logError(__METHOD__, $e);
+            return true;
+        }
     }
 }

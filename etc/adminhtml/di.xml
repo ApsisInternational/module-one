@@ -36,4 +36,11 @@
             <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\WebhookResource</argument>
         </arguments>
     </virtualType>
+    <virtualType name="Apsis\One\Ui\Model\ResourceModel\Config\Collection"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">apsis_config</argument>
+            <argument name="resourceModel" xsi:type="string">Apsis\One\Model\ResourceModel\ConfigResource</argument>
+        </arguments>
+    </virtualType>
 </config>

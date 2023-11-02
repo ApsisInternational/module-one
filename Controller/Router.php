@@ -31,11 +31,11 @@ class Router extends Base
             'method' => 'SystemInformation',
             'requiredRouteParams' => []
         ],
-        self::API_PREFIX . 'system_information/config' => [
-            'actionPath' => 'api_systeminformation',
+        self::API_PREFIX . 'integration_configs' => [
+            'actionPath' => 'api_integrationconfig',
             'action' => 'index',
-            'method' => 'Config',
-            'requiredRouteParams' => ['action']
+            'method' => 'ConfigsList',
+            'requiredRouteParams' => []
         ],
         self::API_PREFIX . 'profile_entities' => [
             'actionPath' => 'api_profiles',
@@ -111,6 +111,12 @@ class Router extends Base
         ]
     ];
     const API_DYNAMIC_PATH_TO_ACTION_MAP = [
+        self::API_PREFIX . 'integration_configs/sections/' => [
+            'actionPath' => 'api_integrationconfig',
+            'action' => 'configs',
+            'method' => 'Config',
+            'requiredRouteParams' => ['action', 'taskId']
+        ],
         self::API_PREFIX . 'webhooks/records/subscriptions/' => [
             'actionPath' => 'api_webhooksrecords',
             'action' => 'subscription',

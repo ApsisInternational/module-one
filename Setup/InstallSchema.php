@@ -24,25 +24,30 @@ class InstallSchema implements InstallSchemaInterface
             self::COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK,
             self::COMMON_COLUMNS_PROFILE_EVENT_AC,
             self::COMMON_COLUMNS_EVENT_QUEUE,
-            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK
+            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK_CONFIG
         ],
         BaseService::APSIS_ABANDONED_TABLE => [
             self::COMMON_COLUMNS,
             self::COLUMNS_AC,
             self::COMMON_COLUMNS_PROFILE_EVENT_AC,
-            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK
+            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK_CONFIG
         ],
         BaseService::APSIS_WEBHOOK_TABLE => [
             self::COMMON_COLUMNS,
             self::COLUMNS_WEBHOOK,
-            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK,
+            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK_CONFIG,
             self::COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK
         ],
         BaseService::APSIS_QUEUE_TABLE => [
             self::COMMON_COLUMNS,
             self::COLUMNS_QUEUE,
-            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK,
+            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK_CONFIG,
             self::COMMON_COLUMNS_EVENT_QUEUE
+        ],
+        BaseService::APSIS_CONFIG_TABLE => [
+            self::COMMON_COLUMNS,
+            self::COLUMNS_CONFIG,
+            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK_CONFIG
         ]
     ];
     const COMMON_COLUMNS = [
@@ -70,7 +75,7 @@ class InstallSchema implements InstallSchemaInterface
             'Last Update Time'
         ]
     ];
-    const COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK = [
+    const COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK_CONFIG = [
         'created_at' => [
             'created_at',
             Table::TYPE_TIMESTAMP,
@@ -268,6 +273,50 @@ class InstallSchema implements InstallSchemaInterface
             'Exponential backoff config'
         ]
     ];
+    const COLUMNS_CONFIG = [
+        'section_discriminator' => [
+            'section_discriminator',
+            Table::TYPE_TEXT,
+            255,
+            ['nullable' => false],
+            'Section Discriminator'
+        ],
+        'integration_config' => [
+            'integration_config',
+            Table::TYPE_TEXT,
+            null,
+            ['nullable' => false],
+            'Installation Config'
+        ],
+        'api_token' => [
+            'api_token',
+            Table::TYPE_TEXT,
+            null,
+            ['nullable' => false, 'default' => ''],
+            'API Token'
+        ],
+        'api_token_expiry' => [
+            'api_token_expiry',
+            Table::TYPE_TEXT,
+            null,
+            ['nullable' => false, 'default' => ''],
+            'API Token Expiry'
+        ],
+        'error_message' => [
+            'error_message',
+            Table::TYPE_TEXT,
+            255,
+            ['nullable' => false, 'default' => ''],
+            'Error Message'
+        ],
+        'is_active' => [
+            'is_active',
+            Table::TYPE_SMALLINT,
+            null,
+            ['nullable' => false, 'default' => '1'],
+            'Is Active?'
+        ],
+    ];
     const TABLE_INDEXES = [
         'id',
         'quote_id',
@@ -287,7 +336,9 @@ class InstallSchema implements InstallSchemaInterface
         'subscriber_status',
         'type',
         'updated_at',
-        'subscription_id'
+        'subscription_id',
+        'section_discriminator',
+        'is_active'
     ];
     const TABLE_FOREIGN_KEYS = [
         'store_id' => ['table' => 'store', 'column' => 'store_id'],

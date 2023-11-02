@@ -85,7 +85,7 @@ class ApiService extends BaseService
     /**
      * @param StoreInterface $store
      *
-     * @return ClientApi|false
+     * @return ClientApi|bool
      */
     public function getApiClient(StoreInterface $store): ClientApi|bool
     {

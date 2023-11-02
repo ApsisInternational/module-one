@@ -8,7 +8,6 @@ use Apsis\One\Model\ConfigModel;
 use Apsis\One\Model\ConfigModelFactory;
 use Apsis\One\Model\ResourceModel\ConfigResource;
 use Apsis\One\Model\ResourceModel\Config\ConfigCollectionFactory;
-use Apsis\One\Service\Sub\SubConfigServiceFactory;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\Module\ModuleListInterface;
 use Magento\Store\Model\StoreManagerInterface;
@@ -77,9 +76,9 @@ class ConfigService extends BaseService
      * @param string $sectionDiscriminator
      * @param array $config
      *
-     * @return true|int
+     * @return bool|int
      */
-    public function createConfig(int $storeId, string $sectionDiscriminator, array $config): true|int
+    public function createConfig(int $storeId, string $sectionDiscriminator, array $config): bool|int
     {
         try {
             $configObj = $this->getConfigCollection()->findAConfigForStore($storeId, $this);
@@ -137,9 +136,9 @@ class ConfigService extends BaseService
      * @param int $storeId
      * @param string $sectionDiscriminator
      *
-     * @return true|int
+     * @return bool|int
      */
-    public function deleteConfig(int $storeId, string $sectionDiscriminator): true|int
+    public function deleteConfig(int $storeId, string $sectionDiscriminator): bool|int
     {
         try {
             $config = $this->getConfigCollection()

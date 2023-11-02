@@ -139,7 +139,7 @@ class CartContentData extends AbstractData
                     'product_image_link' => (string) $item['product_image_url'],
                     'product_link' => (string) $item['product_url'],
                     'product_price' => (float) $item['price_amount'],
-                    'product_category' => (string) $this->getProductCategoriesName($baseService),
+                    'product_categories' => (string) $this->getProductCategoriesName($baseService),
                     'product_quantity' => (float) $item['qty_ordered'],
                     'shop_currency' => (string) $acData['currency_code'],
                     'shop_name' => (string) $acData['store_name'],

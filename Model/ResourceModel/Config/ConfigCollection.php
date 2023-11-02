@@ -72,6 +72,6 @@ class ConfigCollection extends AbstractCollection
      */
     public function getActiveConfigForStore(int $storeId): ConfigCollection
     {
-        return $this->getCollection(['storeId' => $storeId, 'is_active' => 1], null, 1);
+        return $this->getCollection(['store_id' => $storeId, 'is_active' => 1], null, 1);
     }
 }

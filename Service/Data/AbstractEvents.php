@@ -8,7 +8,6 @@ use Apsis\One\Model\ResourceModel\EventResource;
 use Apsis\One\Service\BaseService;
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 use Magento\Framework\Stdlib\DateTime;
-use Magento\Review\Model\Review;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteColFactory;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderColFactory;
@@ -279,8 +278,7 @@ abstract class AbstractEvents
             }
 
             if ($collection instanceof ProductReviewCollection) {
-                $collection->addStatusFilter(Review::STATUS_APPROVED)
-                    ->addFieldToFilter('customer_id', ['in' => $values])
+                $collection->addFieldToFilter('customer_id', ['in' => $values])
                     ->addFieldToFilter('main_table.entity_id', 1)
                     ->addFieldToFilter('main_table.created_at', $this->fetchDuration);
             }

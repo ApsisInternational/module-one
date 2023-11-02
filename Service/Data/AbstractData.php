@@ -229,7 +229,7 @@ abstract class AbstractData
                 'product_image_link' => (string) $this->getProductImageUrl($storeId, $baseService),
                 'product_link' => (string) $this->getProductUrl($storeId, $baseService),
                 'product_price' => $this->isProductSet($baseService) ? round($this->product->getPrice(), 2) : 0.00,
-                'product_category' => $this->getProductCategoriesName($baseService),
+                'product_categories' => $this->getProductCategoriesName($baseService),
                 'shop_currency' => (string) $baseService->getStoreCurrency($storeId),
                 'shop_name' => (string) $baseService->getStoreName($storeId),
                 'shop_id' => (string) $storeId

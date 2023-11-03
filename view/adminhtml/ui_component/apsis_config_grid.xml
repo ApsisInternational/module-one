@@ -143,14 +143,14 @@
                 </item>
             </argument>
         </column>
-        <column name="created_at" class="Magento\Ui\Component\Listing\Columns\Date">
+        <column name="updated_at" class="Magento\Ui\Component\Listing\Columns\Date">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">dateRange</item>
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/date</item>
                     <item name="dataType" xsi:type="string">date</item>
                     <item name="sortOrder" xsi:type="number">60</item>
-                    <item name="label" xsi:type="string" translate="true">Created At</item>
+                    <item name="label" xsi:type="string" translate="true">Updated At</item>
                 </item>
             </argument>
         </column>

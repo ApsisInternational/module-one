@@ -16,38 +16,38 @@ class InstallSchema implements InstallSchemaInterface
             self::COMMON_COLUMNS,
             self::COMMON_COLUMNS_PROFILE_EVENT_AC,
             self::COLUMNS_PROFILE,
-            self::COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK
+            self::COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK_CONFIG
         ],
         BaseService::APSIS_EVENT_TABLE => [
             self::COMMON_COLUMNS,
             self::COLUMNS_EVENT,
-            self::COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK,
+            self::COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK_CONFIG,
             self::COMMON_COLUMNS_PROFILE_EVENT_AC,
             self::COMMON_COLUMNS_EVENT_QUEUE,
-            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK_CONFIG
+            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK
         ],
         BaseService::APSIS_ABANDONED_TABLE => [
             self::COMMON_COLUMNS,
             self::COLUMNS_AC,
             self::COMMON_COLUMNS_PROFILE_EVENT_AC,
-            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK_CONFIG
+            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK
         ],
         BaseService::APSIS_WEBHOOK_TABLE => [
             self::COMMON_COLUMNS,
             self::COLUMNS_WEBHOOK,
-            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK_CONFIG,
-            self::COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK
+            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK,
+            self::COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK_CONFIG
         ],
         BaseService::APSIS_QUEUE_TABLE => [
             self::COMMON_COLUMNS,
             self::COLUMNS_QUEUE,
-            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK_CONFIG,
+            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK,
             self::COMMON_COLUMNS_EVENT_QUEUE
         ],
         BaseService::APSIS_CONFIG_TABLE => [
             self::COMMON_COLUMNS,
             self::COLUMNS_CONFIG,
-            self::COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK_CONFIG
+            self::COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK_CONFIG
         ]
     ];
     const COMMON_COLUMNS = [
@@ -66,7 +66,7 @@ class InstallSchema implements InstallSchemaInterface
             'Store Id'
         ]
     ];
-    const COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK = [
+    const COMMON_COLUMNS_PROFILE_EVENT_WEBHOOK_CONFIG = [
         'updated_at' => [
             'updated_at',
             Table::TYPE_TIMESTAMP,
@@ -75,7 +75,7 @@ class InstallSchema implements InstallSchemaInterface
             'Last Update Time'
         ]
     ];
-    const COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK_CONFIG = [
+    const COMMON_COLUMNS_EVENT_QUEUE_AC_WEBHOOK = [
         'created_at' => [
             'created_at',
             Table::TYPE_TIMESTAMP,

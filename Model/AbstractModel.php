@@ -77,7 +77,7 @@ abstract class AbstractModel extends MagentoAbstractModel
     public function beforeSave(): static
     {
         parent::beforeSave();
-        if (! $this instanceof ProfileModel && $this->isObjectNew()) {
+        if ((! $this instanceof ProfileModel || ! $this instanceof ConfigModel) && $this->isObjectNew()) {
             $this->setCreatedAt($this->dateTime->formatDate(true));
 
             if ($this instanceof WebhookModel) {

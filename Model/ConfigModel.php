@@ -28,8 +28,8 @@ use Magento\Framework\Stdlib\DateTime;
  * @method $this setErrorMessage(string $value)
  * @method int getIsActive()
  * @method $this setIsActive(int $value)
- * @method string getCreatedAt()
- * @method $this setCreatedAt(string $value)
+ * @method string getUpdatedAt()
+ * @method $this setUpdatedAt(string $value)
  *
  */
 class ConfigModel extends AbstractModel

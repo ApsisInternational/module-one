@@ -251,7 +251,7 @@ class BaseService
         try {
             return $this->storeManager->getStore($storeId);
         } catch (Throwable $e) {
-            $this->log($e->getMessage() . " Store: $storeId");
+            $this->logError(__METHOD__, $e);
             return false;
         }
     }

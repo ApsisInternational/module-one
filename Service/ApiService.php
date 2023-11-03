@@ -84,17 +84,13 @@ class ApiService extends BaseService
 
     /**
      * @param StoreInterface $store
+     * @param ConfigModel $configModel
      *
      * @return ClientApi|bool
      */
-    public function getApiClient(StoreInterface $store): ClientApi|bool
+    public function getApiClient(StoreInterface $store, ConfigModel $configModel): ClientApi|bool
     {
         try {
-            $configModel = $this->configService->getActiveConfigForStore($store->getId());
-            if (empty($configModel) || empty($configModel->getApiConfig())) {
-                return false;
-            }
-
             $clientId = $configModel->getApiConfig()->getClientId();
             $clientSecret = $configModel->getApiConfig()->getClientSecret();
             $apiUrl = $configModel->getApiConfig()->getApiUrl();
@@ -102,7 +98,7 @@ class ApiService extends BaseService
                 return false;
             }
 
-            if (! $this->isTokenExpired($configModel) && isset($this->cachedClient[$clientId])) {
+            if (isset($this->cachedClient[$clientId])) {
                 if (getenv('APSIS_DEVELOPER')) {
                     $this->debug('apiClient from cache.', ['Client Id' => $clientId, 'Store Id' => $store->getId()]);
                 }
@@ -206,7 +202,7 @@ class ApiService extends BaseService
                 return;
             }
 
-            $apiClient = $this->getApiClient($store);
+            $apiClient = $this->getApiClient($store, $configModel);
             if (empty($apiClient)) {
                 return;
             }
@@ -219,8 +215,9 @@ class ApiService extends BaseService
             if ($this->syncProfile($apiClient, $sectionDiscriminator, $profile, $customer, $integrationKeySpace)) {
                 //If conflict on merge then set new cookie value for web keyspace
                 if ($apiClient->mergeProfile($keySpacesToMerge) === Api\AbstractRestApi::HTTP_CODE_CONFLICT) {
-                    //Log it
-                    $this->debug(__METHOD__, ['Message' => 'Conflict, creating new cookie.']);
+                    if (getenv('APSIS_DEVELOPER')) {
+                        $this->debug(__METHOD__, ['Message' => 'Conflict, creating new cookie.']);
+                    }
 
                     //Create new cookie value
                     $keySpacesToMerge[1]['profile_key'] = md5($profile->getId() . date('U'));
@@ -290,9 +287,10 @@ class ApiService extends BaseService
                     $cookieMetaData
                 );
 
-                //Log it
-                $info = ['Name' => self::APSIS_WEB_COOKIE_NAME, 'Value' => $keySpacesToMerge[1]['profile_key']];
-                $this->debug(__METHOD__, $info);
+                if (getenv('APSIS_DEVELOPER')) {
+                    $info = ['Name' => self::APSIS_WEB_COOKIE_NAME, 'Value' => $keySpacesToMerge[1]['profile_key']];
+                    $this->debug(__METHOD__, $info);
+                }
             }
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
@@ -338,7 +336,13 @@ class ApiService extends BaseService
         return false;
     }
 
-    public function getToken(ClientApi $apiClient, ConfigModel $configModel): string
+    /**
+     * @param ClientApi $apiClient
+     * @param ConfigModel $configModel
+     *
+     * @return string
+     */
+    private function getToken(ClientApi $apiClient, ConfigModel $configModel): string
     {
         try {
             $token = $configModel->getApiToken();
@@ -346,7 +350,9 @@ class ApiService extends BaseService
                 $response = $apiClient->getAccessToken();
                 // Successfully renewed
                 if ($response && isset($response->access_token)) {
-                    $this->debug('Token renewed', ['Store Id' => $configModel->getStoreId()]);
+                    if (getenv('APSIS_DEVELOPER')) {
+                        $this->debug('Token renewed', ['Store Id' => $configModel->getStoreId()]);
+                    }
                     return $this->configService->saveApiTokenAndExpiry($configModel, $response);
                 }
 
@@ -354,7 +360,9 @@ class ApiService extends BaseService
                 if ($response && isset($response->status) &&
                     in_array($response->status, AbstractRestApi::HTTP_CODES_DISABLE)
                 ) {
-                    $this->debug('Unable to renew token', (array) $response);
+                    if (getenv('APSIS_DEVELOPER')) {
+                        $this->debug('Unable to renew token', (array) $response);
+                    }
                     $this->configService->markConfigInactive($configModel, $response);
                 }
             }
@@ -370,7 +378,7 @@ class ApiService extends BaseService
      *
      * @return bool
      */
-    public function isTokenExpired(ConfigModel $configModel): bool
+    private function isTokenExpired(ConfigModel $configModel): bool
     {
         try {
             $expiryTime = $configModel->getApiTokenExpiry();
@@ -379,7 +387,7 @@ class ApiService extends BaseService
                 ->format('Y-m-d H:i:s');
 
             $check = ($nowTime > $expiryTime);
-            if ($check) {
+            if ($check && getenv('APSIS_DEVELOPER')) {
                 $info = [
                     'Store Id' => $configModel->getStoreId(),
                     'Is Expired/Empty' => true,

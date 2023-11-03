@@ -131,12 +131,14 @@ class SubAbandonedService
             if (! empty($acData)) {
                 $this->abandonedResource->insertMultipleItems($acData['carts'], $abandonedService);
                 $this->eventResource->insertMultipleItems($acData['events'], $abandonedService);
-                $info = [
-                    'Total ACs Inserted' => count($acData['carts']),
-                    'Total AC Events Inserted' => count($acData['events']),
-                    'Store Id' => $storeId
-                ];
-                $abandonedService->debug(__METHOD__, $info);
+                if (getenv('APSIS_DEVELOPER')) {
+                    $info = [
+                        'Total ACs Inserted' => count($acData['carts']),
+                        'Total AC Events Inserted' => count($acData['events']),
+                        'Store Id' => $storeId
+                    ];
+                    $abandonedService->debug(__METHOD__, $info);
+                }
             }
         } catch (Throwable $e) {
             $abandonedService->logError(__METHOD__, $e);

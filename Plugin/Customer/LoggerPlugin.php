@@ -7,6 +7,7 @@ use Apsis\One\Model\ResourceModel\Profile\ProfileCollection;
 use Apsis\One\Model\ResourceModel\ProfileResource;
 use Apsis\One\Model\ResourceModel\Profile\ProfileCollectionFactory;
 use Apsis\One\Service\ApiService;
+use Apsis\One\Service\BaseService;
 use Apsis\One\Service\Sub\SubEventService;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Logger as CustomerLogger;
@@ -89,7 +90,11 @@ class LoggerPlugin
             }
 
             if (isset($data['last_login_at'])) {
-                $this->apiService->mergeProfile($store, $profile, $customer);
+                $trackingTextConfig =
+                    (string) $this->apiService->getStoreConfig($store, BaseService::PATH_CONFIG_TRACKING_SCRIPT);
+                if (strlen($trackingTextConfig)) {
+                    $this->apiService->mergeProfile($store, $profile, $customer);
+                }
                 $this->subEventService
                     ->registerLoggedInEvent($logger, $customerId, $profile, $customer, $this->apiService);
                 $profile->setHasDataChanges(true);

@@ -87,7 +87,6 @@ class AbandonedService extends AbstractCronService
             }
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
-            $this->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
             return;
         }
     }

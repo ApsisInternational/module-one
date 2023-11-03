@@ -198,7 +198,7 @@ abstract class AbstractEvents
         }
 
         $status = $this->eventResource->insertMultipleItems($items, $baseService);
-        if ($status) {
+        if ($status && getenv('APSIS_DEVELOPER')) {
             $info = [
                 'Total Events Inserted' => $status,
                 'Store Id' => $storeId,

@@ -145,7 +145,6 @@ class QueueService extends AbstractCronService
             }
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
-            $this->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
             return;
         }
     }
@@ -196,7 +195,6 @@ class QueueService extends AbstractCronService
             }
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
-            $this->log(__METHOD__ . ' Skipped for webhook type : ' . WebhookModel::TYPE_TEXT_MAP[$type]);
         }
     }
 

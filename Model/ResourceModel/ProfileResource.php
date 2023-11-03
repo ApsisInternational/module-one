@@ -229,7 +229,6 @@ class ProfileResource extends AbstractResource
             // Fill profile data column
             $this->fillProfileDataColumnForAllProfiles($service);
         } catch (Throwable $e) {
-            $service->log('Unable to complete populate Profile table action.');
             $service->logError(__METHOD__, $e);
         }
     }

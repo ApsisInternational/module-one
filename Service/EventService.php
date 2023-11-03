@@ -167,7 +167,7 @@ class EventService extends AbstractCronService
 
             $this->section = $configModel->getApiConfig()->getSectionDiscriminator();
             $this->keySpace = $configModel->getApiConfig()->getKeyspaceDiscriminator();
-            $client = $this->apiService->getApiClient($store);
+            $client = $this->apiService->getApiClient($store, $configModel);
 
             // Validate all things compulsory
             if (! $this->section || ! $this->keySpace || ! $client) {
@@ -199,7 +199,6 @@ class EventService extends AbstractCronService
             $this->processEventCollection($client, $eventCollection, $store);
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
-            $this->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
             return;
         }
     }
@@ -257,10 +256,12 @@ class EventService extends AbstractCronService
 
                 $status = $this->syncProfileForEvent($client, $profile);
                 if ($status === false) {
-                    $this->log(
-                        __METHOD__ . ': Unable to sync profile for events for Store: ' . $store->getCode() .
-                        ' Profile: ' . $profile->getId()
-                    );
+                    if (getenv('APSIS_DEVELOPER')) {
+                        $this->log(
+                            __METHOD__ . ': Unable to sync profile for events for Store: ' . $store->getCode() .
+                            ' Profile: ' . $profile->getId()
+                        );
+                    }
                     continue;
                 } elseif (is_string($status)) {
                     $msg = 'Unable to sync profile with error: ' . $status;
@@ -292,10 +293,12 @@ class EventService extends AbstractCronService
                 );
 
                 if ($status === false) {
-                    $this->log(
-                        __METHOD__ . ': Unable to post events for store id ' . $store->getId() .
-                        ' profile ' . $profile->getId()
-                    );
+                    if (getenv('APSIS_DEVELOPER')) {
+                        $this->log(
+                            __METHOD__ . ': Unable to post events for store id ' . $store->getId() .
+                            ' profile ' . $profile->getId()
+                        );
+                    }
                     continue;
                 } elseif (is_string($status)) {
                     $this->eventResource
@@ -307,12 +310,14 @@ class EventService extends AbstractCronService
                     continue;
                 }
 
-                $info = [
-                    'Profile Id' => $profile->getId(),
-                    'Store Id' => $store->getId(),
-                    'Total Synced' => count($groupedEventArray)
-                ];
-                $this->debug(__METHOD__, $info);
+                if (getenv('APSIS_DEVELOPER')) {
+                    $info = [
+                        'Profile Id' => $profile->getId(),
+                        'Store Id' => $store->getId(),
+                        'Total Synced' => count($groupedEventArray)
+                    ];
+                    $this->debug(__METHOD__, $info);
+                }
 
                 $this->eventResource
                     ->updateItemsByIds(
@@ -354,18 +359,16 @@ class EventService extends AbstractCronService
                 $eventData[] = [
                     'event_time' => $createdAt,
                     'version_id' => $this->eventsVersionMapping[$typeArray['main']],
-                    'data' => $mainData,
-                    'external_id' => $event->getId()
+                    'data' => $mainData
                 ];
-                foreach ($subData as $index => $item) {
+                foreach ($subData as $item) {
                     if (empty($withAddedSecond)) {
                         $withAddedSecond = $createdAt;
                     }
                     $eventData[] = [
                         'event_time' => $withAddedSecond = $this->addSecond($withAddedSecond, 'c'),
                         'version_id' => $this->eventsVersionMapping[$typeArray['sub']],
-                        'data' => (array) $item,
-                        'external_id' => $event->getId() . '-' . $index
+                        'data' => (array) $item
                     ];
                 }
             } else {
@@ -376,8 +379,7 @@ class EventService extends AbstractCronService
                 $eventData[] = [
                     'event_time' => $createdAt,
                     'version_id' => $this->eventsVersionMapping[$this->eventsDiscriminatorMapping[$event->getType()]],
-                    'data' => json_decode($this->getData($isSecure, $event->getEventData()), true),
-                    'external_id' => $event->getId()
+                    'data' => json_decode($this->getData($isSecure, $event->getEventData()), true)
                 ];
             }
 

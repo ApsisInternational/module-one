@@ -91,7 +91,12 @@ class ConfigModel extends AbstractModel
      */
     public function beforeSave(): static
     {
-        $this->setIntegrationConfig($this->encryptor->encrypt($this->getIntegrationConfig()));
+        $config = json_decode($this->getIntegrationConfig(), true);
+        if (isset($config['one_api_key']['client_secret'])) {
+            $config['one_api_key']['client_secret'] =
+                $this->encryptor->encrypt($config['one_api_key']['client_secret']);
+        }
+        $this->setIntegrationConfig(json_encode($config));
         if ($this->getApiToken()) {
             $this->setApiToken($this->encryptor->encrypt($this->getApiToken()));
         }
@@ -104,7 +109,12 @@ class ConfigModel extends AbstractModel
     public function afterLoad(): ConfigModel
     {
         parent::afterLoad();
-        $this->setIntegrationConfig($this->encryptor->decrypt($this->getIntegrationConfig()));
+        $config = json_decode($this->getIntegrationConfig(), true);
+        if (isset($config['one_api_key']['client_secret'])) {
+            $config['one_api_key']['client_secret'] =
+                $this->encryptor->decrypt($config['one_api_key']['client_secret']);
+        }
+        $this->setIntegrationConfig(json_encode($config));
         if ($this->getApiToken()) {
             $this->setApiToken($this->encryptor->decrypt($this->getApiToken()));
         }

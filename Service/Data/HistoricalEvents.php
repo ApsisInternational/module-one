@@ -90,7 +90,6 @@ class HistoricalEvents
                 }
             } catch (Throwable $e) {
                 $baseService->logError(__METHOD__, $e);
-                $baseService->log(__METHOD__ . ' Skipped for store id: ' . $store->getId());
                 $emulate->stopEnvironmentEmulation();
                 continue;
             }

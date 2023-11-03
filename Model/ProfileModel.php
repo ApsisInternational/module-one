@@ -124,13 +124,14 @@ class ProfileModel extends AbstractModel
     {
         try {
             if ($this->isDeleted()) {
-                //Log it
-                $info = [
-                    'Message' => 'Profile removed from integration table.',
-                    'Profile Id' => $this->getId(),
-                    'Store Id' => $this->getStoreId()
-                ];
-                $this->baseService->debug(__METHOD__, $info);
+                if (getenv('APSIS_DEVELOPER')) {
+                    $info = [
+                        'Message' => 'Profile removed from integration table.',
+                        'Profile Id' => $this->getId(),
+                        'Store Id' => $this->getStoreId()
+                    ];
+                    $this->baseService->debug(__METHOD__, $info);
+                }
                 $this->subQueueService->registerItem($this, $this->baseService, QueueModel::RECORD_DELETED);
             }
         } catch (Throwable $e) {

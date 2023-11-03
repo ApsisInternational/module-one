@@ -55,7 +55,7 @@ class OrderData extends AbstractData
             $shippingAddress = $order->getShippingAddress();
             return [
                 'profile_id' => (string) $profileModel->getId(),
-                'orderId' => (string) $order->getEntityId(),
+                'order_id' => (string) $order->getEntityId(),
                 'grand_total' => (float) round($order->getGrandTotal(), 2),
                 'total_products' => (int) $order->getTotalItemCount(),
                 'total_quantity' => (float) $order->getTotalQtyOrdered(),
@@ -70,7 +70,7 @@ class OrderData extends AbstractData
                 'billing_city' => (string) $billingAddress?->getCity(),
                 'billing_region' => (string) $billingAddress?->getRegion(),
                 'billing_country' => (string) $billingAddress?->getCountryId(),
-                'billing_phone' => $this->getFormattedPhone(
+                'billing_telephone' => $this->getFormattedPhone(
                     $baseService,
                     (string) $billingAddress?->getCountryId(),
                     (string) $billingAddress?->getTelephone()
@@ -81,7 +81,7 @@ class OrderData extends AbstractData
                 'shipping_city' => (string) $shippingAddress?->getCity(),
                 'shipping_region' => (string) $shippingAddress?->getRegion(),
                 'shipping_country' => (string) $shippingAddress?->getCountryId(),
-                'shipping_phone' => $this->getFormattedPhone(
+                'shipping_telephone' => $this->getFormattedPhone(
                     $baseService,
                     (string) $shippingAddress?->getCountryId(),
                     (string) $shippingAddress?->getTelephone()

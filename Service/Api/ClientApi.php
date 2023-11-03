@@ -76,7 +76,7 @@ class ClientApi extends AbstractRestApi
      */
     public function getAccessToken(): mixed
     {
-        $this->setUrl($this->hostName . '/oauth/token')
+        $this->setUrl($this->hostName . 'oauth/token')
             ->setVerb(AbstractRestApi::VERB_POST)
             ->buildBodyForGetAccessTokenCall();
         return $this->executeRequestAndReturnResponse(__METHOD__);
@@ -96,7 +96,7 @@ class ClientApi extends AbstractRestApi
             return $fromCache;
         }
 
-        $this->setUrl($this->hostName . '/audience/keyspaces')
+        $this->setUrl($this->hostName . 'audience/keyspaces')
             ->setVerb(AbstractRestApi::VERB_GET);
         return $this->executeRequestAndReturnResponse(__METHOD__, $key);
     }
@@ -115,7 +115,7 @@ class ClientApi extends AbstractRestApi
             return $fromCache;
         }
 
-        $this->setUrl($this->hostName . '/audience/sections')
+        $this->setUrl($this->hostName . 'audience/sections')
             ->setVerb(AbstractRestApi::VERB_GET);
         return $this->executeRequestAndReturnResponse(__METHOD__, $key);
     }
@@ -137,7 +137,7 @@ class ClientApi extends AbstractRestApi
             return $fromCache;
         }
 
-        $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/attributes')
+        $this->setUrl($this->hostName . 'audience/sections/' . $sectionDiscriminator . '/attributes')
             ->setVerb(AbstractRestApi::VERB_GET);
         return $this->executeRequestAndReturnResponse(__METHOD__, $key);
     }
@@ -158,7 +158,7 @@ class ClientApi extends AbstractRestApi
             return $fromCache;
         }
 
-        $url = $this->hostName . '/v2/audience/sections/' . $sectionDiscriminator . '/topics';
+        $url = $this->hostName . 'v2/audience/sections/' . $sectionDiscriminator . '/topics';
 
         $this->setUrl($url)
             ->setVerb(AbstractRestApi::VERB_GET);
@@ -181,7 +181,7 @@ class ClientApi extends AbstractRestApi
             return $fromCache;
         }
 
-        $this->setUrl($this->hostName . '/audience/sections/' . $sectionDiscriminator . '/events')
+        $this->setUrl($this->hostName . 'audience/sections/' . $sectionDiscriminator . '/events')
             ->setVerb(AbstractRestApi::VERB_GET);
         return $this->executeRequestAndReturnResponse(__METHOD__, $key);
     }
@@ -208,7 +208,7 @@ class ClientApi extends AbstractRestApi
         string $sectionDiscriminator,
         array $attributes
     ): mixed {
-        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+        $url = $this->hostName . 'audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/attributes';
         $this->setUrl($url)
             ->setVerb(AbstractRestApi::VERB_PATCH)
@@ -232,7 +232,7 @@ class ClientApi extends AbstractRestApi
         string $sectionDiscriminator,
         string $versionId
     ): mixed {
-        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+        $url = $this->hostName . 'audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/attributes/' . $versionId;
         $this->setUrl($url)
             ->setVerb(AbstractRestApi::VERB_DELETE);
@@ -257,7 +257,7 @@ class ClientApi extends AbstractRestApi
         string $sectionDiscriminator,
         array $events
     ): mixed {
-        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
+        $url = $this->hostName . 'audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/events';
         $this->setUrl($url)
             ->setVerb(AbstractRestApi::VERB_POST)
@@ -281,7 +281,7 @@ class ClientApi extends AbstractRestApi
      */
     public function mergeProfile(array $keySpacesToMerge): mixed
     {
-        $this->setUrl($this->hostName . '/audience/profiles/merges')
+        $this->setUrl($this->hostName . 'audience/profiles/merges')
             ->setVerb(AbstractRestApi::VERB_PUT)
             ->buildBody(['profiles' => $keySpacesToMerge]);
         return $this->executeRequestAndReturnResponse(__METHOD__);
@@ -300,7 +300,7 @@ class ClientApi extends AbstractRestApi
      */
     public function deleteProfile(string $keySpaceDiscriminator, string $profileKey): mixed
     {
-        $url = $this->hostName . '/audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey;
+        $url = $this->hostName . 'audience/keyspaces/' . $keySpaceDiscriminator . '/profiles/' . $profileKey;
         $this->setUrl($url)
             ->setVerb(AbstractRestApi::VERB_DELETE);
         return $this->executeRequestAndReturnResponse(__METHOD__);
@@ -326,7 +326,7 @@ class ClientApi extends AbstractRestApi
         string $channelDiscriminator,
         string $type
     ): mixed {
-        $url = $this->hostName . '/v2/audience/keyspaces/' . $keyspaceDiscriminator . '/profiles/' . $profileKey .
+        $url = $this->hostName . 'v2/audience/keyspaces/' . $keyspaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/consents';
         $body = [
             'topic_discriminator' => $topicDiscriminator,
@@ -360,7 +360,7 @@ class ClientApi extends AbstractRestApi
         string $profileKey,
         string $sectionDiscriminator
     ): mixed {
-        $url = $this->hostName . '/v2/audience/keyspaces/' . $keyspaceDiscriminator . '/profiles/' . $profileKey .
+        $url = $this->hostName . 'v2/audience/keyspaces/' . $keyspaceDiscriminator . '/profiles/' . $profileKey .
             '/sections/' . $sectionDiscriminator . '/consents?consent_types=opt-in&consent_types=confirmed-opt-in';
         $this->setUrl($url)
             ->setVerb(AbstractRestApi::VERB_GET);

@@ -204,16 +204,10 @@ class ConfigService extends BaseService
     public function markConfigInactive(ConfigModel $configModel, stdClass $response): void
     {
         try {
-            $error = sprintf(
-                'Error: %s - Code: %s - Detail: %s',
-                $response->title,
-                $response->status,
-                $response->detail
-            );
             $configModel->setIsActive(0)
                 ->setApiToken('')
                 ->setApiTokenExpiry('')
-                ->setErrorMessage($error);
+                ->setErrorMessage(sprintf('Error: %s - Code: %s', $response->title, $response->status));
             $this->configResource->save($configModel);
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);

@@ -194,18 +194,20 @@ abstract class AbstractApi extends AbstractAction
             ! isset($this->allowedHttpMethods[$actionMethod]) || ! isset($this->requiredParams[$classMethod]) ||
             ! method_exists($this, $classMethod)
         ) {
-            $this->service->debug(
-                'Not everything exist',
-                [
-                    'httpMethod' => $httpMethod,
-                    'actionMethod' => $actionMethod,
-                    'classMethod' => $classMethod,
-                    'storeCode' => $storeCode,
-                    'allowedHttpMethods' => $this->allowedHttpMethods,
-                    'requiredParams' => $this->requiredParams,
-                    'class methods list' => get_class_methods($this)
-                ]
-            );
+            if (getenv('APSIS_DEVELOPER')) {
+                $this->service->debug(
+                    'Not everything exist',
+                    [
+                        'httpMethod' => $httpMethod,
+                        'actionMethod' => $actionMethod,
+                        'classMethod' => $classMethod,
+                        'storeCode' => $storeCode,
+                        'allowedHttpMethods' => $this->allowedHttpMethods,
+                        'requiredParams' => $this->requiredParams,
+                        'class methods list' => get_class_methods($this)
+                    ]
+                );
+            }
             return false;
         }
         return true;

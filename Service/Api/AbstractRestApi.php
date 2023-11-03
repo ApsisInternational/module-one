@@ -347,12 +347,13 @@ abstract class AbstractRestApi
                 'Method' => $method,
                 'Request time in seconds' => $this->responseInfo['total_time'],
                 'Endpoint URL' => $this->responseInfo['url'],
-                'Http code' => $this->responseInfo['http_code']
+                'Http code' => $this->responseInfo['http_code'],
+                'Response' => $response
             ];
             $this->service->debug('CURL Transfer', $info);
         }
 
-        if (isset($response->status) && isset($response->detail)) {
+        if (isset($response->status) && isset($response->title)) {
             if (str_contains($method, '::getAccessToken')) {
                 // Return as it is
                 return $response;
@@ -364,11 +365,12 @@ abstract class AbstractRestApi
                 return self::HTTP_CODE_CONFLICT;
             }
 
-            //Log error
-            $this->service->debug($method, (array)$response);
+            if (getenv('APSIS_DEVELOPER')) {
+                $this->service->debug($method, (array)$response);
+            }
 
             //All other error response handling
-            return (in_array($response->status, self::HTTP_ERROR_CODE_TO_RETRY)) ? false : (string) $response->detail;
+            return (in_array($response->status, self::HTTP_ERROR_CODE_TO_RETRY)) ? false : (string) $response->title;
         }
 
         return $response;

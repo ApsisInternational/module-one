@@ -111,8 +111,8 @@ class SubEventService
             $this->registerEvent(
                 EventModel::EVENT_LOGGED_IN,
                 [
-                    'profileId' => (string) $profile->getId(),
-                    'shopName' => (string) $baseService->getStoreName($customer->getStoreId()),
+                    'profile_id' => (string) $profile->getId(),
+                    'shop_name' => (string) $baseService->getStoreName($customer->getStoreId()),
                     'shop_id' => (string) $customer->getStoreId()
                 ],
                 $baseService,

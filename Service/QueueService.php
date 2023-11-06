@@ -50,7 +50,7 @@ class QueueService extends AbstractCronService
         429 => 'Too many requests. Retry with exponential backoff',
         504 => 'Request timeout. Retry with exponential backoff',
         500 => 'Internal server (generic connector) error',
-        0 => 'Unexpected HTTP code: '
+        0 => 'Unexpected HTTP code'
     ];
     const EXPIRE_SECONDS = 172800; // 48 hours in seconds
     const INTERVAL_SECONDS = 300; // Rate set as 5 minutes
@@ -326,7 +326,7 @@ class QueueService extends AbstractCronService
                 ],
                 default => [
                     'sync_status' => EventModel::STATUS_FAILED,
-                    'error_message' => $httpCode . ' : '. self::HTTP_CODE_TEXT[0].$httpCode
+                    'error_message' => $httpCode . ' : '. self::HTTP_CODE_TEXT[0]
                 ],
             };
             $this->queueResource->updateItemsByIds($ids, $bind, $this);

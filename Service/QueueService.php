@@ -228,7 +228,7 @@ class QueueService extends AbstractCronService
             }
 
             if (isset($backoffConfig)) {
-                $webhook->setBackoffConfig((string) json_encode($backoffConfig));
+                $webhook->setBackoffConfig(empty($backoffConfig) ? '' : (string) json_encode($backoffConfig));
                 $this->webhookResource->save($webhook);
             }
         } catch (Throwable $e) {

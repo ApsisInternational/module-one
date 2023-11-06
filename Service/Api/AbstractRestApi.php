@@ -346,7 +346,7 @@ abstract class AbstractRestApi
             $info = [
                 'Method' => $method,
                 'curl_request_info' => $this->responseInfo,
-                'curl post payload' => json_decode((string) $this->requestBody, true),
+                'curl post payload' => isset($this->requestBody) ? json_decode((string) $this->requestBody, true) : [],
                 'Response' => $response
             ];
             $this->service->debug('CURL Transfer', $info);

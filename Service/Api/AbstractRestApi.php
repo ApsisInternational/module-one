@@ -345,9 +345,8 @@ abstract class AbstractRestApi
         if (getenv('APSIS_DEVELOPER') && ! empty($this->responseInfo)) {
             $info = [
                 'Method' => $method,
-                'Request time in seconds' => $this->responseInfo['total_time'],
-                'Endpoint URL' => $this->responseInfo['url'],
-                'Http code' => $this->responseInfo['http_code'],
+                'curl_request_info' => $this->responseInfo,
+                'curl post payload' => json_decode((string) $this->requestBody, true),
                 'Response' => $response
             ];
             $this->service->debug('CURL Transfer', $info);

@@ -374,8 +374,12 @@ class QueueService extends AbstractCronService
             } else {
                 $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 if (getenv('APSIS_DEVELOPER')) {
-                    $this->debug('curl_request_info', curl_getinfo($ch));
-                    $this->debug('curl post', json_decode($payload, true));
+                    $info = [
+                        'Method' => $method,
+                        'curl_request_info' => curl_getinfo($ch),
+                        'curl post payload' => json_decode($payload, true)
+                    ];
+                    $this->debug('CURL Transfer', $info);
                 }
             }
 

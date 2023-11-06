@@ -321,10 +321,12 @@ class QueueService extends AbstractCronService
                 204 => ['sync_status' => EventModel::STATUS_SYNCED, 'error_message' => self::HTTP_CODE_TEXT[204]],
                 429, 500, 504 => $this->handleNonPermanentError($webhook, $httpCode),
                 400, 404 => [
-                    'sync_status' => EventModel::STATUS_FAILED, 'error_message' => self::HTTP_CODE_TEXT[$httpCode]
+                    'sync_status' => EventModel::STATUS_FAILED,
+                    'error_message' => $httpCode . ' : '. self::HTTP_CODE_TEXT[$httpCode]
                 ],
                 default => [
-                    'sync_status' => EventModel::STATUS_FAILED,'error_message' => self::HTTP_CODE_TEXT[0].$httpCode
+                    'sync_status' => EventModel::STATUS_FAILED,
+                    'error_message' => $httpCode . ' : '. self::HTTP_CODE_TEXT[0].$httpCode
                 ],
             };
             $this->queueResource->updateItemsByIds($ids, $bind, $this);

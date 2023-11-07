@@ -102,6 +102,18 @@ class SubQueueService
                 }
             }
 
+            if ($type === QueueModel::RECORD_UPDATED) {
+                $createdPendingFound = $this->getQueueCollection()
+                    ->findPendingQueueItemForStoreByType(
+                        $profile->getStoreId(),
+                        QueueModel::RECORD_CREATED,
+                        $profile->getId()
+                    );
+                if ($createdPendingFound) {
+                    return;
+                }
+            }
+
             if ($queueItem === false) {
                 $queueItem = $this->getQueueModel()
                     ->setProfileId($profile->getId())

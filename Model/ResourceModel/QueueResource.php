@@ -18,8 +18,12 @@ class QueueResource extends AbstractResource
      *
      * @return void
      */
-    public function deleteItemsByStatusAndProfile(int $type, int $syncStatus, int $profileId, BaseService $service)
-    {
+    public function deleteItemsByStatusAndProfile(
+        int $type,
+        int $syncStatus,
+        int $profileId,
+        BaseService $service
+    ): void {
         try {
             $this->getConnection()
                 ->delete(
@@ -37,7 +41,7 @@ class QueueResource extends AbstractResource
      *
      * @return void
      */
-    public function deleteAllPendingItemsForStore(int $storeId, BaseService $service)
+    public function deleteAllPendingItemsForStore(int $storeId, BaseService $service): void
     {
         try {
             $this->getConnection()

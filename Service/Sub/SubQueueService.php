@@ -108,11 +108,12 @@ class SubQueueService
                     ->setStoreId($profile->getStoreId())
                     ->setType($type);
                 if ($type === QueueModel::RECORD_DELETED) {
-                    $this->queueResource->getConnection()
-                        ->delete(
-                            $this->queueResource->getMainTable(),
-                            ['type != ?' => $type, 'sync_status = ?' => EventModel::STATUS_PENDING]
-                        );
+                    $this->queueResource->deleteItemsByStatusAndProfile(
+                        $type,
+                        EventModel::STATUS_PENDING,
+                        $profile->getId(),
+                        $this->webhookService
+                    );
                 }
             }
             $this->queueResource->save($queueItem);

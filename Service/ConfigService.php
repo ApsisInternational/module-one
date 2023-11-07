@@ -8,6 +8,8 @@ use Apsis\One\Model\ConfigModel;
 use Apsis\One\Model\ConfigModelFactory;
 use Apsis\One\Model\ResourceModel\ConfigResource;
 use Apsis\One\Model\ResourceModel\Config\ConfigCollectionFactory;
+use Apsis\One\Model\ResourceModel\EventResource;
+use Apsis\One\Model\ResourceModel\QueueResource;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\Module\ModuleListInterface;
 use Magento\Store\Model\StoreManagerInterface;
@@ -32,6 +34,16 @@ class ConfigService extends BaseService
     private ConfigCollectionFactory $configCollectionFactory;
 
     /**
+     * @var EventResource
+     */
+    private EventResource $eventResource;
+
+    /**
+     * @var QueueResource
+     */
+    private QueueResource $queueResource;
+
+    /**
      * @param Logger $logger
      * @param StoreManagerInterface $storeManager
      * @param WriterInterface $writer
@@ -39,6 +51,8 @@ class ConfigService extends BaseService
      * @param ConfigModelFactory $configModelFactory
      * @param ConfigResource $configResource
      * @param ConfigCollectionFactory $configCollectionFactory
+     * @param EventResource $eventResource
+     * @param QueueResource $queueResource
      */
     public function __construct(
         Logger $logger,
@@ -47,12 +61,16 @@ class ConfigService extends BaseService
         ModuleListInterface $moduleList,
         ConfigModelFactory $configModelFactory,
         ConfigResource $configResource,
-        ConfigCollectionFactory $configCollectionFactory
+        ConfigCollectionFactory $configCollectionFactory,
+        EventResource $eventResource,
+        QueueResource $queueResource
     ) {
         parent::__construct($logger, $storeManager, $writer, $moduleList);
         $this->configCollectionFactory = $configCollectionFactory;
         $this->configModelFactory = $configModelFactory;
         $this->configResource = $configResource;
+        $this->eventResource = $eventResource;
+        $this->queueResource = $queueResource;
     }
 
     /**
@@ -148,6 +166,10 @@ class ConfigService extends BaseService
             }
 
             $this->configResource->delete($config);
+            $this->eventResource->resetEventStatusForGivenStore($storeId, $this);
+            $this->queueResource->deleteAllPendingItemsForStore($storeId, $this);
+            // @todo remove all none api configs
+
             return true;
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);

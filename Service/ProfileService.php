@@ -219,7 +219,7 @@ class ProfileService extends BaseService
             if ($object->getEmail() != $profile->getEmail()) {
                 $this->subEventService
                     ->eventResource
-                    ->updateEventsEmail($profile->getEmail(), $object->getEmail(), $this);
+                    ->updateEventsEmail($profile->getId(), $object->getEmail(), $this);
                 $profile->setEmail($object->getEmail());
             }
 

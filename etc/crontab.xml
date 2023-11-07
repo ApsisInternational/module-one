@@ -2,13 +2,13 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
     <group id="apsis_one">
         <job name="apsis_one_process_queue" instance="Apsis\One\Service\QueueService" method="runCronjobTask">
-            <schedule>*/2 * * * *</schedule>
+            <schedule>*/3 * * * *</schedule>
         </job>
         <job name="apsis_one_find_abandoned_carts" instance="Apsis\One\Service\AbandonedService" method="runCronjobTask">
-            <schedule>*/2 * * * *</schedule>
+            <schedule>*/5 * * * *</schedule>
         </job>
         <job name="apsis_one_sync_events" instance="Apsis\One\Service\EventService" method="runCronjobTask">
-            <schedule>*/2 * * * *</schedule>
+            <schedule>*/3 * * * *</schedule>
         </job>
     </group>
 </config>

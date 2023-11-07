@@ -81,13 +81,6 @@
         </paging>
     </container>
     <columns name="apsis_event_columns" class="Apsis\One\Block\Adminhtml\Ui\DataSourceBlock">
-        <selectionsColumn name="ids">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="indexField" xsi:type="string">id</item>
-                </item>
-            </argument>
-        </selectionsColumn>
         <column name="id">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">

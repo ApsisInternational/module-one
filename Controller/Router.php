@@ -163,6 +163,18 @@ class Router extends Base
             'actionPath' => 'frontend_abandoned',
             'action' => 'helper'
         ],
+        'apsis/abandoned/cart' => [
+            'actionPath' => 'api_abandoned',
+            'action' => 'index',
+            'method' => 'getCartContent',
+            'requiredRouteParams' => ['token' => 'taskId']
+        ],
+        'apsis/abandoned/checkout' => [
+            'actionPath' => 'api_abandoned',
+            'action' => 'index',
+            'method' => 'getCartContent',
+            'requiredRouteParams' => ['token' => 'taskId']
+        ],
     ];
 
     /**
@@ -216,7 +228,20 @@ class Router extends Base
             // If path is related to old links
             foreach (self::INTERNAL_STATIC_PATH_TO_ACTION_MAP as $path => $config) {
                 if (str_contains($requestPath, $path)) {
-                    return $this->forwardRequest($request, $config, []);
+                    $routeParams = [];
+                    if (isset($config['requiredRouteParams'])) {
+                        $routeParams = $this->parseRequest($request);
+                        if (empty($routeParams['variables'])) {
+                            continue;
+                        }
+                        foreach ($config['requiredRouteParams'] as $routeParam => $routeParamR) {
+                            if (empty($routeParams['variables'][$routeParam])) {
+                                continue;
+                            }
+                            $routeParams[$routeParamR] = $routeParams['variables'][$routeParam];
+                        }
+                    }
+                    return $this->forwardRequest($request, $config, $routeParams);
                 }
             }
 

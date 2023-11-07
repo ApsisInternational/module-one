@@ -2,6 +2,7 @@
 
 namespace Apsis\One\Service\Sub;
 
+use Apsis\One\Model\EventModel;
 use Apsis\One\Model\ProfileModel;
 use Apsis\One\Model\QueueModel;
 use Apsis\One\Model\ResourceModel\QueueResource;
@@ -106,6 +107,13 @@ class SubQueueService
                     ->setProfileId($profile->getId())
                     ->setStoreId($profile->getStoreId())
                     ->setType($type);
+                if ($type === QueueModel::RECORD_DELETED) {
+                    $this->queueResource->getConnection()
+                        ->delete(
+                            $this->queueResource->getMainTable(),
+                            ['type != ?' => $type, 'sync_status = ?' => EventModel::STATUS_PENDING]
+                        );
+                }
             }
             $this->queueResource->save($queueItem);
         } catch (Throwable $e) {

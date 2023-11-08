@@ -168,7 +168,6 @@ class ConfigService extends BaseService
             $this->configResource->delete($config);
             $this->eventResource->resetEventStatusForGivenStore($storeId, $this);
             $this->queueResource->deleteAllPendingItemsForStore($storeId, $this);
-            // @todo remove all none api configs
 
             return true;
         } catch (Throwable $e) {

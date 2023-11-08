@@ -173,7 +173,7 @@ abstract class AbstractEvents
                 'subscriber_id' => $profile->getSubscriberId(),
                 'store_id' => $storeId,
                 'email' => $profile->getEmail(),
-                'sync_status' => EventModel::STATUS_PENDING,
+                'sync_status' => EventModel::STATUS_HISTORICAL,
                 'created_at' => $createdAt,
                 'updated_at' => $this->dateTime->formatDate(true)
             ];

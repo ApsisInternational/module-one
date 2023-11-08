@@ -2,6 +2,8 @@
 
 namespace Apsis\One\Model\ResourceModel;
 
+use Apsis\One\Model\ResourceModel\Profile\ProfileCollection;
+use Apsis\One\Model\ResourceModel\Profile\ProfileCollectionFactory;
 use Apsis\One\Service\BaseService;
 use Apsis\One\Service\ProfileService;
 use Magento\Customer\Model\ResourceModel\Customer\Collection as CustomerCollection;
@@ -28,6 +30,7 @@ class ProfileResource extends AbstractResource
         END
     )';
     const SQL_CURRENCY = '(SELECT "%s")';
+    const QUERY_LIMIT = 500;
 
     /**
      * @var CustomerCollectionFactory
@@ -45,12 +48,18 @@ class ProfileResource extends AbstractResource
     private SubscriberCollectionFactory $subscriberCollectionFactory;
 
     /**
+     * @var ProfileCollectionFactory
+     */
+    private ProfileCollectionFactory $profileCollectionFactory;
+
+    /**
      * @param Context $context
      * @param DateTime $dateTime
      * @param CustomerCollectionFactory $customerCollectionFactory
      * @param ExpressionFactory $expressionFactory
      * @param SubscriberCollectionFactory $subscriberCollectionFactory
-     * @param null $connectionName
+     * @param ProfileCollectionFactory $profileCollectionFactory
+     * @param $connectionName
      */
     public function __construct(
         Context $context,
@@ -58,12 +67,14 @@ class ProfileResource extends AbstractResource
         CustomerCollectionFactory $customerCollectionFactory,
         ExpressionFactory $expressionFactory,
         SubscriberCollectionFactory $subscriberCollectionFactory,
+        ProfileCollectionFactory $profileCollectionFactory,
         $connectionName = null
     ) {
         parent::__construct($context, $dateTime, $connectionName);
         $this->subscriberCollectionFactory = $subscriberCollectionFactory;
         $this->customerCollectionFactory = $customerCollectionFactory;
         $this->expressionFactory = $expressionFactory;
+        $this->profileCollectionFactory = $profileCollectionFactory;
     }
 
     /**
@@ -91,25 +102,32 @@ class ProfileResource extends AbstractResource
         BaseService $service
     ): void {
         try {
-            $select = $connection->select()
-                ->from(
-                    [ProfileService::TYPE_CUSTOMER => $magentoTable],
-                    [
-                        'customer_id' => 'entity_id',
-                        'group_id',
-                        'email',
-                        'is_customer' => $this->getExpressionModel('1'),
-                        'store_id',
-                        'updated_at' => $this->expressionFactory
-                            ->create(['expression' => "'" . $this->dateTime->formatDate(true) . "'"])
-                    ]
+            $filter = $this->getCustomerCollection()->getAllIds();
+            if (empty($filter)) {
+                return;
+            }
+
+            foreach (array_chunk($filter, self::QUERY_LIMIT) as $filterChunk) {
+                $select = $connection->select()
+                    ->from(
+                        [ProfileService::TYPE_CUSTOMER => $magentoTable],
+                        [
+                            'customer_id' => 'entity_id',
+                            'group_id',
+                            'email',
+                            'is_customer' => $this->getExpressionModel('1'),
+                            'store_id',
+                            'updated_at' => $this->expressionFactory
+                                ->create(['expression' => "'" . $this->dateTime->formatDate(true) . "'"])
+                        ]
+                    )->where('entity_id IN (?)', $filterChunk);
+                $sqlQuery = $select->insertFromSelect(
+                    $apsisTable,
+                    ['customer_id', 'group_id', 'email', 'is_customer', 'store_id', 'updated_at'],
+                    false
                 );
-            $sqlQuery = $select->insertFromSelect(
-                $apsisTable,
-                ['customer_id', 'group_id', 'email', 'is_customer', 'store_id', 'updated_at'],
-                false
-            );
-            $connection->query($sqlQuery);
+                $connection->query($sqlQuery);
+            }
         } catch (Throwable $e) {
             $service->logError(__METHOD__, $e);
         }
@@ -130,32 +148,41 @@ class ProfileResource extends AbstractResource
         BaseService $service
     ): void {
         try {
-            $select = $connection->select()
-                ->from(
-                    [ProfileService::TYPE_SUBSCRIBER => $magentoTable],
+            $filter = $this->getSubscriberCollection()->getAllIds();
+            if (empty($filter)) {
+                return;
+            }
+
+            foreach (array_chunk($filter, self::QUERY_LIMIT) as $filterChunk) {
+                $select = $connection->select()
+                    ->from(
+                        [ProfileService::TYPE_SUBSCRIBER => $magentoTable],
+                        [
+                            'subscriber_id',
+                            'store_id' => 'store_id',
+                            'email' => 'subscriber_email',
+                            'is_subscriber' => $this->getExpressionModel('1'),
+                            'subscriber_status',
+                            'updated_at' => $this->expressionFactory
+                                ->create(['expression' => "'" . $this->dateTime->formatDate(true) . "'"])
+                        ]
+                    )
+                    ->where('customer_id = ?', 0)
+                    ->where('subscriber_id IN (?)', $filterChunk);
+                $sqlQuery = $select->insertFromSelect(
+                    $apsisTable,
                     [
                         'subscriber_id',
-                        'store_id' => 'store_id',
-                        'email' => 'subscriber_email',
-                        'is_subscriber' => $this->getExpressionModel('1'),
+                        'store_id',
+                        'email',
+                        'is_subscriber',
                         'subscriber_status',
-                        'updated_at' => $this->expressionFactory
-                            ->create(['expression' => "'" . $this->dateTime->formatDate(true) . "'"])
-                    ]
-                )->where('customer_id = ?', 0);
-            $sqlQuery = $select->insertFromSelect(
-                $apsisTable,
-                [
-                    'subscriber_id',
-                    'store_id',
-                    'email',
-                    'is_subscriber',
-                    'subscriber_status',
-                    'updated_at'
-                ],
-                false
-            );
-            $connection->query($sqlQuery);
+                        'updated_at'
+                    ],
+                    false
+                );
+                $connection->query($sqlQuery);
+            }
         } catch (Throwable $e) {
             $service->logError(__METHOD__, $e);
         }
@@ -176,20 +203,37 @@ class ProfileResource extends AbstractResource
         BaseService $service
     ): void {
         try {
-            $select = $connection->select();
-            $select->from(
-                [ProfileService::TYPE_SUBSCRIBER => $magentoTable],
-                [
-                    'subscriber_id',
-                    'subscriber_status',
-                    'is_subscriber' => $this->getExpressionModel('1'),
-                ]
-            )->where('subscriber.customer_id = profile.customer_id');
-            $sqlQuery = $select->crossUpdateFromSelect(['profile' => $apsisTable]);
-            $connection->query($sqlQuery);
+            $filter = $this->getProfileCollection()->getAllIds();
+            if (empty($filter)) {
+                return;
+            }
+
+            foreach (array_chunk($filter, self::QUERY_LIMIT) as $filterChunk) {
+                $select = $connection->select()
+                    ->from(
+                        [ProfileService::TYPE_SUBSCRIBER => $magentoTable],
+                        [
+                            'subscriber_id',
+                            'subscriber_status',
+                            'is_subscriber' => $this->getExpressionModel('1'),
+                        ]
+                    )
+                    ->where('subscriber.customer_id = profile.customer_id')
+                    ->where('profile.id IN (?)', $filterChunk);
+                $sqlQuery = $select->crossUpdateFromSelect(['profile' => $apsisTable]);
+                $connection->query($sqlQuery);
+            }
         } catch (Throwable $e) {
             $service->logError(__METHOD__, $e);
         }
+    }
+
+    /**
+     * @return ProfileCollection
+     */
+    private function getProfileCollection(): ProfileCollection
+    {
+        return $this->profileCollectionFactory->create();
     }
 
     /**
@@ -242,9 +286,17 @@ class ProfileResource extends AbstractResource
     {
         try {
             foreach ($service->getStores() as $store) {
+                $filter = $this->getProfileCollection()
+                    ->getProfileCollectionForStore($store->getId())->getColumnValues('id');
+                if (empty($filter)) {
+                    return;
+                }
+
                 $currency = $service->getStoreCurrency($store->getId());
-                $this->fillProfileDataColumnForCustomers($store, $currency, $service);
-                $this->fillProfileDataColumnForSubscribers($store, $currency, $service);
+                foreach (array_chunk($filter, self::QUERY_LIMIT) as $filterChunk) {
+                    $this->fillProfileDataColumnForCustomers($store, $currency, $service, $filterChunk);
+                    $this->fillProfileDataColumnForSubscribers($store, $currency, $service, $filterChunk);
+                }
             }
         } catch (Throwable $e) {
             $service->logError(__METHOD__, $e);
@@ -255,13 +307,15 @@ class ProfileResource extends AbstractResource
      * @param StoreInterface $store
      * @param string $currency
      * @param BaseService $service
+     * @param array $filter
      *
      * @return void
      */
     private function fillProfileDataColumnForCustomers(
         StoreInterface $store,
         string $currency,
-        BaseService $service
+        BaseService $service,
+        array $filter
     ): void {
         try {
             $expString = $this->buildDataQueryForCustomer($store, $service, $currency);
@@ -274,8 +328,10 @@ class ProfileResource extends AbstractResource
                 ->from(
                     [ProfileService::TYPE_CUSTOMER => $this->getCustomerCollection()->getMainTable()],
                     ['profile_data' => $this->getExpressionModel($expString)]
-                )->where('customer.store_id = ?', $store->getId())
-                ->where('customer.entity_id = profile.customer_id');
+                )
+                ->where('customer.store_id = ?', $store->getId())
+                ->where('customer.entity_id = profile.customer_id')
+                ->where('profile.id IN (?)', $filter);
             $sqlQuery = $select->crossUpdateFromSelect(['profile' => $this->getMainTable()]);
             $this->getConnection()->query($sqlQuery);
         } catch (Throwable $e) {
@@ -505,13 +561,15 @@ class ProfileResource extends AbstractResource
      * @param StoreInterface $store
      * @param string $currency
      * @param BaseService $service
+     * @param array $filter
      *
      * @return void
      */
     private function fillProfileDataColumnForSubscribers(
         StoreInterface $store,
         string $currency,
-        BaseService $service
+        BaseService $service,
+        array $filter
     ): void {
         try {
             $expString = $this->buildDataQueryForSubscriber($store, $service, $currency);
@@ -527,7 +585,8 @@ class ProfileResource extends AbstractResource
                 )
                 ->where('subscriber.store_id = ?', $store->getId())
                 ->where('subscriber.customer_id = ?', 0)
-                ->where('subscriber.subscriber_id = profile.subscriber_id');
+                ->where('subscriber.subscriber_id = profile.subscriber_id')
+                ->where('profile.id IN (?)', $filter);
 
             $sqlQuery = $select->crossUpdateFromSelect(['profile' => $this->getMainTable()]);
             $this->getConnection()->query($sqlQuery);

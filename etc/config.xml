@@ -12,7 +12,7 @@
                 <duration>15</duration>
             </abandoned_cart>
             <event_sync>
-                <enabled>0</enabled>
+                <enabled>1</enabled>
             </event_sync>
             <tracking>
                 <script></script>

@@ -25,11 +25,11 @@ class EventService extends AbstractCronService
     /**
      * Maximum collection limit per store
      */
-    const COLLECTION_LIMIT = 1000;
+    const COLLECTION_LIMIT = 500;
     /**
      * Maximum event limit per profile
      */
-    const PROFILE_EVENT_LIMIT = 100;
+    const PROFILE_EVENT_LIMIT = 25;
 
     /**
      * Event discriminators

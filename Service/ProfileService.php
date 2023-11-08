@@ -217,9 +217,12 @@ class ProfileService extends BaseService
     {
         try {
             if ($object->getEmail() != $profile->getEmail()) {
-                $this->subEventService
-                    ->eventResource
-                    ->updateEventsEmail($profile->getId(), $object->getEmail(), $this);
+                $tables = [BaseService::APSIS_EVENT_TABLE, BaseService::APSIS_ABANDONED_TABLE];
+                foreach ($tables as $table) {
+                    $this->subEventService
+                        ->eventResource
+                        ->updateEmailInRecords($table, $profile->getId(), $object->getEmail(), $this);
+                }
                 $profile->setEmail($object->getEmail());
             }
 

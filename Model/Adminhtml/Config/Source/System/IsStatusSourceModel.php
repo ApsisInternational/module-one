@@ -2,18 +2,13 @@
 
 namespace Apsis\One\Model\Adminhtml\Config\Source\System;
 
-use Magento\Framework\Data\OptionSourceInterface;
-
-class IsStatusSourceModel implements OptionSourceInterface
+class IsStatusSourceModel extends AbstractOptionsSource
 {
     /**
      * @inheritdoc
      */
-    public function toOptionArray(): array
+    protected function getOptionTextMap(): array
     {
-        return [
-            ['value' => '0', 'label' => __('No')],
-            ['value' => '1', 'label' => __('Yes')]
-        ];
+        return ['0' => 'No', '1' => 'Yes'];
     }
 }

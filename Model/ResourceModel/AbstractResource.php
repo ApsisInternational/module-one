@@ -75,4 +75,26 @@ abstract class AbstractResource extends AbstractDb
             return 0;
         }
     }
+
+    /**
+     * @param string $table
+     * @param int $profileId
+     * @param string $newEmail
+     * @param BaseService $service
+     *
+     * @return int
+     */
+    public function updateEmailInRecords(string $table, int $profileId, string $newEmail, BaseService $service): int
+    {
+        try {
+            return (int) $this->getConnection()->update(
+                $this->getTable($table),
+                ['email' => $newEmail],
+                $this->getConnection()->quoteInto('profile_id = ?', $profileId)
+            );
+        } catch (Throwable $e) {
+            $service->logError(__METHOD__, $e);
+            return 0;
+        }
+    }
 }

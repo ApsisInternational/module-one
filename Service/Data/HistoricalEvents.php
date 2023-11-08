@@ -135,7 +135,7 @@ class HistoricalEvents
         try {
             $toTime = $baseService->getDateTimeFromTimeAndTimeZone();
             $fromTime = clone $toTime;
-            $fromTime->sub($baseService->getDateIntervalFromIntervalSpec('P1Y'));
+            $fromTime->sub($baseService->getDateIntervalFromIntervalSpec('P4Y'));
             $fetchDuration = [
                 'from' => $fromTime->format('Y-m-d H:i:s'),
                 'to' => $toTime->format('Y-m-d H:i:s'),

@@ -2,22 +2,21 @@
 
 namespace Apsis\One\Model\Adminhtml\Config\Source\System;
 
-use Magento\Framework\Data\OptionSourceInterface;
 use Magento\Newsletter\Model\Subscriber;
 
-class SubscriberStatusSourceModel implements OptionSourceInterface
+class SubscriberStatusSourceModel extends AbstractOptionsSource
 {
     /**
      * @inheritdoc
      */
-    public function toOptionArray(): array
+    protected function getOptionTextMap(): array
     {
         return [
-            ['value' => 'N/A', 'label' => __('N/A')],
-            ['value' => Subscriber::STATUS_SUBSCRIBED, 'label' => __('Subscribed')],
-            ['value' => Subscriber::STATUS_NOT_ACTIVE, 'label' => __('Not Active')],
-            ['value' => Subscriber::STATUS_UNSUBSCRIBED, 'label' => __('Unsubscribed')],
-            ['value' => Subscriber::STATUS_UNCONFIRMED, 'label' => __('Unconfirmed')]
+            'N/A' => 'N/A',
+            Subscriber::STATUS_SUBSCRIBED => 'Subscribed',
+            Subscriber::STATUS_NOT_ACTIVE => 'Not Active',
+            Subscriber::STATUS_UNSUBSCRIBED => 'Unsubscribed',
+            Subscriber::STATUS_UNCONFIRMED => 'Unconfirmed'
         ];
     }
 }

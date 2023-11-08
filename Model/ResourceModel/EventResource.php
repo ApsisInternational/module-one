@@ -11,38 +11,17 @@ class EventResource extends AbstractResource
     const RESOURCE_MODEL = BaseService::APSIS_EVENT_TABLE;
 
     /**
-     * @param int $profileId
-     * @param string $newEmail
-     * @param BaseService $service
-     *
-     * @return int
-     */
-    public function updateEventsEmail(int $profileId, string $newEmail, BaseService $service): int
-    {
-        try {
-            return (int) $this->getConnection()->update(
-                $this->getMainTable(),
-                ['email' => $newEmail],
-                $this->getConnection()->quoteInto('profile_id = ?', $profileId)
-            );
-        } catch (Throwable $e) {
-            $service->logError(__METHOD__, $e);
-            return 0;
-        }
-    }
-
-    /**
      * @param int $storeId
      * @param BaseService $service
      *
      * @return int
      */
-    public function resetEventStatusForGivenStore(int $storeId, BaseService $service)
+    public function resetEventStatusForGivenStore(int $storeId, BaseService $service): int
     {
         try {
             return (int) $this->getConnection()->update(
                 $this->getMainTable(),
-                ['sync_status' => EventModel::STATUS_PENDING], // @todo something for historical
+                ['sync_status' => EventModel::STATUS_HISTORICAL],
                 $this->getConnection()->quoteInto('store_id = ?', $storeId)
             );
         } catch (Throwable $e) {

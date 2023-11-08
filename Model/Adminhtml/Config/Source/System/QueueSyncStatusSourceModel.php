@@ -2,20 +2,23 @@
 
 namespace Apsis\One\Model\Adminhtml\Config\Source\System;
 
+use Apsis\One\Model\EventModel;
 use Apsis\One\Model\QueueModel;
 
-class QueueSyncStatusSourceModel extends EventSyncStatusSourceModel
+class QueueSyncStatusSourceModel extends AbstractOptionsSource
 {
     /**
      * @inheritdoc
      */
-    public function toOptionArray(): array
+    protected function getOptionTextMap(): array
     {
-        $options = parent::toOptionArray();
-        $options[] = [
-            'value' => QueueModel::STATUS_EXPIRED,
-            'label' => __(QueueModel::STATUS_TEXT_MAP[QueueModel::STATUS_EXPIRED])
-        ];
-        return $options;
+        $eventTextMap = EventModel::STATUS_TEXT_MAP;
+        $rms = [EventModel::STATUS_SYNCED, EventModel::STATUS_HISTORICAL];
+        foreach ($rms as $rm) {
+            if (isset($eventTextMap[$rm])) {
+                unset($eventTextMap[$rm]);
+            }
+        }
+        return array_merge($eventTextMap, QueueModel::STATUS_TEXT_MAP);
     }
 }

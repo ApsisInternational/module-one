@@ -39,7 +39,9 @@ class QueueModel extends AbstractModel
     ];
 
     const STATUS_EXPIRED = 3;
+    const STATUS_SENT = 1;
     const STATUS_TEXT_MAP = [
-        self::STATUS_EXPIRED => 'Expired'
+        self::STATUS_EXPIRED => 'Expired',
+        self::STATUS_SENT => 'Sent'
     ];
 }

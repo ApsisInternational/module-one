@@ -318,7 +318,10 @@ class QueueService extends AbstractCronService
     {
         try {
             $bind = match ($httpCode) {
-                204 => ['sync_status' => EventModel::STATUS_SYNCED, 'error_message' => self::HTTP_CODE_TEXT[204]],
+                204 => [
+                    'sync_status' => EventModel::STATUS_SYNCED,
+                    'error_message' => self::HTTP_CODE_TEXT[204]
+                ],
                 429, 500, 504 => $this->handleNonPermanentError($webhook, $httpCode),
                 400, 404 => [
                     'sync_status' => EventModel::STATUS_FAILED,
@@ -329,6 +332,11 @@ class QueueService extends AbstractCronService
                     'error_message' => $httpCode . ' : '. self::HTTP_CODE_TEXT[0]
                 ],
             };
+            if ($bind['sync_status'] === EventModel::STATUS_FAILED ||
+                $bind['sync_status'] === EventModel::STATUS_SYNCED) {
+                $webhook->setBackoffConfig('');
+                $this->webhookResource->save($webhook);
+            }
             $this->queueResource->updateItemsByIds($ids, $bind, $this);
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
@@ -377,6 +385,7 @@ class QueueService extends AbstractCronService
                     $info = [
                         'Method' => __METHOD__,
                         'curl_request_info' => curl_getinfo($ch),
+                        'curl_headers' => $headers,
                         'curl post payload' => json_decode($payload, true)
                     ];
                     $this->debug('CURL Transfer', $info);

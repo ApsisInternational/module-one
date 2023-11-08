@@ -135,6 +135,24 @@ class BaseService
     }
 
     /**
+     * @param string $method
+     * @param int $startTime
+     * @param int $startMemory
+     *
+     * @return void
+     */
+    public function logPerformanceData(string $method, float $startTime, int $startMemory): void
+    {
+        $this->debug(
+            $method,
+            [
+                sprintf('Execution time: %s seconds', microtime(true) - $startTime),
+                sprintf('Peak memory usage: %s bytes', memory_get_peak_usage() - $startMemory)
+            ]
+        );
+    }
+
+    /**
      * @return string
      */
     public function getCurrentVersion(): string

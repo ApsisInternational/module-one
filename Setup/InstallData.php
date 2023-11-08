@@ -118,6 +118,8 @@ class InstallData implements InstallDataInterface
     public function install(ModuleDataSetupInterface $setup, ModuleContextInterface $context): void
     {
         $this->baseService->log(__METHOD__);
+        $startTime = microtime(true);
+        $startMemory = memory_get_peak_usage();
 
         try {
             $this->appState->setAreaCode(Area::AREA_GLOBAL);
@@ -143,6 +145,7 @@ class InstallData implements InstallDataInterface
             $this->baseService->logError(__METHOD__, $e);
         }
         $setup->endSetup();
+        $this->baseService->logPerformanceData(__METHOD__, $startTime, $startMemory);
     }
 
     /**

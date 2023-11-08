@@ -67,9 +67,12 @@ abstract class AbstractCronService extends BaseService
                 return;
             }
 
+            $startTime = microtime(true);
+            $startMemory = memory_get_peak_usage();
             foreach ($this->getStores() as $store) {
                 $this->runEntityCronjobTaskByStore($store);
             }
+            $this->logPerformanceData($cronjobCode, $startTime, $startMemory);
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
         }

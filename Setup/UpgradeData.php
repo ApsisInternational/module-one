@@ -39,8 +39,11 @@ class UpgradeData implements UpgradeDataInterface
      */
     public function upgrade(ModuleDataSetupInterface $setup, ModuleContextInterface $context): void
     {
+        $this->baseService->log(__METHOD__);
+        $startTime = microtime(true);
+        $startMemory = memory_get_peak_usage();
+
         try {
-            $this->baseService->log(__METHOD__);
             $setup->startSetup();
             if ($context->getVersion() && version_compare($context->getVersion(), '3.0.0', '<')) {
                 // v3.0.0, uninstalling and starting fresh install.
@@ -50,5 +53,6 @@ class UpgradeData implements UpgradeDataInterface
             $this->baseService->logError(__METHOD__, $e);
         }
         $setup->endSetup();
+        $this->baseService->logPerformanceData(__METHOD__, $startTime, $startMemory);
     }
 }

@@ -143,13 +143,15 @@ class BaseService
      */
     public function logPerformanceData(string $method, float $startTime, int $startMemory): void
     {
-        $this->debug(
-            $method,
-            [
-                sprintf('Execution time: %s seconds', microtime(true) - $startTime),
-                sprintf('Peak memory usage: %s bytes', memory_get_peak_usage() - $startMemory)
-            ]
-        );
+        if (getenv('APSIS_DEVELOPER')) {
+            $this->debug(
+                $method,
+                [
+                    sprintf('Execution time: %s seconds', microtime(true) - $startTime),
+                    sprintf('Peak memory usage: %s bytes', memory_get_peak_usage() - $startMemory)
+                ]
+            );
+        }
     }
 
     /**

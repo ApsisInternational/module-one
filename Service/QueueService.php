@@ -42,8 +42,7 @@ class QueueService extends AbstractCronService
             QueueModel::CONSENT_OPT_OUT => false
         ]
     ];
-    const HTTP_CODE_TEXT = [
-        204 => '',
+    const HTTP_ERROR_CODE_TEXT = [
         400 => 'Bad request',
         404 => 'Installation not found',
         413 => 'You sent more than 200 contacts',
@@ -140,7 +139,6 @@ class QueueService extends AbstractCronService
     {
         try {
             foreach (array_keys(WebhookModel::TYPE_TEXT_MAP) as $type) {
-                $this->isExpired = false;
                 $this->processQueueByWebhookType($store, $type);
             }
         } catch (Throwable $e) {
@@ -165,6 +163,7 @@ class QueueService extends AbstractCronService
             }
 
             $webhook = current($webhooks);
+            $this->isExpired = false;
 
             /** @var WebhookModel $webhookObject */
             $webhookObject = $webhook['object'];
@@ -205,8 +204,8 @@ class QueueService extends AbstractCronService
      */
     private function isOkToProceedWithRetry(WebhookModel $webhook): bool
     {
+        $status = false;
         try {
-            $status = false;
             $backoffConfig = json_decode($webhook->getBackoffConfig(), true);
             $retryCount = $backoffConfig['retryCount'] + 1;
             $nextRetryTimeStamp = $backoffConfig['lastTryTimeStamp'] + ($retryCount * self::INTERVAL_SECONDS);
@@ -234,7 +233,6 @@ class QueueService extends AbstractCronService
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
         }
-
         return $status;
     }
 
@@ -253,7 +251,7 @@ class QueueService extends AbstractCronService
             if ($this->isExpired) {
                 $backoffConfig = '';
                 $status = QueueModel::STATUS_EXPIRED;
-                $message = '48 hours has passed. ' . self::HTTP_CODE_TEXT[$httpCode];
+                $message = '48 hours has passed. ' . self::HTTP_ERROR_CODE_TEXT[$httpCode];
             } elseif (empty($webhook->getBackoffConfig())) {
                 // First try
                 $currentTimeStamp = time();
@@ -320,16 +318,16 @@ class QueueService extends AbstractCronService
             $bind = match ($httpCode) {
                 204 => [
                     'sync_status' => EventModel::STATUS_SYNCED,
-                    'error_message' => self::HTTP_CODE_TEXT[204]
+                    'error_message' => ''
                 ],
                 429, 500, 504 => $this->handleNonPermanentError($webhook, $httpCode),
                 400, 404 => [
                     'sync_status' => EventModel::STATUS_FAILED,
-                    'error_message' => $httpCode . ' : '. self::HTTP_CODE_TEXT[$httpCode]
+                    'error_message' => $httpCode . ' : '. self::HTTP_ERROR_CODE_TEXT[$httpCode]
                 ],
                 default => [
                     'sync_status' => EventModel::STATUS_FAILED,
-                    'error_message' => $httpCode . ' : '. self::HTTP_CODE_TEXT[0]
+                    'error_message' => $httpCode . ' : '. self::HTTP_ERROR_CODE_TEXT[0]
                 ],
             };
             if ($bind['sync_status'] === EventModel::STATUS_FAILED ||

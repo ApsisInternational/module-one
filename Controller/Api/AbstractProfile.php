@@ -387,7 +387,7 @@ abstract class AbstractProfile extends AbstractApi
                 if (in_array($codeName, ProfilesIndex::DATETIME_FIELDS)) {
                     $value = $this->service->formatDateForPlatformCompatibility($value);
                 } elseif ($codeName === 'phone' && ! empty($profileData['country'])) {
-                    $value = $this->service->validateAndFormatMobileNumber($profileData['country'], (string) $value);
+                    $value = $this->service->formatPhoneNumber($profileData['country'], (string) $value);
                 }
                 return is_null($value) || $value === '' ? null : (integer) $value;
             } elseif ($field['type'] === 'double') {

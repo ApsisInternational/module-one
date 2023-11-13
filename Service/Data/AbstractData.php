@@ -303,7 +303,7 @@ abstract class AbstractData
     protected function getFormattedPhone(BaseService $baseService, string $countryCode, string $phone): int
     {
         try {
-            return (int) $baseService->validateAndFormatMobileNumber($countryCode, $phone);
+            return (int) $baseService->formatPhoneNumber($countryCode, $phone);
         } catch (Throwable $e) {
             $baseService->logError(__METHOD__, $e);
             return 0;

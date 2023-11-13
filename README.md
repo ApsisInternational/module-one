@@ -25,8 +25,6 @@ APSIS One integration for Magento 2
     - Quote
     - Checkout
     - Ui
-- External library(s) dependency
-    - [giggsey/libphonenumber-for-php](https://github.com/giggsey/libphonenumber-for-php)
 - APSIS One [Account](https://www.apsis.com/about-us/request-tour)
 
 ## Installation
@@ -46,7 +44,7 @@ $ composer update apsis/module-one
 # Update to latest version for Magento 2.2.x, 2.3.x, 2.4.0  to 2.4.3-p3
 $ composer update apsis/module-one:~2.0
 ```
-If you do not use composer, ensure that you also load any dependencies that this module has, such as [giggsey/libphonenumber-for-php](https://github.com/giggsey/libphonenumber-for-php) and it's own dependencies.
+If you do not use composer, ensure that you also load any dependencies that this module has.
 
 ## Support
 
@@ -57,3 +55,8 @@ Full support documentation and setup guides available [here](https://help.apsis.
 You are welcome to contribute to our APSIS One integration module for Magento 2. You can either:
 - Report a bug: Create a [GitHub issue](https://github.com/ApsisInternational/module-one/issues/new) including detailed description, steps to reproduce issue, Magento version including edition and module version number.
 - To request a feature: Please contact us through [support](https://www.apsis.com/services/support)
+
+## Internal Docs
+- [Attributes Definition](https://efficy-my.sharepoint.com/:w:/p/aqa/EZDpQ4hY711Ol_2I57QzVJwB6wGu6kWyv54-wS3IpZKKMw?e=0xMYn9)
+- [Events Definition](https://efficy-my.sharepoint.com/:w:/p/aqa/ESr18U14JsdEgRSovPxb5S4BeCVtX4lYjCFjV1rJ53mHZg?e=rIR1e4)
+- [Abandoned Cart Definition](https://efficy-my.sharepoint.com/:w:/p/aqa/EXcCpN1BtaJDmwL2W2mN_Y4Bu-RY9PuF_nMcXYwHDB99EQ?e=oUDdGn)

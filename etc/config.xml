@@ -1,22 +1,14 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
     <default>
-        <apsis_one_connect>
-            <api>
-                <endpoint></endpoint>
-                <key></key>
-            </api>
-        </apsis_one_connect>
         <apsis_one_configuration>
             <abandoned_cart>
                 <duration>15</duration>
             </abandoned_cart>
             <event_sync>
                 <enabled>1</enabled>
+                <historical>0</historical>
             </event_sync>
-            <tracking>
-                <script></script>
-            </tracking>
         </apsis_one_configuration>
     </default>
 </config>

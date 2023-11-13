@@ -166,8 +166,16 @@ class ConfigService extends BaseService
             }
 
             $this->configResource->delete($config);
-            $this->eventResource->resetEventStatusForGivenStore($storeId, $this);
+            $this->eventResource->setHistoricalStatusOnAllEvents($storeId, $this);
             $this->queueResource->deleteAllPendingItemsForStore($storeId, $this);
+            $this->saveStoreConfig(
+                $this->getStore($storeId),
+                [
+                    BaseService::PATH_CONFIG_AC_DURATION => 15,
+                    BaseService::PATH_CONFIG_TRACKING_SCRIPT => '',
+                    BaseService::PATH_CONFIG_EVENT_PREVIOUS_HISTORICAL => ''
+                ]
+            );
 
             return true;
         } catch (Throwable $e) {

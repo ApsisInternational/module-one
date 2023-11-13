@@ -1,0 +1,48 @@
+.apsis-copy-helper {
+    opacity:1 !important;
+}
+.apsis-logs-div {
+    border: 4px solid #dfdfdf;
+    overflow: hidden;
+    height: 510px;
+    padding: 5px;
+}
+.apsis-logs-pre {
+    width:100%;
+    height:500px;
+    overflow:auto;
+    margin:0;
+    padding:3px;
+    background:black;
+    color:#2EC029;
+    font:normal 11px Lucida Console, Courier New, serif;
+    line-height:1.6;
+}
+.apsis-config-info-container {
+    padding: 2rem 0;
+    margin-left: 4rem;
+}
+.apsis-config-info-container img {
+    display: block;
+    margin-bottom: 1rem;
+}
+.apsis-config-info-heading {
+    display: block;
+    font-size: 1.7rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+.apsis-config-info-container span {
+    display: block;
+    margin-bottom: 2rem;
+}
+.apsis-tooltip {
+    position: absolute;
+    top: -15px;
+    background-color: #333;
+    color: #fff;
+    padding: 5px;
+}
+.apsis-resource-button {
+    margin: 10px;
+}

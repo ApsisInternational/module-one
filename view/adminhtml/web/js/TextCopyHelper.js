@@ -3,8 +3,7 @@ require(['jquery', 'jquery/ui', 'domReady!', 'mage/translate'], function ($) {
 
     const mouseEnterText = $.mage.__('CLICK TO COPY');
     const successText = $.mage.__('COPIED TO CLIPBOARD');
-    const tip = '<div class="apsis-tooltip" style="position: absolute; top: -15px; background-color: #333;' +
-        'color: #fff; padding: 5px;"></div>';
+    const tip = '<div class="apsis-tooltip"></div>';
 
     /**
      * Add tooltip with text

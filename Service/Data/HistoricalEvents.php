@@ -74,7 +74,7 @@ class HistoricalEvents
      *
      * @return void
      */
-    public function process(BaseService $baseService): void
+    public function identifyAndFetchHistoricalEvents(BaseService $baseService): void
     {
         $baseService->log(__METHOD__);
         foreach ($baseService->getStores() as $store) {

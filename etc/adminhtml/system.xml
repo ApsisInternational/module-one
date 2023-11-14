@@ -78,7 +78,7 @@
             <tab>apsis_one</tab>
             <resource>Apsis_One::config</resource>
             <group id="resource" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Integration Resources</label>
+                <label>Integration</label>
                 <attribute type="expanded">1</attribute>
                 <field id="webhooks" translate="label" sortOrder="10" type="button" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Installed Webhooks</label>
@@ -92,9 +92,17 @@
                     <label>Profile Updates</label>
                     <frontend_model>Apsis\One\Block\Adminhtml\Ui\QueueButton</frontend_model>
                 </field>
-                <field id="logs" translate="label" sortOrder="40" type="button" showInDefault="1" showInWebsite="1" showInStore="1">
+            </group>
+            <group id="developer" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Developer</label>
+                <attribute type="expanded">1</attribute>
+                <field id="logs" translate="label" sortOrder="10" type="button" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Integration Logs</label>
                     <frontend_model>Apsis\One\Block\Adminhtml\Ui\LogsButton</frontend_model>
+                </field>
+                <field id="reset" translate="label" sortOrder="20" type="button" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Reset Module</label>
+                    <frontend_model>Apsis\One\Block\Adminhtml\Ui\ResetButton</frontend_model>
                 </field>
             </group>
         </section>

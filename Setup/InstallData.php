@@ -140,7 +140,7 @@ class InstallData implements InstallDataInterface
             $this->identifyAndMigrateProfiles($setup);
 
             // Find historical Events
-            $this->historicalEvents->process($this->baseService);
+            $this->historicalEvents->identifyAndFetchHistoricalEvents($this->baseService);
         } catch (Throwable $e) {
             $this->baseService->logError(__METHOD__, $e);
         }

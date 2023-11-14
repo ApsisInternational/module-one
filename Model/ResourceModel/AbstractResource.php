@@ -35,6 +35,44 @@ abstract class AbstractResource extends AbstractDb
     }
 
     /**
+     * @param array $tables
+     * @param BaseService $service
+     *
+     * @return void
+     */
+    public function truncateTable(array $tables, BaseService $service): void
+    {
+        try {
+            foreach ($tables as $table) {
+                $this->getConnection()->query('SET FOREIGN_KEY_CHECKS = 0');
+                $this->getConnection()->truncateTable($this->getTable($table));
+                $this->getConnection()->query('SET FOREIGN_KEY_CHECKS = 1');
+            }
+        } catch (Throwable $e) {
+            $service->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
+     * @param BaseService $service
+     *
+     * @return void
+     */
+    public function deleteModuleConfigs(BaseService $service): void
+    {
+        try {
+            //Remove all module config except api key
+            $this->getConnection()->delete(
+                $this->getTable('core_config_data'),
+                "path LIKE 'apsis_one%' AND path != 'apsis_one_connect/api/key'"
+            );
+            $service->getStore()->resetConfig();
+        } catch (Throwable $e) {
+            $service->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
      * @param array $items
      * @param BaseService $service
      *

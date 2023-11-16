@@ -3,12 +3,14 @@
     <policies>
         <policy id="script-src">
             <values>
-                <value id="apsis_link" type="host">*.apsis.one</value>
+                <value id="apsis_production_link" type="host">*.apsis.one</value>
+                <value id="apsis_stage_link" type="host">*.apsis.cloud</value>
             </values>
         </policy>
         <policy id="connect-src">
             <values>
-                <value id="apsis_link" type="host">*.apsis.one</value>
+                <value id="apsis_production_link" type="host">*.apsis.one</value>
+                <value id="apsis_stage_link" type="host">*.apsis.cloud</value>
             </values>
         </policy>
     </policies>

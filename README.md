@@ -57,6 +57,6 @@ You are welcome to contribute to our APSIS One integration module for Magento 2.
 - To request a feature: Please contact us through [support](https://www.apsis.com/services/support)
 
 ## Internal Docs
-- [Attributes Definition](https://efficy-my.sharepoint.com/:w:/p/aqa/EZDpQ4hY711Ol_2I57QzVJwB6wGu6kWyv54-wS3IpZKKMw?e=0xMYn9)
+- [Profile Definition](https://efficy-my.sharepoint.com/:w:/p/aqa/EZDpQ4hY711Ol_2I57QzVJwB6wGu6kWyv54-wS3IpZKKMw?e=0xMYn9)
 - [Events Definition](https://efficy-my.sharepoint.com/:w:/p/aqa/ESr18U14JsdEgRSovPxb5S4BeCVtX4lYjCFjV1rJ53mHZg?e=rIR1e4)
 - [Abandoned Cart Definition](https://efficy-my.sharepoint.com/:w:/p/aqa/EXcCpN1BtaJDmwL2W2mN_Y4Bu-RY9PuF_nMcXYwHDB99EQ?e=oUDdGn)

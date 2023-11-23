@@ -684,14 +684,15 @@ class BaseService
 
     /**
      * @param RequestInterface $request
+     * @param string $add
      *
      * @return string
      */
-    public function generateSystemAccessUrl(RequestInterface $request): string
+    public function generateSystemAccessUrl(RequestInterface $request, string $add = ''): string
     {
         try {
             $store = $this->getStore($request->getParam('store'));
-            return $store->getBaseUrl() . $store->getCode() . '/' . Router::API_ROUTE;
+            return $store->getBaseUrl() . $store->getCode() . '/' . Router::API_ROUTE . $add;
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);
             return '';

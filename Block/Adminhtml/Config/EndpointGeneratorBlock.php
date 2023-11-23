@@ -30,7 +30,15 @@ class EndpointGeneratorBlock extends Field
      */
     protected function _getElementHtml(AbstractElement $element): string
     {
-        $element->setData('value', $this->baseService->generateSystemAccessUrl($this->getRequest()))
+        $add = '';
+        $acLink = '/v1/abandoned/%s/token/##com.apsis1.integrations.adobe-commerce.events.cart-abandoned-cart.token##';
+        if ($element->getId() === 'apsis_one_connect_abandoned_cart_content_endpoint') {
+            $add = sprintf($acLink, 'cart');
+        } elseif ($element->getId() === 'apsis_one_connect_abandoned_cart_session_endpoint') {
+            $add = sprintf($acLink, 'checkout');
+        }
+
+        $element->setData('value', $this->baseService->generateSystemAccessUrl($this->getRequest(), $add))
             ->setData('readonly', 1)
             ->addClass('apsis-copy-helper');
         return parent::_getElementHtml($element);

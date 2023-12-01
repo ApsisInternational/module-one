@@ -66,7 +66,7 @@ class Index extends AbstractApi
             'system_access_url' => $this->service->generateSystemAccessUrl($this->getRequest()),
             'system_version' => $this->productMetadata->getVersion(),
             'supported_integration_versions' => ['v3.0'],
-            'supported_features' => ['PROFILE_SYNC', 'PROFILE_LIST_SYNC'],
+            'supported_features' => ['PROFILE_SYNC', 'PROFILE_LIST_SYNC', 'CONFIG_INJECTION'],
             'supported_marketing_automation_nodes' => []
         ];
         return $this->sendResponse(200, null, json_encode($info));

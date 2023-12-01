@@ -134,13 +134,13 @@ class ConfigService extends BaseService
             }
 
             if ($isSingleSections) {
-                return json_decode($configs->getIntegrationConfig(), true);
+                return $this->removeClientSecret(json_decode($configs->getIntegrationConfig(), true));
             } else {
                 $sConfigs = [];
                 /** @var ConfigModel $config */
                 foreach ($configs as $config) {
                     $config->afterLoad();
-                    $sConfigs[] = json_decode($config->getIntegrationConfig(), true);
+                    $sConfigs[] = $this->removeClientSecret(json_decode($config->getIntegrationConfig(), true));
                 }
                 return $sConfigs;
             }
@@ -148,6 +148,19 @@ class ConfigService extends BaseService
             $this->logError(__METHOD__, $e);
             return 500;
         }
+    }
+
+    /**
+     * @param array $config
+     *
+     * @return array
+     */
+    private function removeClientSecret(array $config): array
+    {
+        if (isset($config['one_api_key']['client_secret'])) {
+            $config['one_api_key']['client_secret'] = '';
+        }
+        return $config;
     }
 
     /**

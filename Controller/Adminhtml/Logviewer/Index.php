@@ -2,48 +2,20 @@
 
 namespace Apsis\One\Controller\Adminhtml\Logviewer;
 
-use Magento\Backend\App\Action;
-use Magento\Backend\App\Action\Context;
-use Magento\Backend\Model\View\Result\Page;
-use Magento\Framework\View\Result\PageFactory;
+use Apsis\One\Controller\Adminhtml\AbstractIndex;
 
-class Index extends Action
+class Index extends AbstractIndex
 {
     /**
-     * Authorization level of a basic admin session
-     *
-     * @see _isAllowed()
+     * @inheritDoc
      */
     const ADMIN_RESOURCE = 'Apsis_One::logviewer';
 
     /**
-     * @var PageFactory
+     * @inheritDoc
      */
-    private PageFactory $resultPageFactory;
-
-    /**
-     * Index constructor.
-     *
-     * @param Context $context
-     * @param PageFactory $resultPageFactory
-     */
-    public function __construct(Context $context, PageFactory $resultPageFactory)
+    protected function getLabelTitle(): string
     {
-        $this->resultPageFactory = $resultPageFactory;
-        parent::__construct($context);
-    }
-
-    /**
-     * @return Page
-     */
-    public function execute()
-    {
-        /** @var Page $resultPage */
-        $resultPage = $this->resultPageFactory->create();
-        $resultPage->setActiveMenu('Apsis_One::logviewer');
-        $resultPage->addBreadcrumb(__('APSIS Logs'), __('APSIS Logs'));
-        $resultPage->addBreadcrumb(__('Reports'), __('Reports'));
-        $resultPage->getConfig()->getTitle()->prepend(__('APSIS Logs'));
-        return $resultPage;
+        return 'Integration Logs';
     }
 }

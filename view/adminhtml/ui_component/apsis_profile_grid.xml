@@ -70,41 +70,6 @@
                 </item>
             </argument>
         </filters>
-        <massaction name="listing_massaction">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="selectProvider" xsi:type="string">apsis_profile_grid.apsis_profile_grid.apsis_profile_columns.ids</item>
-                    <item name="component" xsi:type="string">Magento_Ui/js/grid/tree-massactions</item>
-                    <item name="indexField" xsi:type="string">id</item>
-                </item>
-            </argument>
-            <action name="delete">
-                <argument name="data" xsi:type="array">
-                    <item name="config" xsi:type="array">
-                        <item name="type" xsi:type="string">delete</item>
-                        <item name="label" xsi:type="string" translate="true">Delete</item>
-                        <item name="url" xsi:type="url" path="*/*/massDelete"/>
-                        <item name="confirm" xsi:type="array">
-                            <item name="title" xsi:type="string" translate="true">Delete items</item>
-                            <item name="message" xsi:type="string" translate="true">This action will delete record(s) from integration table in Magento, as well as already synced Profile(s) along with all of its associated data such as Attributes, Events and Consents will be removed from APSIS One. Are you sure to delete?</item>
-                        </item>
-                    </item>
-                </argument>
-            </action>
-            <action name="reset">
-                <argument name="data" xsi:type="array">
-                    <item name="config" xsi:type="array">
-                        <item name="type" xsi:type="string">reset</item>
-                        <item name="label" xsi:type="string" translate="true">Reset</item>
-                        <item name="url" xsi:type="url" path="*/*/massReset"/>
-                        <item name="confirm" xsi:type="array">
-                            <item name="title" xsi:type="string" translate="true">Reset items</item>
-                            <item name="message" xsi:type="string" translate="true">This action will reset record(s) to re-sync. Are you sure to reset profile sync?</item>
-                        </item>
-                    </item>
-                </argument>
-            </action>
-        </massaction>
         <paging name="listing_paging">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
@@ -117,29 +82,15 @@
             </argument>
         </paging>
     </container>
-    <columns name="apsis_profile_columns" class="Apsis\One\Block\Adminhtml\Ui\DataSource">
-        <selectionsColumn name="ids">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="indexField" xsi:type="string">id</item>
-                </item>
-            </argument>
-        </selectionsColumn>
+    <columns name="apsis_profile_columns" class="Apsis\One\Block\Adminhtml\Ui\DataSourceBlock">
         <column name="id">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">Row Id</item>
+                    <item name="label" xsi:type="string" translate="true">Profile Id</item>
+                    <item name="sortable" xsi:type="boolean">true</item>
+                    <item name="sorting" xsi:type="string">desc</item>
                     <item name="sortOrder" xsi:type="number">10</item>
-                </item>
-            </argument>
-        </column>
-        <column name="integration_uid">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">KS Id</item>
-                    <item name="sortOrder" xsi:type="number">20</item>
                 </item>
             </argument>
         </column>
@@ -148,20 +99,33 @@
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">text</item>
                     <item name="label" xsi:type="string" translate="true">Email</item>
-                    <item name="sortOrder" xsi:type="number">25</item>
+                    <item name="sortOrder" xsi:type="number">30</item>
+                </item>
+            </argument>
+        </column>
+        <column name="store_id">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Apsis\One\Model\Adminhtml\Config\Source\System\StoreSourceModel</item>
+                <item name="config" xsi:type="array">
+                    <item name="filter" xsi:type="string">select</item>
+                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
+                    <item name="dataType" xsi:type="string">select</item>
+                    <item name="editor" xsi:type="string">select</item>
+                    <item name="label" xsi:type="string" translate="true">Customer Store</item>
+                    <item name="sortOrder" xsi:type="number">40</item>
                 </item>
             </argument>
         </column>
         <column name="is_customer">
             <argument name="data" xsi:type="array">
-                <item name="options" xsi:type="object">Apsis\One\Model\Config\Source\System\IsStatus</item>
+                <item name="options" xsi:type="object">Apsis\One\Model\Adminhtml\Config\Source\System\IsStatusSourceModel</item>
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">select</item>
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
                     <item name="dataType" xsi:type="string">select</item>
                     <item name="editor" xsi:type="string">select</item>
                     <item name="label" xsi:type="string" translate="true">Is Customer</item>
-                    <item name="sortOrder" xsi:type="number">30</item>
+                    <item name="sortOrder" xsi:type="number">50</item>
                 </item>
             </argument>
         </column>
@@ -170,58 +134,32 @@
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">text</item>
                     <item name="label" xsi:type="string" translate="true">Customer Id</item>
-                    <item name="sortOrder" xsi:type="number">40</item>
-                </item>
-            </argument>
-        </column>
-        <column name="store_id">
-            <argument name="data" xsi:type="array">
-                <item name="options" xsi:type="object">Apsis\One\Model\Config\Source\System\Store</item>
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">select</item>
-                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
-                    <item name="dataType" xsi:type="string">select</item>
-                    <item name="editor" xsi:type="string">select</item>
-                    <item name="label" xsi:type="string" translate="true">Customer Store</item>
-                    <item name="sortOrder" xsi:type="number">50</item>
-                </item>
-            </argument>
-        </column>
-        <column name="customer_sync_status">
-            <argument name="data" xsi:type="array">
-                <item name="options" xsi:type="object">Apsis\One\Model\Config\Source\System\SyncStatus</item>
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">select</item>
-                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
-                    <item name="dataType" xsi:type="string">select</item>
-                    <item name="editor" xsi:type="string">select</item>
-                    <item name="label" xsi:type="string" translate="true">Customer Sync Status</item>
                     <item name="sortOrder" xsi:type="number">60</item>
+                </item>
+            </argument>
+        </column>
+        <column name="group_id">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Apsis\One\Model\Adminhtml\Config\Source\System\CustomerGroupsSourceModel</item>
+                <item name="config" xsi:type="array">
+                    <item name="filter" xsi:type="string">select</item>
+                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
+                    <item name="dataType" xsi:type="string">select</item>
+                    <item name="editor" xsi:type="string">select</item>
+                    <item name="label" xsi:type="string" translate="true">Customer Group</item>
+                    <item name="sortOrder" xsi:type="number">70</item>
                 </item>
             </argument>
         </column>
         <column name="is_subscriber">
             <argument name="data" xsi:type="array">
-                <item name="options" xsi:type="object">Apsis\One\Model\Config\Source\System\IsStatus</item>
+                <item name="options" xsi:type="object">Apsis\One\Model\Adminhtml\Config\Source\System\IsStatusSourceModel</item>
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">select</item>
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
                     <item name="dataType" xsi:type="string">select</item>
                     <item name="editor" xsi:type="string">select</item>
                     <item name="label" xsi:type="string" translate="true">Is Subscriber</item>
-                    <item name="sortOrder" xsi:type="number">70</item>
-                </item>
-            </argument>
-        </column>
-        <column name="subscriber_store_id">
-            <argument name="data" xsi:type="array">
-                <item name="options" xsi:type="object">Apsis\One\Model\Config\Source\System\Store</item>
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">select</item>
-                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
-                    <item name="dataType" xsi:type="string">select</item>
-                    <item name="editor" xsi:type="string">select</item>
-                    <item name="label" xsi:type="string" translate="true">Subscriber Store</item>
                     <item name="sortOrder" xsi:type="number">80</item>
                 </item>
             </argument>
@@ -237,36 +175,14 @@
         </column>
         <column name="subscriber_status">
             <argument name="data" xsi:type="array">
-                <item name="options" xsi:type="object">Apsis\One\Model\Config\Source\System\SubscriberStatus</item>
+                <item name="options" xsi:type="object">Apsis\One\Model\Adminhtml\Config\Source\System\SubscriberStatusSourceModel</item>
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">select</item>
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
                     <item name="dataType" xsi:type="string">select</item>
                     <item name="editor" xsi:type="string">select</item>
-                    <item name="label" xsi:type="string" translate="true">Subscription Status</item>
+                    <item name="label" xsi:type="string" translate="true">Subscriber Status</item>
                     <item name="sortOrder" xsi:type="number">100</item>
-                </item>
-            </argument>
-        </column>
-        <column name="subscriber_sync_status">
-            <argument name="data" xsi:type="array">
-                <item name="options" xsi:type="object">Apsis\One\Model\Config\Source\System\SubscriberSyncStatus</item>
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">select</item>
-                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
-                    <item name="dataType" xsi:type="string">select</item>
-                    <item name="editor" xsi:type="string">select</item>
-                    <item name="label" xsi:type="string" translate="true">Subscriber Sync Status</item>
-                    <item name="sortOrder" xsi:type="number">110</item>
-                </item>
-            </argument>
-        </column>
-        <column name="error_message">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">Error Message</item>
-                    <item name="sortOrder" xsi:type="number">120</item>
                 </item>
             </argument>
         </column>
@@ -277,7 +193,8 @@
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/date</item>
                     <item name="dataType" xsi:type="string">date</item>
                     <item name="label" xsi:type="string" translate="true">Updated At</item>
-                    <item name="sortOrder" xsi:type="number">130</item>
+                    <item name="sortable" xsi:type="boolean">true</item>
+                    <item name="sortOrder" xsi:type="number">110</item>
                 </item>
             </argument>
         </column>

@@ -1,17 +1,14 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
     <group id="apsis_one">
-        <job name="apsis_one_sync_profiles" instance="Apsis\One\Model\Cron" method="syncProfiles">
-            <config_path>apsis_one_configuration/developer_settings/cron_schedule_profile_sync</config_path>
+        <job name="apsis_one_process_queue" instance="Apsis\One\Service\QueueService" method="runCronjobTask">
+            <schedule>*/3 * * * *</schedule>
         </job>
-        <job name="apsis_one_find_abandoned_carts" instance="Apsis\One\Model\Cron" method="findAbandonedCarts">
+        <job name="apsis_one_find_abandoned_carts" instance="Apsis\One\Service\AbandonedService" method="runCronjobTask">
             <schedule>*/5 * * * *</schedule>
         </job>
-        <job name="apsis_one_sync_events" instance="Apsis\One\Model\Cron" method="syncEvents">
-            <config_path>apsis_one_configuration/developer_settings/cron_schedule_events_sync</config_path>
-        </job>
-        <job name="apsis_one_cleanup" instance="Apsis\One\Model\Cron" method="cleanup">
-            <schedule>0 0 * * *</schedule>
+        <job name="apsis_one_sync_events" instance="Apsis\One\Service\EventService" method="runCronjobTask">
+            <schedule>*/3 * * * *</schedule>
         </job>
     </group>
 </config>

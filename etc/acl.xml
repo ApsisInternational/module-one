@@ -6,10 +6,12 @@
                 <resource id="Magento_Reports::report">
                     <resource id="Apsis_One::reports" title="Apsis One">
                         <resource id="Apsis_One::profile" title="Apsis Profile" sortOrder="10"/>
-                        <resource id="Apsis_One::batch" title="Apsis Profile Batched" sortOrder="20"/>
-                        <resource id="Apsis_One::event" title="Apsis Event" sortOrder="30"/>
-                        <resource id="Apsis_One::abandoned" title="Apsis Abandoned Carts" sortOrder="40"/>
-                        <resource id="Apsis_One::logviewer" title="Log Viewer" sortOrder="50"/>
+                        <resource id="Apsis_One::event" title="Apsis Event" sortOrder="20"/>
+                        <resource id="Apsis_One::abandoned" title="Apsis Abandoned Carts" sortOrder="30"/>
+                        <resource id="Apsis_One::queue" title="Apsis Queue Processor" sortOrder="40"/>
+                        <resource id="Apsis_One::webhook" title="Apsis Webhooks" sortOrder="50"/>
+                        <resource id="Apsis_One::configs" title="Apsis Integration Config" sortOrder="60"/>
+                        <resource id="Apsis_One::logviewer" title="Log Viewer" sortOrder="70"/>
                     </resource>
                 </resource>
                 <resource id="Magento_Backend::stores">

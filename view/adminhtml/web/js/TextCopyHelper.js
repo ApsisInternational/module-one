@@ -3,8 +3,7 @@ require(['jquery', 'jquery/ui', 'domReady!', 'mage/translate'], function ($) {
 
     const mouseEnterText = $.mage.__('CLICK TO COPY');
     const successText = $.mage.__('COPIED TO CLIPBOARD');
-    const tip = '<div class="apsis-tooltip" style="position: absolute; top: -15px; background-color: #333;' +
-        'color: #fff; padding: 5px;"></div>';
+    const tip = '<div class="apsis-tooltip"></div>';
 
     /**
      * Add tooltip with text
@@ -49,23 +48,23 @@ require(['jquery', 'jquery/ui', 'domReady!', 'mage/translate'], function ($) {
     /**
      * Mouse leave observer
      */
-    $(document).on('mouseleave', '.apsis-copy-helper', function() {
+    $(document).on('mouseleave', '.apsis-copy-helper', function () {
         remove($(this));
     });
 
     /**
      * Mouse enter observer
      */
-    $(document).on('mouseenter', '.apsis-copy-helper', function() {
+    $(document).on('mouseenter', '.apsis-copy-helper', function () {
         add(mouseEnterText, $(this));
     });
 
     /**
      * Mouse click observer
      */
-    $(document).on('click', '.apsis-copy-helper', function() {
+    $(document).on('click', '.apsis-copy-helper', function () {
         copy($(this));
-        setTimeout(function() {
+        setTimeout(function () {
             remove($(this));
         }.bind(this), 1000);
     });

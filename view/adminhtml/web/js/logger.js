@@ -1,10 +1,11 @@
-define(['jquery', 'domReady!'], function ($) {
+define(['jquery', 'domReady!'], function () {
     'use strict';
 
     /**
      * Scroll to the bottom of text
      */
-    function consoleScroll() {
+    function consoleScroll()
+    {
         let logData = document.getElementById('log_data'),
             dh = logData.scrollHeight,
             ch = logData.clientHeight;

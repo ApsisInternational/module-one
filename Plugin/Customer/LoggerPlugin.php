@@ -2,15 +2,15 @@
 
 namespace Apsis\One\Plugin\Customer;
 
-use Apsis\One\Model\ResourceModel\Profile\CollectionFactory as ProfileCollectionFactory;
-use Apsis\One\Model\Service\Config as ApsisConfigHelper;
-use Apsis\One\Model\Service\Core as ApsisCoreHelper;
-use Apsis\One\Model\Service\Event;
-use Apsis\One\Model\Service\Profile;
+use Apsis\One\Model\ProfileModel;
+use Apsis\One\Model\ResourceModel\Profile\ProfileCollection;
+use Apsis\One\Model\ResourceModel\ProfileResource;
+use Apsis\One\Model\ResourceModel\Profile\ProfileCollectionFactory;
+use Apsis\One\Service\ApiService;
+use Apsis\One\Service\BaseService;
+use Apsis\One\Service\Sub\SubEventService;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Logger as CustomerLogger;
-use Magento\Store\Api\Data\StoreInterface;
-use Magento\Store\Model\ScopeInterface;
 use Throwable;
 
 class LoggerPlugin
@@ -21,46 +21,44 @@ class LoggerPlugin
     private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
-     * @var ApsisCoreHelper
-     */
-    private ApsisCoreHelper $apsisCoreHelper;
-
-    /**
      * @var CustomerRepositoryInterface
      */
     private CustomerRepositoryInterface $customerRepository;
 
     /**
-     * @var Event
+     * @var SubEventService
      */
-    private Event $eventService;
+    private SubEventService $subEventService;
 
     /**
-     * @var Profile
+     * @var ApiService
      */
-    private Profile $profileService;
+    private ApiService $apiService;
 
     /**
-     * Account constructor.
-     *
-     * @param ApsisCoreHelper $apsisCoreHelper
+     * @var ProfileResource
+     */
+    private ProfileResource $profileResource;
+
+    /**
      * @param CustomerRepositoryInterface $customerRepository
      * @param ProfileCollectionFactory $profileCollectionFactory
-     * @param Event $eventService
-     * @param Profile $profileService
+     * @param SubEventService $subEventService
+     * @param ApiService $apiService
+     * @param ProfileResource $profileResource
      */
     public function __construct(
-        ApsisCoreHelper $apsisCoreHelper,
         CustomerRepositoryInterface $customerRepository,
         ProfileCollectionFactory $profileCollectionFactory,
-        Event $eventService,
-        Profile $profileService
+        SubEventService $subEventService,
+        ApiService $apiService,
+        ProfileResource $profileResource
     ) {
-        $this->eventService = $eventService;
-        $this->profileService = $profileService;
+        $this->profileResource = $profileResource;
+        $this->subEventService = $subEventService;
+        $this->apiService = $apiService;
         $this->profileCollectionFactory = $profileCollectionFactory;
         $this->customerRepository = $customerRepository;
-        $this->apsisCoreHelper = $apsisCoreHelper;
     }
 
     /**
@@ -83,41 +81,37 @@ class LoggerPlugin
                 return $result;
             }
 
-            $store = $this->apsisCoreHelper->getStore($customer->getStoreId());
-            $account = $this->apsisCoreHelper->isEnabled(ScopeInterface::SCOPE_STORES, $store->getId());
-            if (! $account) {
-                return $result;
-            }
-
-            $profile = $this->profileCollectionFactory->create()
-                ->loadByCustomerId($customer->getId());
-            if (! $profile) {
+            $store = $this->apiService->getStore($customer->getStoreId());
+            /** @var ProfileModel $profile */
+            $profile = $this->getProfileCollection()
+                ->getFirstItemFromCollection('customer_id', $customer->getId());
+            if (empty($profile)) {
                 return $result;
             }
 
             if (isset($data['last_login_at'])) {
-                $this->profileService->mergeMagentoProfileWithWebProfile($profile, $store, $customer);
-                if ($this->isEventEnabled($store)) {
-                    $this->eventService->registerCustomerLoginEvent($logger, $customerId, $profile, $customer);
+                $trackingTextConfig =
+                    (string) $this->apiService->getStoreConfig($store, BaseService::PATH_CONFIG_TRACKING_SCRIPT);
+                if (strlen($trackingTextConfig)) {
+                    $this->apiService->mergeProfile($store, $profile, $customer);
                 }
+                $this->subEventService
+                    ->registerLoggedInEvent($logger, $customerId, $profile, $customer, $this->apiService);
+                $profile->setHasDataChanges(true);
+                $this->profileResource->save($profile);
             }
         } catch (Throwable $e) {
-            $this->apsisCoreHelper->logError(__METHOD__, $e);
+            $this->apiService->logError(__METHOD__, $e);
         }
 
         return $result;
     }
 
     /**
-     * @param StoreInterface $store
-     *
-     * @return bool
+     * @return ProfileCollection
      */
-    private function isEventEnabled(StoreInterface $store): bool
+    public function getProfileCollection(): ProfileCollection
     {
-        return (boolean) $this->apsisCoreHelper->getStoreConfig(
-            $store,
-            ApsisConfigHelper::EVENTS_CUSTOMER_LOGIN
-        );
+        return $this->profileCollectionFactory->create();
     }
 }

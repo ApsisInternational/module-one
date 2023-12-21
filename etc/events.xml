@@ -4,38 +4,46 @@
     <!-- Subscriber Events -->
     <event name="newsletter_subscriber_save_after">
         <observer name="apsis_newsletter_subscriber_save_after_observer"
-                  instance="Apsis\One\Observer\Subscriber\SaveUpdate"/>
+                  instance="Apsis\One\Observer\Subscriber\SaveUpdateObserver"/>
     </event>
     <event name="newsletter_subscriber_delete_after">
         <observer name="apsis_newsletter_subscriber_delete_after_observer"
-                  instance="Apsis\One\Observer\Subscriber\Remove"/>
+                  instance="Apsis\One\Observer\Subscriber\RemoveObserver"/>
     </event>
     <!-- Customer Events -->
     <event name="customer_save_after">
         <observer name="apsis_customer_save_after_observer"
-                  instance="Apsis\One\Observer\Customer\SaveUpdate"/>
+                  instance="Apsis\One\Observer\Customer\SaveUpdateObserver"/>
     </event>
     <event name="customer_delete_after">
         <observer name="apsis_customer_delete_after_observer"
-                  instance="Apsis\One\Observer\Customer\Remove"/>
+                  instance="Apsis\One\Observer\Customer\RemoveObserver"/>
+    </event>
+    <event name="customer_address_save_after">
+        <observer name="apsis_customer_address_save_after_observer"
+                  instance="Apsis\One\Observer\Customer\Address\SaveUpdateLoadObserver"/>
+    </event>
+    <event name="customer_address_load_after">
+        <observer name="apsis_customer_address_load_after_observer"
+                  instance="Apsis\One\Observer\Customer\Address\SaveUpdateLoadObserver"/>
     </event>
     <!-- Customer Review Events -->
     <event name="review_save_after">
         <observer name="apsis_review_save_after_observer"
-                  instance="Apsis\One\Observer\Customer\Review\Product"/>
+                  instance="Apsis\One\Observer\Customer\Review\ProductObserver"/>
     </event>
     <!-- Customer Wishlist Events -->
     <event name="wishlist_add_product">
         <observer name="apsis_wishlist_add_product_observer"
-                  instance="Apsis\One\Observer\Customer\Wishlist\AddProduct"/>
+                  instance="Apsis\One\Observer\Customer\Wishlist\AddProductObserver"/>
     </event>
     <!-- Sales Events -->
     <event name="sales_order_save_after">
         <observer name="apsis_sales_order_place_after_observer"
-                  instance="Apsis\One\Observer\Sales\Order\Placed"/>
+                  instance="Apsis\One\Observer\Sales\Order\PlacedObserver"/>
     </event>
     <event name="checkout_cart_add_product_complete">
-        <observer name="apsis_checkout_cart_add_product_complete"
-                  instance="Apsis\One\Observer\Sales\Cart\AddProduct"/>
+        <observer name="apsis_checkout_cart_add_product_complete_observer"
+                  instance="Apsis\One\Observer\Sales\Cart\AddProductObserver"/>
     </event>
 </config>

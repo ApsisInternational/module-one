@@ -2,46 +2,42 @@
 
 namespace Apsis\One\Controller\Adminhtml\Developer;
 
-use Apsis\One\Model\Developer;
-use Magento\Backend\App\AbstractAction;
+use Apsis\One\Service\DeveloperService;
+use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\App\ResponseInterface;
+use Magento\Framework\Controller\ResultInterface;
 
-class Reset extends AbstractAction
+class Reset extends Action
 {
     /**
-     * Authorization level of a basic admin session
-     *
      * @see _isAllowed()
      */
     const ADMIN_RESOURCE = 'Apsis_One::config';
 
     /**
-     * @var Developer
+     * @var DeveloperService
      */
-    private Developer $developer;
+    private DeveloperService $developerService;
 
     /**
-     * Reset constructor.
-     *
      * @param Context $context
-     * @param Developer $developer
+     * @param DeveloperService $developerService
      */
-    public function __construct(Context $context, Developer $developer)
+    public function __construct(Context $context, DeveloperService $developerService)
     {
-        $this->developer = $developer;
+        $this->developerService = $developerService;
         parent::__construct($context);
     }
 
     /**
-     * @return ResponseInterface
+     * @inheirtDoc
      */
-    public function execute()
+    public function execute(): ResultInterface|ResponseInterface
     {
-        $this->developer->resetModule() ?
-            $this->messageManager->addSuccessMessage('Module full reset request is complete') :
-            $this->messageManager->addWarningMessage('Unable to reset module, please check log file.');
-
+        $this->developerService->resetModule() ?
+            $this->messageManager->addSuccessMessage('Module is successfully reset.') :
+            $this->messageManager->addWarningMessage('Unable to reset module, please check integration log file.');
         return $this->_redirect($this->_redirect->getRefererUrl());
     }
 }

@@ -2,7 +2,6 @@
 
 namespace Apsis\One\Service\Data\Review;
 
-use Apsis\One\Model\ProfileModel;
 use Apsis\One\Service\Data\AbstractData;
 use Apsis\One\Service\BaseService;
 use Magento\Catalog\Api\ProductRepositoryInterface;
@@ -64,7 +63,6 @@ class ReviewData extends AbstractData
     }
 
     /**
-     * @param ProfileModel $profile
      * @param Review $review
      * @param MagentoProduct $product
      * @param BaseService $baseService
@@ -72,25 +70,30 @@ class ReviewData extends AbstractData
      * @return array
      */
     public function getReviewData(
-        ProfileModel $profile,
         Review $review,
         MagentoProduct $product,
         BaseService $baseService
     ): array {
         try {
             $this->fetchProduct($product, $baseService);
-            $commonDataArray = $this->getCommonProdDataArray($profile, $review->getStoreId(), $baseService);
-            if (empty($commonDataArray)) {
-                return [];
-            }
-
-            return array_merge(
-                $commonDataArray,
-                [
-                    'review_rating' => $this->getVoteValue($review),
-                    'review_text' => (string) $review->getDetail()
-                ]
-            );
+            return [
+                'reviewId' => (int) $review->getReviewId(),
+                'customerId' => (int) $review->getCustomerId(),
+                'websiteName' => (string) $baseService->getStoreWebsiteName($review->getStoreId()),
+                'storeName' => (string) $baseService->getStoreName($review->getStoreId()),
+                'nickname' => (string) $review->getNickname(),
+                'reviewTitle' => (string) $review->getTitle(),
+                'reviewDetail' => (string) $review->getDetail(),
+                'productId' => $this->isProductSet($baseService) ? (int) $this->product->getId() : 0,
+                'sku' => $this->isProductSet($baseService) ? (string) $this->product->getSku() : '',
+                'name' => $this->isProductSet($baseService) ? (string) $this->product->getName() : '',
+                'productUrl' => (string) $this->getProductUrl($review->getStoreId(), $baseService),
+                'productReviewUrl' => (string) $this->getProductUrl($review->getStoreId(), $baseService),
+                'productImageUrl' => (string) $this->getProductImageUrl($review->getStoreId(), $baseService),
+                'catalogPriceAmount' => $this->isProductSet($baseService) ?
+                    (float) round($this->product->getPrice(), 2) : 0.00,
+                'ratingStarValue' => $this->getVoteValue($review)
+            ];
         } catch (Throwable $e) {
             $baseService->logError(__METHOD__, $e);
             return [];

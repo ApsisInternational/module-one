@@ -106,12 +106,7 @@ class ReviewEvents extends AbstractEvents
                     continue;
                 }
 
-                $eventData = $this->eventData->getReviewData(
-                    $profile,
-                    $review,
-                    $product,
-                    $baseService
-                );
+                $eventData = $this->eventData->getReviewData($review, $product, $baseService);
 
                 if (! empty($eventData)) {
                     $eventDataForEvent = $this->getFormattedEventDataForRecord(

@@ -187,7 +187,6 @@ class ProfileService extends BaseService
                     $this->subQueueService->registerItem($profile, $this, $subscription);
                     $this->subEventService->registerSubscriptionChangedEvent(
                         $object,
-                        self::QUEUE_CONSENT_TYPE_CONSENTED_MAP[$subscription],
                         $profile,
                         $this
                     );
@@ -230,6 +229,7 @@ class ProfileService extends BaseService
                 if ((int) $object->getSubscriberStatus() === Subscriber::STATUS_UNSUBSCRIBED) {
                     $subscription = QueueModel::CONSENT_OPT_OUT;
                 } elseif ((int) $object->getSubscriberStatus() === Subscriber::STATUS_SUBSCRIBED) {
+                    $this->subEventService->registerCustomerBecomesSubscriberEvent($object, $profile, $this);
                     $subscription = QueueModel::CONSENT_OPT_IN;
                 }
 
@@ -237,11 +237,14 @@ class ProfileService extends BaseService
                     $this->subQueueService->registerItem($profile, $this, $subscription);
                     $this->subEventService->registerSubscriptionChangedEvent(
                         $object,
-                        self::QUEUE_CONSENT_TYPE_CONSENTED_MAP[$subscription],
                         $profile,
                         $this
                     );
                 }
+            }
+
+            if ($object instanceof Customer) {
+                $this->subEventService->registerSubscriberBecomesCustomerEvent($object, $profile, $this);
             }
 
             $this->subProfileService->updateProfile($profile, $object, $this);

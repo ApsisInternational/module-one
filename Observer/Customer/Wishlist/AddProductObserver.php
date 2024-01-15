@@ -31,6 +31,8 @@ class AddProductObserver extends AbstractObserver
             if ($profile) {
                 $this->subEventService
                     ->registerProductWishedEvent(
+                        $wishlist,
+                        $observer->getEvent()->getItem(),
                         $observer,
                         $store,
                         $profile,

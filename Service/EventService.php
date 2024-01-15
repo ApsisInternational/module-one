@@ -34,15 +34,19 @@ class EventService extends AbstractCronService
     /**
      * Event discriminators
      */
-    const SUBSCRIPTION_CHANGED_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.subscription-changed';
-    const LOGGED_IN_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.logged-in';
-    const PRODUCT_WISHED__DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.product-wished';
-    const PRODUCT_REVIEWED_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.product-reviewed';
-    const CART_ABANDONED_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.cart-abandoned-cart';
-    const CART_ABANDONED_PRODUCT_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.cart-abandoned-product';
-    const ORDER_PLACED_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.order-placed-order';
-    const ORDER_PLACED_PRODUCT_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.order-placed-product';
-    const PRODUCT_CARTED_DISCRIMINATOR = 'com.apsis1.integrations.adobe-commerce.events.product-carted';
+    const UNSUBSCRIBED_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.subscriber-unsubscribe';
+    const CUSTOMER_LOGIN_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.login';
+    const WISHLIST_PRODUCT_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.wishlist-product';
+    const PRODUCT_REVIEW_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.product-review';
+    const AC_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.abandoned-cart';
+    const AC_PRODUCT_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.abandoned-product';
+    const ORDER_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.order';
+    const ORDER_PRODUCT_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.order-product';
+    const PRODUCT_CARTED_EVENT_DISCRIMINATOR = 'com.apsis1.integrations.magento.events.product-carted';
+    const SUBSCRIBER_2_CUSTOMER_EVENT_DISCRIMINATOR =
+        'com.apsis1.integrations.magento.events.subscriber-register-as-customer';
+    const CUSTOMER_2_SUBSCRIBER_EVENT_DISCRIMINATOR =
+        'com.apsis1.integrations.magento.events.customer-becomes-subscriber';
 
     /**
      * @var EventResource
@@ -68,34 +72,38 @@ class EventService extends AbstractCronService
      * @var array
      */
     private array $eventsDiscriminatorMapping = [
-        EventModel::EVENT_SUBSCRIPTION_CHANGED => self::SUBSCRIPTION_CHANGED_DISCRIMINATOR,
-        EventModel::EVENT_LOGGED_IN => self::LOGGED_IN_DISCRIMINATOR,
-        EventModel::EVENT_PRODUCT_WISHED => self::PRODUCT_WISHED__DISCRIMINATOR,
-        EventModel::EVENT_PRODUCT_REVIEWED => self::PRODUCT_REVIEWED_DISCRIMINATOR,
+        EventModel::EVENT_SUBSCRIBER_UNSUBSCRIBED => self::UNSUBSCRIBED_EVENT_DISCRIMINATOR,
+        EventModel::EVENT_LOGGED_IN => self::CUSTOMER_LOGIN_EVENT_DISCRIMINATOR,
+        EventModel::EVENT_PRODUCT_WISHED => self::WISHLIST_PRODUCT_EVENT_DISCRIMINATOR,
+        EventModel::EVENT_PRODUCT_REVIEWED => self::PRODUCT_REVIEW_EVENT_DISCRIMINATOR,
         EventModel::EVENT_CART_ABANDONED => [
-            'main' => self::CART_ABANDONED_DISCRIMINATOR,
-            'sub' => self::CART_ABANDONED_PRODUCT_DISCRIMINATOR
+            'main' => self::AC_EVENT_DISCRIMINATOR,
+            'sub' => self::AC_PRODUCT_EVENT_DISCRIMINATOR
         ],
         EventModel::EVENT_PLACED_ORDER => [
-            'main' => self::ORDER_PLACED_DISCRIMINATOR,
-            'sub' => self::ORDER_PLACED_PRODUCT_DISCRIMINATOR
+            'main' => self::ORDER_EVENT_DISCRIMINATOR,
+            'sub' => self::ORDER_PRODUCT_EVENT_DISCRIMINATOR
         ],
-        EventModel::EVENT_PRODUCT_CARTED => self::PRODUCT_CARTED_DISCRIMINATOR,
+        EventModel::EVENT_PRODUCT_CARTED => self::PRODUCT_CARTED_EVENT_DISCRIMINATOR,
+        EventModel::EVENT_CUSTOMER_BECOMES_SUBSCRIBER => self::CUSTOMER_2_SUBSCRIBER_EVENT_DISCRIMINATOR,
+        EventModel::EVENT_SUBSCRIBER_BECOMES_CUSTOMER => self::SUBSCRIBER_2_CUSTOMER_EVENT_DISCRIMINATOR,
     ];
 
     /**
      * @var array
      */
     private array $eventsVersionMapping = [
-        self::SUBSCRIPTION_CHANGED_DISCRIMINATOR => false,
-        self::LOGGED_IN_DISCRIMINATOR => false,
-        self::PRODUCT_WISHED__DISCRIMINATOR => false,
-        self::PRODUCT_REVIEWED_DISCRIMINATOR => false,
-        self::CART_ABANDONED_DISCRIMINATOR => false,
-        self::CART_ABANDONED_PRODUCT_DISCRIMINATOR => false,
-        self::ORDER_PLACED_DISCRIMINATOR => false,
-        self::ORDER_PLACED_PRODUCT_DISCRIMINATOR => false,
-        self::PRODUCT_CARTED_DISCRIMINATOR => false
+        self::UNSUBSCRIBED_EVENT_DISCRIMINATOR => false,
+        self::CUSTOMER_LOGIN_EVENT_DISCRIMINATOR => false,
+        self::WISHLIST_PRODUCT_EVENT_DISCRIMINATOR => false,
+        self::PRODUCT_REVIEW_EVENT_DISCRIMINATOR => false,
+        self::AC_EVENT_DISCRIMINATOR => false,
+        self::AC_PRODUCT_EVENT_DISCRIMINATOR => false,
+        self::ORDER_EVENT_DISCRIMINATOR => false,
+        self::ORDER_PRODUCT_EVENT_DISCRIMINATOR => false,
+        self::PRODUCT_CARTED_EVENT_DISCRIMINATOR => false,
+        self::SUBSCRIBER_2_CUSTOMER_EVENT_DISCRIMINATOR => false,
+        self::CUSTOMER_2_SUBSCRIBER_EVENT_DISCRIMINATOR => false
     ];
 
     /**

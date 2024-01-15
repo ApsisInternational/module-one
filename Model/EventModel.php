@@ -39,16 +39,20 @@ class EventModel extends AbstractModel
     const EVENT_PRODUCT_CARTED = 3;
     const EVENT_CART_ABANDONED = 4;
     const EVENT_PLACED_ORDER = 5;
-    const EVENT_SUBSCRIPTION_CHANGED = 6;
+    const EVENT_SUBSCRIBER_UNSUBSCRIBED = 6;
     const EVENT_LOGGED_IN = 7;
+    const EVENT_SUBSCRIBER_BECOMES_CUSTOMER = 8;
+    const EVENT_CUSTOMER_BECOMES_SUBSCRIBER = 9;
     const TYPE_TEXT_MAP = [
         self::EVENT_PRODUCT_REVIEWED => 'Product Reviewed',
         self::EVENT_PRODUCT_WISHED => 'Product Wished',
         self::EVENT_PRODUCT_CARTED => 'Product Carted',
         self::EVENT_CART_ABANDONED => 'Cart Abandoned',
         self::EVENT_PLACED_ORDER => 'Order Placed',
-        self::EVENT_SUBSCRIPTION_CHANGED => 'Subscription Changed',
-        self::EVENT_LOGGED_IN => 'Logged In'
+        self::EVENT_SUBSCRIBER_UNSUBSCRIBED => 'Subscriber Unsubscribed',
+        self::EVENT_LOGGED_IN => 'Logged In',
+        self::EVENT_SUBSCRIBER_BECOMES_CUSTOMER => 'Subscriber Becomes Customer',
+        self::EVENT_CUSTOMER_BECOMES_SUBSCRIBER => 'Customer Becomes Subscriber'
     ];
 
     const STATUS_PENDING = 0;

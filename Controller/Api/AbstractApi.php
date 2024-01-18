@@ -317,7 +317,7 @@ abstract class AbstractApi extends AbstractAction
     protected function getBackendTypeByInput(string $input): string
     {
         return match ($input) {
-            'date', 'datetime' => 'integer',
+            'date', 'datetime' => ProfilesIndex::ENUM_UNIX_S,
             'boolean' => 'boolean',
             'price', 'weight' => 'double',
             default => 'string',

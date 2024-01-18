@@ -22,25 +22,21 @@ class OrderData extends AbstractData
     {
         try {
             $items = [];
-            $shopCurrency = $shopName = null;
-
             /** @var OrderItem $item */
             foreach ($order->getAllVisibleItems() as $item) {
                 try {
                     $this->fetchAndSetProductFromItem($item, $baseService);
-                    $productDataArr = $this->getCommonProdDataArray($profileModel, $item->getStoreId(), $baseService);
-                    if (empty($productDataArr)) {
-                        return [];
-                    }
-
-                    if (! isset($shopCurrency) || ! isset($shopName)) {
-                        $shopCurrency = $productDataArr['shop_currency'];
-                        $shopName = $productDataArr['shop_name'];
-                    }
-                    $productDataArr['product_quantity'] = (float) round($item->getQtyOrdered(), 2);
-                    $productDataArr['order_id'] = (string) $order->getEntityId();
-
-                    $items [] = $productDataArr;
+                    $items [] = [
+                        'orderId' => (int) $order->getEntityId(),
+                        'productId' => (int) $item->getProductId(),
+                        'sku' => (string) $item->getSku(),
+                        'name' => (string) $item->getName(),
+                        'productUrl' => (string) $this->getProductUrl($order->getStoreId(), $baseService),
+                        'productImageUrl' => (string) $this->getProductImageUrl($order->getStoreId(), $baseService),
+                        'qtyOrdered' => (float) round($item->getQtyOrdered(), 2),
+                        'priceAmount' => (float) round($item->getPrice(), 2),
+                        'rowTotalAmount' => (float) round($item->getRowTotal(), 2),
+                    ];
                 } catch (Throwable $e) {
                     $baseService->logError(__METHOD__, $e);
                     continue;
@@ -51,41 +47,21 @@ class OrderData extends AbstractData
                 return [];
             }
 
-            $billingAddress = $order->getBillingAddress();
-            $shippingAddress = $order->getShippingAddress();
             return [
-                'profile_id' => (string) $profileModel->getId(),
-                'order_id' => (string) $order->getEntityId(),
-                'grand_total' => (float) round($order->getGrandTotal(), 2),
-                'total_products' => (int) $order->getTotalItemCount(),
-                'total_quantity' => (float) $order->getTotalQtyOrdered(),
-                'shipping_method_name' => (string) $order->getShippingMethod(),
-                'payment_method_name' => (string) $order->getPayment()?->getMethod(),
-                'shop_currency' => $shopCurrency,
-                'shop_name' => $shopName,
-                'shop_id' => (string) $order->getStoreId(),
-                'billing_name' => (string) $billingAddress?->getName(),
-                'billing_street' => implode(', ', (array) $billingAddress?->getStreet()),
-                'billing_postcode' => (string) $billingAddress?->getPostcode(),
-                'billing_city' => (string) $billingAddress?->getCity(),
-                'billing_region' => (string) $billingAddress?->getRegion(),
-                'billing_country' => (string) $billingAddress?->getCountryId(),
-                'billing_telephone' => $this->getFormattedPhone(
-                    $baseService,
-                    (string) $billingAddress?->getCountryId(),
-                    (string) $billingAddress?->getTelephone()
-                ),
-                'shipping_name' => (string) $shippingAddress?->getName(),
-                'shipping_street' => implode(', ', (array) $shippingAddress?->getStreet()),
-                'shipping_postcode' => (string) $shippingAddress?->getPostcode(),
-                'shipping_city' => (string) $shippingAddress?->getCity(),
-                'shipping_region' => (string) $shippingAddress?->getRegion(),
-                'shipping_country' => (string) $shippingAddress?->getCountryId(),
-                'shipping_telephone' => $this->getFormattedPhone(
-                    $baseService,
-                    (string) $shippingAddress?->getCountryId(),
-                    (string) $shippingAddress?->getTelephone()
-                ),
+                'orderId' => (int) $order->getEntityId(),
+                'incrementId' => (string) $order->getIncrementId(),
+                'customerId' => (int) $order->getCustomerId(),
+                'subscriberId' => (int) $profileModel->getSubscriberId(),
+                'isGuest' => (boolean) $order->getCustomerIsGuest(),
+                'websiteName' => (string) $order->getStore()->getWebsite()->getName(),
+                'storeName' => (string) $order->getStore()->getName(),
+                'grandTotalAmount' => (float) round($order->getGrandTotal(), 2),
+                'shippingAmount' => (float) round($order->getShippingAmount(), 2),
+                'discountAmount' => (float) round($order->getDiscountAmount(), 2),
+                'shippingMethodName' => (string) $order->getShippingDescription(),
+                'paymentMethodName' => (string) $order->getPayment()->getMethod(),
+                'itemsCount' => (int) $order->getTotalItemCount(),
+                'currencyCode' => (string) $order->getOrderCurrencyCode(),
                 'items' => $items
             ];
         } catch (Throwable $e) {

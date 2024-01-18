@@ -383,8 +383,8 @@ abstract class AbstractProfile extends AbstractApi
             }
 
             $value = $profileData[$codeName];
-            if ($field['type'] === 'integer') {
-                if (in_array($codeName, ProfilesIndex::DATETIME_FIELDS)) {
+            if ($field['type'] === 'integer' || $field['type'] === ProfilesIndex::ENUM_UNIX_S) {
+                if ($field['type'] === ProfilesIndex::ENUM_UNIX_S) {
                     $value = $this->service->formatDateForPlatformCompatibility($value);
                 } elseif ($codeName === 'phone' && ! empty($profileData['country'])) {
                     $value = $this->service->formatPhoneNumber($profileData['country'], (string) $value);

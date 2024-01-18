@@ -112,7 +112,8 @@ class WishlistEvents extends AbstractEvents
                 }
 
                 $eventData = $this->eventData->getWishedData(
-                    $profile,
+                    $wishList,
+                    $wishlistItem,
                     $store->getId(),
                     $product,
                     $baseService

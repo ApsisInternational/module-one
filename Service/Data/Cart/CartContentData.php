@@ -76,13 +76,7 @@ class CartContentData extends AbstractData
             if (! empty($cartData)) {
                 $data['token'] = BaseService::generateUniversallyUniqueIdentifier();
                 $data['cart_content'] = $cartData;
-                $data['cart_event'] = $this->getDataForEventFromAcData(
-                    $cartData,
-                    $profileModel->getId(),
-                    $quoteModel,
-                    $data['token'],
-                    $baseService
-                );
+                $data['cart_event'] = $this->getDataForEventFromAcData($cartData, $data['token'], $baseService);
             }
             $appEmulation->stopEnvironmentEmulation();
         } catch (Throwable $e) {
@@ -112,38 +106,27 @@ class CartContentData extends AbstractData
 
     /**
      * @param array $acData
-     * @param string $profileId
-     * @param Quote $quoteModel
      * @param string $token
      * @param BaseService $baseService
      *
      * @return array
      */
-    private function getDataForEventFromAcData(
-        array $acData,
-        string $profileId,
-        Quote $quoteModel,
-        string $token,
-        BaseService $baseService
-    ): array {
+    private function getDataForEventFromAcData(array $acData, string $token, BaseService $baseService): array
+    {
         try {
             $items = [];
 
             foreach ($acData['items'] as $item) {
                 $items [] = [
-                    'profile_id' => $profileId,
-                    'cart_id' => (string) $acData['cart_id'],
-                    'product_id' => (string) $item['product_id'],
-                    'product_sku' => (string) $item['sku'],
-                    'product_name' => (string) $item['name'],
-                    'product_image_link' => (string) $item['product_image_url'],
-                    'product_link' => (string) $item['product_url'],
-                    'product_price' => (float) $item['price_amount'],
-                    'product_categories' => (string) $this->getProductCategoriesName($baseService),
-                    'product_quantity' => (float) $item['qty_ordered'],
-                    'shop_currency' => (string) $acData['currency_code'],
-                    'shop_name' => (string) $acData['store_name'],
-                    'shop_id' => (string) $quoteModel->getStoreId(),
+                    'cartId' => $acData['cart_id'],
+                    'productId' => $item['product_id'],
+                    'sku' => $item['sku'],
+                    'name' => $item['name'],
+                    'productUrl' => $item['product_url'],
+                    'productImageUrl' => $item['product_image_url'],
+                    'qtyOrdered' => $item['qty_ordered'],
+                    'priceAmount' => $item['price_amount'],
+                    'rowTotalAmount' => $item['row_total_amount'],
                 ];
             }
 
@@ -151,27 +134,15 @@ class CartContentData extends AbstractData
                 return [];
             }
 
-            $secure = $baseService->isStoreFrontSecure($quoteModel->getStoreId());
             return [
-                'cart_id' => (string) $acData['cart_id'],
-                'profile_id' => $profileId,
-                'grand_total' => (float) $acData['grand_total_amount'],
-                'total_products' => (int) $acData['items_count'],
-                'total_quantity' => (float) $acData['items_quantity'],
-                'shop_currency' => (string) $acData['currency_code'],
-                'shop_name' => (string) $acData['store_name'],
-                'shop_id' => (string) $quoteModel->getStoreId(),
+                'cartId' => $acData['cart_id'],
+                'customerId' => $acData['customer_info']['customer_id'],
+                'storeName' => $acData['store_name'],
+                'websiteName' => $acData['website_name'],
+                'grandTotalAmount' => $acData['grand_total_amount'],
+                'itemsCount' => $acData['items_count'],
+                'currencyCode' => $acData['currency_code'],
                 'token' => $token,
-                'cart_data_endpoint' => $quoteModel->getStore()
-                        ->getUrl(
-                            $quoteModel->getStore()->getCode(),
-                            ['_secure' => $secure]
-                        ) . AbandonedService::CART_CONTENT_ENDPOINT . '/token/'. $token,
-                'recreate_cart_endpoint' => $quoteModel->getStore()
-                        ->getUrl(
-                            $quoteModel->getStore()->getCode(),
-                            ['_secure' => $secure]
-                        ) . AbandonedService::CHECKOUT_ENDPOINT . '/token/'. $token,
                 'items' => $items
             ];
         } catch (Throwable $e) {

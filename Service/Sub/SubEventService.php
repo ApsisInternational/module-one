@@ -24,6 +24,8 @@ use Magento\Review\Model\Review;
 use Magento\Sales\Model\Order;
 use Magento\Store\Api\Data\StoreInterface;
 use Apsis\One\Model\EventModelFactory;
+use Magento\Wishlist\Model\Item as MagentoWishlistItem;
+use Magento\Wishlist\Model\Wishlist;
 use Throwable;
 
 class SubEventService
@@ -111,9 +113,13 @@ class SubEventService
             $this->registerEvent(
                 EventModel::EVENT_LOGGED_IN,
                 [
-                    'profile_id' => (string) $profile->getId(),
-                    'shop_name' => (string) $baseService->getStoreName($customer->getStoreId()),
-                    'shop_id' => (string) $customer->getStoreId()
+                    'customerId' => (int) $customerLog->getCustomerId(),
+                    'lastLogoutAt' => (int) $baseService
+                        ->formatDateForPlatformCompatibility($customerLog->getLastLogoutAt()),
+                    'lastVisitAt' => (int) $baseService
+                        ->formatDateForPlatformCompatibility($customerLog->getLastVisitAt()),
+                    'websiteName' => (string) $baseService->getStoreWebsiteName($customer->getStoreId()),
+                    'storeName' => (string) $baseService->getStoreName($customer->getStoreId())
                 ],
                 $baseService,
                 (int) $profile->getId(),
@@ -127,8 +133,73 @@ class SubEventService
     }
 
     /**
+     * @param Customer $customer
+     * @param ProfileModel $profile
+     * @param BaseService $baseService
+     *
+     * @return void
+     */
+    public function registerSubscriberBecomesCustomerEvent(
+        Customer $customer,
+        ProfileModel $profile,
+        BaseService $baseService
+    ): void {
+        try {
+            if ($profile->getIsSubscriber() && ! $profile->getIsCustomer()) {
+                $this->registerEvent(
+                    EventModel::EVENT_SUBSCRIBER_BECOMES_CUSTOMER,
+                    [
+                        'subscriberId' => (int) $profile->getSubscriberId(),
+                        'customerId' => (int) $customer->getEntityId(),
+                        'websiteName' => (string) $baseService->getStoreWebsiteName($customer->getStoreId()),
+                        'storeName' => (string) $baseService->getStoreName($customer->getStoreId())
+                    ],
+                    $baseService,
+                    (int) $profile->getId(),
+                    (string) $customer->getEmail(),
+                    (int) $customer->getStoreId(),
+                    (int) $customer->getId(),
+                    (int) $profile->getSubscriberId()
+                );
+            }
+        } catch (Throwable $e) {
+            $baseService->logError(__METHOD__, $e);
+        }
+    }
+
+    /**
      * @param Subscriber $subscriber
-     * @param bool $subscribed
+     * @param ProfileModel $profile
+     * @param BaseService $baseService
+     *
+     * @return void
+     */
+    public function registerCustomerBecomesSubscriberEvent(
+        Subscriber $subscriber,
+        ProfileModel $profile,
+        BaseService $baseService
+    ): void {
+        if ($profile->getIsCustomer() && ! $profile->getIsSubscriber()) {
+            $this->registerEvent(
+                EventModel::EVENT_CUSTOMER_BECOMES_SUBSCRIBER,
+                [
+                    'subscriberId' => (int) $subscriber->getSubscriberId(),
+                    'customerId' => (int) $profile->getCustomerId(),
+                    'websiteName' => (string) $baseService->getStoreWebsiteName($subscriber->getStoreId()),
+                    'storeName' => (string) $baseService->getStoreName($subscriber->getStoreId())
+                ],
+                $baseService,
+                (int) $profile->getId(),
+                (string) $subscriber->getEmail(),
+                (int) $subscriber->getStoreId(),
+                (int) $profile->getCustomerId(),
+                (int) $subscriber->getSubscriberId()
+            );
+        }
+    }
+
+    /**
+     * @param Subscriber $subscriber
      * @param ProfileModel $profile
      * @param BaseService $baseService
      *
@@ -136,11 +207,14 @@ class SubEventService
      */
     public function registerSubscriptionChangedEvent(
         Subscriber $subscriber,
-        bool $subscribed,
         ProfileModel $profile,
         BaseService $baseService
     ): void {
         try {
+            if ($subscriber->getSubscriberStatus() !== Subscriber::STATUS_UNSUBSCRIBED) {
+                return;
+            }
+
             $emailReg = $this->registry
                 ->registry($subscriber->getEmail() . EventService::REGISTRY_NAME_SUBSCRIBER_UPDATE);
             if ($emailReg) {
@@ -154,12 +228,11 @@ class SubEventService
             );
 
             $this->registerEvent(
-                EventModel::EVENT_SUBSCRIPTION_CHANGED,
+                EventModel::EVENT_SUBSCRIBER_UNSUBSCRIBED,
                 [
-                    'profile_id' => (string) $profile->getId(),
-                    'subscribed' => $subscribed,
-                    'shop_name' => (string) $baseService->getStoreName($profile->getStoreId()),
-                    'shop_id' => (string) $profile->getStoreId()
+                    'subscriberId' => (int) $subscriber->getSubscriberId(),
+                    'websiteName' => (string) $baseService->getStoreWebsiteName($subscriber->getStoreId()),
+                    'storeName' => (string) $baseService->getStoreName($profile->getStoreId())
                 ],
                 $baseService,
                 (int) $profile->getId(),
@@ -188,7 +261,7 @@ class SubEventService
         BaseService $baseService
     ): void {
         try {
-            $eventData = $this->cartData->getCartedData($profile, $cart, $item, $baseService);
+            $eventData = $this->cartData->getCartedData($cart, $item, $baseService);
             if (! empty($eventData)) {
                 $this->registerEvent(
                     EventModel::EVENT_PRODUCT_CARTED,
@@ -238,6 +311,8 @@ class SubEventService
     }
 
     /**
+     * @param Wishlist $wishlist
+     * @param MagentoWishlistItem $wishlistItem
      * @param Observer $observer
      * @param StoreInterface $store
      * @param ProfileModel $profile
@@ -247,6 +322,8 @@ class SubEventService
      * @return void
      */
     public function registerProductWishedEvent(
+        Wishlist $wishlist,
+        MagentoWishlistItem $wishlistItem,
         Observer $observer,
         StoreInterface $store,
         ProfileModel $profile,
@@ -260,7 +337,8 @@ class SubEventService
                 return;
             }
 
-            $eventData = $this->wishlistData->getWishedData($profile, $store->getId(), $product, $baseService);
+            $eventData = $this->wishlistData
+                ->getWishedData($wishlist, $wishlistItem, $store->getId(), $product, $baseService);
             if (! empty($eventData)) {
                 $this->registerEvent(
                     EventModel::EVENT_PRODUCT_WISHED,
@@ -294,7 +372,7 @@ class SubEventService
         BaseService $baseService
     ): void {
         try {
-            $eventData = $this->reviewData->getReviewData($profile, $reviewObject, $product, $baseService);
+            $eventData = $this->reviewData->getReviewData($reviewObject, $product, $baseService);
             if (! empty($eventData)) {
                 $this->registerEvent(
                     EventModel::EVENT_PRODUCT_REVIEWED,

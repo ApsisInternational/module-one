@@ -2,8 +2,6 @@
 
 namespace Apsis\One\Service\Data\Cart;
 
-use Apsis\One\Model\ProfileModel;
-use Apsis\One\Service\AbandonedService;
 use Apsis\One\Service\Data\AbstractData;
 use Apsis\One\Service\BaseService;
 use Magento\Catalog\Api\ProductRepositoryInterface;
@@ -60,12 +58,11 @@ class CartContentData extends AbstractData
 
     /**
      * @param Quote $quoteModel
-     * @param ProfileModel $profileModel
      * @param BaseService $baseService
      *
      * @return array
      */
-    public function getCartData(Quote $quoteModel, ProfileModel $profileModel, BaseService $baseService): array
+    public function getCartData(Quote $quoteModel, BaseService $baseService): array
     {
         $appEmulation = $this->getEmulationModel();
         $data = [];

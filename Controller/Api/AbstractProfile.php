@@ -11,10 +11,8 @@ use Apsis\One\Service\ProfileService;
 use Magento\Eav\Model\Config as EavConfig;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\ResponseInterface;
-use Magento\Framework\Data\Collection;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Apsis\One\Model\ResourceModel\AbstractCollection;
-use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection as MagentoAbstractCollection;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Customer\Model\CustomerFactory;
 use Magento\Customer\Model\ResourceModel\Customer as CustomerResource;
@@ -144,33 +142,6 @@ abstract class AbstractProfile extends AbstractApi
                 ->getProfileCollection()
                 ->getCollection(['group_id' => $this->taskId, 'store_id' => $this->store->getId()]);
             return $addPagination ? $this->setPaginationOnCollection($collection) : $collection;
-        } catch (Throwable $e) {
-            $this->service->logError(__METHOD__, $e);
-            return 500;
-        }
-    }
-
-    /**
-     * @param AbstractCollection|MagentoAbstractCollection $collection
-     * @param string $field
-     *
-     * @return AbstractCollection|MagentoAbstractCollection|int
-     */
-    protected function setPaginationOnCollection(
-        AbstractCollection|MagentoAbstractCollection $collection,
-        string $field = 'id'
-    ): AbstractCollection|MagentoAbstractCollection|int {
-        try {
-            $page = (int) $this->queryParams['page'] + 1;
-            $pageSize = (int) $this->queryParams['page_size'];
-
-            if ($collection instanceof AbstractCollection) {
-                return $collection->setPaginationOnCollection($page, $pageSize, $field);
-            }
-
-            $collection->setOrder($field, Collection::SORT_ORDER_ASC);
-            $collection->getSelect()->limitPage($page, $pageSize);
-            return $collection;
         } catch (Throwable $e) {
             $this->service->logError(__METHOD__, $e);
             return 500;

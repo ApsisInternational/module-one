@@ -49,6 +49,30 @@ class Router extends Base
             'method' => 'ProfileSchema',
             'requiredRouteParams' => ['action']
         ],
+        self::API_PREFIX . 'ecommerce/cart_schema' => [
+            'actionPath' => 'api_carts',
+            'action' => 'index',
+            'method' => 'Schema',
+            'requiredRouteParams' => ['action']
+        ],
+        self::API_PREFIX . 'ecommerce/get_carts' => [
+            'actionPath' => 'api_carts',
+            'action' => 'index',
+            'method' => 'Items',
+            'requiredRouteParams' => ['action']
+        ],
+        self::API_PREFIX . 'ecommerce/cart_item_schema' => [
+            'actionPath' => 'api_carts',
+            'action' => 'items',
+            'method' => 'Schema',
+            'requiredRouteParams' => ['action']
+        ],
+        self::API_PREFIX . 'ecommerce/get_cart_items' => [
+            'actionPath' => 'api_carts',
+            'action' => 'items',
+            'method' => 'Items',
+            'requiredRouteParams' => ['action']
+        ],
         self::API_PREFIX . 'records/profile' => [
             'actionPath' => 'api_profiles',
             'action' => 'index',

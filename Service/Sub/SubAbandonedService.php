@@ -5,7 +5,6 @@ namespace Apsis\One\Service\Sub;
 use Apsis\One\Model\EventModel;
 use Apsis\One\Model\ResourceModel\AbandonedResource;
 use Apsis\One\Model\ResourceModel\EventResource;
-use Apsis\One\Service\AbandonedService;
 use Apsis\One\Service\ProfileService;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\ResourceModel\Quote\Collection;
@@ -63,17 +62,13 @@ class SubAbandonedService
 
     /**
      * @param Collection $quoteCollection
-     * @param int $storeId
-     * @param AbandonedService $abandonedService
+     * @param bool $forApi
      *
-     * @return void
+     * @return array
      */
-    public function aggregateCartsData(
-        Collection $quoteCollection,
-        int $storeId,
-        AbandonedService $abandonedService
-    ): void {
-        $createdAt = (string) $abandonedService->formatCurrentDateToInternalFormat();
+    public function aggregateCartsData(Collection $quoteCollection, bool $forApi = false): array
+    {
+        $createdAt = (string) $this->profileService->formatCurrentDateToInternalFormat();
         $acData = [];
 
         /** @var Quote $quote */
@@ -89,7 +84,15 @@ class SubAbandonedService
                     continue;
                 }
 
-                $cartData = $this->getCartContentDataModel()->getCartData($quote, $profile, $this->profileService);
+                $cartData = $this->getCartContentDataModel()->getCartData($quote, $this->profileService);
+                if ($forApi) {
+                    if (! empty($cartData['cart_content'])) {
+                        $cartData['cart_content']['profile_id'] = $profile->getId();
+                        $acData[] = $cartData['cart_content'];
+                    }
+                    continue;
+                }
+
                 if (empty($cartData['cart_content']) || empty($cartData['cart_event']) || empty($cartData['token'])) {
                     continue;
                 }
@@ -122,26 +125,27 @@ class SubAbandonedService
                     'updated_at' => $createdAt,
                 ];
             } catch (Throwable $e) {
-                $abandonedService->logError(__METHOD__, $e);
+                $this->profileService->logError(__METHOD__, $e);
                 continue;
             }
         }
 
         try {
-            if (! empty($acData)) {
-                $this->abandonedResource->insertMultipleItems($acData['carts'], $abandonedService);
-                $this->eventResource->insertMultipleItems($acData['events'], $abandonedService);
+            if (! $forApi && ! empty($acData)) {
+                $this->abandonedResource->insertMultipleItems($acData['carts'], $this->profileService);
+                $this->eventResource->insertMultipleItems($acData['events'], $this->profileService);
                 if (getenv('APSIS_DEVELOPER')) {
                     $info = [
                         'Total ACs Inserted' => count($acData['carts']),
-                        'Total AC Events Inserted' => count($acData['events']),
-                        'Store Id' => $storeId
+                        'Total AC Events Inserted' => count($acData['events'])
                     ];
-                    $abandonedService->debug(__METHOD__, $info);
+                    $this->profileService->debug(__METHOD__, $info);
                 }
             }
         } catch (Throwable $e) {
-            $abandonedService->logError(__METHOD__, $e);
+            $this->profileService->logError(__METHOD__, $e);
         }
+
+        return $acData;
     }
 }

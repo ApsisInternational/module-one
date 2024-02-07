@@ -83,7 +83,7 @@ class AbandonedService extends AbstractCronService
 
             $quoteCollection = $this->getQuoteCollectionByStore($store, $acDelayPeriod);
             if ($quoteCollection && $quoteCollection->getSize()) {
-                $this->subAbandonedService->aggregateCartsData($quoteCollection, $store->getId(), $this);
+                $this->subAbandonedService->aggregateCartsData($quoteCollection);
             }
         } catch (Throwable $e) {
             $this->logError(__METHOD__, $e);

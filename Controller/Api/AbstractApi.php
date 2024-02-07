@@ -4,6 +4,7 @@ namespace Apsis\One\Controller\Api;
 
 use Apsis\One\Controller\AbstractAction;
 use Apsis\One\Controller\Api\ProfileLists\Records;
+use Apsis\One\Model\ResourceModel\AbstractCollection;
 use Apsis\One\Service\BaseService;
 use Apsis\One\Service\ConfigService;
 use Apsis\One\Service\ProfileService;
@@ -12,7 +13,9 @@ use Magento\Customer\Model\Customer;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Customer\Model\CustomerFactory;
+use Magento\Framework\Data\Collection;
 use Magento\Framework\Encryption\EncryptorInterface;
+use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection as MagentoAbstractCollection;
 use Magento\Store\Api\Data\StoreInterface;
 use Apsis\One\Controller\Api\Profiles\Index as ProfilesIndex;
 use Throwable;
@@ -367,6 +370,33 @@ abstract class AbstractApi extends AbstractAction
                 $object instanceof ResponseInterface? 'API Response' : 'API Request',
                 [str_replace(PHP_EOL, PHP_EOL . '        ', PHP_EOL . $object->toString())]
             );
+        }
+    }
+
+    /**
+     * @param AbstractCollection|MagentoAbstractCollection $collection
+     * @param string $field
+     *
+     * @return AbstractCollection|MagentoAbstractCollection|int
+     */
+    protected function setPaginationOnCollection(
+        AbstractCollection|MagentoAbstractCollection $collection,
+        string $field = 'id'
+    ): AbstractCollection|MagentoAbstractCollection|int {
+        try {
+            $page = (int) $this->queryParams['page'] + 1;
+            $pageSize = (int) $this->queryParams['page_size'];
+
+            if ($collection instanceof AbstractCollection) {
+                return $collection->setPaginationOnCollection($page, $pageSize, $field);
+            }
+
+            $collection->setOrder($field, Collection::SORT_ORDER_ASC);
+            $collection->getSelect()->limitPage($page, $pageSize);
+            return $collection;
+        } catch (Throwable $e) {
+            $this->service->logError(__METHOD__, $e);
+            return 500;
         }
     }
 }

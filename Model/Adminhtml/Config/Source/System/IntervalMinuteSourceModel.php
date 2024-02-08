@@ -9,7 +9,7 @@ class IntervalMinuteSourceModel implements OptionSourceInterface
     /**
      * @var array
      */
-    protected array $times = [15, 20, 25, 30, 45, 60, 90, 120, 180, 240];
+    protected array $times = [0, 15, 20, 25, 30, 45, 60, 90, 120, 180, 240];
 
     /**
      * @var string
@@ -24,7 +24,7 @@ class IntervalMinuteSourceModel implements OptionSourceInterface
         $interval = [];
 
         foreach ($this->times as $time) {
-            $interval[] =  ['value' => $time, 'label' => __($time . ' ' . $this->timeType)];
+            $interval[] =  ['value' => $time, 'label' => __($time ? $time . ' ' . $this->timeType : 'Disable')];
         }
 
         return $interval;

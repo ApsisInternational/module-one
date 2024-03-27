@@ -153,17 +153,6 @@ class ProfileModel extends AbstractModel
             $store = $this->baseService->getStore($this->getStoreId());
             $currency = (string) $this->baseService->getStoreConfig($store, 'currency/options/default');
 
-            // Aggregate profile data column
-            if ($this->getCustomerId()) {
-                $expressionString = $this->profileResource
-                    ->buildDataQueryForCustomer($store, $this->baseService, $currency, $this->getCustomerId());
-            } elseif ($this->getSubscriberId()) {
-                $expressionString = $this->profileResource
-                    ->buildDataQueryForSubscriber($store, $this->baseService, $currency, $this->getSubscriberId());
-            }
-            if (! empty($expressionString)) {
-                $this->setProfileData($this->getExpressionModel($expressionString));
-            }
         } catch (Throwable $e) {
             $this->baseService->logError(__METHOD__, $e);
         }

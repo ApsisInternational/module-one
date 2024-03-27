@@ -117,7 +117,7 @@ class InstallData implements InstallDataInterface
      */
     public function install(ModuleDataSetupInterface $setup, ModuleContextInterface $context): void
     {
-        $this->baseService->log(__METHOD__);
+        $setup->startSetup();
         $startTime = microtime(true);
         $startMemory = memory_get_peak_usage();
 
@@ -125,47 +125,23 @@ class InstallData implements InstallDataInterface
             $this->appState->setAreaCode(Area::AREA_GLOBAL);
         } catch (Throwable $e) {
             $this->baseService->logError(__METHOD__, $e);
+            return;
         }
 
         try {
-            $setup->startSetup();
-
-            // Remove all module data from Magento tables
             $this->uninstallSchema->removeAllModuleDataFromMagentoTables($setup);
+            $setup->getConnection()->truncateTable($setup->getTable(BaseService::APSIS_PROFILE_TABLE));
 
-            //Create data in Magento tables
             $this->createDataInMagentoTables();
+            $this->profileResource->populateProfilesTable($this->baseService);
 
-            // Identify Profiles
-            $this->identifyAndMigrateProfiles($setup);
-
-            // Find historical Events
             $this->historicalEvents->identifyAndFetchHistoricalEvents($this->baseService);
         } catch (Throwable $e) {
             $this->baseService->logError(__METHOD__, $e);
         }
+
         $setup->endSetup();
         $this->baseService->logPerformanceData(__METHOD__, $startTime, $startMemory);
-    }
-
-    /**
-     * @param ModuleDataSetupInterface $installer
-     *
-     * @return void
-     */
-    private function identifyAndMigrateProfiles(ModuleDataSetupInterface $installer): void
-    {
-        try {
-            $this->baseService->log(__METHOD__);
-
-            $apsisProfileTable = $installer->getTable(BaseService::APSIS_PROFILE_TABLE);
-            $installer->getConnection()->truncateTable($apsisProfileTable);
-
-            //Populate table with Customers and Subscribers
-            $this->profileResource->populateProfilesTable($this->baseService);
-        } catch (Throwable $e) {
-            $this->baseService->logError(__METHOD__, $e);
-        }
     }
 
     /**

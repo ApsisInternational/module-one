@@ -8,13 +8,11 @@ use Apsis\One\Service\BaseService;
 use Apsis\One\Service\ProfileService;
 use Magento\Customer\Model\ResourceModel\Customer\Collection as CustomerCollection;
 use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
-use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\DB\Sql\Expression;
 use Magento\Framework\DB\Sql\ExpressionFactory;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\ResourceModel\Db\Context;
 use Magento\Framework\Stdlib\DateTime;
-use Magento\Newsletter\Model\ResourceModel\Subscriber\Collection as SubscriberCollection;
-use Magento\Newsletter\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
 use Magento\Newsletter\Model\Subscriber;
 use Magento\Store\Api\Data\StoreInterface;
 use Throwable;
@@ -22,15 +20,7 @@ use Throwable;
 class ProfileResource extends AbstractResource
 {
     const RESOURCE_MODEL = BaseService::APSIS_PROFILE_TABLE;
-    const SQL_CONSENT = '(
-        SELECT CASE
-            WHEN subscriber_status = %s THEN true
-            WHEN subscriber_status = %s THEN false
-            ELSE null
-        END
-    )';
-    const SQL_CURRENCY = '(SELECT "%s")';
-    const QUERY_LIMIT = 500;
+    const QUERY_LIMIT = 5000;
 
     /**
      * @var CustomerCollectionFactory
@@ -43,11 +33,6 @@ class ProfileResource extends AbstractResource
     private ExpressionFactory $expressionFactory;
 
     /**
-     * @var SubscriberCollectionFactory
-     */
-    private SubscriberCollectionFactory $subscriberCollectionFactory;
-
-    /**
      * @var ProfileCollectionFactory
      */
     private ProfileCollectionFactory $profileCollectionFactory;
@@ -57,7 +42,6 @@ class ProfileResource extends AbstractResource
      * @param DateTime $dateTime
      * @param CustomerCollectionFactory $customerCollectionFactory
      * @param ExpressionFactory $expressionFactory
-     * @param SubscriberCollectionFactory $subscriberCollectionFactory
      * @param ProfileCollectionFactory $profileCollectionFactory
      * @param $connectionName
      */
@@ -66,12 +50,10 @@ class ProfileResource extends AbstractResource
         DateTime $dateTime,
         CustomerCollectionFactory $customerCollectionFactory,
         ExpressionFactory $expressionFactory,
-        SubscriberCollectionFactory $subscriberCollectionFactory,
         ProfileCollectionFactory $profileCollectionFactory,
         $connectionName = null
     ) {
         parent::__construct($context, $dateTime, $connectionName);
-        $this->subscriberCollectionFactory = $subscriberCollectionFactory;
         $this->customerCollectionFactory = $customerCollectionFactory;
         $this->expressionFactory = $expressionFactory;
         $this->profileCollectionFactory = $profileCollectionFactory;
@@ -82,156 +64,23 @@ class ProfileResource extends AbstractResource
      *
      * @return Expression
      */
-    private function getExpressionModel(string $expressionString): Expression
+    private function getSqlExpression(string $expressionString): Expression
     {
         return $this->expressionFactory->create(['expression' => $expressionString]);
     }
 
     /**
-     * @param AdapterInterface $connection
-     * @param string $magentoTable
-     * @param string $apsisTable
-     * @param BaseService $service
-     *
-     * @return void
+     * @return CustomerCollection
      */
-    public function fetchAndPopulateCustomers(
-        AdapterInterface $connection,
-        string $magentoTable,
-        string $apsisTable,
-        BaseService $service
-    ): void {
-        try {
-            $filter = $this->getCustomerCollection()->getAllIds();
-            if (empty($filter)) {
-                return;
-            }
-
-            foreach (array_chunk($filter, self::QUERY_LIMIT) as $filterChunk) {
-                $select = $connection->select()
-                    ->from(
-                        [ProfileService::TYPE_CUSTOMER => $magentoTable],
-                        [
-                            'customer_id' => 'entity_id',
-                            'group_id',
-                            'email',
-                            'is_customer' => $this->getExpressionModel('1'),
-                            'store_id',
-                            'updated_at' => $this->expressionFactory
-                                ->create(['expression' => "'" . $this->dateTime->formatDate(true) . "'"])
-                        ]
-                    )->where('entity_id IN (?)', $filterChunk);
-                $sqlQuery = $select->insertFromSelect(
-                    $apsisTable,
-                    ['customer_id', 'group_id', 'email', 'is_customer', 'store_id', 'updated_at'],
-                    false
-                );
-                $connection->query($sqlQuery);
-            }
-        } catch (Throwable $e) {
-            $service->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param AdapterInterface $connection
-     * @param string $magentoTable
-     * @param string $apsisTable
-     * @param BaseService $service
-     *
-     * @return void
-     */
-    public function fetchAndPopulateSubscribers(
-        AdapterInterface $connection,
-        string $magentoTable,
-        string $apsisTable,
-        BaseService $service
-    ): void {
-        try {
-            $filter = $this->getSubscriberCollection()->getAllIds();
-            if (empty($filter)) {
-                return;
-            }
-
-            foreach (array_chunk($filter, self::QUERY_LIMIT) as $filterChunk) {
-                $select = $connection->select()
-                    ->from(
-                        [ProfileService::TYPE_SUBSCRIBER => $magentoTable],
-                        [
-                            'subscriber_id',
-                            'store_id' => 'store_id',
-                            'email' => 'subscriber_email',
-                            'is_subscriber' => $this->getExpressionModel('1'),
-                            'subscriber_status',
-                            'updated_at' => $this->expressionFactory
-                                ->create(['expression' => "'" . $this->dateTime->formatDate(true) . "'"])
-                        ]
-                    )
-                    ->where('customer_id = ?', 0)
-                    ->where('subscriber_id IN (?)', $filterChunk);
-                $sqlQuery = $select->insertFromSelect(
-                    $apsisTable,
-                    [
-                        'subscriber_id',
-                        'store_id',
-                        'email',
-                        'is_subscriber',
-                        'subscriber_status',
-                        'updated_at'
-                    ],
-                    false
-                );
-                $connection->query($sqlQuery);
-            }
-        } catch (Throwable $e) {
-            $service->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param AdapterInterface $connection
-     * @param string $magentoTable
-     * @param string $apsisTable
-     * @param BaseService $service
-     *
-     * @return void
-     */
-    public function updateCustomerProfiles(
-        AdapterInterface $connection,
-        string $magentoTable,
-        string $apsisTable,
-        BaseService $service
-    ): void {
-        try {
-            $filter = $this->getProfileCollection()->getAllIds();
-            if (empty($filter)) {
-                return;
-            }
-
-            foreach (array_chunk($filter, self::QUERY_LIMIT) as $filterChunk) {
-                $select = $connection->select()
-                    ->from(
-                        [ProfileService::TYPE_SUBSCRIBER => $magentoTable],
-                        [
-                            'subscriber_id',
-                            'subscriber_status',
-                            'is_subscriber' => $this->getExpressionModel('1'),
-                        ]
-                    )
-                    ->where('subscriber.customer_id = profile.customer_id')
-                    ->where('profile.id IN (?)', $filterChunk);
-                $sqlQuery = $select->crossUpdateFromSelect(['profile' => $apsisTable]);
-                $connection->query($sqlQuery);
-            }
-        } catch (Throwable $e) {
-            $service->logError(__METHOD__, $e);
-        }
+    private function getCustomerCollectionInstance(): CustomerCollection
+    {
+        return $this->customerCollectionFactory->create();
     }
 
     /**
      * @return ProfileCollection
      */
-    private function getProfileCollection(): ProfileCollection
+    private function getProfileCollectionInstance(): ProfileCollection
     {
         return $this->profileCollectionFactory->create();
     }
@@ -243,35 +92,40 @@ class ProfileResource extends AbstractResource
      */
     public function populateProfilesTable(BaseService $service): void
     {
+        $this->fetchAndInsertCustomersForAllStores($service);
+        $this->aggregateProfileDataForAllStores($service);
+    }
+
+    /**
+     * @param BaseService $service
+     *
+     * @return void
+     */
+    private function fetchAndInsertCustomersForAllStores(BaseService $service): void
+    {
         try {
-            $magentoSubscriberTable = $this->getTable('newsletter_subscriber');
-
-            // Fetch customers to profile table
-            $this->fetchAndPopulateCustomers(
-                $this->getConnection(),
-                $this->getTable('customer_entity'),
-                $this->getMainTable(),
-                $service
-            );
-
-            // Fetch subscribers to profile table
-            $this->fetchAndPopulateSubscribers(
-                $this->getConnection(),
-                $magentoSubscriberTable,
-                $this->getMainTable(),
-                $service
-            );
-
-            // Update customers with profile id in profile table
-            $this->updateCustomerProfiles(
-                $this->getConnection(),
-                $magentoSubscriberTable,
-                $this->getMainTable(),
-                $service
-            );
-
-            // Fill profile data column
-            $this->fillProfileDataColumnForAllProfiles($service);
+            $customerIds = $this->getCustomerCollectionInstance()->getAllIds();
+            foreach (array_chunk($customerIds, self::QUERY_LIMIT) as $filterChunk) {
+                $select = $this->getConnection()->select()
+                    ->from(
+                        [ProfileService::TYPE_CUSTOMER => $this->getTable('customer_entity')],
+                        [
+                            'customer_id' => 'entity_id',
+                            'group_id',
+                            'email',
+                            'is_customer' => $this->getSqlExpression('1'),
+                            'store_id',
+                            'updated_at' => $this->expressionFactory
+                                ->create(['expression' => sprintf("'%s'", $this->dateTime->formatDate(true))])
+                        ]
+                    )->where('entity_id IN (?)', $filterChunk);
+                $insertQuery = $select->insertFromSelect(
+                    $this->getMainTable(),
+                    ['customer_id', 'group_id', 'email', 'is_customer', 'store_id', 'updated_at'],
+                    false
+                );
+                $this->getConnection()->query($insertQuery);
+            }
         } catch (Throwable $e) {
             $service->logError(__METHOD__, $e);
         }
@@ -282,20 +136,15 @@ class ProfileResource extends AbstractResource
      *
      * @return void
      */
-    private function fillProfileDataColumnForAllProfiles(BaseService $service): void
+    private function aggregateProfileDataForAllStores(BaseService $service): void
     {
         try {
             foreach ($service->getStores() as $store) {
-                $filter = $this->getProfileCollection()
-                    ->getProfileCollectionForStore($store->getId())->getColumnValues('id');
-                if (empty($filter)) {
-                    return;
-                }
-
-                $currency = $service->getStoreCurrency($store->getId());
-                foreach (array_chunk($filter, self::QUERY_LIMIT) as $filterChunk) {
-                    $this->fillProfileDataColumnForCustomers($store, $currency, $service, $filterChunk);
-                    $this->fillProfileDataColumnForSubscribers($store, $currency, $service, $filterChunk);
+                $profileIds = $this->getProfileCollectionInstance()
+                    ->getProfileCollectionForStore($store->getId())
+                    ->getColumnValues('id');
+                foreach (array_chunk($profileIds, self::QUERY_LIMIT) as $filterChunk) {
+                    $this->aggregateProfileDataForStore($store, $service, $filterChunk);
                 }
             }
         } catch (Throwable $e) {
@@ -305,424 +154,327 @@ class ProfileResource extends AbstractResource
 
     /**
      * @param StoreInterface $store
-     * @param string $currency
      * @param BaseService $service
-     * @param array $filter
+     * @param array $profileIds
      *
      * @return void
+     *
+     * @throws LocalizedException
      */
-    private function fillProfileDataColumnForCustomers(
-        StoreInterface $store,
-        string $currency,
-        BaseService $service,
-        array $filter
-    ): void {
-        try {
-            $expString = $this->buildDataQueryForCustomer($store, $service, $currency);
-            if (empty($expString)) {
-                return;
-            }
-
-            $select = $this->getConnection()
-                ->select()
-                ->from(
-                    [ProfileService::TYPE_CUSTOMER => $this->getCustomerCollection()->getMainTable()],
-                    ['profile_data' => $this->getExpressionModel($expString)]
-                )
-                ->where('customer.store_id = ?', $store->getId())
-                ->where('customer.entity_id = profile.customer_id')
-                ->where('profile.id IN (?)', $filter);
-            $sqlQuery = $select->crossUpdateFromSelect(['profile' => $this->getMainTable()]);
-            $this->getConnection()->query($sqlQuery);
-        } catch (Throwable $e) {
-            $service->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @return CustomerCollection
-     */
-    private function getCustomerCollection(): CustomerCollection
+    private function aggregateProfileDataForStore(StoreInterface $store, BaseService $service, array $profileIds): void
     {
-        return $this->customerCollectionFactory->create();
+        $select = $this->getConnection()
+            ->select()
+            ->from(
+                [ProfileService::TYPE_CUSTOMER => $this->getCustomerCollectionInstance()->getMainTable()],
+                ['profile_data' => $this->getSqlExpression($this->assembleProfileDataQuery($store, $service))]
+            )
+            ->where('customer.store_id = ?', $store->getId())
+            ->where('customer.entity_id = profile.customer_id')
+            ->where('profile.id IN (?)', $profileIds);
+        $crossUpdateSqlQuery = $select->crossUpdateFromSelect(['profile' => $this->getMainTable()]);
+        $this->getConnection()->query($crossUpdateSqlQuery);
     }
 
     /**
      * @param StoreInterface $store
      * @param BaseService $service
-     * @param string $currency
      *
-     * @param string $id
-     * @return string|null
+     * @return string
+     *
+     * @throws LocalizedException
      */
-    public function buildDataQueryForCustomer(
-        StoreInterface $store,
-        BaseService $service,
-        string $currency,
-        string $id = 'customer.entity_id'
-    ): ?string {
-        try {
-            $collection = $this->getCustomerCollection()
-                ->addAttributeToSelect('*')
-                ->addAttributeToFilter('store_id', $store->getId());
+    public function assembleProfileDataQuery(StoreInterface $store, BaseService $service): string
+    {
+        $collection = $this->getCustomerCollectionInstance()
+            ->addAttributeToSelect('*')
+            ->addAttributeToFilter('store_id', $store->getId());
 
-            $phText = '(SELECT aov.value FROM %s aov WHERE aov.option_id = e.gender AND aov.store_id = 0 LIMIT 1)';
-            $collection->getSelect()->columns(
-                [
-                    'gender_text' => $this->getExpressionModel(
-                        sprintf($phText, $this->getTable('eav_attribute_option_value'))
-                    ),
-                    'shop_currency' => $this->getExpressionModel(sprintf(self::SQL_CURRENCY, $currency))
-                ]
-            );
+        $this->joinTablesOnCollection($collection);
+        $this->addEavAttributes($collection, $store->getId());
+        $this->addAdditionalColumns($collection, $service, $store->getId());
 
-            $this->addBillingAddress($collection, $store->getId(), $service);
-            $this->addDynamicAttributes($collection, $service);
-            $this->joinTables($collection, $service);
-
-            $collection->getSelect()->group(['e.entity_id', 'subscriber.subscriber_id']);
-            return $this->getExpressionString($collection->getSelect()->assemble(), $id);
-        } catch (Throwable $e) {
-            $service->logError(__METHOD__, $e);
-            return null;
-        }
+        $collection->getSelect()->group(['e.entity_id', 'subscriber.subscriber_id']);
+        return $this->getJsonRepresentationFromSqlSelect($collection->getSelect()->assemble());
     }
 
     /**
      * @param CustomerCollection $collection
-     * @param BaseService $service
      *
      * @return void
      */
-    private function joinTables(CustomerCollection $collection, BaseService $service): void
+    private function joinTablesOnCollection(CustomerCollection $collection): void
     {
-        try {
-            $collection->getSelect()->joinLeft(
+        $salesOrderGrid = $this->getTable('sales_order_grid');
+        $collection->getSelect()
+            ->joinLeft(
+                ['cv' => $this->getTable('customer_visitor')],
+                'e.entity_id = cv.customer_id',
+                [
+                    'last_visit_at' => '(
+                        SELECT last_visit_at
+                        ORDER BY visitor_id DESC
+                    )'
+                ]
+            )
+            ->joinLeft(
                 ['group' => $this->getTable('customer_group')],
                 'e.group_id = group.customer_group_id',
                 ['customer_group_id', 'customer_group_code']
-            )->joinLeft(
+            )
+            ->joinLeft(
                 ['store' => $this->getTable('store')],
                 'e.store_id = store.store_id',
                 ['store_name' => 'name']
-            )->joinLeft(
+            )
+            ->joinLeft(
                 [ProfileService::TYPE_SUBSCRIBER => $this->getTable('newsletter_subscriber')],
                 'e.entity_id = subscriber.customer_id',
                 [
-                    'subscribed' => $this->getExpressionModel(
-                        sprintf(self::SQL_CONSENT, Subscriber::STATUS_SUBSCRIBED, Subscriber::STATUS_UNSUBSCRIBED)
+                    'subscribed' => $this->getSqlExpression(
+                        sprintf(
+                            '(
+                                SELECT CASE
+                                    WHEN subscriber_status = %s THEN true
+                                    WHEN subscriber_status = %s THEN false
+                                    ELSE null
+                                END
+                            )',
+                            Subscriber::STATUS_SUBSCRIBED,
+                            Subscriber::STATUS_UNSUBSCRIBED
+                        )
                     )
                 ]
-            )->joinLeft(
+            )
+            ->joinLeft(
                 ['sales' => $this->getTable('sales_order')],
                 'e.entity_id = sales.customer_id',
                 [
-                    'total_orders_value' => 'SUM(grand_total)',
-                    'average_order_value' => 'AVG(grand_total)'
+                    'total_orders_value' => 'SUM(sales.grand_total)',
+                    'average_order_value' => 'AVG(sales.grand_total)',
+                    'total_orders' => 'COUNT(*)',
+                    'most_used_shipping_method' => '(
+                        SELECT sales.shipping_description
+                        GROUP BY shipping_method
+                        ORDER BY COUNT(sales.shipping_description) DESC
+                    )'
                 ]
+            )
+            ->joinLeft(
+                ['sog' => $this->getTable('sales_order_grid')],
+                'e.entity_id = sog.customer_id',
+                [
+                    'last_order_date' => '(
+                        SELECT sog.created_at
+                        ORDER BY sog.created_at DESC
+                    )',
+                    'last_order_value' => '(
+                        SELECT sog.grand_total
+                        ORDER BY sog.created_at DESC
+                    )'
+                ]
+            )
+            ->joinLeft(
+                ['cl' => $this->getTable('customer_log')],
+                'e.entity_id = cl.customer_id',
+                [
+                    'last_login_date' => '(
+                        SELECT cl.last_login_at
+                        ORDER BY cl.log_id DESC
+                    )',
+                    'last_logout_at' => '(
+                        SELECT cl.last_logout_at
+                        ORDER BY cl.log_id DESC
+                    )'
+                ]
+            )
+            ->joinLeft(
+                ['quote' => $this->getTable('quote')],
+                'e.entity_id = quote.customer_id AND quote.is_active = 1',
+                [
+                    'active_shopping_cart' => 'quote.is_active',
+                    'shopping_cart_created_at' => 'quote.created_at',
+                    'shopping_cart_modified_at' => 'quote.updated_at',
+                    'products_in_shopping_cart' => 'quote.items_count',
+                ]
+            )
+            ->joinLeft(
+                ['aov' => $this->getTable('eav_attribute_option_value')],
+                'aov.option_id = e.gender AND aov.store_id = 0',
+                ['gender_text' => 'aov.value']
             );
-        } catch (Throwable $e) {
-            $service->logError(__METHOD__, $e);
+    }
+
+    /**
+     * @param CustomerCollection $collection
+     * @param int $storeId
+     *
+     * @return void
+     *
+     * @throws LocalizedException
+     */
+    private function addEavAttributes(CustomerCollection $collection, int $storeId): void
+    {
+        $addressAttributes = [
+            'billing_street' => 'customer_address/street',
+            'billing_city' => 'customer_address/city',
+            'billing_country_code' => 'customer_address/country_id',
+            'billing_postcode' => 'customer_address/postcode',
+            'billing_telephone' => 'customer_address/telephone',
+            'billing_region' => 'customer_address/region'
+        ];
+        foreach ($addressAttributes as $alias => $attribute) {
+            $collection->joinAttribute(
+                $alias,
+                $attribute,
+                'default_billing',
+                null,
+                'left',
+                $storeId
+            );
         }
     }
 
     /**
      * @param CustomerCollection $collection
      * @param BaseService $service
+     * @param int $storeId
      *
      * @return void
      */
-    private function addDynamicAttributes(CustomerCollection $collection, BaseService $service): void
+    private function addAdditionalColumns(CustomerCollection $collection, BaseService $service, int $storeId): void
     {
-        try {
-            $salesOrderGrid = $this->getTable('sales_order_grid');
-            $collection->getSelect()->columns([
-                'last_login_date' => $this->getExpressionModel(
-                    sprintf('(
-                        SELECT last_login_at
-                        FROM %s
-                        WHERE customer_id = e.entity_id
-                        ORDER BY log_id DESC
+        $collection->getSelect()->columns([
+            'most_used_payment_method' => $this->getSqlExpression(
+                sprintf(
+                    '(
+                        SELECT op.additional_information
+                        FROM %s so
+                        LEFT JOIN %s op ON op.parent_id = so.entity_id
+                        WHERE so.customer_id = e.entity_id
+                        GROUP BY op.method
+                        ORDER BY COUNT(op.additional_information) DESC
                         LIMIT 1
-                    )', $this->getTable('customer_log'))
-                ),
-                'last_order_date' => $this->getExpressionModel(
-                    "(
-                        SELECT created_at
-                        FROM $salesOrderGrid
-                        WHERE customer_id = e.entity_id
-                        ORDER BY created_at DESC
+                    )',
+                    $collection->getTable('sales_order'),
+                    $collection->getTable('sales_order_payment')
+                )
+            ),
+            'last_product_wished_at' => $this->getSqlExpression(
+                sprintf(
+                    '(
+                        SELECT wi.added_at
+                        FROM %s w
+                        LEFT JOIN %s wi ON wi.wishlist_id = w.wishlist_id
+                        WHERE w.customer_id = e.entity_id
+                        ORDER BY wi.added_at DESC
                         LIMIT 1
-                    )"
-                ),
-                'last_order_value' => $this->getExpressionModel(
-                    "(
-                        SELECT grand_total
-                        FROM $salesOrderGrid
-                        WHERE customer_id = e.entity_id
-                        ORDER BY created_at DESC
-                        LIMIT 1
-                    )"
-                ),
-                'total_orders' => $this->getExpressionModel(
-                    sprintf('(
+                    )',
+                    $collection->getTable('wishlist'),
+                    $collection->getTable('wishlist_item')
+                )
+            ),
+            'total_products_in_wishlist' => $this->getSqlExpression(
+                sprintf(
+                    '(
                         SELECT COUNT(*)
-                        FROM %s
-                        WHERE customer_id = e.entity_id
-                        GROUP BY customer_id
+                        FROM %s w
+                        LEFT JOIN %s wi ON wi.wishlist_id = w.wishlist_id
+                        WHERE w.customer_id = e.entity_id
                         LIMIT 1
-                    )', $this->getTable('sales_order'))
-                ),
-                'last_product_review_date' => $this->getExpressionModel(
-                    sprintf('(
+                    )',
+                    $collection->getTable('wishlist'),
+                    $collection->getTable('wishlist_item')
+                )
+            ),
+            'last_product_review_date' => $this->getSqlExpression(
+                sprintf(
+                    '(
                         SELECT r.created_at
                         FROM %s r
                         LEFT JOIN %s rd ON rd.review_id = r.review_id
                         WHERE rd.customer_id = e.entity_id
                         ORDER BY r.created_at DESC
                         LIMIT 1
-                    )', $this->getTable('review'), $this->getTable('review_detail'))
-                ),
-                'total_product_reviews' => $this->getExpressionModel(
-                    sprintf('(
+                    )',
+                    $this->getTable('review'),
+                    $this->getTable('review_detail')
+                )
+            ),
+            'total_product_reviews' => $this->getSqlExpression(
+                sprintf(
+                    '(
                         SELECT COUNT(*)
                         FROM %s r
                         LEFT JOIN %s rd ON rd.review_id = r.review_id
                         WHERE rd.customer_id = e.entity_id
                         GROUP BY customer_id
                         LIMIT 1
-                    )', $this->getTable('review'), $this->getTable('review_detail'))
+                    )',
+                    $this->getTable('review'),
+                    $this->getTable('review_detail')
                 )
-            ]);
-        } catch (Throwable $e) {
-            $service->logError(__METHOD__, $e);
-        }
+            ),
+            'shop_currency' => $this->getSqlExpression(
+                sprintf('(SELECT "%s")', $service->getStoreCurrency($storeId))
+            )
+        ]);
     }
 
     /**
-     * @param CustomerCollection $collection
-     * @param int $storeId
-     * @param BaseService $service
-     *
-     * @return void
-     */
-    private function addBillingAddress(CustomerCollection $collection, int $storeId, BaseService $service): void
-    {
-        try {
-            $collection->joinAttribute(
-                'billing_street',
-                'customer_address/street',
-                'default_billing',
-                null,
-                'left',
-                $storeId
-            )->joinAttribute(
-                'billing_city',
-                'customer_address/city',
-                'default_billing',
-                null,
-                'left',
-                $storeId
-            )->joinAttribute(
-                'billing_country_code',
-                'customer_address/country_id',
-                'default_billing',
-                null,
-                'left',
-                $storeId
-            )->joinAttribute(
-                'billing_postcode',
-                'customer_address/postcode',
-                'default_billing',
-                null,
-                'left',
-                $storeId
-            )->joinAttribute(
-                'billing_telephone',
-                'customer_address/telephone',
-                'default_billing',
-                null,
-                'left',
-                $storeId
-            )->joinAttribute(
-                'billing_region',
-                'customer_address/region',
-                'default_billing',
-                null,
-                'left',
-                $storeId
-            );
-        } catch (Throwable $e) {
-            $service->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @param StoreInterface $store
-     * @param string $currency
-     * @param BaseService $service
-     * @param array $filter
-     *
-     * @return void
-     */
-    private function fillProfileDataColumnForSubscribers(
-        StoreInterface $store,
-        string $currency,
-        BaseService $service,
-        array $filter
-    ): void {
-        try {
-            $expString = $this->buildDataQueryForSubscriber($store, $service, $currency);
-            if (empty($expString)) {
-                return;
-            }
-
-            $select = $this->getConnection()
-                ->select()
-                ->from(
-                    [ProfileService::TYPE_SUBSCRIBER => $this->getSubscriberCollection()->getMainTable()],
-                    ['profile_data' => $this->getExpressionModel($expString)]
-                )
-                ->where('subscriber.store_id = ?', $store->getId())
-                ->where('subscriber.customer_id = ?', 0)
-                ->where('subscriber.subscriber_id = profile.subscriber_id')
-                ->where('profile.id IN (?)', $filter);
-
-            $sqlQuery = $select->crossUpdateFromSelect(['profile' => $this->getMainTable()]);
-            $this->getConnection()->query($sqlQuery);
-        } catch (Throwable $e) {
-            $service->logError(__METHOD__, $e);
-        }
-    }
-
-    /**
-     * @return SubscriberCollection
-     */
-    private function getSubscriberCollection(): SubscriberCollection
-    {
-        return $this->subscriberCollectionFactory->create();
-    }
-
-    /**
-     * @param StoreInterface $store
-     * @param BaseService $service
-     * @param string $currency
-     * @param string $id
-     *
-     * @return string|null
-     */
-    public function buildDataQueryForSubscriber(
-        StoreInterface $store,
-        BaseService $service,
-        string $currency,
-        string $id = 'subscriber.subscriber_id'
-    ): ?string {
-        try {
-            $collection = $this->getSubscriberCollection()
-                ->addFieldToSelect(
-                    [
-                        'store_id',
-                        'email' => 'subscriber_email',
-                        'subscribed' => $this->getExpressionModel(
-                            sprintf(self::SQL_CONSENT, Subscriber::STATUS_SUBSCRIBED, Subscriber::STATUS_UNSUBSCRIBED)
-                        )
-                    ]
-                )->addFieldToFilter('main_table.store_id', $store->getId())
-                ->addFieldToFilter('main_table.customer_id', 0);
-
-            $nullExpr = $this->getExpressionModel('NULL');
-            $collection->getSelect()
-                ->columns(
-                    [
-                        'dob' => $nullExpr,
-                        'gender_text' => $nullExpr,
-                        'created_at' => $nullExpr,
-                        'last_login_date' => $nullExpr,
-                        'prefix' => $nullExpr,
-                        'firstname' => $nullExpr,
-                        'middlename' => $nullExpr,
-                        'lastname' => $nullExpr,
-                        'billing_street' => $nullExpr,
-                        'billing_postcode' => $nullExpr,
-                        'billing_region' => $nullExpr,
-                        'billing_city' => $nullExpr,
-                        'billing_country_code' => $nullExpr,
-                        'billing_telephone' => $nullExpr,
-                        'customer_group_id' => $nullExpr,
-                        'customer_group_code' => $nullExpr,
-                        'total_product_reviews' => $nullExpr,
-                        'last_product_review_date' => $nullExpr,
-                        'total_orders' => $nullExpr,
-                        'total_orders_value' => $nullExpr,
-                        'average_order_value' => $nullExpr,
-                        'last_order_value' => $nullExpr,
-                        'last_order_date' => $nullExpr,
-                        'shop_currency' => $this->getExpressionModel(sprintf(self::SQL_CURRENCY, $currency))
-                    ]
-                )->joinLeft(
-                    ['store' => $this->getTable('store')],
-                    'main_table.store_id = store.store_id',
-                    ['store_name' => 'name']
-                );
-
-            return $this->getExpressionString($collection->getSelect()->assemble(), $id, true);
-        } catch (Throwable $e) {
-            $service->logError(__METHOD__, $e);
-            return null;
-        }
-    }
-
-    /**
-     * Profile schema, see function getProfileSchema in class \Apsis\One\Controller\Api\Profiles\Index
-     * IMPORTANT. JSON object keys needs to match with \Apsis\One\Controller\Api\Profiles\Index::getProfileSchema
-     *
-     *
-     * @param string $select
-     * @param string $id
-     * @param bool $forSubscriber
+     * @param string $sqlSelect
      *
      * @return string
      */
-    private function getExpressionString(string $select, string $id, bool $forSubscriber = false): string
+    private function getJsonRepresentationFromSqlSelect(string $sqlSelect): string
     {
-        $pColumn = $forSubscriber ? 'subscriber_id' : 'entity_id';
         return sprintf(
-            "(SELECT
-                        JSON_OBJECT(
-                            'email', email,
-                            'shop_id', store_id,
-                            'shop_name', store_name,
-                            'subscribed', subscribed,
-                            'date_of_birth', dob,
-                            'gender', gender_text,
-                            'created_at', created_at,
-                            'last_login_date', last_login_date,
-                            'title', prefix,
-                            'first_name', firstname,
-                            'middle_name', middlename,
-                            'last_name', lastname,
-                            'street', billing_street,
-                            'postcode', billing_postcode,
-                            'city', billing_city,
-                            'region', billing_region,
-                            'country', billing_country_code,
-                            'phone', billing_telephone,
-                            'list_id', customer_group_id,
-                            'list_name', customer_group_code,
-                            'shop_currency', shop_currency,
-                            'total_product_reviews', total_product_reviews,
-                            'last_product_review_date', last_product_review_date,
-                            'total_orders', total_orders,
-                            'total_orders_value', total_orders_value,
-                            'average_order_value', average_order_value,
-                            'last_order_value', last_order_value,
-                            'last_order_date', last_order_date
-                        )
-                    FROM (%s) AS q
-                    WHERE (q.%s = %s))",
-            $select,
-            $pColumn,
-            $id
+            "(
+                SELECT
+                    JSON_OBJECT(
+                        'email', email,
+                        'shop_id', store_id,
+                        'shop_name', store_name,
+                        'subscribed', subscribed,
+                        'date_of_birth', dob,
+                        'gender', gender_text,
+                        'created_at', created_at,
+                        'last_login_date', last_login_date,
+                        'last_logout_at', last_logout_at,
+                        'last_visit_at', last_visit_at,
+                        'title', prefix,
+                        'first_name', firstname,
+                        'middle_name', middlename,
+                        'last_name', lastname,
+                        'street', billing_street,
+                        'postcode', billing_postcode,
+                        'city', billing_city,
+                        'region', billing_region,
+                        'country', billing_country_code,
+                        'phone', billing_telephone,
+                        'list_id', customer_group_id,
+                        'list_name', customer_group_code,
+                        'shop_currency', shop_currency,
+                        'total_product_reviews', total_product_reviews,
+                        'last_product_review_date', last_product_review_date,
+                        'total_orders', total_orders,
+                        'total_orders_value', total_orders_value,
+                        'average_order_value', average_order_value,
+                        'last_order_value', last_order_value,
+                        'last_order_date', last_order_date,
+                        'most_used_shipping_method', most_used_shipping_method,
+                        'most_used_payment_method', most_used_payment_method,
+                        'active_shopping_cart', active_shopping_cart,
+                        'shopping_cart_created_at', shopping_cart_created_at,
+                        'shopping_cart_modified_at', shopping_cart_modified_at,
+                        'products_in_shopping_cart', products_in_shopping_cart,
+                        'last_product_wished_at', last_product_wished_at,
+                        'total_products_in_wishlist', total_products_in_wishlist
+                    )
+                FROM (%s) AS q
+                WHERE q.entity_id = customer.entity_id
+            )",
+            $sqlSelect
         );
     }
 }

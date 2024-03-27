@@ -382,7 +382,7 @@ class BaseService
 
     /**
      * @param string $method
-     * @param int $startTime
+     * @param float $startTime
      * @param int $startMemory
      *
      * @return void

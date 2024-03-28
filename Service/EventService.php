@@ -74,17 +74,17 @@ class EventService extends AbstractCronService
     private array $eventsDiscriminatorMapping = [
         EventModel::EVENT_SUBSCRIBER_UNSUBSCRIBED => self::UNSUBSCRIBED_EVENT_DISCRIMINATOR,
         EventModel::EVENT_LOGGED_IN => self::CUSTOMER_LOGIN_EVENT_DISCRIMINATOR,
-        EventModel::EVENT_PRODUCT_WISHED => self::WISHLIST_PRODUCT_EVENT_DISCRIMINATOR,
-        EventModel::EVENT_PRODUCT_REVIEWED => self::PRODUCT_REVIEW_EVENT_DISCRIMINATOR,
+        EventModel::WISHED => self::WISHLIST_PRODUCT_EVENT_DISCRIMINATOR,
+        EventModel::REVIEW => self::PRODUCT_REVIEW_EVENT_DISCRIMINATOR,
         EventModel::EVENT_CART_ABANDONED => [
             'main' => self::AC_EVENT_DISCRIMINATOR,
             'sub' => self::AC_PRODUCT_EVENT_DISCRIMINATOR
         ],
-        EventModel::EVENT_PLACED_ORDER => [
+        EventModel::ORDER => [
             'main' => self::ORDER_EVENT_DISCRIMINATOR,
             'sub' => self::ORDER_PRODUCT_EVENT_DISCRIMINATOR
         ],
-        EventModel::EVENT_PRODUCT_CARTED => self::PRODUCT_CARTED_EVENT_DISCRIMINATOR,
+        EventModel::CARTED => self::PRODUCT_CARTED_EVENT_DISCRIMINATOR,
         EventModel::EVENT_CUSTOMER_BECOMES_SUBSCRIBER => self::CUSTOMER_2_SUBSCRIBER_EVENT_DISCRIMINATOR,
         EventModel::EVENT_SUBSCRIBER_BECOMES_CUSTOMER => self::SUBSCRIBER_2_CUSTOMER_EVENT_DISCRIMINATOR,
     ];
@@ -353,7 +353,7 @@ class EventService extends AbstractCronService
             $createdAt = (string) $this->formatDateForPlatformCompatibility($event->getCreatedAt(), 'c');
             $withAddedSecond = '';
             if ((int) $event->getType() === EventModel::EVENT_CART_ABANDONED ||
-                (int) $event->getType() === EventModel::EVENT_PLACED_ORDER) {
+                (int) $event->getType() === EventModel::ORDER) {
                 $typeArray = $this->eventsDiscriminatorMapping[$event->getType()];
 
                 if (empty($this->eventsVersionMapping[$typeArray['main']]) ||

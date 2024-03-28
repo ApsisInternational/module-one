@@ -11,7 +11,7 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Wishlist\Model\Item as MagentoWishlistItem;
 use Magento\Wishlist\Model\ResourceModel\Item\CollectionFactory as WishlistItemCollectionFactory;
 use Magento\Wishlist\Model\ResourceModel\Wishlist\CollectionFactory as WishlistCollectionFactory;
-use Throwable;
+use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 
 class WishlistEvents extends AbstractEvents
 {
@@ -21,153 +21,88 @@ class WishlistEvents extends AbstractEvents
     private WishlistCollectionFactory $wishlistCollectionFactory;
 
     /**
+     * @var WishlistItemCollectionFactory
+     */
+    private WishlistItemCollectionFactory $wishlistItemCollectionFactory;
+
+    /**
      * @param DateTime $dateTime
      * @param EventResource $eventResource
-     * @param WishlistItemCollectionFactory $collectionFactory
-     * @param WishlistData $eventData
+     * @param WishlistData $entityData
+     * @param WishlistItemCollectionFactory $wishlistItemCollectionFactory
      * @param WishlistCollectionFactory $wishlistCollectionFactory
      */
     public function __construct(
         DateTime $dateTime,
         EventResource $eventResource,
-        WishlistItemCollectionFactory $collectionFactory,
-        WishlistData $eventData,
+        WishlistData $entityData,
+        WishlistItemCollectionFactory $wishlistItemCollectionFactory,
         WishlistCollectionFactory $wishlistCollectionFactory
     ) {
+        $this->wishlistItemCollectionFactory = $wishlistItemCollectionFactory;
         $this->wishlistCollectionFactory = $wishlistCollectionFactory;
-        parent::__construct($dateTime, $eventResource, $collectionFactory, $eventData);
+        parent::__construct($dateTime, $eventResource, $entityData);
     }
 
     /**
      * @inheirtDoc
      */
-    public function process(StoreInterface $store, BaseService $baseService, array $profileColArray): void
+    public function getCollection(int $storeId, array $ids): AbstractCollection
     {
-        $eventsToRegister = $this->findAndRegister($store, $baseService, $profileColArray);
-        $this->registerEvents($eventsToRegister, $baseService, $store->getId(), 'Product Wished');
+        $collection =  $this->wishlistItemCollectionFactory
+            ->create()
+            ->addStoreFilter([$storeId])
+            ->addFieldToFilter('wishlist_id', ['in' => $ids])
+            ->addFieldToFilter('main_table.added_at', $this->fetchDuration)
+            ->setVisibilityFilter()
+            ->setSalableFilter();
+        $collection->getSelect()->group('wishlist_item_id');
+        return $collection;
     }
 
     /**
      * @inheirtDoc
      */
-    protected function findAndRegister(
-        StoreInterface $store,
-        BaseService $baseService,
-        array $profileColArray
-    ): array {
-        try {
-            if (empty($profileColArray)) {
-                return [];
-            }
+    public function getEventsArr(BaseService $service, array $collection, array $profiles, int $storeId): array
+    {
+        $wishlistItemCollection = $this->getArrayFromEntityCollection(array_keys($collection), $storeId);
+        $events = [];
+        /** @var  MagentoWishlistItem $item */
+        foreach ($wishlistItemCollection as $item) {
+            $wishList = $collection[$item->getWishlistId()];
+            $profile = $profiles[$wishList->getCustomerId()];
 
-            $wishlistArrayCollection = $this->getWishlistCollection(
-                array_keys($profileColArray),
-                $baseService
-            );
-            if (empty($wishlistArrayCollection)) {
-                return [];
-            }
-
-            return $this->getEventsToRegister(
-                $baseService,
-                $wishlistArrayCollection,
-                $profileColArray,
-                $store
-            );
-        } catch (Throwable $e) {
-            $baseService->logError(__METHOD__, $e);
-            return [];
+            $data = ['main' => $this->entityData->getDataArr($item, $service), 'sub' => ''];
+            $events[] = $this->getDataForInsertion($profile, EventModel::WISHED, $item->getAddedAt(), $data);
         }
+        return $events;
     }
 
     /**
      * @inheirtDoc
      */
-    protected function getEventsToRegister(
-        BaseService $baseService,
-        array $entityCollectionArr,
-        array $profileCollectionArray,
-        StoreInterface $store
-    ): array {
-        $eventsToRegister = [];
-        $wishlistItemCollection = $this->getFormattedArrFromCollection(
-            array_keys($entityCollectionArr),
-            $store,
-            $baseService
-        );
-        if (empty($wishlistItemCollection)) {
-            return $eventsToRegister;
-        }
-
-        /** @var  MagentoWishlistItem $wishlistItem */
-        foreach ($wishlistItemCollection as $wishlistItem) {
-            try {
-                if (! isset($entityCollectionArr[$wishlistItem->getWishlistId()]) ||
-                    empty($wishList = $entityCollectionArr[$wishlistItem->getWishlistId()]) ||
-                    ! isset($profileCollectionArray[$wishList->getCustomerId()]) ||
-                    empty($profile = $profileCollectionArray[$wishList->getCustomerId()]) ||
-                    empty($product = $wishlistItem->getProduct())
-                ) {
-                    continue;
-                }
-
-                $eventData = $this->eventData->getWishedData(
-                    $wishList,
-                    $wishlistItem,
-                    $store->getId(),
-                    $product,
-                    $baseService
-                );
-
-                if (! empty($eventData)) {
-                    $eventDataForEvent = $this->getFormattedEventDataForRecord(
-                        $wishlistItem->getStoreId(),
-                        $profile,
-                        EventModel::EVENT_PRODUCT_WISHED,
-                        $wishlistItem->getAddedAt(),
-                        json_encode($eventData),
-                        $baseService
-                    );
-
-                    if (! empty($eventDataForEvent)) {
-                        $eventsToRegister[] = $eventDataForEvent;
-                    }
-                }
-            } catch (Throwable $e) {
-                $baseService->logError(__METHOD__, $e);
-                continue;
-            }
-        }
-
-        return $eventsToRegister;
+    protected function findEvents(StoreInterface $store, BaseService $baseService, array $profileColArray): array
+    {
+        $wishListCollection = $this->getWishlistCollection(array_keys($profileColArray));
+        return $this->getEventsArr($baseService, $wishListCollection, $profileColArray, $store->getId());
     }
 
     /**
      * @param array $customerIds
-     * @param BaseService $baseService
      *
      * @return array
      */
-    private function getWishlistCollection(array $customerIds, BaseService $baseService): array
+    private function getWishlistCollection(array $customerIds): array
     {
         $collectionArray = [];
-
-        try {
-            foreach (array_chunk($customerIds, self::QUERY_LIMIT) as $customerIdsChunk) {
-                $collection = $this->wishlistCollectionFactory
-                    ->create()
-                    ->filterByCustomerIds($customerIdsChunk);
-
-                if ($collection->getSize()) {
-                    foreach ($collection as $item) {
-                        $collectionArray[$item->getId()] =  $item;
-                    }
-                }
+        foreach (array_chunk($customerIds, self::QUERY_LIMIT) as $customerIdsChunk) {
+            $collection = $this->wishlistCollectionFactory
+                ->create()
+                ->filterByCustomerIds($customerIdsChunk);
+            foreach ($collection as $item) {
+                $collectionArray[$item->getId()] =  $item;
             }
-        } catch (Throwable $e) {
-            $baseService->logError(__METHOD__, $e);
         }
-
         return $collectionArray;
     }
 }

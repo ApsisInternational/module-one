@@ -4,84 +4,64 @@ namespace Apsis\One\Service\Data;
 
 use Apsis\One\Model\ResourceModel\EventResource;
 use Apsis\One\Service\BaseService;
+use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 use Magento\Framework\Stdlib\DateTime;
 use Apsis\One\Service\Data\Order\OrderData;
 use Apsis\One\Model\EventModel;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
 use Magento\Sales\Model\Order;
-use Magento\Store\Api\Data\StoreInterface;
-use Throwable;
 
 class OrderEvents extends AbstractEvents
 {
     /**
+     * @var OrderCollectionFactory
+     */
+    private OrderCollectionFactory $orderCollectionFactory;
+
+    /**
      * @param DateTime $dateTime
      * @param EventResource $eventResource
-     * @param OrderCollectionFactory $collectionFactory
-     * @param OrderData $eventData
+     * @param OrderData $entityData
+     * @param OrderCollectionFactory $orderCollectionFactory
      */
     public function __construct(
         DateTime $dateTime,
         EventResource $eventResource,
-        OrderCollectionFactory $collectionFactory,
-        OrderData $eventData
+        OrderData $entityData,
+        OrderCollectionFactory $orderCollectionFactory,
     ) {
-        parent::__construct($dateTime, $eventResource, $collectionFactory, $eventData);
+        $this->orderCollectionFactory = $orderCollectionFactory;
+        parent::__construct($dateTime, $eventResource, $entityData);
     }
 
     /**
      * @inheirtDoc
      */
-    public function process(StoreInterface $store, BaseService $baseService, array $profileColArray): void
+    public function getCollection(int $storeId, array $ids): AbstractCollection
     {
-        $eventsToRegister = $this->findAndRegister($store, $baseService, $profileColArray);
-        $this->registerEvents($eventsToRegister, $baseService, $store->getId(), 'Order Placed');
+        return $this->orderCollectionFactory
+            ->create()
+            ->addFieldToFilter('main_table.store_id', $storeId)
+            ->addFieldToFilter('main_table.updated_at', $this->fetchDuration)
+            ->addFieldToFilter('main_table.customer_email', ['in' => $ids]);
     }
 
     /**
      * @inheirtDoc
      */
-    protected function getEventsToRegister(
-        BaseService $baseService,
-        array $entityCollectionArr,
-        array $profileCollectionArray,
-        StoreInterface $store
-    ): array {
-        $eventsToRegister = [];
-
+    public function getEventsArr(BaseService $service, array $collection, array $profiles, int $storeId): array
+    {
+        $events = [];
         /** @var Order $order */
-        foreach ($entityCollectionArr as $order) {
-            try {
-                if (isset($profileCollectionArray[$order->getCustomerEmail()])) {
-                    $orderDataArr = $this->eventData->getDataArr(
-                        $order,
-                        $profileCollectionArray[$order->getCustomerEmail()],
-                        $baseService
-                    );
+        foreach ($collection as $order) {
+            $profile = $profiles[$order->getCustomerEmail()];
+            $mainData = $this->entityData->getDataArr($order, $service);
+            $items = $mainData['items'];
+            unset($mainData['items']);
 
-                    if (! empty($orderDataArr)) {
-                        $items = $orderDataArr['items'];
-                        unset($orderDataArr['items']);
-                        $eventDataForEvent = $this->getFormattedEventDataForRecord(
-                            $store->getStoreId(),
-                            $profileCollectionArray[$order->getCustomerEmail()],
-                            EventModel::EVENT_PLACED_ORDER,
-                            $order->getCreatedAt(),
-                            json_encode($orderDataArr),
-                            $baseService,
-                            json_encode($items)
-                        );
-
-                        if (! empty($eventDataForEvent)) {
-                            $eventsToRegister[] = $eventDataForEvent;
-                        }
-                    }
-                }
-            } catch (Throwable $e) {
-                $baseService->logError(__METHOD__, $e);
-                continue;
-            }
+            $data = ['main' => $mainData, 'sub' => $items];
+            $events[] = $this->getDataForInsertion($profile, EventModel::ORDER, $order->getCreatedAt(), $data);
         }
-        return $eventsToRegister;
+        return $events;
     }
 }

@@ -194,7 +194,7 @@ class ProfileResource extends AbstractResource
         $this->addEavAttributes($collection, $store->getId());
         $this->addAdditionalColumns($collection, $service, $store->getId());
 
-        $collection->getSelect()->group(['e.entity_id', 'subscriber.subscriber_id']);
+        $collection->getSelect()->group(['e.entity_id']);
         return $this->getJsonRepresentationFromSqlSelect($collection->getSelect()->assemble());
     }
 
@@ -205,7 +205,6 @@ class ProfileResource extends AbstractResource
      */
     private function joinTablesOnCollection(CustomerCollection $collection): void
     {
-        $salesOrderGrid = $this->getTable('sales_order_grid');
         $collection->getSelect()
             ->joinLeft(
                 ['cv' => $this->getTable('customer_visitor')],

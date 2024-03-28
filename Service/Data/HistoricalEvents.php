@@ -11,14 +11,15 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\App\EmulationFactory;
 use Magento\Framework\App\Area;
+use Exception;
 use Throwable;
 
 class HistoricalEvents
 {
     const FETCH_HISTORICAL_EVENTS = [
-        EventModel::EVENT_PLACED_ORDER,
-        EventModel::EVENT_PRODUCT_REVIEWED,
-        EventModel::EVENT_PRODUCT_WISHED,
+        EventModel::ORDER,
+        EventModel::REVIEW,
+        EventModel::WISHED,
     ];
 
     /**
@@ -27,19 +28,9 @@ class HistoricalEvents
     private ProfileCollectionFactory $profileCollectionFactory;
 
     /**
-     * @var OrderEvents
+     * @var EventsInterface[]
      */
-    private OrderEvents $historicalOrders;
-
-    /**
-     * @var ReviewEvents
-     */
-    private ReviewEvents $historicalReviews;
-
-    /**
-     * @var WishlistEvents
-     */
-    private WishlistEvents $historicalWishlist;
+    private array $eventTypeEntityInstances;
 
     /**
      * @var EmulationFactory
@@ -64,9 +55,19 @@ class HistoricalEvents
     ) {
         $this->emulationFactory = $emulationFactory;
         $this->profileCollectionFactory = $profileCollectionFactory;
-        $this->historicalWishlist = $historicalWishlist;
-        $this->historicalOrders = $historicalOrders;
-        $this->historicalReviews = $historicalReviews;
+        $this->eventTypeEntityInstances = [
+            EventModel::ORDER => $historicalOrders,
+            EventModel::REVIEW => $historicalReviews,
+            EventModel::WISHED => $historicalWishlist,
+        ];
+    }
+
+    /**
+     * @return Emulation
+     */
+    private function getEmulationModelInstance(): Emulation
+    {
+        return $this->emulationFactory->create();
     }
 
     /**
@@ -76,9 +77,9 @@ class HistoricalEvents
      */
     public function identifyAndFetchHistoricalEvents(BaseService $baseService): void
     {
-        $baseService->log(__METHOD__);
         foreach ($baseService->getStores() as $store) {
-            $emulate = $this->getEmulationModel();
+            $emulate = $this->getEmulationModelInstance();
+
             try {
                 $emulate->startEnvironmentEmulation($store->getId(), Area::AREA_FRONTEND, true);
                 $profileCollection = $this->profileCollectionFactory
@@ -86,125 +87,72 @@ class HistoricalEvents
                     ->getProfileCollectionForStore($store->getId());
 
                 if ($profileCollection->getSize()) {
-                    $this->runByType($store, $baseService, $profileCollection);
+                    $this->fetchByType($store, $baseService, $profileCollection);
                 }
             } catch (Throwable $e) {
                 $baseService->logError(__METHOD__, $e);
                 $emulate->stopEnvironmentEmulation();
                 continue;
             }
+
             $emulate->stopEnvironmentEmulation();
         }
     }
 
     /**
-     * @return Emulation
-     */
-    private function getEmulationModel(): Emulation
-    {
-        return $this->emulationFactory->create();
-    }
-
-    /**
-     * @param int $entityTypeId
-     *
-     * @return AbstractEvents|null
-     */
-    private function getEventEntityObject(int $entityTypeId): ?AbstractEvents
-    {
-        $eventTypeObjects = [
-            EventModel::EVENT_PLACED_ORDER => $this->historicalOrders,
-            EventModel::EVENT_PRODUCT_REVIEWED => $this->historicalReviews,
-            EventModel::EVENT_PRODUCT_WISHED => $this->historicalWishlist,
-        ];
-        return $eventTypeObjects[$entityTypeId] ?? null;
-    }
-
-    /**
      * @param StoreInterface $store
      * @param BaseService $baseService
-     * @param ProfileCollection $profileCollection
+     * @param ProfileCollection $collection
      *
      * @return void
      */
-    private function runByType(
-        StoreInterface $store,
-        BaseService $baseService,
-        ProfileCollection $profileCollection
-    ): void {
-        try {
-            $toTime = $baseService->getDateTimeFromTimeAndTimeZone();
-            $fromTime = clone $toTime;
-            $fromTime->sub($baseService->getDateIntervalFromIntervalSpec('P4Y'));
-            $fetchDuration = [
-                'from' => $fromTime->format('Y-m-d H:i:s'),
-                'to' => $toTime->format('Y-m-d H:i:s'),
-                'date' => true,
-            ];
-            foreach (self::FETCH_HISTORICAL_EVENTS as $type) {
-                try {
-                    if ($type === EventModel::EVENT_PLACED_ORDER) {
-                        $profileCollectionArray = $this
-                            ->getFormattedProfileCollection($profileCollection, $baseService, $store, true);
-                    } else {
-                        $profileCollectionArray = $this->getFormattedProfileCollection(
-                            $profileCollection,
-                            $baseService,
-                            $store
-                        );
-                    }
-
-                    $object = $this->getEventEntityObject($type);
-                    if ($object instanceof AbstractEvents) {
-                        $object->setFetchDuration($fetchDuration)
-                            ->process($store, $baseService, $profileCollectionArray);
-                    }
-                } catch (Throwable $e) {
-                    $baseService->logError(__METHOD__, $e);
-                    continue;
-                }
+    private function fetchByType(StoreInterface $store, BaseService $baseService, ProfileCollection $collection): void
+    {
+        foreach (self::FETCH_HISTORICAL_EVENTS as $eventType) {
+            try {
+                $profileCollectionArray = $this->getFormattedArrFromCollection($collection, $eventType);
+                $instance = $this->eventTypeEntityInstances[$eventType];
+                $instance->setFetchDuration($this->getCalculatedDuration($baseService));
+                $instance->propagate($store, $baseService, $profileCollectionArray);
+            } catch (Throwable $e) {
+                $baseService->logError(__METHOD__, $e);
+                continue;
             }
-        } catch (Throwable $e) {
-            $baseService->logError(__METHOD__, $e);
         }
     }
 
     /**
-     * @param ProfileCollection $profileCollection
-     * @param BaseService $baseService
-     * @param StoreInterface $store
-     * @param bool $orderType
+     * @param ProfileCollection $collection
+     * @param int $eventType
      *
      * @return array
      */
-    protected function getFormattedProfileCollection(
-        ProfileCollection $profileCollection,
-        BaseService $baseService,
-        StoreInterface $store,
-        bool $orderType = false
-    ): array {
-        $formattedProfileCollectionArray = [];
-
-        try {
-            if ($orderType) {
-                $profileCollection = $this->profileCollectionFactory
-                    ->create()
-                    ->getProfileCollectionForStore($store->getId());
-            }
-
-            /** @var ProfileModel $profile */
-            foreach ($profileCollection as $profile) {
-                if ($orderType) {
-                    $index = $profile->getEmail();
-                } else {
-                    $index = $profile->getCustomerId();
-                }
-                $formattedProfileCollectionArray[$index] = $profile;
-            }
-        } catch (Throwable $e) {
-            $baseService->logError(__METHOD__, $e);
+    private function getFormattedArrFromCollection(ProfileCollection $collection, int $eventType): array
+    {
+        $collectionArray = [];
+        /** @var ProfileModel $profile */
+        foreach ($collection as $profile) {
+            $index = ($eventType === EventModel::ORDER) ? $profile->getEmail() : $profile->getCustomerId();
+            $collectionArray[$index] = $profile;
         }
+        return $collectionArray;
+    }
 
-        return $formattedProfileCollectionArray;
+    /**
+     * @param BaseService $baseService
+     * @return array
+     *
+     * @throws Exception
+     */
+    private function getCalculatedDuration(BaseService $baseService): array
+    {
+        $toTime = $baseService->getDateTimeFromTimeAndTimeZone();
+        $fromTime = clone $toTime;
+        $fromTime->sub($baseService->getDateIntervalFromIntervalSpec('P4Y'));
+        return [
+            'from' => $fromTime->format('Y-m-d H:i:s'),
+            'to' => $toTime->format('Y-m-d H:i:s'),
+            'date' => true,
+        ];
     }
 }

@@ -264,7 +264,7 @@ class SubEventService
             $eventData = $this->cartData->getCartedData($cart, $item, $baseService);
             if (! empty($eventData)) {
                 $this->registerEvent(
-                    EventModel::EVENT_PRODUCT_CARTED,
+                    EventModel::CARTED,
                     $eventData,
                     $baseService,
                     (int) $profile->getId(),
@@ -289,12 +289,12 @@ class SubEventService
     public function registerOrderPlacedEvent(Order $order, ProfileModel $profile, BaseService $baseService): void
     {
         try {
-            $dataArr = $this->orderData->getDataArr($order, $profile, $baseService);
+            $dataArr = $this->orderData->getDataArr($order, $baseService);
             if (! empty($dataArr)) {
                 $items = $dataArr['items'];
                 unset($dataArr['items']);
                 $this->registerEvent(
-                    EventModel::EVENT_PLACED_ORDER,
+                    EventModel::ORDER,
                     $dataArr,
                     $baseService,
                     (int) $profile->getId(),
@@ -338,10 +338,10 @@ class SubEventService
             }
 
             $eventData = $this->wishlistData
-                ->getWishedData($wishlist, $wishlistItem, $store->getId(), $product, $baseService);
+                ->getDataArr($wishlistItem, $baseService);
             if (! empty($eventData)) {
                 $this->registerEvent(
-                    EventModel::EVENT_PRODUCT_WISHED,
+                    EventModel::WISHED,
                     $eventData,
                     $baseService,
                     (int) $profile->getId(),
@@ -372,10 +372,10 @@ class SubEventService
         BaseService $baseService
     ): void {
         try {
-            $eventData = $this->reviewData->getReviewData($reviewObject, $product, $baseService);
+            $eventData = $this->reviewData->getDataArr($reviewObject, $baseService);
             if (! empty($eventData)) {
                 $this->registerEvent(
-                    EventModel::EVENT_PRODUCT_REVIEWED,
+                    EventModel::REVIEW,
                     $eventData,
                     $baseService,
                     (int) $profile->getId(),

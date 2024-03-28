@@ -6,23 +6,15 @@ use Apsis\One\Model\EventModel;
 use Apsis\One\Service\Data\Review\ReviewData;
 use Apsis\One\Model\ResourceModel\EventResource;
 use Apsis\One\Service\BaseService;
-use Magento\Catalog\Model\ResourceModel\Product\Collection;
-use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
+use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Review\Model\ResourceModel\Review\CollectionFactory as ProductReviewCollectionFactory;
 use Magento\Review\Model\Review;
 use Magento\Review\Model\ResourceModel\Review as ReviewResource;
 use Magento\Review\Model\ReviewFactory;
-use Magento\Store\Api\Data\StoreInterface;
-use Throwable;
 
 class ReviewEvents extends AbstractEvents
 {
-    /**
-     * @var ProductCollectionFactory
-     */
-    private ProductCollectionFactory $productCollectionFactory;
-
     /**
      * @var ReviewFactory
      */
@@ -33,37 +25,60 @@ class ReviewEvents extends AbstractEvents
      */
     private ReviewResource $reviewResource;
 
+    private ProductReviewCollectionFactory $productReviewCollectionFactory;
+
     /**
      * @param DateTime $dateTime
      * @param EventResource $eventResource
-     * @param ProductReviewCollectionFactory $collectionFactory
-     * @param ReviewData $eventData
-     * @param ProductCollectionFactory $productCollectionFactory
+     * @param ReviewData $entityData
+     * @param ProductReviewCollectionFactory $productReviewCollectionFactory
      * @param ReviewFactory $reviewFactory
      * @param ReviewResource $reviewResource
      */
     public function __construct(
         DateTime $dateTime,
         EventResource $eventResource,
-        ProductReviewCollectionFactory $collectionFactory,
-        ReviewData $eventData,
-        ProductCollectionFactory $productCollectionFactory,
+        ReviewData $entityData,
+        ProductReviewCollectionFactory $productReviewCollectionFactory,
         ReviewFactory $reviewFactory,
         ReviewResource $reviewResource
     ) {
+        $this->productReviewCollectionFactory = $productReviewCollectionFactory;
         $this->reviewResource = $reviewResource;
         $this->reviewFactory = $reviewFactory;
-        $this->productCollectionFactory = $productCollectionFactory;
-        parent::__construct($dateTime, $eventResource, $collectionFactory, $eventData);
+        parent::__construct($dateTime, $eventResource, $entityData);
     }
 
     /**
      * @inheirtDoc
      */
-    public function process(StoreInterface $store, BaseService $baseService, array $profileColArray): void
+    public function getCollection(int $storeId, array $ids): AbstractCollection
     {
-        $eventsToRegister = $this->findAndRegister($store, $baseService, $profileColArray);
-        $this->registerEvents($eventsToRegister, $baseService, $store->getId(), 'Product Reviewed');
+        return $this->productReviewCollectionFactory
+            ->create()
+            ->addStoreFilter([$storeId])
+            ->addFieldToFilter('customer_id', ['in' => $ids])
+            ->addFieldToFilter('main_table.entity_id', 1)
+            ->addFieldToFilter('main_table.created_at', $this->fetchDuration);
+    }
+
+    /**
+     * @inheirtDoc
+     */
+    public function getEventsArr(BaseService $service, array $collection, array $profiles, int $storeId): array
+    {
+        $events = [];
+        /** @var Review $entity */
+        foreach ($collection as $entity) {
+            $review = $this->getReviewModel();
+            $this->reviewResource->load($review, $entity->getId());
+            $review->setData('store_id', $storeId);
+            $profile = $profiles[$review->getCustomerId()];
+
+            $data = ['main' => $this->entityData->getDataArr($review, $service), 'sub' => ''];
+            $events[] = $this->getDataForInsertion($profile, EventModel::REVIEW, $review->getCreatedAt(), $data);
+        }
+        return $events;
     }
 
     /**
@@ -72,130 +87,5 @@ class ReviewEvents extends AbstractEvents
     private function getReviewModel(): Review
     {
         return $this->reviewFactory->create();
-    }
-
-    /**
-     * @inheirtDoc
-     */
-    protected function getEventsToRegister(
-        BaseService $baseService,
-        array $entityCollectionArr,
-        array $profileCollectionArray,
-        StoreInterface $store
-    ): array {
-        $eventsToRegister = [];
-        $productCollectionArray = $this->getProductCollectionArray(
-            $store,
-            $baseService,
-            $this->getProductIdsFromCollection($entityCollectionArr, $baseService)
-        );
-        if (empty($productCollectionArray)) {
-            return $eventsToRegister;
-        }
-
-        /** @var Review $entity */
-        foreach ($entityCollectionArr as $entity) {
-            try {
-                $review = $this->getReviewModel();
-                $this->reviewResource->load($review, $entity->getId());
-                if (! $review->getId() || ! isset($profileCollectionArray[$review->getCustomerId()]) ||
-                    empty($profile = $profileCollectionArray[$review->getCustomerId()]) ||
-                    ! isset($productCollectionArray[$review->getEntityPkValue()]) ||
-                    empty($product = $productCollectionArray[$review->getEntityPkValue()])
-                ) {
-                    continue;
-                }
-
-                $eventData = $this->eventData->getReviewData($review, $product, $baseService);
-
-                if (! empty($eventData)) {
-                    $eventDataForEvent = $this->getFormattedEventDataForRecord(
-                        $review->getStoreId(),
-                        $profile,
-                        EventModel::EVENT_PRODUCT_REVIEWED,
-                        $review->getCreatedAt(),
-                        json_encode($eventData),
-                        $baseService
-                    );
-                    if (! empty($eventDataForEvent)) {
-                        $eventsToRegister[] = $eventDataForEvent;
-                    }
-                }
-            } catch (Throwable $e) {
-                $baseService->logError(__METHOD__, $e);
-                continue;
-            }
-        }
-
-        return $eventsToRegister;
-    }
-
-    /**
-     * @return Collection
-     */
-    private function getProductCollection(): Collection
-    {
-        return $this->productCollectionFactory->create();
-    }
-
-    /**
-     * @param StoreInterface $store
-     * @param BaseService $baseService
-     * @param array $productIds
-     *
-     * @return array
-     */
-    private function getProductCollectionArray(
-        StoreInterface  $store,
-        BaseService $baseService,
-        array $productIds
-    ): array {
-        $productCollectionArray = [];
-
-        try {
-            $productCollection = $this->getProductCollection()
-                ->addAttributeToSelect('*')
-                ->addStoreFilter($store->getId())
-                ->addIdFilter($productIds)
-                ->addUrlRewrite()
-                ->addPriceData();
-
-            foreach ($productCollection as $product) {
-                $productCollectionArray[$product->getId()] = $product;
-            }
-        } catch (Throwable $e) {
-            $baseService->logError(__METHOD__, $e);
-        }
-
-        return $productCollectionArray;
-    }
-
-    /**
-     * @param array $collection
-     * @param BaseService $baseService
-     *
-     * @return array
-     */
-    private function getProductIdsFromCollection(array $collection, BaseService $baseService): array
-    {
-        $productIds = [];
-
-        try {
-            /** @var Review $item */
-            foreach ($collection as $item) {
-                try {
-                    if (! in_array($item->getEntityPkValue(), $productIds)) {
-                        $productIds[] = $item->getEntityPkValue();
-                    }
-                } catch (Throwable $e) {
-                    $baseService->logError(__METHOD__, $e);
-                    continue;
-                }
-            }
-        } catch (Throwable $e) {
-            $baseService->logError(__METHOD__, $e);
-        }
-
-        return $productIds;
     }
 }
